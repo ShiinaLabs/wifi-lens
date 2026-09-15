@@ -57,9 +57,9 @@ class IntegrityVerifierTests(unittest.TestCase):
     def anchor(manifest_digest: str) -> str:
         return (
             "<!-- knowledge-boundary-gate:start -->\n"
-            "Run `.agents/skills/protect-knowledge-boundary/scripts/check_public_knowledge.py` "
-            "and `.agents/skills/protect-knowledge-boundary/scripts/verify_integrity.py` before "
-            "completing knowledge-boundary changes.\n"
+            "Complete the manual module-by-module edition-boundary review described in "
+            "`.agents/skills/protect-knowledge-boundary/SKILL.md` before completing "
+            "knowledge-boundary changes.\n"
             f"Integrity manifest SHA-256: `{manifest_digest}`\n"
             "<!-- knowledge-boundary-gate:end -->\n"
         )

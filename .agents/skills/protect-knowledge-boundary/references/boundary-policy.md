@@ -32,3 +32,24 @@ An allowed path is an index, not permission to read and summarize its target.
 For non-Pro tasks, do not load private documents into Agent context. For
 explicitly Pro-scoped tasks, follow `Pro/AGENTS.md` and keep resulting private
 knowledge inside the private repository.
+
+## Boundary review method
+
+The boundary is semantic and architectural. A review must be performed module
+by module, not reduced to a repository-wide text search or a build result.
+For every changed file, identify its physical repository, module ownership,
+edition, target membership, callers, callees, and composition entrypoint.
+Then inspect the dependency direction and the Xcode source/resource phases
+that deliver it to each target.
+
+The public repository may contain edition-neutral contracts, OSS
+implementations, and Xcode wiring needed to build the separate Pro target.
+Those facts alone do not disclose private implementation. The boundary fails
+when public source or public target membership receives private behavior, when
+the dependency direction bypasses the composition seam, or when public assets
+describe private implementation knowledge.
+
+Automated scripts may assist with navigation or protect the review
+instructions, but they cannot establish that a module relationship is safe.
+Only a complete manual review with no unresolved `REVIEW` edges can produce a
+boundary `PASS`.

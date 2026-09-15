@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Verify protected WiFi Lens knowledge-boundary assets and entrypoints."""
+"""Verify the integrity of the protected boundary-review instructions.
+
+This checks instruction assets only. It does not evaluate whether an OSS/Pro
+module relationship is safe.
+"""
 
 from __future__ import annotations
 
@@ -28,9 +32,9 @@ REQUIRED_PROTECTED_ASSETS = frozenset(
 )
 ANCHOR = re.compile(
     r"<!-- knowledge-boundary-gate:start -->\n"
-    r"Run `\.agents/skills/protect-knowledge-boundary/scripts/check_public_knowledge\.py` "
-    r"and `\.agents/skills/protect-knowledge-boundary/scripts/verify_integrity\.py` before "
-    r"completing knowledge-boundary changes\.\n"
+    r"Complete the manual module-by-module edition-boundary review described in "
+    r"`\.agents/skills/protect-knowledge-boundary/SKILL\.md` before completing "
+    r"knowledge-boundary changes\.\n"
     r"Integrity manifest SHA-256: `([0-9a-f]{64})`\n"
     r"<!-- knowledge-boundary-gate:end -->"
 )
@@ -133,7 +137,8 @@ def main() -> int:
     result = verify(root, manifest)
     for item in result.findings:
         print(f"FAIL [{item.code}] {item.message}")
-    print("PASS: knowledge boundary integrity" if result.exit_code == 0 else "FAIL: knowledge boundary integrity")
+    status = "PASS" if result.exit_code == 0 else "FAIL"
+    print(f"{status}: boundary-review instruction integrity")
     return result.exit_code
 
 

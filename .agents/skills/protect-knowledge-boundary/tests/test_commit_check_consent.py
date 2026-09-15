@@ -34,6 +34,17 @@ class CommitCheckConsentPolicyTests(unittest.TestCase):
     def test_consent_applies_to_only_one_commit(self):
         self.assertIn("Consent applies to one commit request only", self.collaboration)
 
+    def test_boundary_check_is_manual_and_not_build_or_test_based(self):
+        self.assertIn("Boundary verification", self.collaboration)
+        self.assertIn("manual module-by-module review", self.collaboration)
+        self.assertIn("Build success", self.collaboration)
+        self.assertIn("unit-test results", self.collaboration)
+        self.assertIn("cannot establish a boundary", self.collaboration)
+        self.assertNotIn(
+            "all code changes must be verified by running `xcodebuild build` successfully",
+            self.collaboration,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

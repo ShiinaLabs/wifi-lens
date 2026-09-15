@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Detect private Pro knowledge in public WiFi Lens Markdown assets."""
+"""Legacy heuristic for public Markdown content.
+
+This is an auxiliary content lint only. It is not an OSS/Pro boundary
+verifier, and its result must never be treated as a boundary ``PASS``.
+"""
 
 from __future__ import annotations
 
@@ -201,7 +205,7 @@ def main() -> int:
     for item in result.findings:
         print(f"{item.level} {item.path}:{item.line} [{item.code}] {item.message}")
     status = {0: "PASS", 1: "FAIL", 2: "REVIEW"}[result.exit_code]
-    print(f"{status}: knowledge boundary scan")
+    print(f"{status}: auxiliary public-content lint; manual boundary review required")
     return result.exit_code
 
 

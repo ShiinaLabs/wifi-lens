@@ -52,9 +52,17 @@ other checks whose purpose is to gate that commit.
 
 - **Enter plan mode**: Non-trivial implementation tasks must enter plan mode (EnterPlanMode) and receive approval before any code is written.
 
-- **Build verification**: When the user chooses pre-commit checks, all code changes must be verified by running `xcodebuild build` successfully.
+- **Boundary verification**: When a commit touches the OSS/Pro boundary, the
+  relevant check is a manual module-by-module review of file locations, target
+  membership, composition seams, and dependency direction. Build success,
+  unit-test results, and repository-wide scripts cannot establish a boundary
+  `PASS`.
 
-- **No UI tests by default**: Do not run `WiFiLensUITests`, `WiFiLensProUITests`, or full scheme `xcodebuild test` commands that include UI test bundles unless the user explicitly asks for UI tests. Use build verification and unit-test-only verification by default.
+- **Product verification**: When product behavior changes, use the relevant build
+  and unit-test workflow if product verification is in scope. Do not run
+  `WiFiLensUITests`, `WiFiLensProUITests`, or full scheme `xcodebuild test`
+  commands that include UI test bundles unless the user explicitly asks for UI
+  tests. Product verification does not replace the manual boundary review.
 
 - **Place Markdown by responsibility**: Project roadmaps, known issues, design records, and implementation plans go under `docs/` (see `docs/README.md`). Agent-oriented technical references (architecture, testing, etc.) live under `.agents/references/project/`. Agent Skills and Agent-only workflow references go under `.agents/`. The only root exceptions are `AGENTS.md`, `CLAUDE.md`, and `README.md`.
 

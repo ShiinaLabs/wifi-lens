@@ -15,7 +15,7 @@ def load_module():
     return module
 
 
-class BoundaryScannerTests(unittest.TestCase):
+class AuxiliaryContentLintTests(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
