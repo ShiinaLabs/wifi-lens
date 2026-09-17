@@ -5,6 +5,25 @@ import Testing
 @testable import WiFi_Lens
 
 extension NetworkDiagnosticsTests {
+    @Test("IPv6 route parser recognizes an active default route")
+    func ipv6RouteParserRecognizesActiveDefaultRoute() {
+        let output = """
+        route to: ::
+        destination: ::
+        mask: default
+        gateway: fdfe:dcba:9876::
+        interface: utun6
+        flags: <UP,GATEWAY,DONE,PRCLONING,GLOBAL>
+        """
+
+        #expect(
+            DiagnosticIPv6RouteParser.parse(
+                output: output,
+                interfaceIndices: ["utun6": 22]
+            ) == .init(interfaceName: "utun6", interfaceIndex: 22)
+        )
+    }
+
     @Test("route selection follows the kernel-selected interface")
     func routeSelectionUsesKernelInterface() {
         let output = """

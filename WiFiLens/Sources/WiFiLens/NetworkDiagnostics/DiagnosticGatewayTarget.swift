@@ -11,6 +11,15 @@ struct DiagnosticTunnelRouteTarget: Equatable, Sendable {
     let interfaceIndex: UInt32
 }
 
+struct DiagnosticIPv6RouteTarget: Equatable, Sendable {
+    let interfaceName: String
+    let interfaceIndex: UInt32
+}
+
+protocol DiagnosticIPv6RouteSourcing: Sendable {
+    func currentIPv6Route(timeout: Duration) async -> DiagnosticIPv6RouteTarget?
+}
+
 enum DiagnosticRouteInterface {
     private static let tunnelPrefixes = ["utun", "ipsec", "ppp", "tun", "tap"]
 

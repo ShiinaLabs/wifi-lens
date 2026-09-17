@@ -7,6 +7,7 @@ import Testing
 extension NetworkDiagnosticsTests {
     @Test("IPv6 outcomes preserve optional-check conclusion semantics")
     func ipv6OutcomeMatrix() async {
+        let route = DiagnosticIPv6RouteTarget(interfaceName: "utun6", interfaceIndex: 22)
         let ipv6 = await IPv6ControlEndpointCheck(
             loader: StubIPv6Loader(.noGlobalAddress)
         ).run()
@@ -23,10 +24,12 @@ extension NetworkDiagnosticsTests {
             )
         ) == .networkNormal)
 
-        let failed = await IPv6ControlEndpointCheck(loader: StubIPv6Loader(.failed)).run()
+        let failed = await IPv6ControlEndpointCheck(
+            loader: StubIPv6Loader(.connectionFailed(route: route))
+        ).run()
 
         #expect(failed.status == .indeterminate)
-        #expect(failed.evidence.contains(.init(code: "ipv6.unavailable", value: nil)))
+        #expect(failed.evidence.contains(.init(code: "ipv6.connection-failure", value: nil)))
         #expect(NetworkDiagnosticConclusion.evaluate(
             makeResults(
                 path: .normal,
@@ -37,10 +40,42 @@ extension NetworkDiagnosticsTests {
             )
         ) == .networkNormal)
 
-        let succeeded = await IPv6ControlEndpointCheck(loader: StubIPv6Loader(.succeeded)).run()
+        let succeeded = await IPv6ControlEndpointCheck(
+            loader: StubIPv6Loader(.succeeded(route: route))
+        ).run()
 
         #expect(succeeded.status == .normal)
         #expect(succeeded.evidence.contains(.init(code: "ipv6.available", value: nil)))
+        #expect(succeeded.evidence.contains(.init(code: "ipv6.route-interface", value: "utun6")))
+    }
+
+    @Test("IPv6 outcomes preserve the distinction between DNS and connection failures")
+    func ipv6OutcomeReasonsRemainDistinct() async {
+        let route = DiagnosticIPv6RouteTarget(interfaceName: "utun6", interfaceIndex: 22)
+
+        let noRoute = await IPv6ControlEndpointCheck(
+            loader: StubIPv6Loader(.noDefaultRoute)
+        ).run()
+        #expect(noRoute.status == .indeterminate)
+        #expect(noRoute.evidence.contains(.init(code: "ipv6.no-default-route", value: nil)))
+
+        let noAAAA = await IPv6ControlEndpointCheck(
+            loader: StubIPv6Loader(.noAAAA(route: route))
+        ).run()
+        #expect(noAAAA.status == .indeterminate)
+        #expect(noAAAA.evidence.contains(.init(code: "ipv6.no-aaaa", value: nil)))
+
+        let dnsFailure = await IPv6ControlEndpointCheck(
+            loader: StubIPv6Loader(.dnsFailure(route: route))
+        ).run()
+        #expect(dnsFailure.status == .indeterminate)
+        #expect(dnsFailure.evidence.contains(.init(code: "ipv6.dns-failure", value: nil)))
+
+        let timeout = await IPv6ControlEndpointCheck(
+            loader: StubIPv6Loader(.timedOut(route: route))
+        ).run()
+        #expect(timeout.status == .indeterminate)
+        #expect(timeout.evidence.contains(.init(code: "ipv6.timeout", value: nil)))
     }
 
     @Test("IPv6 loader preserves literal, fallback, and precondition behavior")
@@ -49,13 +84,14 @@ extension NetworkDiagnosticsTests {
         let loader = SystemIPv6ControlEndpointLoader(
             addressSource: StubGlobalIPv6AddressSource(hasAddress: true),
             resolver: StubIPv6AddressResolver(addresses: ["2001:db8::42"]),
-            connector: RecordingIPv6HTTPSConnector(succeeds: true, recorder: recorder)
+            connector: RecordingIPv6HTTPSConnector(succeeds: true, recorder: recorder),
+            routeSource: StubIPv6RouteSource(.init(interfaceName: "utun6", interfaceIndex: 22))
         )
         let endpoint = URL(string: "https://control.example/health")!
 
         let outcome = await loader.load(url: endpoint, timeout: .seconds(4))
 
-        #expect(outcome == .succeeded)
+        #expect(outcome == .succeeded(route: .init(interfaceName: "utun6", interfaceIndex: 22)))
         let requests = await recorder.requests
         #expect(requests.count == 1)
         #expect(requests.first?.url == endpoint)
@@ -67,7 +103,8 @@ extension NetworkDiagnosticsTests {
         let fallbackLoader = SystemIPv6ControlEndpointLoader(
             addressSource: StubGlobalIPv6AddressSource(hasAddress: true),
             resolver: StubIPv6AddressResolver(addresses: ["2001:db8::1", "2001:db8::2"]),
-            connector: connector
+            connector: connector,
+            routeSource: StubIPv6RouteSource(.init(interfaceName: "en0", interfaceIndex: 11))
         )
 
         let fallbackOutcome = await fallbackLoader.load(
@@ -75,18 +112,58 @@ extension NetworkDiagnosticsTests {
             timeout: .seconds(4)
         )
 
-        #expect(fallbackOutcome == .succeeded)
+        #expect(fallbackOutcome == .succeeded(route: .init(interfaceName: "en0", interfaceIndex: 11)))
         #expect(await connector.addresses == ["2001:db8::1", "2001:db8::2"])
         let timeouts = await connector.timeouts
         #expect(timeouts.count == 2)
         #expect(timeouts.first.map { $0 > .zero && $0 <= .seconds(2) } == true)
         #expect(timeouts.last.map { $0 > .zero && $0 <= .seconds(4) } == true)
 
+        let noAAAALoader = SystemIPv6ControlEndpointLoader(
+            addressSource: StubGlobalIPv6AddressSource(hasAddress: true),
+            resolver: StubIPv6AddressResolver(addresses: []),
+            connector: StubIPv6HTTPSConnector(succeeds: true),
+            routeSource: StubIPv6RouteSource(.init(interfaceName: "utun6", interfaceIndex: 22))
+        )
+        #expect(
+            await noAAAALoader.load(
+                url: URL(string: "https://control.example/health")!,
+                timeout: .seconds(4)
+            ) == .noAAAA(route: .init(interfaceName: "utun6", interfaceIndex: 22))
+        )
+
+        let dnsFailureLoader = SystemIPv6ControlEndpointLoader(
+            addressSource: StubGlobalIPv6AddressSource(hasAddress: true),
+            resolver: StubIPv6AddressResolver(outcome: .failed),
+            connector: StubIPv6HTTPSConnector(succeeds: true),
+            routeSource: StubIPv6RouteSource(.init(interfaceName: "utun6", interfaceIndex: 22))
+        )
+        #expect(
+            await dnsFailureLoader.load(
+                url: URL(string: "https://control.example/health")!,
+                timeout: .seconds(4)
+            ) == .dnsFailure(route: .init(interfaceName: "utun6", interfaceIndex: 22))
+        )
+
+        let connectionFailureLoader = SystemIPv6ControlEndpointLoader(
+            addressSource: StubGlobalIPv6AddressSource(hasAddress: true),
+            resolver: StubIPv6AddressResolver(addresses: ["2001:db8::42"]),
+            connector: StubIPv6HTTPSConnector(succeeds: false),
+            routeSource: StubIPv6RouteSource(.init(interfaceName: "utun6", interfaceIndex: 22))
+        )
+        #expect(
+            await connectionFailureLoader.load(
+                url: URL(string: "https://control.example/health")!,
+                timeout: .seconds(4)
+            ) == .connectionFailed(route: .init(interfaceName: "utun6", interfaceIndex: 22))
+        )
+
         let resolver = RecordingIPv6AddressResolver(addresses: ["2001:db8::42"])
         let noAddressLoader = SystemIPv6ControlEndpointLoader(
             addressSource: StubGlobalIPv6AddressSource(hasAddress: false),
             resolver: resolver,
-            connector: StubIPv6HTTPSConnector(succeeds: true)
+            connector: StubIPv6HTTPSConnector(succeeds: true),
+            routeSource: StubIPv6RouteSource(.init(interfaceName: "utun6", interfaceIndex: 22))
         )
 
         let noAddressOutcome = await noAddressLoader.load(
@@ -332,4 +409,3 @@ extension NetworkDiagnosticsTests {
         #expect(exception?["NSIncludesSubdomains"] == nil)
     }
 }
-

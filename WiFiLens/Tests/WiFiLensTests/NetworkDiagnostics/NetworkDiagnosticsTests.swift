@@ -496,6 +496,18 @@ struct StubIPv6Loader: IPv6ControlEndpointLoading {
     }
 }
 
+struct StubIPv6RouteSource: DiagnosticIPv6RouteSourcing {
+    let route: DiagnosticIPv6RouteTarget?
+
+    init(_ route: DiagnosticIPv6RouteTarget?) {
+        self.route = route
+    }
+
+    func currentIPv6Route(timeout: Duration) async -> DiagnosticIPv6RouteTarget? {
+        route
+    }
+}
+
 struct StubGlobalIPv6AddressSource: GlobalIPv6AddressSourcing {
     let hasAddress: Bool
 
@@ -505,10 +517,18 @@ struct StubGlobalIPv6AddressSource: GlobalIPv6AddressSourcing {
 }
 
 struct StubIPv6AddressResolver: IPv6AddressResolving {
-    let addresses: [String]
+    let outcome: IPv6AddressResolutionOutcome
 
-    func resolveAAAA(host: String, timeout: Duration) async -> [String] {
-        addresses
+    init(addresses: [String]) {
+        outcome = addresses.isEmpty ? .noAAAA : .addresses(addresses)
+    }
+
+    init(outcome: IPv6AddressResolutionOutcome) {
+        self.outcome = outcome
+    }
+
+    func resolveAAAA(host: String, timeout: Duration) async -> IPv6AddressResolutionOutcome {
+        outcome
     }
 }
 
@@ -520,9 +540,9 @@ actor RecordingIPv6AddressResolver: IPv6AddressResolving {
         self.addresses = addresses
     }
 
-    func resolveAAAA(host: String, timeout: Duration) async -> [String] {
+    func resolveAAAA(host: String, timeout: Duration) async -> IPv6AddressResolutionOutcome {
         hosts.append(host)
-        return addresses
+        return addresses.isEmpty ? .noAAAA : .addresses(addresses)
     }
 }
 
@@ -550,14 +570,14 @@ struct RecordingIPv6HTTPSConnector: IPv6HTTPSConnecting {
         ipv6Address: String,
         serverName: String,
         timeout: Duration
-    ) async -> Bool {
+    ) async -> IPv6HTTPSConnectionOutcome {
         await recorder.record(.init(
             url: url,
             ipv6Address: ipv6Address,
             serverName: serverName,
             timeout: timeout
         ))
-        return succeeds
+        return succeeds ? .succeeded : .failed
     }
 }
 
@@ -569,8 +589,8 @@ struct StubIPv6HTTPSConnector: IPv6HTTPSConnecting {
         ipv6Address: String,
         serverName: String,
         timeout: Duration
-    ) async -> Bool {
-        succeeds
+    ) async -> IPv6HTTPSConnectionOutcome {
+        succeeds ? .succeeded : .failed
     }
 }
 
@@ -588,10 +608,10 @@ actor SequencedIPv6HTTPSConnector: IPv6HTTPSConnecting {
         ipv6Address: String,
         serverName: String,
         timeout: Duration
-    ) async -> Bool {
+    ) async -> IPv6HTTPSConnectionOutcome {
         addresses.append(ipv6Address)
         timeouts.append(timeout)
-        return ipv6Address == successfulAddress
+        return ipv6Address == successfulAddress ? .succeeded : .failed
     }
 }
 

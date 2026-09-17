@@ -46677,6 +46677,211 @@
           }
         }
       }
+    },
+    "network_diagnostics.ipv6.no_default_route.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No IPv6 default route was available, so IPv6 HTTPS could not be verified."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es war keine IPv6-Standardroute verfügbar, daher konnte HTTPS über IPv6 nicht überprüft werden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No había ninguna ruta IPv6 predeterminada disponible, por lo que no se pudo verificar HTTPS mediante IPv6."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune route IPv6 par défaut n’était disponible : HTTPS sur IPv6 n’a pas pu être vérifié."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPv6 のデフォルトルートが利用できないため、IPv6 HTTPS を確認できませんでした。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可用的 IPv6 默认路由，因此无法验证 IPv6 HTTPS。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.ipv6.no_aaaa.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The target did not provide an IPv6 address (AAAA record), so IPv6 HTTPS could not be verified."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Ziel stellte keine IPv6-Adresse (AAAA-Record) bereit, daher konnte HTTPS über IPv6 nicht überprüft werden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El destino no proporcionó una dirección IPv6 (registro AAAA), por lo que no se pudo verificar HTTPS mediante IPv6."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cible n’a fourni aucune adresse IPv6 (enregistrement AAAA) : HTTPS sur IPv6 n’a pas pu être vérifié."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "対象から IPv6 アドレス（AAAA レコード）が返されないため、IPv6 HTTPS を確認できませんでした。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标没有提供 IPv6 地址（AAAA 记录），因此无法验证 IPv6 HTTPS。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.ipv6.dns_failure.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The system DNS lookup for the IPv6 target failed, so IPv6 HTTPS could not be verified."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die System-DNS-Abfrage für das IPv6-Ziel ist fehlgeschlagen, daher konnte HTTPS über IPv6 nicht überprüft werden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La consulta DNS del sistema para el destino IPv6 falló, por lo que no se pudo verificar HTTPS mediante IPv6."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La résolution DNS système de la cible IPv6 a échoué : HTTPS sur IPv6 n’a pas pu être vérifié."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPv6 の対象に対するシステム DNS 検索に失敗したため、IPv6 HTTPS を確認できませんでした。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统对 IPv6 目标的 DNS 查询失败，因此无法验证 IPv6 HTTPS。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.ipv6.connection_failure.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An IPv6 address was found, but the HTTPS connection did not succeed."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eine IPv6-Adresse wurde gefunden, aber die HTTPS-Verbindung war nicht erfolgreich."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se encontró una dirección IPv6, pero la conexión HTTPS no se estableció correctamente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une adresse IPv6 a été trouvée, mais la connexion HTTPS a échoué."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPv6 アドレスは見つかりましたが、HTTPS 接続に失敗しました。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已找到 IPv6 地址，但 HTTPS 连接未成功。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.ipv6.timeout.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The IPv6 HTTPS probe timed out before it could complete."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die IPv6-HTTPS-Prüfung wurde vor dem Abschluss wegen einer Zeitüberschreitung beendet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La comprobación HTTPS mediante IPv6 agotó el tiempo de espera antes de completarse."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vérification HTTPS sur IPv6 a expiré avant de se terminer."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPv6 HTTPS の確認は完了する前にタイムアウトしました。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPv6 HTTPS 检测在完成前超时。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

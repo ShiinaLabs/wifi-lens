@@ -154,8 +154,12 @@ struct DiagnosticLogResult: Equatable, Sendable {
             "gateway.unavailable": "Gateway could not be determined",
             "gateway.route-changed": "Route changed before the gateway probe; result not established",
             "ipv6.available": "Forced IPv6 endpoint responded",
-            "ipv6.unavailable": "Forced IPv6 endpoint did not respond",
             "ipv6.no-global-address": "No global IPv6 address; probe skipped",
+            "ipv6.no-default-route": "No IPv6 default route was available",
+            "ipv6.no-aaaa": "IPv6 target returned no AAAA record",
+            "ipv6.dns-failure": "IPv6 target DNS lookup failed",
+            "ipv6.connection-failure": "IPv6 HTTPS connection failed",
+            "ipv6.timeout": "IPv6 HTTPS probe timed out",
             "captive-portal.clear": "HTTP captive-portal control response matched",
             "captive-portal.suspected": "HTTP control response differed; captive portal suspected",
             "check.failed": "Probe could not complete",
@@ -175,6 +179,12 @@ struct DiagnosticLogResult: Equatable, Sendable {
         }
         if code == "gateway.probe-scope" {
             return "Gateway probe scope: " + value
+        }
+        if code == "ipv6.route-interface" {
+            return "IPv6 route interface: " + value
+        }
+        if code == "ipv6.route-interface-index" {
+            return "IPv6 route interface index: " + value
         }
         let interfaces = ["path.interface", "path.interface-name", "path.routed-tunnel", "gateway.interface", "gateway.route-interface",
                           "proxy.http.tunnel-interface", "proxy.https.tunnel-interface"]

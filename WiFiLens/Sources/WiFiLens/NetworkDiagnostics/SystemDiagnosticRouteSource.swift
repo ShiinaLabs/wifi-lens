@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 
 enum DiagnosticRouteParser {
-    private static let recognizedFields = ["destination", "gateway", "interface", "flags"]
+    private static let recognizedFields = ["destination", "gateway", "interface", "flags", "mask"]
     private static let unsupportedInterfacePrefixes = [
         "lo", "utun", "ipsec", "ppp", "tun", "tap", "bridge", "gif", "stf"
     ]
@@ -99,6 +99,51 @@ enum DiagnosticRouteParser {
     }
 }
 
+enum DiagnosticIPv6RouteParser {
+    private static let recognizedFields = ["destination", "interface", "flags", "mask"]
+
+    static func parse(
+        output: String,
+        interfaceIndices: [String: UInt32]
+    ) -> DiagnosticIPv6RouteTarget? {
+        var fields: [String: String] = [:]
+
+        for line in output.split(whereSeparator: \.isNewline) {
+            guard let separator = line.firstIndex(of: ":") else { continue }
+            let key = line[..<separator].trimmingCharacters(in: .whitespacesAndNewlines)
+            guard recognizedFields.contains(key) else { continue }
+            let value = line[line.index(after: separator)...]
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard fields[key] == nil else { return nil }
+            fields[key] = value
+        }
+
+        guard fields["destination"] == "::",
+              fields["mask"] == "default",
+              let interfaceName = fields["interface"],
+              !interfaceName.isEmpty,
+              let flags = fields["flags"],
+              hasUpFlag(flags),
+              let interfaceIndex = interfaceIndices[interfaceName],
+              interfaceIndex != 0 else {
+            return nil
+        }
+
+        return DiagnosticIPv6RouteTarget(
+            interfaceName: interfaceName,
+            interfaceIndex: interfaceIndex
+        )
+    }
+
+    private static func hasUpFlag(_ flags: String) -> Bool {
+        let normalized = flags
+            .trimmingCharacters(in: CharacterSet(charactersIn: "<>"))
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        return Set(normalized).contains("UP")
+    }
+}
+
 struct SystemDiagnosticRouteSource: DiagnosticRouteSourcing {
     private static let executablePath = "/sbin/route"
     private static let arguments = ["-n", "get", "-inet", "default"]
@@ -122,6 +167,47 @@ struct SystemDiagnosticRouteSource: DiagnosticRouteSourcing {
             return .unavailable
         }
         return DiagnosticRouteParser.parse(
+            output: result.stdout,
+            interfaceIndices: interfaceIndices
+        )
+    }
+
+    private func interfaceIndices() async -> [String: UInt32] {
+        await Task.detached(priority: .utility) {
+            Dictionary(
+                uniqueKeysWithValues: NetworkInfoService.fetchAll().compactMap { interface in
+                    let index = if_nametoindex(interface.interfaceName)
+                    guard index != 0 else { return nil }
+                    return (interface.interfaceName, index)
+                }
+            )
+        }.value
+    }
+}
+
+struct SystemDiagnosticIPv6RouteSource: DiagnosticIPv6RouteSourcing {
+    private static let executablePath = "/sbin/route"
+    private static let arguments = ["-n", "get", "-inet6", "default"]
+    private static let outputLimit = 16 * 1024
+
+    func currentIPv6Route(timeout: Duration) async -> DiagnosticIPv6RouteTarget? {
+        let interfaceIndices = await interfaceIndices()
+        let execution = DiagnosticRouteProcessExecution(
+            executablePath: Self.executablePath,
+            arguments: Self.arguments,
+            environment: ["LC_ALL": "C"],
+            outputLimit: Self.outputLimit
+        )
+        let result = await withTaskCancellationHandler {
+            await execution.run(timeout: timeout)
+        } onCancel: {
+            execution.cancel()
+        }
+
+        guard result.exitCode == 0, !result.timedOut, !result.cancelled else {
+            return nil
+        }
+        return DiagnosticIPv6RouteParser.parse(
             output: result.stdout,
             interfaceIndices: interfaceIndices
         )
