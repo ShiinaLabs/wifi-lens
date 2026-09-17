@@ -5,6 +5,7 @@ struct OverviewView: View {
     @Bindable var viewModel: ScannerViewModel
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(OverviewVisualStyle.storageKey) private var overviewVisualStyleRaw = OverviewVisualStyle.system.rawValue
 
     let store: WiFiObservationStore
 
@@ -34,6 +35,11 @@ struct OverviewView: View {
         .from(viewModel.channelRecommendations)
     }
 
+    private var overviewVisualStyle: OverviewVisualStyle.ResolvedStyle {
+        OverviewVisualStyle.fromPersistedValue(overviewVisualStyleRaw)
+            .resolved(reduceMotion: reduceMotion)
+    }
+
     private var totalNetworks: Int {
         guard viewModel.isWiFiAvailable else { return 0 }
         return viewModel.cachedTotalNetworks
@@ -52,46 +58,63 @@ struct OverviewView: View {
             .frame(maxHeight: .infinity, alignment: .top)
             .ignoresSafeArea()
 
+            if overviewVisualStyle == .worldMap {
+                EqualEarthWorldMapBackdrop(colorScheme: colorScheme)
+                    .frame(height: 360)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .ignoresSafeArea(edges: .top)
+                    .accessibilityHidden(true)
+            }
+
             ScrollView {
-                HStack(spacing: 0) {
-                    Spacer(minLength: 0)
-                    VStack(spacing: 16) {
-                        // State icon — rotating 3D Earth
-                        let stateColor = wifi != nil ? rssiColor(wifi!.rssi ?? -100) : Color.secondary
-                        EarthGlobeView(color: stateColor, reduceMotion: reduceMotion)
-                            .frame(width: 240, height: 240)
-                            .accessibilityHidden(true)
-
-                        if !viewModel.locationManager.isAuthorizedForSSID {
-                            authorizationCard
-                        }
-
-                        if !viewModel.isWiFiAvailable {
-                            wifiOffCard
-                        } else if let wifi {
-                            connectionCard(wifi)
-                            signalHealthRow(wifi)
-                            if recommendationAvailability != .currentGoodEnough {
-                                diagnosticCard(wifi)
+                ZStack(alignment: .top) {
+                    HStack(spacing: 0) {
+                        Spacer(minLength: 0)
+                        VStack(spacing: 16) {
+                            // The globe remains the hero visual. The reduced-motion
+                            // map is a quiet background layer behind the connection card.
+                            if overviewVisualStyle == .globe {
+                                let stateColor = wifi != nil ? rssiColor(wifi!.rssi ?? -100) : Color.secondary
+                                EarthGlobeView(color: stateColor, reduceMotion: reduceMotion)
+                                    .frame(width: 240, height: 240)
+                                    .accessibilityHidden(true)
+                            } else {
+                                Color.clear
+                                    .frame(height: 180)
+                                    .accessibilityHidden(true)
                             }
-                            if let current = currentChannelQuality, hasBetterChannel(current) {
-                                channelAdviceCard(current)
-                            } else if !viewModel.channelRecommendations.isEmpty {
-                                channelStatusCard(recommendationAvailability)
+
+                            if !viewModel.locationManager.isAuthorizedForSSID {
+                                authorizationCard
                             }
-                        } else {
-                            noConnectionCard
+
+                            if !viewModel.isWiFiAvailable {
+                                wifiOffCard
+                            } else if let wifi {
+                                connectionCard(wifi)
+                                signalHealthRow(wifi)
+                                if recommendationAvailability != .currentGoodEnough {
+                                    diagnosticCard(wifi)
+                                }
+                                if let current = currentChannelQuality, hasBetterChannel(current) {
+                                    channelAdviceCard(current)
+                                } else if !viewModel.channelRecommendations.isEmpty {
+                                    channelStatusCard(recommendationAvailability)
+                                }
+                            } else {
+                                noConnectionCard
+                            }
+                            if viewModel.locationManager.isAuthorizedForSSID && viewModel.isWiFiAvailable {
+                                environmentCard
+                            }
+                            Spacer(minLength: 0)
                         }
-                        if viewModel.locationManager.isAuthorizedForSSID && viewModel.isWiFiAvailable {
-                            environmentCard
-                        }
+                        .padding(16)
+                        .frame(maxWidth: 640)
                         Spacer(minLength: 0)
                     }
-                    .padding(16)
-                    .frame(maxWidth: 640)
-                    Spacer(minLength: 0)
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
             }
             .onChange(of: currentChannelQuality?.rfScore) { _, newRaw in
             let raw = newRaw ?? 100
@@ -419,6 +442,76 @@ struct OverviewView: View {
         if sec.contains("WPA") { return "WPA" }
         if sec == "—" || sec == String(localized: "common.label.none", comment: "Generic none/empty value label") { return String(localized: "wifi.security.open", comment: "Open/no password security type") }
         return sec
+    }
+}
+
+private struct EqualEarthWorldMapBackdrop: View {
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        GeometryReader { geometry in
+            let cropWidth = min(620, max(480, geometry.size.width * 0.48))
+            let cropHeight: CGFloat = 300
+            let imageWidth = min(
+                max(560, cropWidth * 1.12),
+                cropHeight * 684 / 340.306
+            )
+            let imageHeight = imageWidth * 340.306 / 684
+
+            // Use the layout system's actual top-trailing anchor. The map is
+            // fitted inside this crop so its top edge is not cut by the safe
+            // area; the visual treatment comes from the mask, not displacement.
+            ZStack(alignment: .topTrailing) {
+                ZStack {
+                    Image("EqualEarthWorldMap")
+                        .resizable()
+                        .renderingMode(.template)
+                        .scaledToFit()
+                        .frame(width: imageWidth, height: imageHeight)
+                        .foregroundStyle(
+                            colorScheme == .dark
+                                ? Color.white.opacity(0.12)
+                                : Color.black.opacity(0.07)
+                        )
+                        .blur(radius: 3.0)
+                        // Fit the source entirely inside the crop so the
+                        // northern edge and both American continents remain
+                        // visible at the top-trailing anchor.
+                        .offset(x: 0, y: 0)
+                }
+                .frame(width: cropWidth, height: cropHeight)
+                .mask(
+                    RadialGradient(
+                        stops: [
+                            .init(color: .black, location: 0.05),
+                            .init(color: .black.opacity(0.82), location: 0.38),
+                            .init(color: .black.opacity(0.28), location: 0.72),
+                            .init(color: .clear, location: 1),
+                        ],
+                        center: .topTrailing,
+                        startRadius: 18,
+                        endRadius: max(cropWidth, cropHeight) * 1.15
+                    )
+                )
+                // Fade the image before the right edge as well. The map can
+                // remain top-trailing without ending in a visible vertical
+                // crop line.
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .black, location: 0.0),
+                            .init(color: .black, location: 0.78),
+                            .init(color: .black.opacity(0.72), location: 0.92),
+                            .init(color: .clear, location: 1.0),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        }
+        .allowsHitTesting(false)
     }
 }
 

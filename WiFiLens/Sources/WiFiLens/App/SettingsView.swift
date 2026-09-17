@@ -29,10 +29,18 @@ struct SettingsView: View {
     @AppStorage("mcpEnabled") private var mcpEnabled: Bool = false
     @AppStorage("mcpPort") private var mcpPort: Int = 19840
     @AppStorage("appearance") private var appearance: String = "system"
+    @AppStorage(OverviewVisualStyle.storageKey) private var overviewVisualStyleRaw = OverviewVisualStyle.system.rawValue
     @AppStorage("hideTitleBadge") private var hideTitleBadge = true
     @AppStorage("menuBarEnabled") private var menuBarEnabled = true
     @AppStorage("apRadarSoundPreset") private var apRadarSoundPresetRaw = APRadarSoundPreset.softPulse.rawValue
     @AppStorage("apRadarGeigerUnlocked") private var apRadarGeigerUnlocked = false
+
+    private var overviewVisualStyleSelection: Binding<String> {
+        Binding(
+            get: { OverviewVisualStyle.fromPersistedValue(overviewVisualStyleRaw).rawValue },
+            set: { overviewVisualStyleRaw = OverviewVisualStyle.fromPersistedValue($0).rawValue }
+        )
+    }
 
     init(
         macVendorDatabaseSummary: MACVendorBundledDatabaseSummary?,
@@ -101,6 +109,19 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("settings-theme-picker")
+                    Picker(
+                        String(localized: "settings.appearance.overview_style_label", comment: "Overview hero visual style picker label"),
+                        selection: overviewVisualStyleSelection.animation(reduceMotion ? nil : .snappy(duration: 0.2))
+                    ) {
+                        Text(String(localized: "settings.appearance.overview_style.system", comment: "Follow system Reduce Motion option for the overview hero")).tag(OverviewVisualStyle.system.rawValue)
+                        Text(String(localized: "settings.appearance.overview_style.globe", comment: "Force 3D globe option for the overview hero")).tag(OverviewVisualStyle.globe.rawValue)
+                        Text(String(localized: "settings.appearance.overview_style.world_map", comment: "Force static world map option for the overview hero")).tag(OverviewVisualStyle.worldMap.rawValue)
+                    }
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier("settings-overview-visual-style-picker")
+                    Text(String(localized: "settings.appearance.overview_style_description", comment: "Description of overview hero visual style and Reduce Motion behavior"))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     if BuildConfig.current == .pro {
                         Toggle(String(localized: "settings.appearance.hide_badge", comment: "Toggle to hide the title badge"), isOn: $hideTitleBadge)
                     }
