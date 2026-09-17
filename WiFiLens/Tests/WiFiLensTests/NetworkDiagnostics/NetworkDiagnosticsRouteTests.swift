@@ -52,6 +52,22 @@ extension NetworkDiagnosticsTests {
         )))
     }
 
+    @Test("route parser recognizes an active tunnel default without a gateway")
+    func routeParserRecognizesTunnelDefaultWithoutGateway() {
+        let output = """
+        destination: default
+        interface: utun6
+        flags: <UP,DONE,CLONING,STATIC,GLOBAL>
+        """
+
+        let result = DiagnosticRouteParser.parse(
+            output: output,
+            interfaceIndices: ["utun6": 22]
+        )
+
+        #expect(result == .tunneled(.init(interfaceName: "utun6", interfaceIndex: 22)))
+    }
+
     @Test("route parser rejects invalid, ambiguous, and unsupported default routes")
     func routeParserRejectsInvalidDefaultRoutes() {
         let ambiguousOutput = """
@@ -88,7 +104,7 @@ extension NetworkDiagnosticsTests {
         #expect(DiagnosticRouteParser.parse(
             output: tunnel,
             interfaceIndices: ["utun3": 20]
-        ) == .unsupported)
+        ) == .tunneled(.init(interfaceName: "utun3", interfaceIndex: 20)))
 
         let missingRouteOutput = "gateway: 192.0.2.1\ninterface: en7\nflags: <UP,GATEWAY>"
 
@@ -202,6 +218,52 @@ extension NetworkDiagnosticsTests {
         #expect(await gateway.targets == [
             .init(interfaceName: "en7", interfaceIndex: 12, address: "192.0.2.1")
         ])
+    }
+
+    @Test("VPN route probes the uniquely identified physical underlay gateway")
+    func vpnRouteProbesPhysicalUnderlayGateway() async {
+        let context = makeDiagnosticContext(
+            pathState: .satisfied,
+            route: .tunneled(.init(interfaceName: "utun6", interfaceIndex: 22)),
+            interfaces: [makeNetworkInterface(name: "en0", router: "192.0.2.1")]
+        )
+        let gateway = RecordingDiagnosticGatewayMeasurer()
+
+        let result = await GatewayReachabilityCheck(
+            context: context,
+            gatewayMeasuring: gateway,
+            routeSource: nil,
+            interfaceIndexProvider: { name in name == "en0" ? 4 : 0 }
+        ).run()
+
+        #expect(result.status == .normal)
+        #expect(result.evidence.contains(.init(code: "gateway.route-selection", value: "tunneled")))
+        #expect(result.evidence.contains(.init(code: "gateway.probe-scope", value: "underlying-lan")))
+        #expect(result.evidence.contains(.init(code: "gateway.interface", value: "en0")))
+        #expect(result.evidence.contains(.init(code: "gateway.address", value: "192.0.2.1")))
+        #expect(await gateway.targets == [
+            .init(interfaceName: "en0", interfaceIndex: 4, address: "192.0.2.1")
+        ])
+    }
+
+    @Test("VPN route skips gateway probing when no physical underlay gateway is identifiable")
+    func vpnRouteSkipsGatewayProbeWithoutPhysicalUnderlay() async {
+        let context = makeDiagnosticContext(
+            pathState: .satisfied,
+            route: .tunneled(.init(interfaceName: "utun6", interfaceIndex: 22))
+        )
+        let gateway = RecordingDiagnosticGatewayMeasurer()
+
+        let result = await GatewayReachabilityCheck(
+            context: context,
+            gatewayMeasuring: gateway,
+            routeSource: nil,
+            interfaceIndexProvider: { _ in 0 }
+        ).run()
+
+        #expect(result.status == .skipped)
+        #expect(result.evidence.contains(.init(code: "gateway.route-selection", value: "tunneled")))
+        #expect(await gateway.targets.isEmpty)
     }
 
     @Test("context capture accepts a stable route")
@@ -367,6 +429,33 @@ extension NetworkDiagnosticsTests {
         #expect(assessment.conclusion == .networkNormal)
         #expect(assessment.primaryIssue == nil)
         #expect(assessment.stages.first { $0.stage == .lan }?.status == .indeterminate)
+    }
+
+    @Test("skipped VPN gateway does not make a healthy assessment actionable")
+    func skippedVPNGatewayDoesNotMakeHealthyAssessmentActionable() {
+        var results = makeResults(
+            path: .normal,
+            gateway: .skipped,
+            dns: .normal,
+            internet: .normal,
+            ipv6: .indeterminate,
+            proxy: .normal
+        )
+        results[1] = NetworkDiagnosticResult(
+            id: .gatewayReachability,
+            status: .skipped,
+            summary: "Gateway check not applicable",
+            evidence: [.init(code: "gateway.route-selection", value: "tunneled")]
+        )
+
+        let assessment = NetworkDiagnosticAssessmentResolver().resolve(
+            results: Dictionary(uniqueKeysWithValues: results.map { ($0.id, $0) }),
+            complete: true
+        )
+
+        #expect(assessment.conclusion == .networkNormal)
+        #expect(assessment.primaryIssue == nil)
+        #expect(assessment.stages.first { $0.stage == .lan }?.status == .skipped)
     }
 
     @Test("path check keeps interface evidence without gateway latency")

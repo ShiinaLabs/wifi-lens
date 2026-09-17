@@ -46554,6 +46554,129 @@
           }
         }
       }
+    },
+    "network_diagnostics.gateway.skipped.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gateway check not applicable"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gateway-Prüfung nicht anwendbar"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobación de la puerta de enlace no aplicable"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de la passerelle non applicable"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲートウェイチェックは対象外です"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网关检测不适用"
+          }
+        }
+      }
+    },
+    "network_diagnostics.gateway.vpn_underlay.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The default route uses a VPN tunnel; this probe targets the underlying physical LAN gateway."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Standardroute verwendet einen VPN-Tunnel; diese Prüfung testet das zugrunde liegende physische LAN-Gateway."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La ruta predeterminada usa un túnel VPN; esta prueba se dirige a la puerta de enlace física de la LAN subyacente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La route par défaut utilise un tunnel VPN ; cette sonde cible la passerelle LAN physique sous-jacente."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デフォルトルートは VPN トンネルを使用しているため、このプローブでは基盤となる物理 LAN ゲートウェイを確認します。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "默认路由使用 VPN 隧道；此检测会探测其底层物理 LAN 网关。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.gateway.skipped.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The VPN route has no unique physical LAN gateway to probe."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für die VPN-Route wurde kein eindeutiges physisches LAN-Gateway zum Testen gefunden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró una puerta de enlace física única de la LAN para probar en la ruta VPN."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune passerelle LAN physique unique à sonder n’a été trouvée pour la route VPN."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VPN ルートに対して確認できる一意の物理 LAN ゲートウェイがありません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VPN 路由没有可唯一确定的物理 LAN 网关可供检测。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

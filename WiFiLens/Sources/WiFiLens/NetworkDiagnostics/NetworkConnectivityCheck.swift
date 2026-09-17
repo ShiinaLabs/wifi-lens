@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import Network
 
 protocol NetworkInterfaceInfoSourcing: Sendable {
@@ -171,7 +172,7 @@ struct NetworkConnectivityCheck: DiagnosticCheck {
         let selectedInterface: NetworkInterfaceInfo? = switch context.route {
         case .selected(let target):
             context.interfaces.interfaces.first { $0.interfaceName == target.interfaceName }
-        case .unavailable, .ambiguous, .unsupported:
+        case .tunneled, .unavailable, .ambiguous, .unsupported:
             nil
         }
         var evidence = pathEvidence(interface: selectedInterface)
@@ -240,6 +241,7 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
     private let context: DiagnosticNetworkContext?
     private let diagnosticGatewayMeasuring: (any DiagnosticGatewayMeasuring)?
     private let routeSource: (any DiagnosticRouteSourcing)?
+    private let interfaceIndexProvider: @Sendable (String) -> UInt32
 
     init(
         interfaceSource: any NetworkInterfaceInfoSourcing = SystemNetworkInterfaceInfoSource(),
@@ -250,18 +252,21 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         self.context = nil
         self.diagnosticGatewayMeasuring = nil
         self.routeSource = nil
+        self.interfaceIndexProvider = { _ in 0 }
     }
 
     init(
         context: DiagnosticNetworkContext,
         gatewayMeasuring: any DiagnosticGatewayMeasuring = GatewayLatencyProvider(),
-        routeSource: (any DiagnosticRouteSourcing)? = SystemDiagnosticRouteSource()
+        routeSource: (any DiagnosticRouteSourcing)? = SystemDiagnosticRouteSource(),
+        interfaceIndexProvider: @escaping @Sendable (String) -> UInt32 = { if_nametoindex($0) }
     ) {
         self.interfaceSource = SystemNetworkInterfaceInfoSource()
         self.gatewayLatency = GatewayLatencyProvider()
         self.context = context
         self.diagnosticGatewayMeasuring = gatewayMeasuring
         self.routeSource = routeSource
+        self.interfaceIndexProvider = interfaceIndexProvider
     }
 
     func run() async -> NetworkDiagnosticResult {
@@ -320,32 +325,32 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
     }
 
     private func contextResult(_ context: DiagnosticNetworkContext) async -> NetworkDiagnosticResult {
-        guard case .selected(let target) = context.route,
-              let diagnosticGatewayMeasuring else {
-            let detailKey: String = switch context.route {
-            case .unsupported:
-                "network_diagnostics.gateway.unsupported"
-            default:
-                "network_diagnostics.gateway.route_changed"
+        guard let diagnosticGatewayMeasuring else {
+            return indeterminateRouteResult(for: context.route)
+        }
+
+        let target: DiagnosticGatewayTarget
+        let probeScope: String
+        switch context.route {
+        case .selected(let selectedTarget):
+            target = selectedTarget
+            probeScope = "selected-route"
+        case .tunneled(let tunnel):
+            guard let underlayTarget = underlyingGatewayTarget(
+                for: tunnel,
+                interfaces: context.interfaces.interfaces
+            ) else {
+                return skippedTunnelResult(tunnel)
             }
-            return NetworkDiagnosticResult(
-                id: id,
-                status: .indeterminate,
-                summary: String(
-                    localized: "network_diagnostics.gateway.indeterminate.summary",
-                    comment: "Network self-check gateway reachability indeterminate summary"
-                ),
-                detail: String(
-                    localized: .init(stringLiteral: detailKey),
-                    comment: "Network self-check gateway route selection detail"
-                ),
-                evidence: [.init(code: "gateway.route-selection", value: routeSelectionCode(context.route))]
-            )
+            target = underlayTarget
+            probeScope = "underlying-lan"
+        case .unavailable, .ambiguous, .unsupported:
+            return indeterminateRouteResult(for: context.route)
         }
 
         let gateway = await diagnosticGatewayMeasuring.measure(target: target)
         if let routeSource,
-           await routeSource.currentRoute(timeout: .seconds(1)) != .selected(target) {
+           await routeSource.currentRoute(timeout: .seconds(1)) != context.route {
             return NetworkDiagnosticResult(
                 id: id,
                 status: .indeterminate,
@@ -359,17 +364,31 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
                 ),
                 evidence: [
                     .init(code: "gateway.route-changed", value: nil),
+                    .init(code: "gateway.route-selection", value: routeSelectionCode(context.route)),
+                    .init(code: "gateway.probe-scope", value: probeScope),
                     .init(code: "gateway.interface", value: target.interfaceName),
                     .init(code: "gateway.interface-index", value: String(target.interfaceIndex)),
                     .init(code: "gateway.address", value: target.address),
                 ]
             )
         }
-        let targetEvidence = [
+        var targetEvidence = [
+            NetworkDiagnosticEvidence(code: "gateway.route-selection", value: routeSelectionCode(context.route)),
+            NetworkDiagnosticEvidence(code: "gateway.probe-scope", value: probeScope),
             NetworkDiagnosticEvidence(code: "gateway.interface", value: target.interfaceName),
             NetworkDiagnosticEvidence(code: "gateway.interface-index", value: String(target.interfaceIndex)),
             NetworkDiagnosticEvidence(code: "gateway.address", value: target.address),
         ]
+        if case .tunneled(let tunnel) = context.route {
+            targetEvidence.append(.init(code: "gateway.route-interface", value: tunnel.interfaceName))
+            targetEvidence.append(.init(code: "gateway.route-interface-index", value: String(tunnel.interfaceIndex)))
+        }
+        let underlayDetail: String? = probeScope == "underlying-lan"
+            ? String(
+                localized: "network_diagnostics.gateway.vpn_underlay.detail",
+                comment: "Gateway probe scope when a system VPN owns the default route"
+            )
+            : nil
 
         if let latency = gateway.latencyMs {
             return NetworkDiagnosticResult(
@@ -379,6 +398,7 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
                     localized: "network_diagnostics.gateway.normal.summary",
                     comment: "Network self-check gateway reachability success summary"
                 ),
+                detail: underlayDetail,
                 evidence: targetEvidence + [.init(code: "gateway.latency-ms", value: String(latency))]
             )
         }
@@ -404,13 +424,81 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
                 localized: "network_diagnostics.gateway.abnormal.summary",
                 comment: "Network self-check gateway reachability failure summary"
             ),
+            detail: underlayDetail,
             evidence: targetEvidence + [.init(code: "gateway.unreachable", value: target.address)]
         )
+    }
+
+    private func indeterminateRouteResult(for route: DiagnosticRouteSelection) -> NetworkDiagnosticResult {
+        let detailKey: String = switch route {
+        case .unsupported:
+            "network_diagnostics.gateway.unsupported"
+        default:
+            "network_diagnostics.gateway.route_changed"
+        }
+        return NetworkDiagnosticResult(
+            id: id,
+            status: .indeterminate,
+            summary: String(
+                localized: "network_diagnostics.gateway.indeterminate.summary",
+                comment: "Network self-check gateway reachability indeterminate summary"
+            ),
+            detail: String(
+                localized: .init(stringLiteral: detailKey),
+                comment: "Network self-check gateway route selection detail"
+            ),
+            evidence: [.init(code: "gateway.route-selection", value: routeSelectionCode(route))]
+        )
+    }
+
+    private func skippedTunnelResult(_ tunnel: DiagnosticTunnelRouteTarget) -> NetworkDiagnosticResult {
+        NetworkDiagnosticResult(
+            id: id,
+            status: .skipped,
+            summary: String(
+                localized: "network_diagnostics.gateway.skipped.summary",
+                comment: "Network self-check gateway check not applicable summary"
+            ),
+            detail: String(
+                localized: "network_diagnostics.gateway.skipped.detail",
+                comment: "Network self-check gateway check skipped because the VPN underlay is not identifiable"
+            ),
+            evidence: [
+                .init(code: "gateway.route-selection", value: "tunneled"),
+                .init(code: "gateway.probe-scope", value: "underlying-lan-unavailable"),
+                .init(code: "gateway.route-interface", value: tunnel.interfaceName),
+                .init(code: "gateway.route-interface-index", value: String(tunnel.interfaceIndex)),
+            ]
+        )
+    }
+
+    private func underlyingGatewayTarget(
+        for tunnel: DiagnosticTunnelRouteTarget,
+        interfaces: [NetworkInterfaceInfo]
+    ) -> DiagnosticGatewayTarget? {
+        let candidates = interfaces.compactMap { interface -> DiagnosticGatewayTarget? in
+            guard interface.interfaceName != tunnel.interfaceName,
+                  !DiagnosticRouteInterface.isTunnel(interface.interfaceName),
+                  interface.interfaceType != .virtual,
+                  let address = interface.router else {
+                return nil
+            }
+            let interfaceIndex = interfaceIndexProvider(interface.interfaceName)
+            guard interfaceIndex != 0 else { return nil }
+            return DiagnosticGatewayTarget(
+                interfaceName: interface.interfaceName,
+                interfaceIndex: interfaceIndex,
+                address: address
+            )
+        }
+        guard candidates.count == 1 else { return nil }
+        return candidates[0]
     }
 
     private func routeSelectionCode(_ route: DiagnosticRouteSelection) -> String {
         switch route {
         case .selected: "selected"
+        case .tunneled: "tunneled"
         case .unavailable: "unavailable"
         case .ambiguous: "ambiguous"
         case .unsupported: "unsupported"

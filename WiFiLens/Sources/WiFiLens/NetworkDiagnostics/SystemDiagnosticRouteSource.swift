@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 
 enum DiagnosticRouteParser {
-    private static let requiredFields = ["destination", "gateway", "interface", "flags"]
+    private static let recognizedFields = ["destination", "gateway", "interface", "flags"]
     private static let unsupportedInterfacePrefixes = [
         "lo", "utun", "ipsec", "ppp", "tun", "tap", "bridge", "gif", "stf"
     ]
@@ -16,7 +16,7 @@ enum DiagnosticRouteParser {
         for line in output.split(whereSeparator: \.isNewline) {
             guard let separator = line.firstIndex(of: ":") else { continue }
             let key = line[..<separator].trimmingCharacters(in: .whitespacesAndNewlines)
-            guard requiredFields.contains(key) else { continue }
+            guard recognizedFields.contains(key) else { continue }
             let value = line[line.index(after: separator)...]
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             guard fields[key] == nil else { return .ambiguous }
@@ -24,20 +24,31 @@ enum DiagnosticRouteParser {
         }
 
         guard let destination = fields["destination"], destination == "default",
-              let gateway = fields["gateway"], !gateway.isEmpty,
               let interfaceName = fields["interface"], !interfaceName.isEmpty,
               let flags = fields["flags"], !flags.isEmpty else {
             return .unavailable
         }
 
-        guard hasRequiredFlags(flags) else { return .unavailable }
+        guard hasUpFlag(flags),
+              let interfaceIndex = interfaceIndices[interfaceName], interfaceIndex != 0 else {
+            return .unavailable
+        }
+
+        if DiagnosticRouteInterface.isTunnel(interfaceName) {
+            return .tunneled(.init(
+                interfaceName: interfaceName,
+                interfaceIndex: interfaceIndex
+            ))
+        }
+
+        guard let gateway = fields["gateway"], !gateway.isEmpty,
+              hasRequiredFlags(flags) else {
+            return .unavailable
+        }
         if isLinkLayerAddress(gateway) {
             return .unsupported
         }
         guard isUnicastIPv4(gateway) else { return .unavailable }
-        guard let interfaceIndex = interfaceIndices[interfaceName], interfaceIndex != 0 else {
-            return .unavailable
-        }
         if unsupportedInterfacePrefixes.contains(where: { interfaceName.hasPrefix($0) }) {
             return .unsupported
         }
@@ -56,6 +67,14 @@ enum DiagnosticRouteParser {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         let flagSet = Set(normalized)
         return flagSet.contains("UP") && flagSet.contains("GATEWAY")
+    }
+
+    private static func hasUpFlag(_ flags: String) -> Bool {
+        let normalized = flags
+            .trimmingCharacters(in: CharacterSet(charactersIn: "<>"))
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        return Set(normalized).contains("UP")
     }
 
     private static func isLinkLayerAddress(_ address: String) -> Bool {

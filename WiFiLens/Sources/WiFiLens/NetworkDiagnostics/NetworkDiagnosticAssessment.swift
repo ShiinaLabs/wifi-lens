@@ -73,6 +73,9 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         guard contributors.count == stage.contributingCheckIDs.count else {
             return .init(stage: stage, status: nil, qualificationCode: nil)
         }
+        if contributors.allSatisfy({ $0.status == .skipped }) {
+            return .init(stage: stage, status: .skipped, qualificationCode: nil)
+        }
         if contributors.contains(where: { $0.status == .abnormal }) {
             return .init(stage: stage, status: .abnormal, qualificationCode: nil)
         }
@@ -139,6 +142,7 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 case .gatewayReachability:
                     !isNeutralGateway(result, externalSuccess: externalSuccess)
                         && result.status != .normal
+                        && result.status != .skipped
                 case .dns, .internet:
                     result.status != .normal
                 case .proxy:

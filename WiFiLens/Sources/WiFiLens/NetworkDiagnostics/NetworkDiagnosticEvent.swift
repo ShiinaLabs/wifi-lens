@@ -169,13 +169,17 @@ struct DiagnosticLogResult: Equatable, Sendable {
         }
         if code == "gateway.route-selection" {
             let reasons = ["unavailable": "No usable default IPv4 route", "ambiguous": "Default route is ambiguous",
-                           "unsupported": "Default route does not support this gateway probe", "selected": "Default route selected"]
+                           "unsupported": "Default route does not support this gateway probe", "selected": "Default route selected",
+                           "tunneled": "Default route selected through a VPN tunnel"]
             return reasons[value]
         }
-        let interfaces = ["path.interface", "path.interface-name", "path.routed-tunnel", "gateway.interface",
+        if code == "gateway.probe-scope" {
+            return "Gateway probe scope: " + value
+        }
+        let interfaces = ["path.interface", "path.interface-name", "path.routed-tunnel", "gateway.interface", "gateway.route-interface",
                           "proxy.http.tunnel-interface", "proxy.https.tunnel-interface"]
         if interfaces.contains(code), value.range(of: #"^(en|utun|ipsec|ppp|bridge|lo|awdl|llw|gif|stf)[0-9]{1,5}$"#, options: .regularExpression) != nil {
-            return (code.contains("tunnel") ? "Tunnel interface: " : "Interface: ") + value
+            return ((code.contains("tunnel") || code == "gateway.route-interface") ? "Tunnel interface: " : "Interface: ") + value
         }
         if code == "path.interface-type" {
             let types = ["wifi": "Wi-Fi", "wiredEthernet": "Ethernet", "cellular": "Cellular", "loopback": "Loopback", "other": "Other"]
