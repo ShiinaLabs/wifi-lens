@@ -126,7 +126,9 @@ struct ChannelQualityView: View {
     // MARK: - Table
 
     private var tableView: some View {
-        ScrollView {
+        // Localized column titles can be substantially wider than the English
+        // abbreviations. Allow horizontal scrolling instead of truncating them.
+        ScrollView([.horizontal, .vertical]) {
             VStack(spacing: 10) {
                 recommendationStatusBanner
                 Grid(horizontalSpacing: 0, verticalSpacing: 0) {

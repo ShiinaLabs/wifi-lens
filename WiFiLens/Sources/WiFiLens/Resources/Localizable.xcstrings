@@ -12844,7 +12844,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Сос."
+            "value": "Смежные каналы"
           }
         }
       }
@@ -12892,7 +12892,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "AP"
+            "value": "Точки доступа"
           }
         }
       }
@@ -13084,7 +13084,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Совп."
+            "value": "На том же канале"
           }
         }
       }
@@ -13362,6 +13362,12 @@
             "state": "translated",
             "value": "%@: %@"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@"
+          }
         }
       },
       "shouldTranslate": false
@@ -13395,6 +13401,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@, %@"
+          }
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "%@: %@, %@"
@@ -17350,6 +17362,12 @@
             "state": "translated",
             "value": "·  %1$@  ·  Ch %2$lld"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "·  %1$@  ·  канал %2$lld"
+          }
         }
       },
       "shouldTranslate": false
@@ -17387,6 +17405,12 @@
             "state": "translated",
             "value": "CH %1$lld  %2$lld dBm"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Канал %1$lld  %2$lld дБм"
+          }
         }
       },
       "shouldTranslate": false
@@ -17411,6 +17435,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ch %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Канал %@"
           }
         }
       },
@@ -17445,6 +17475,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "{\"mcpServers\" :{\"wifi-lens\" :{\"url\" :\"http://127.0.0.1:%ld\"}}}"
+          }
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "{\"mcpServers\" :{\"wifi-lens\" :{\"url\" :\"http://127.0.0.1:%ld\"}}}"
@@ -17527,6 +17563,12 @@
             "state": "translated",
             "value": "· %@"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %@"
+          }
         }
       },
       "shouldTranslate": false
@@ -17552,6 +17594,12 @@
             "state": "translated",
             "value": "%1$@ — %2$@"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — %2$@"
+          }
         }
       },
       "shouldTranslate": false
@@ -17573,6 +17621,12 @@
           }
         },
         "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ %2$@"
@@ -17610,6 +17664,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@%3$@"
+          }
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ %2$@%3$@"
@@ -17782,6 +17842,12 @@
             "state": "translated",
             "value": "%@"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
         }
       },
       "shouldTranslate": false
@@ -17819,6 +17885,12 @@
             "state": "translated",
             "value": "%lld dBm"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld дБм"
+          }
         }
       },
       "shouldTranslate": false
@@ -17843,6 +17915,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "RSSI %@ dBm"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RSSI %@ дБм"
           }
         }
       },
@@ -17928,6 +18006,12 @@
             "state": "translated",
             "value": "%lld/100"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/100"
+          }
         }
       },
       "shouldTranslate": false
@@ -17961,6 +18045,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@/100"
+          }
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "%@/100"
@@ -18950,6 +19040,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCS %@ / NSS %@"
+          }
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "MCS %@ / NSS %@"
@@ -42587,6 +42683,12 @@
             "state": "translated",
             "value": "5 GHz"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 ГГц"
+          }
         }
       },
       "shouldTranslate": false
@@ -42612,6 +42714,12 @@
             "state": "translated",
             "value": "6 GHz"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "6 ГГц"
+          }
         }
       },
       "shouldTranslate": false
@@ -42636,6 +42744,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "2.4 GHz"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2,4 ГГц"
           }
         }
       },
@@ -43382,6 +43496,12 @@
             "state": "translated",
             "value": "—"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "—"
+          }
         }
       },
       "shouldTranslate": false
@@ -43451,6 +43571,12 @@
           }
         },
         "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0"
+          }
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "0"
@@ -43597,7 +43723,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Шир."
+            "value": "Ширина канала"
           }
         }
       }
@@ -43693,7 +43819,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Код"
+            "value": "Код страны"
           }
         }
       }
@@ -43741,7 +43867,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "k"
+            "value": "802.11k"
           }
         }
       }
@@ -43789,7 +43915,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "r"
+            "value": "802.11r"
           }
         }
       }
@@ -43837,7 +43963,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "v"
+            "value": "802.11v"
           }
         }
       }
@@ -43885,7 +44011,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Скр."
+            "value": "Скрытая сеть"
           }
         }
       }
@@ -43933,7 +44059,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Блок."
+            "value": "Блокировка"
           }
         }
       }
@@ -44077,7 +44203,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Защ."
+            "value": "Безопасность"
           }
         }
       }
@@ -44125,7 +44251,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Обнаружена"
+            "value": "Последнее обнаружение"
           }
         }
       }
@@ -50101,7 +50227,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Открытая"
+            "value": "Без защиты"
           }
         }
       }
