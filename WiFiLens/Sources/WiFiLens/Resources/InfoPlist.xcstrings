@@ -1,158 +1,176 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "CFBundleDisplayName" : {
-      "comment" : "Bundle display name",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "WiFi Lens Pro"
+  "sourceLanguage": "en",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "Bundle display name",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "WiFi Lens Pro"
           }
         }
       },
-      "shouldTranslate" : false
+      "shouldTranslate": false
     },
-    "CFBundleName" : {
-      "comment" : "Bundle name",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "WiFi Lens Pro"
+    "CFBundleName": {
+      "comment": "Bundle name",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "WiFi Lens Pro"
           }
         }
       },
-      "shouldTranslate" : false
+      "shouldTranslate": false
     },
-    "NSBluetoothAlwaysUsageDescription" : {
-      "comment" : "Privacy usage description shown by macOS when Bluetooth access is requested.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens kann Bluetooth verwenden, um BLE-Geräte in der Nähe zu erkennen und ihre Signalstärke zu analysieren, wenn die Bluetooth-Analyse in den Einstellungen aktiviert ist."
+    "NSBluetoothAlwaysUsageDescription": {
+      "comment": "Privacy usage description shown by macOS when Bluetooth access is requested.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens kann Bluetooth verwenden, um BLE-Geräte in der Nähe zu erkennen und ihre Signalstärke zu analysieren, wenn die Bluetooth-Analyse in den Einstellungen aktiviert ist."
           }
         },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings."
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings."
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens puede usar Bluetooth para detectar dispositivos BLE cercanos y analizar la intensidad de la señal cuando el análisis Bluetooth está activado en Ajustes."
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens puede usar Bluetooth para detectar dispositivos BLE cercanos y analizar la intensidad de la señal cuando el análisis Bluetooth está activado en Ajustes."
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens peut utiliser Bluetooth pour détecter les appareils BLE à proximité et analyser la puissance du signal lorsque l’analyse Bluetooth est activée dans les réglages."
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens peut utiliser Bluetooth pour détecter les appareils BLE à proximité et analyser la puissance du signal lorsque l’analyse Bluetooth est activée dans les réglages."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lensは、設定でBluetooth分析を有効にした場合、近くのBLEデバイスを検出して信号強度を分析するためにBluetoothを使用することがあります。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lensは、設定でBluetooth分析を有効にした場合、近くのBLEデバイスを検出して信号強度を分析するためにBluetoothを使用することがあります。"
           }
         },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当你在设置中开启蓝牙分析时，WiFi Lens 可能会使用蓝牙发现附近的 BLE 设备并分析信号强度。"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当你在设置中开启蓝牙分析时，WiFi Lens 可能会使用蓝牙发现附近的 BLE 设备并分析信号强度。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens может использовать Bluetooth для обнаружения находящихся рядом устройств BLE и анализа уровня их сигнала, когда в настройках включён анализ Bluetooth."
           }
         }
       }
     },
-    "NSLocalNetworkUsageDescription" : {
-      "comment" : "Privacy usage description shown by macOS when local-network access is requested.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens verwendet das lokale Netzwerk, wenn du den MCP-Server aktivierst und wenn der Netzwerk-Selbsttest die Erreichbarkeit deines konfigurierten Netzwerk-Proxys prüft. Diese Prüfungen erfassen oder übertragen keine Wi-Fi-Scandaten."
+    "NSLocalNetworkUsageDescription": {
+      "comment": "Privacy usage description shown by macOS when local-network access is requested.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens verwendet das lokale Netzwerk, wenn du den MCP-Server aktivierst und wenn der Netzwerk-Selbsttest die Erreichbarkeit deines konfigurierten Netzwerk-Proxys prüft. Diese Prüfungen erfassen oder übertragen keine Wi-Fi-Scandaten."
           }
         },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens uses local networking when you enable its MCP server and when Network Self-Check tests reachability of your configured network proxy. These checks do not collect or transmit your Wi-Fi scan data."
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens uses local networking when you enable its MCP server and when Network Self-Check tests reachability of your configured network proxy. These checks do not collect or transmit your Wi-Fi scan data."
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens usa la red local cuando activas su servidor MCP y cuando el autodiagnóstico de red comprueba la accesibilidad del proxy de red configurado. Estas comprobaciones no recopilan ni transmiten los datos de tus escaneos Wi-Fi."
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens usa la red local cuando activas su servidor MCP y cuando el autodiagnóstico de red comprueba la accesibilidad del proxy de red configurado. Estas comprobaciones no recopilan ni transmiten los datos de tus escaneos Wi-Fi."
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lens utilise le réseau local lorsque tu actives son serveur MCP et lorsque l’auto-diagnostic réseau teste l’accessibilité de ton proxy réseau configuré. Ces vérifications ne collectent ni ne transmettent les données de tes scans Wi-Fi."
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens utilise le réseau local lorsque tu actives son serveur MCP et lorsque l’auto-diagnostic réseau teste l’accessibilité de ton proxy réseau configuré. Ces vérifications ne collectent ni ne transmettent les données de tes scans Wi-Fi."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WiFi Lensは、MCPサーバーを有効にしたとき、およびネットワーク自己診断で設定済みネットワークプロキシへの到達性を確認するときにローカルネットワークを使用します。これらの確認でWi-Fiスキャンデータを収集または送信することはありません。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lensは、MCPサーバーを有効にしたとき、およびネットワーク自己診断で設定済みネットワークプロキシへの到達性を確認するときにローカルネットワークを使用します。これらの確認でWi-Fiスキャンデータを収集または送信することはありません。"
           }
         },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当你开启 MCP 服务器，或网络自检测试已配置网络代理的可达性时，WiFi Lens 会使用本地网络。这些检查不会收集或传输你的 Wi-Fi 扫描数据。"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当你开启 MCP 服务器，或网络自检测试已配置网络代理的可达性时，WiFi Lens 会使用本地网络。这些检查不会收集或传输你的 Wi-Fi 扫描数据。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens использует локальную сеть, когда вы включаете MCP-сервер и когда самопроверка сети проверяет доступность настроенного сетевого прокси. Эти проверки не собирают и не передают данные сканирования Wi‑Fi."
           }
         }
       }
     },
-    "NSLocationWhenInUseUsageDescription" : {
-      "comment" : "Privacy usage description shown by macOS when location access is requested to read Wi-Fi network names.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS benötigt diese Berechtigung für Apps, die Wi-Fi-Netzwerknamen (SSIDs) lesen. WiFi Lens greift niemals auf deine GPS-Koordinaten zu und protokolliert deinen Standort nicht."
+    "NSLocationWhenInUseUsageDescription": {
+      "comment": "Privacy usage description shown by macOS when location access is requested to read Wi-Fi network names.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS benötigt diese Berechtigung für Apps, die Wi-Fi-Netzwerknamen (SSIDs) lesen. WiFi Lens greift niemals auf deine GPS-Koordinaten zu und protokolliert deinen Standort nicht."
           }
         },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS requires this permission for any app that reads Wi‑Fi network names (SSIDs). WiFi Lens never accesses your GPS coordinates and never logs your location."
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS requires this permission for any app that reads Wi‑Fi network names (SSIDs). WiFi Lens never accesses your GPS coordinates and never logs your location."
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS requiere este permiso para cualquier app que lea los nombres de redes Wi-Fi (SSID). WiFi Lens nunca accede a tus coordenadas GPS ni registra tu ubicación."
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS requiere este permiso para cualquier app que lea los nombres de redes Wi-Fi (SSID). WiFi Lens nunca accede a tus coordenadas GPS ni registra tu ubicación."
           }
         },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS exige cette autorisation pour toute app qui lit les noms de réseaux Wi-Fi (SSID). WiFi Lens n’accède jamais à tes coordonnées GPS et n’enregistre jamais ta position."
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS exige cette autorisation pour toute app qui lit les noms de réseaux Wi-Fi (SSID). WiFi Lens n’accède jamais à tes coordonnées GPS et n’enregistre jamais ta position."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOSでは、Wi-Fiネットワーク名（SSID）を読み取るアプリにこの権限が必要です。WiFi LensがGPS座標にアクセスしたり、位置情報を記録したりすることはありません。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOSでは、Wi-Fiネットワーク名（SSID）を読み取るアプリにこの権限が必要です。WiFi LensがGPS座標にアクセスしたり、位置情報を記録したりすることはありません。"
           }
         },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS 要求读取 Wi-Fi 网络名称（SSID）的 App 获得此权限。WiFi Lens 从不访问你的 GPS 坐标，也不会记录你的位置。"
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 要求读取 Wi-Fi 网络名称（SSID）的 App 获得此权限。WiFi Lens 从不访问你的 GPS 坐标，也不会记录你的位置。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS требует это разрешение для приложений, которые считывают имена сетей Wi‑Fi (SSID). WiFi Lens не получает доступ к вашим координатам GPS и не сохраняет данные о вашем местоположении."
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
