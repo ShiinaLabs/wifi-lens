@@ -1,6 +1,6 @@
 # Localization Terminology Guide
 
-Standardized terms for `en`, `ja`, `zh-Hans`, `de`, `es` translations in `Localizable.xcstrings`.
+Standardized terms for `en`, `de`, `es`, `fr`, `ja`, `ru`, `zh-Hans` translations in `Localizable.xcstrings`.
 
 ## zh-Hans (简体中文)
 
@@ -111,3 +111,43 @@ Standardized terms for `en`, `ja`, `zh-Hans`, `de`, `es` translations in `Locali
 1. **Guillemets** — use `« »` for quoted text in French
 2. **Feminine/plural agreement** — match the noun gender/number for quality tiers, permission states, and "X est/est désactivé" forms
 3. **Product name & abbreviations** — never translate `WiFi Lens`, `AP`, `RSSI`, `MCS`, `NSS`, `BSSID`, `SSID`, `DFS`, `EMA` in short labels; keep them as-is
+
+## ru (Русский)
+
+| English | Use | Do NOT use | Notes |
+|---------|-----|------------|-------|
+| channel | канал | ~~частота~~ | «Частота» is reserved for frequency |
+| Wi-Fi (technology) | Wi‑Fi | ~~WiFi~~, ~~вайфай~~ | Follow Apple Russian typography |
+| WiFi Lens (product) | WiFi Lens | ~~Wi‑Fi Lens~~ | Product name, never translate |
+| AP (short UI) | AP | ~~ТД~~ | Keep the industry abbreviation in badges, tables, and compact labels |
+| access point (prose) | точка доступа | ~~роутер~~ | Use the full term in explanatory prose |
+| scan / scanning | сканировать / сканирование | ~~скан~~ | Choose verb or noun by UI context |
+| System Settings | Системные настройки | ~~Системные параметры~~ | Apple macOS terminology |
+| Location Services | Службы геолокации | ~~Сервисы геолокации~~ | Apple macOS terminology |
+| menu bar | строка меню | ~~панель меню~~ | Apple macOS terminology |
+| Show in Finder | Показать в Finder | ~~Открыть в Finder~~ | Apple macOS menu wording |
+| network | сеть | — | |
+| network interface | сетевой интерфейс | ~~интерфейс сети~~ | |
+| gateway | шлюз | ~~гейтвей~~ | |
+| router | маршрутизатор | ~~роутер~~ | Prefer the standard technical term in UI |
+| signal strength | уровень сигнала | ~~сила сигнала~~ | Natural Russian UI terminology |
+| interference | помехи | ~~интерференция~~ | Wireless interference |
+| overlap | перекрытие | ~~наложение~~ | Channel overlap |
+| roaming | роуминг | ~~перемещение~~ | Wi-Fi roaming |
+| latency | задержка | ~~латентность~~ | |
+| throughput | пропускная способность | ~~пропускная скорость~~ | |
+| Timeline | хронология | ~~таймлайн~~ | Product feature name in Russian |
+| Insights | выводы | ~~инсайты~~ | Product feature name in Russian |
+| permission | разрешение / доступ | ~~пермиссия~~ | Pick the natural noun for the sentence |
+| enabled / disabled | включено / выключено | ~~активировано / деактивировано~~ | Prefer native macOS-style state wording |
+| unknown | неизвестно | — | |
+
+### General Rules (ru addition)
+
+1. Use natural Russian macOS UI wording rather than word-for-word translation.
+2. Preserve technical abbreviations such as `AP`, `RSSI`, `MCS`, `NSS`, `BSSID`, `SSID`, `DFS`, `EMA`, `MCC`, `MNC`, `IKE`, and `NAT`.
+3. Keep format placeholders (`%@`, `%lld`, `%1$@`, etc.) exactly as in the source and in the same order.
+4. Prefer concise imperatives for actions: «Открыть», «Показать», «Сохранить», «Очистить», «Проверить».
+5. Avoid unnecessary English loanwords when an established Russian networking or macOS term exists.
+6. Use `…` for ellipses and Russian decimal commas in localized prose/units where the value is literal.
+7. Product and brand names (`WiFi Lens`, `Finder`, `App Store`, `GitHub`, carrier names) are not translated.
