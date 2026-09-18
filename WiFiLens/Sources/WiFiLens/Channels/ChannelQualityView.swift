@@ -262,28 +262,48 @@ private struct ChannelCard: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 HStack(spacing: 4) {
-                    Text(String(localized: "channels.card.co_label", comment: "Co-channel label on detail card")).font(.caption2).foregroundColor(.secondary)
-                    Text("\(channel.coChannelCount)").font(.callout.weight(.medium))
-                    Text(String(localized: "channels.card.adj_label", comment: "Adjacent channel label on detail card")).font(.caption2).foregroundColor(.secondary)
-                    Text("\(channel.adjacentCount)").font(.callout.weight(.medium))
+                    Text(String(localized: "channels.card.co_label", comment: "Co-channel label on detail card"))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                    Text("\(channel.coChannelCount)")
+                        .font(.callout.weight(.medium))
+                        .monospacedDigit()
+                    Text(String(localized: "channels.card.adj_label", comment: "Adjacent channel label on detail card"))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                    Text("\(channel.adjacentCount)")
+                        .font(.callout.weight(.medium))
+                        .monospacedDigit()
                 }
+                .minimumScaleFactor(0.8)
+                .allowsTightening(true)
+
                 HStack(spacing: 4) {
                     Image(systemName: "wave.3.right").font(.caption2).foregroundColor(.secondary)
                     Text(String(format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"), channel.strongestNeighborRSSI)).font(.caption).foregroundColor(.secondary)
                 }
+
                 HStack(spacing: 4) {
                     Text(channel.overlapLevel.displayName)
                         .font(.caption)
                         .foregroundColor(overlapColor(channel.overlapLevel))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .allowsTightening(true)
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(overlapColor(channel.overlapLevel).opacity(0.12))
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                     Text(String(localized: "channels.card.overlap_label", comment: "Overlap label on detail card"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .allowsTightening(true)
                 }
             }
-            .frame(width: 100)
+            .layoutPriority(1)
         }
         .padding(12)
         .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 10))

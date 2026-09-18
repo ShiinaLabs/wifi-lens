@@ -10852,7 +10852,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "· Соседние:"
+            "value": "· Сосед.:"
           }
         }
       }
@@ -10900,7 +10900,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Совпадающие:"
+            "value": "Совп.:"
           }
         }
       }

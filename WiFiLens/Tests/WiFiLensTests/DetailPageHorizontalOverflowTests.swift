@@ -217,6 +217,18 @@ struct DetailPageHorizontalOverflowTests {
         assertNoScrollClipping(view)
     }
 
+    @Test("Channels simple cards keep localized metrics in a compact panel")
+    func channelsSimpleCardsKeepLocalizedMetricsCompact() {
+        let viewModel = makeScannerViewModel(ssid: "Office")
+        let view = ChannelQualityView(channels: viewModel.channelRecommendations, mode: .simple)
+        let size = scrollDocumentSize(of: view)
+
+        #expect(
+            (size?.height ?? 0) <= 280,
+            "Channel cards should keep the localized metric panel to the same compact three-row shape as the English layout; measured document height: \(size?.height ?? 0)"
+        )
+    }
+
     @Test("Channels table mode fits the minimum detail width")
     func channelsTableFitsMinimumDetailWidth() {
         let viewModel = makeScannerViewModel(ssid: "Office")
