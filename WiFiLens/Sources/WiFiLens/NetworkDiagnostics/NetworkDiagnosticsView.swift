@@ -1177,7 +1177,7 @@ struct NetworkDiagnosticsPipelineView: View {
         case "proxy.direct-unverified":
             String(localized: "network_diagnostics.proxy.direct_unverified", comment: "Direct proxy route qualification")
         default:
-            String(localized: "network_diagnostics.state.indeterminate", comment: "Network self-check uncertainty qualification")
+            String(localized: "network_diagnostics.status.indeterminate", comment: "Network self-check uncertainty qualification")
         }
     }
 }
