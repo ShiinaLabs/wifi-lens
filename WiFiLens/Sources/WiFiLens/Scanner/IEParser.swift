@@ -19,8 +19,11 @@ struct IEData {
     var heSupported: Bool = false  // 802.11ax / Wi-Fi 6
     var ehtSupported: Bool = false // 802.11be / Wi-Fi 7
 
-    // Channel width support
+    // Channel width capability and current operation
+    /// Whether HT Capabilities advertise 20/40 MHz support.
     var supports40MHz: Bool = false
+    /// Whether the AP is currently operating with a 40 MHz secondary channel.
+    var operating40MHz: Bool = false
     var supports80MHz: Bool = false
     var supports160MHz: Bool = false
 
@@ -225,13 +228,12 @@ enum IEParser {
     }
 
     private static func parseHTOperation(_ data: [UInt8], into result: inout IEData) {
-        // Secondary channel offset in HT Op Info byte indicates whether 40 MHz
-        // is actually in use, complementing the capability bit from HT Capabilities.
-        guard data.count >= 1 else { return }
-        let secChannel = data[0] & 0x03
-        if secChannel == 1 || secChannel == 3 {
-            result.supports40MHz = true
-        }
+        // Byte 0 is the primary channel. Byte 1's HT Operation Information
+        // subset carries the secondary channel offset and indicates whether
+        // 40 MHz is currently in use.
+        guard data.count >= 2 else { return }
+        let secondaryChannelOffset = data[1] & 0x03
+        result.operating40MHz = secondaryChannelOffset == 1 || secondaryChannelOffset == 3
     }
 
     // MARK: - VHT Capabilities (802.11ac)

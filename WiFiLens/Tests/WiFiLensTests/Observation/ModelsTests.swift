@@ -99,4 +99,47 @@ struct AdapterTests {
         #expect(obs.capabilities.channelWidth == 80)
         #expect(obs.capabilities.phyMode == "n")
     }
+
+    @Test("Adapt reports 20 MHz when HT capabilities allow 40 MHz but operation is 20 MHz")
+    func adaptUsesOperatingWidthOverCapability() {
+        var htCapabilities = [UInt8](repeating: 0, count: 19)
+        htCapabilities[0] = 0x02 // 20/40 MHz capable
+        var htOperation = [UInt8](repeating: 0, count: 22)
+        htOperation[0] = 11 // primary channel
+        htOperation[1] = 0 // no secondary channel
+        let ieData = Data([45, UInt8(htCapabilities.count)] + htCapabilities)
+            + Data([61, UInt8(htOperation.count)] + htOperation)
+        let channel = WiFiChannel(band: .band24GHz, channelNumber: 11, channelWidthMHz: 20)
+        let network = WiFiNetwork(
+            ssid: "TwentyMHz",
+            bssid: "AA:BB:CC:DD:EE:11",
+            rssi: -50,
+            channel: channel,
+            ieData: ieData
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        #expect(observation.capabilities.channelWidth == 20)
+    }
+
+    @Test("Adapt reports 40 MHz only when HT operation has a secondary channel")
+    func adaptUsesOperating40MHz() {
+        var htOperation = [UInt8](repeating: 0, count: 22)
+        htOperation[0] = 6 // primary channel
+        htOperation[1] = 1 // secondary channel above
+        let ieData = Data([61, UInt8(htOperation.count)] + htOperation)
+        let channel = WiFiChannel(band: .band24GHz, channelNumber: 6, channelWidthMHz: 20)
+        let network = WiFiNetwork(
+            ssid: "FortyMHz",
+            bssid: "AA:BB:CC:DD:EE:40",
+            rssi: -50,
+            channel: channel,
+            ieData: ieData
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        #expect(observation.capabilities.channelWidth == 40)
+    }
 }

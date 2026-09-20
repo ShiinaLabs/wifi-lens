@@ -187,7 +187,7 @@ enum ChannelSpanCalculator {
     private static func widthLabel(_ ie: IEData) -> String {
         if ie.supports160MHz { return "160" }
         if ie.supports80MHz { return "80" }
-        if ie.supports40MHz { return "40" }
+        if ie.operating40MHz { return "40" }
         return ""
     }
 }

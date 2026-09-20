@@ -129,25 +129,61 @@ struct IEParserHTCapabilitiesTests {
 // MARK: - HT Operation
 
 struct IEParserHTOperationTests {
+    private func htOperationPayload(primaryChannel: UInt8, secondaryChannelOffset: UInt8) -> [UInt8] {
+        var payload = [UInt8](repeating: 0, count: 22)
+        payload[0] = primaryChannel
+        payload[1] = secondaryChannelOffset & 0x03
+        return payload
+    }
+
     @Test func htOperation40MHzAbove() {
-        // HT Op Info byte: secondary channel = 1 (above)
-        let data = singleIE(tag: 61, value: [0x01])
+        // HT Operation: primary channel 6, secondary channel above (offset = 1).
+        let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 6, secondaryChannelOffset: 1))
         let result = IEParser.parse(data: data)
-        #expect(result.supports40MHz == true)
+        #expect(result.supports40MHz == false)
+        #expect(result.operating40MHz == true)
     }
 
     @Test func htOperation40MHzBelow() {
-        // HT Op Info byte: secondary channel = 3 (below)
-        let data = singleIE(tag: 61, value: [0x03])
+        // HT Operation: primary channel 11, secondary channel below (offset = 3).
+        let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 11, secondaryChannelOffset: 3))
         let result = IEParser.parse(data: data)
-        #expect(result.supports40MHz == true)
+        #expect(result.supports40MHz == false)
+        #expect(result.operating40MHz == true)
     }
 
     @Test func htOperation20MHzOnly() {
-        // HT Op Info byte: secondary channel = 0 (no secondary)
-        let data = singleIE(tag: 61, value: [0x00])
+        // HT Operation: primary channel 6, no secondary channel (offset = 0).
+        let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 6, secondaryChannelOffset: 0))
         let result = IEParser.parse(data: data)
         #expect(result.supports40MHz == false)
+        #expect(result.operating40MHz == false)
+    }
+
+    @Test func primaryChannel11DoesNotImply40MHz() {
+        // Regression for #99: channel 11 is 0b1011, whose low bits are 3.
+        // Those bits belong to the primary channel and must not be parsed as an offset.
+        let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 11, secondaryChannelOffset: 0))
+        let result = IEParser.parse(data: data)
+        #expect(result.supports40MHz == false)
+        #expect(result.operating40MHz == false)
+    }
+
+    @Test func htOperationPayloadTooShort() {
+        for payload in [[], [UInt8(11)]] {
+            let result = IEParser.parse(data: singleIE(tag: 61, value: payload))
+            #expect(result.operating40MHz == false)
+        }
+    }
+
+    @Test func capabilitiesCanSupport40MHzWhileOperationUses20MHz() {
+        var htCapabilities = [UInt8](repeating: 0, count: 19)
+        htCapabilities[0] = 0x02 // HT Capabilities: 20/40 MHz capable.
+        let htOperation = htOperationPayload(primaryChannel: 11, secondaryChannelOffset: 0)
+        let data = singleIE(tag: 45, value: htCapabilities) + singleIE(tag: 61, value: htOperation)
+        let result = IEParser.parse(data: data)
+        #expect(result.supports40MHz == true)
+        #expect(result.operating40MHz == false)
     }
 }
 
