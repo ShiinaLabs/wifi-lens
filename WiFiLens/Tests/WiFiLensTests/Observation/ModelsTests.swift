@@ -92,7 +92,7 @@ struct AdapterTests {
     func adaptWidthFallback() {
         // HT Capabilities (tag 45): 2 bytes, bit 1 clear = no 40MHz
         // VHT Operation (tag 192): chWidth 0 = 20/40 only
-        let ieData = Data([45, 2, 0, 0, 192, 1, 0])
+        let ieData = Data([45, 2, 0, 0, 192, 5, 0, 36, 0, 0, 0])
         let ch = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 80)
         let nw = WiFiNetwork(ssid: "WideNet", bssid: "AA:BB:CC:DD:EE:FF", rssi: -50, channel: ch, ieData: ieData)
         let obs = NetworkObservationAdapter.adapt(nw)
@@ -160,13 +160,32 @@ struct AdapterTests {
         #expect(observation.capabilities.channelWidth == 80)
     }
 
+    @Test("Adapt preserves the CoreWLAN fallback for non-contiguous VHT 80+80")
+    func adaptUsesFallbackForVHT80Plus80() {
+        let vht80plus80 = Data([192, 5, 3, 42, 58, 0, 0])
+        let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 80)
+        let network = WiFiNetwork(
+            ssid: "NonContiguous",
+            bssid: "AA:BB:CC:DD:EE:80",
+            rssi: -50,
+            channel: channel,
+            ieData: vht80plus80
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        // The scalar observation model cannot represent two disjoint 80 MHz
+        // segments; retain CoreWLAN's fallback instead of inventing 160.
+        #expect(observation.capabilities.channelWidth == 80)
+    }
+
     @Test("VHT operation remains higher priority than explicit HT 20 MHz")
     func adaptPreservesVHTWidthPriority() {
         var htOperation = [UInt8](repeating: 0, count: 22)
         htOperation[0] = 36
         htOperation[1] = 0
         let ieData = Data([61, UInt8(htOperation.count)] + htOperation)
-            + Data([192, 1, 1])
+            + Data([192, 5, 1, 42, 0, 0, 0])
         let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 20)
         let network = WiFiNetwork(
             ssid: "VHTWide",
@@ -187,7 +206,7 @@ struct AdapterTests {
         htOperation[0] = 36
         htOperation[1] = 0
         let ieData = Data([61, UInt8(htOperation.count)] + htOperation)
-            + Data([192, 1, 2])
+            + Data([192, 5, 2, 42, 0, 0, 0])
         let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 20)
         let network = WiFiNetwork(
             ssid: "VHT160Wide",
@@ -200,5 +219,26 @@ struct AdapterTests {
         let observation = NetworkObservationAdapter.adapt(network)
 
         #expect(observation.capabilities.channelWidth == 160)
+    }
+
+    @Test("VHT use-HT operation defers to HT 40 MHz")
+    func adaptVHTUseHTDefersToHTOperation() {
+        var htOperation = [UInt8](repeating: 0, count: 22)
+        htOperation[0] = 36
+        htOperation[1] = 0x05
+        let ieData = Data([61, UInt8(htOperation.count)] + htOperation)
+            + Data([192, 5, 0, 42, 0, 0, 0])
+        let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 20)
+        let network = WiFiNetwork(
+            ssid: "VHTUseHT",
+            bssid: "AA:BB:CC:DD:EE:44",
+            rssi: -50,
+            channel: channel,
+            ieData: ieData
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        #expect(observation.capabilities.channelWidth == 40)
     }
 }

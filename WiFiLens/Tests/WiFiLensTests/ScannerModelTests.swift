@@ -193,13 +193,21 @@ struct WiFiNetworkTests {
             channel: WiFiChannel(band: .band24GHz, channelNumber: 11),
             ieData: Data([61, 1, 11])
         )
+        let vht80 = WiFiNetwork(
+            ssid: "VHT80",
+            bssid: "00:11:22:33:44:80",
+            rssi: -52,
+            channel: WiFiChannel(band: .band5GHz, channelNumber: 36),
+            ieData: Data([192, 5, 1, 42, 0, 0, 0])
+        )
         let vm = ScannerViewModel()
 
-        vm.debugApplyNetworksForTesting([known20, unknown], supportedBands: [.band24GHz])
+        vm.debugApplyNetworksForTesting([known20, unknown, vht80], supportedBands: [.band24GHz, .band5GHz])
 
         let rowsByID = Dictionary(uniqueKeysWithValues: vm.cachedCombinedTableRows.map { ($0.id, $0) })
         #expect(rowsByID[known20.id]?.channelWidth == "20")
         #expect(rowsByID[unknown.id]?.channelWidth == "")
+        #expect(rowsByID[vht80.id]?.channelWidth == "80")
     }
 
     @Test("caches update when a new scan arrives")

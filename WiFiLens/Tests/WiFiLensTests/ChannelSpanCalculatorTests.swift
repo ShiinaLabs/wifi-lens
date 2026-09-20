@@ -249,4 +249,26 @@ struct ChannelSpanCalculatorTests {
         #expect(belowSeries?.left == 5)
         #expect(belowSeries?.right == 13)
     }
+
+    @Test func seriesLabelsVHT80Plus80WithoutInventingContiguousGeometry() {
+        let network = WiFiNetwork(
+            ssid: "VHT80Plus80",
+            bssid: "AA:BB:CC:DD:EE:88",
+            rssi: -50,
+            channel: WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 80),
+            ieData: Data([192, 5, 3, 42, 58, 0, 0])
+        )
+
+        let series = ChannelSpanCalculator.toSeriesData(
+            [network],
+            colorHasher: SSIDColorHasher()
+        )
+
+        let item = series.first
+        #expect(item?.channelWidth == "80+80")
+        // Geometry stays on the existing CoreWLAN scalar width until segment
+        // centers are modeled; it must not be widened to a contiguous 160.
+        #expect(item?.left == 34)
+        #expect(item?.right == 50)
+    }
 }

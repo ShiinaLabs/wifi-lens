@@ -26,6 +26,51 @@ enum HTChannelOperation: Equatable, Sendable {
     }
 }
 
+/// The current channel operation advertised by the VHT Operation element.
+///
+/// `useHT` delegates the effective 20/40 MHz width to HT Operation. The
+/// remaining cases describe VHT operation directly, including the
+/// non-contiguous 80+80 MHz layout.
+enum VHTChannelOperation: Equatable, Sendable {
+    case useHT
+    case eightyMHz
+    case oneSixtyMHz
+    case eightyPlusEightyMHz
+}
+
+/// A user-facing operating width derived from HT and VHT Operation elements.
+///
+/// The scalar MHz value is intentionally unavailable for 80+80 MHz because
+/// two non-contiguous 80 MHz segments cannot be represented by one span.
+enum IEOperatingChannelWidth: Equatable, Sendable {
+    case twentyMHz
+    case fortyMHz
+    case eightyMHz
+    case oneSixtyMHz
+    case eightyPlusEightyMHz
+
+    var label: String {
+        switch self {
+        case .twentyMHz: "20"
+        case .fortyMHz: "40"
+        case .eightyMHz: "80"
+        case .oneSixtyMHz: "160"
+        case .eightyPlusEightyMHz: "80+80"
+        }
+    }
+
+    /// Width for scalar observation models. 80+80 needs segment-aware data.
+    var widthMHz: Int? {
+        switch self {
+        case .twentyMHz: 20
+        case .fortyMHz: 40
+        case .eightyMHz: 80
+        case .oneSixtyMHz: 160
+        case .eightyPlusEightyMHz: nil
+        }
+    }
+}
+
 /// Parsed 802.11 information elements and derived capabilities from beacon/probe response data.
 struct IEData {
     /// Whether 802.11k (Radio Measurement) is supported
@@ -51,8 +96,34 @@ struct IEData {
     /// The current BSS channel operation from HT Operation, when available.
     /// A missing value means the operation is unknown, not that it is 20 MHz.
     var htChannelOperation: HTChannelOperation?
-    var supports80MHz: Bool = false
-    var supports160MHz: Bool = false
+    /// The current BSS channel operation from VHT Operation, when available.
+    /// A missing value means the element was absent or malformed.
+    var vhtChannelOperation: VHTChannelOperation?
+
+    /// Effective operating width, with VHT Operation taking precedence when
+    /// it advertises a VHT width and falling back to HT Operation for
+    /// `useHT` or when VHT Operation is absent.
+    var operatingChannelWidth: IEOperatingChannelWidth? {
+        switch vhtChannelOperation {
+        case .eightyMHz:
+            return .eightyMHz
+        case .oneSixtyMHz:
+            return .oneSixtyMHz
+        case .eightyPlusEightyMHz:
+            return .eightyPlusEightyMHz
+        case .useHT, nil:
+            break
+        }
+
+        switch htChannelOperation {
+        case .twentyMHz:
+            return .twentyMHz
+        case .fortyMHzAbove, .fortyMHzBelow:
+            return .fortyMHz
+        case nil:
+            return nil
+        }
+    }
 
     // Raw info
     var maxMCSIndex: Int?
@@ -298,13 +369,44 @@ enum IEParser {
     }
 
     private static func parseVHTOperation(_ data: [UInt8], into result: inout IEData) {
-        guard data.count >= 1 else { return }
-        let chWidth = data[0] & 0xFF
-        switch chWidth {
-        case 1: result.supports80MHz = true
-        case 2: result.supports160MHz = true
-        case 3: result.supports80MHz = true; result.supports160MHz = true  // 80+80
-        default: break
+        // VHT Operation is 5 bytes:
+        // channel width, center frequency segment 0, center frequency
+        // segment 1, and the two-byte basic VHT-MCS/NSS set.
+        guard data.count >= 5 else { return }
+
+        let channelWidth = data[0]
+        let segment0 = Int(data[1])
+        let segment1 = Int(data[2])
+
+        switch channelWidth {
+        case 0:
+            // 20/40 MHz operation is defined by HT Operation.
+            result.vhtChannelOperation = .useHT
+        case 1:
+            // Linux/mac80211 uses this encoding for 80 MHz and for the
+            // interop form of 160/80+80. Segment spacing disambiguates them.
+            guard segment1 != 0 else {
+                result.vhtChannelOperation = .eightyMHz
+                return
+            }
+
+            let segmentDifference = abs(segment1 - segment0)
+            if segmentDifference == 8 {
+                result.vhtChannelOperation = .oneSixtyMHz
+            } else if segmentDifference > 8 {
+                result.vhtChannelOperation = .eightyPlusEightyMHz
+            } else {
+                result.vhtChannelOperation = .eightyMHz
+            }
+        case 2:
+            // Deprecated/direct encoding retained for interoperability.
+            result.vhtChannelOperation = .oneSixtyMHz
+        case 3:
+            // Deprecated/direct encoding retained for interoperability.
+            result.vhtChannelOperation = .eightyPlusEightyMHz
+        default:
+            // Reserved channel-width values are unknown.
+            result.vhtChannelOperation = nil
         }
     }
 

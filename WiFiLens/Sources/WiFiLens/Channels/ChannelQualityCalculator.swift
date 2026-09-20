@@ -174,7 +174,7 @@ enum ChannelQualityCalculator {
     struct APInfo {
         let channel: Int
         let rssi: Int
-        let channelWidth: String  // "20"/"40"/"80"/"160"
+        let channelWidth: String  // "20"/"40"/"80"/"160"/"80+80"
         let band: String          // "24"/"5"/"6"
         let bssid: String?
         let ssid: String?

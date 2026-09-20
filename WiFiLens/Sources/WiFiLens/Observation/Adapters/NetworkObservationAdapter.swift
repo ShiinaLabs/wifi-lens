@@ -41,9 +41,10 @@ enum NetworkObservationAdapter {
         }()
 
         let channelWidth: Int = {
-            if ie.supports160MHz { return 160 }
-            if ie.supports80MHz { return 80 }
-            if let operation = ie.htChannelOperation { return operation.widthMHz }
+            if let operation = ie.operatingChannelWidth,
+               let widthMHz = operation.widthMHz {
+                return widthMHz
+            }
             return fallbackWidth
         }()
 

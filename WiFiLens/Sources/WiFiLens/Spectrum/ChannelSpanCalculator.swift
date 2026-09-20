@@ -187,8 +187,6 @@ enum ChannelSpanCalculator {
     }
 
     private static func widthLabel(_ ie: IEData) -> String {
-        if ie.supports160MHz { return "160" }
-        if ie.supports80MHz { return "80" }
-        return ie.htChannelOperation.map { "\($0.widthMHz)" } ?? ""
+        ie.operatingChannelWidth?.label ?? ""
     }
 }

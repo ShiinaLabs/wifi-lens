@@ -78,11 +78,23 @@ import MCP
             bssid: "aa:bb:cc:dd:ee:40",
             ieData: Data([61, UInt8(ht40.count)] + ht40)
         )
+        let vht80 = makeNetwork(
+            bssid: "aa:bb:cc:dd:ee:80",
+            channelNumber: 36,
+            band: .band5GHz,
+            ieData: Data([192, 5, 1, 42, 0, 0, 0])
+        )
+        let vht80plus80 = makeNetwork(
+            bssid: "aa:bb:cc:dd:ee:88",
+            channelNumber: 36,
+            band: .band5GHz,
+            ieData: Data([192, 5, 3, 42, 58, 0, 0])
+        )
 
         let result = MCPServer.handleCallTool(
             name: "scan_networks",
             arguments: nil,
-            networks: [known20, unknown, known40]
+            networks: [known20, unknown, known40, vht80, vht80plus80]
         )
         let json = resultJSON(from: result) as? [[String: Any]]
         let widths: [String: String] = Dictionary(uniqueKeysWithValues: json?.compactMap { entry in
@@ -94,6 +106,8 @@ import MCP
         #expect(widths[known20.bssid] == "20")
         #expect(widths[unknown.bssid] == "")
         #expect(widths[known40.bssid] == "40")
+        #expect(widths[vht80.bssid] == "80")
+        #expect(widths[vht80plus80.bssid] == "80+80")
     }
 
     // MARK: - get_network_detail

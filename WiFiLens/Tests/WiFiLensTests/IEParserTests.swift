@@ -17,6 +17,15 @@ private func u16le(_ v: UInt16) -> [UInt8] {
     [UInt8(v & 0xFF), UInt8(v >> 8)]
 }
 
+/// VHT Operation body: channel width, center segments, basic MCS/NSS set.
+private func vhtOperationPayload(
+    channelWidth: UInt8,
+    segment0: UInt8 = 42,
+    segment1: UInt8 = 0
+) -> [UInt8] {
+    [channelWidth, segment0, segment1, 0xFF, 0xFF]
+}
+
 // MARK: - SSID
 
 struct IEParserSSIDTests {
@@ -270,35 +279,82 @@ struct IEParserVHTCapabilitiesTests {
 
 struct IEParserVHTOperationTests {
     @Test func channelWidth80MHz() {
-        // Channel Width byte = 1 → 80 MHz
-        let data = singleIE(tag: 192, value: [0x01])
+        // Channel Width byte = 1 and segment 1 = 0 → 80 MHz.
+        let data = singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 1))
         let result = IEParser.parse(data: data)
-        #expect(result.supports80MHz == true)
-        #expect(result.supports160MHz == false)
+        #expect(result.vhtChannelOperation == .some(.eightyMHz))
+        #expect(result.operatingChannelWidth == .some(.eightyMHz))
     }
 
     @Test func channelWidth160MHz() {
-        // Channel Width byte = 2 → 160 MHz
-        let data = singleIE(tag: 192, value: [0x02])
+        // Direct/deprecated Channel Width byte = 2 → 160 MHz.
+        let data = singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 2))
         let result = IEParser.parse(data: data)
-        #expect(result.supports80MHz == false)
-        #expect(result.supports160MHz == true)
+        #expect(result.vhtChannelOperation == .some(.oneSixtyMHz))
+        #expect(result.operatingChannelWidth == .some(.oneSixtyMHz))
     }
 
     @Test func channelWidth80plus80() {
-        // Channel Width byte = 3 → 80+80 (implies both 80 and 160)
-        let data = singleIE(tag: 192, value: [0x03])
+        // Direct/deprecated Channel Width byte = 3 → non-contiguous 80+80.
+        let data = singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 3))
         let result = IEParser.parse(data: data)
-        #expect(result.supports80MHz == true)
-        #expect(result.supports160MHz == true)
+        #expect(result.vhtChannelOperation == .some(.eightyPlusEightyMHz))
+        #expect(result.operatingChannelWidth == .some(.eightyPlusEightyMHz))
+        #expect(result.operatingChannelWidth?.label == "80+80")
     }
 
     @Test func channelWidth20Or40() {
-        // Channel Width byte = 0 → 20/40 MHz only
-        let data = singleIE(tag: 192, value: [0x00])
+        // Channel Width byte = 0 delegates to HT Operation.
+        let data = singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 0))
         let result = IEParser.parse(data: data)
-        #expect(result.supports80MHz == false)
-        #expect(result.supports160MHz == false)
+        #expect(result.vhtChannelOperation == .some(.useHT))
+        #expect(result.operatingChannelWidth == nil)
+    }
+
+    @Test func newStyle160MHzUsesEightChannelSegmentSpacing() {
+        let data = singleIE(
+            tag: 192,
+            value: vhtOperationPayload(channelWidth: 1, segment0: 42, segment1: 50)
+        )
+        let result = IEParser.parse(data: data)
+        #expect(result.vhtChannelOperation == .some(.oneSixtyMHz))
+        #expect(result.operatingChannelWidth == .some(.oneSixtyMHz))
+    }
+
+    @Test func newStyle80plus80UsesSeparatedSegments() {
+        let data = singleIE(
+            tag: 192,
+            value: vhtOperationPayload(channelWidth: 1, segment0: 42, segment1: 58)
+        )
+        let result = IEParser.parse(data: data)
+        #expect(result.vhtChannelOperation == .some(.eightyPlusEightyMHz))
+        #expect(result.operatingChannelWidth == .some(.eightyPlusEightyMHz))
+    }
+
+    @Test func malformedVHTOperationDoesNotInventWidth() {
+        let data = singleIE(tag: 192, value: [0x01, 42, 0, 0])
+        let result = IEParser.parse(data: data)
+        #expect(result.vhtChannelOperation == nil)
+        #expect(result.operatingChannelWidth == nil)
+    }
+
+    @Test func reservedVHTChannelWidthIsUnknown() {
+        let data = singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 4))
+        let result = IEParser.parse(data: data)
+        #expect(result.vhtChannelOperation == nil)
+        #expect(result.operatingChannelWidth == nil)
+    }
+
+    @Test func vhtUseHTPreservesHTOperationWidth() {
+        var htOperation = [UInt8](repeating: 0, count: 22)
+        htOperation[0] = 36
+        htOperation[1] = 0x05
+        let data = singleIE(tag: 61, value: htOperation)
+            + singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 0))
+        let result = IEParser.parse(data: data)
+        #expect(result.vhtChannelOperation == .some(.useHT))
+        #expect(result.htChannelOperation == .some(.fortyMHzAbove))
+        #expect(result.operatingChannelWidth == .some(.fortyMHz))
     }
 }
 
@@ -581,8 +637,8 @@ struct IEParserCombinedTests {
         htBody[4] = 0xFF  // MCS 8-15
         let htCap = Data([45, UInt8(htBody.count)] + htBody)
 
-        // VHT Op: 80 MHz
-        let vhtOp = Data([192, 1, 1])
+        // VHT Op: 80 MHz (full five-byte payload)
+        let vhtOp = Data([192, 5] + vhtOperationPayload(channelWidth: 1))
 
         // RSN: WPA2 + SAE (WPA3), PMF capable
         let version = u16le(1)
@@ -613,7 +669,8 @@ struct IEParserCombinedTests {
         #expect(result.htSupported == true)
         #expect(result.vhtSupported == false)  // VHT Op but no VHT Cap
         #expect(result.supports40MHz == true)
-        #expect(result.supports80MHz == true)
+        #expect(result.vhtChannelOperation == .some(.eightyMHz))
+        #expect(result.operatingChannelWidth == .some(.eightyMHz))
         #expect(result.maxMCSIndex == 7)   // MCS 15 → per-stream MCS 7
         #expect(result.spatialStreams == 2)
         #expect(result.supportsWPA3 == true)

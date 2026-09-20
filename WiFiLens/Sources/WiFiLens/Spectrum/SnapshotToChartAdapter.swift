@@ -6,7 +6,8 @@ import ChartLens
 /// Mirrors ChannelSpanCalculator.toSeriesData() but operates on snapshots instead of WiFiNetwork.
 enum SnapshotToChartAdapter {
 
-    /// Parse channel width string ("160"/"80"/"40"/"20"/"") to MHz integer.
+    /// Parse scalar channel widths for geometry. 80+80 remains non-contiguous
+    /// and uses the existing narrow fallback until segment centers are modeled.
     static func channelWidthMHz(from widthStr: String) -> Int {
         switch widthStr {
         case "160": return 160
