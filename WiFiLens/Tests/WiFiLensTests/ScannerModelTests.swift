@@ -147,12 +147,21 @@ struct WiFiNetworkTests {
 // MARK: - ScannerViewModel behavior
 
 @Suite("ScannerViewModel behavior") @MainActor struct ScannerViewModelBehaviorTests {
-    private func makeNetwork(ssid: String?, bssid: String, band: ChannelBand, channel: Int, rssi: Int = -50) -> WiFiNetwork {
+    private func makeNetwork(
+        ssid: String?,
+        bssid: String,
+        band: ChannelBand,
+        channel: Int,
+        channelWidthMHz: Int = 20,
+        rssi: Int = -50,
+        ieData: Data? = nil
+    ) -> WiFiNetwork {
         WiFiNetwork(
             ssid: ssid,
             bssid: bssid,
             rssi: rssi,
-            channel: WiFiChannel(band: band, channelNumber: channel, channelWidthMHz: 20)
+            channel: WiFiChannel(band: band, channelNumber: channel, channelWidthMHz: channelWidthMHz),
+            ieData: ieData
         )
     }
 
@@ -349,5 +358,24 @@ struct WiFiNetworkTests {
             vm.signalHistory.allSnapshots[network.bssid]?.map(\.timestamp)
                 == [firstScan, secondScan, thirdScan]
         )
+    }
+
+    @Test("snapshot keeps CoreWLAN scalar width when IE operation width is unknown")
+    func snapshotPreservesScalarWidthForUnknownIEOperation() {
+        let vm = ScannerViewModel()
+        let network = makeNetwork(
+            ssid: "Unknown width",
+            bssid: "00:11:22:33:44:80",
+            band: .band5GHz,
+            channel: 36,
+            channelWidthMHz: 80,
+            ieData: Data([61, 1, 36])
+        )
+
+        vm.debugApplyNetworksForTesting([network], supportedBands: [.band5GHz])
+
+        let snapshot = vm.signalHistory.allSnapshots[network.bssid]?.last
+        #expect(snapshot?.channelWidth == "")
+        #expect(snapshot?.channelWidthMHz == 80)
     }
 }

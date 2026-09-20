@@ -44,6 +44,7 @@ struct NetworkSnapshotTests {
         #expect(snap.rssi == -50)
         #expect(snap.channel == 44)
         #expect(snap.band == "5")
+        #expect(snap.channelWidthMHz == 80)
         #expect(snap.supportsK == true)
         #expect(snap.supportsR == false)
         #expect(snap.supportsWPA3 == false)
@@ -58,6 +59,7 @@ struct NetworkSnapshotTests {
         #expect(decoded.rssi == original.rssi)
         #expect(decoded.channel == original.channel)
         #expect(decoded.band == original.band)
+        #expect(decoded.channelWidthMHz == original.channelWidthMHz)
         #expect(decoded.supportsK == original.supportsK)
         #expect(decoded.isHiddenSSID == original.isHiddenSSID)
         #expect(decoded.timestamp == original.timestamp)
@@ -97,6 +99,46 @@ struct NetworkSnapshotTests {
         let data = json.data(using: .utf8)!
         let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: data)
         #expect(decoded.isHiddenSSID == false)
+    }
+
+    @Test func decoderFallback_missingChannelWidthMHzUsesLabel() throws {
+        let json = """
+        {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ac",
+        "channelWidth":"80+80","mcs":"11","nss":"2","security":"WPA2","country":"US",
+        "supportsK":false,"supportsR":false,"supportsV":false,"supportsWPA3":false}
+        """
+        let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: Data(json.utf8))
+        #expect(decoded.channelWidthMHz == 80)
+    }
+
+    @Test func decoderFallback_missingChannelWidthMHzUsesConservativeDefault() throws {
+        let json = """
+        {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ac",
+        "channelWidth":"","mcs":"11","nss":"2","security":"WPA2","country":"US",
+        "supportsK":false,"supportsR":false,"supportsV":false,"supportsWPA3":false}
+        """
+        let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: Data(json.utf8))
+        #expect(decoded.channelWidthMHz == 20)
+    }
+
+    @Test func explicitScalarWidthPreservesGeometryWhenOperationLabelIsUnknown() {
+        let snapshot = NetworkSnapshot(
+            timestamp: Date(), bssid: "aa:bb:cc:dd:ee:80", ssid: "Unknown IE width",
+            rssi: -50, channel: 36, band: "5", phyMode: "ac",
+            channelWidth: "", channelWidthMHz: 80, mcs: "", nss: "", security: "",
+            country: "", supportsK: false, supportsR: false,
+            supportsV: false, supportsWPA3: false, isHiddenSSID: false
+        )
+
+        let series = SnapshotToChartAdapter.toSeriesData(
+            snapshotsByBSSID: [snapshot.bssid: snapshot],
+            band: .band5GHz,
+            colorHasher: SSIDColorHasher()
+        )
+
+        #expect(series.first?.left == 34)
+        #expect(series.first?.right == 50)
+        #expect(series.first?.channelWidth == "")
     }
 }
 

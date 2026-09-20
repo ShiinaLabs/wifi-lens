@@ -637,6 +637,7 @@ final class ScannerViewModel {
             band: network.channel.band.id,
             phyMode: phyMode,
             channelWidth: channelWidth,
+            channelWidthMHz: network.channel.channelWidthMHz,
             mcs: mcs,
             nss: nss,
             security: security,
