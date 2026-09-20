@@ -12,6 +12,28 @@ private func singleIE(tag: UInt8, value: [UInt8]) -> Data {
     Data([tag, UInt8(value.count)] + value)
 }
 
+// Standard RSN suite helper. Legacy WPA OUI is accepted only when explicitly passed.
+private func rsnSuite(_ selector: UInt8, oui: [UInt8] = [0x00, 0x0F, 0xAC]) -> [UInt8] {
+    oui + [selector]
+}
+
+private func rsnIE(
+    groupCipher: UInt8 = 0x04,
+    pairwiseCiphers: [UInt8] = [0x04],
+    akmSuites: [UInt8],
+    rsnCapabilities: UInt16 = 0,
+    oui: [UInt8] = [0x00, 0x0F, 0xAC]
+) -> Data {
+    let body = u16le(1)
+        + rsnSuite(groupCipher, oui: oui)
+        + u16le(UInt16(pairwiseCiphers.count))
+        + pairwiseCiphers.flatMap { rsnSuite($0, oui: oui) }
+        + u16le(UInt16(akmSuites.count))
+        + akmSuites.flatMap { rsnSuite($0, oui: oui) }
+        + u16le(rsnCapabilities)
+    return singleIE(tag: 48, value: body)
+}
+
 /// Little-endian UInt16 → [UInt8].
 private func u16le(_ v: UInt16) -> [UInt8] {
     [UInt8(v & 0xFF), UInt8(v >> 8)]
@@ -414,133 +436,86 @@ struct IEParserVHTOperationTests {
 // MARK: - RSN (WPA2/WPA3)
 
 struct IEParserRSNTests {
-    // Build RSN IE body:
-    // Version(2) + GroupCipher(4) + PairwiseCount(2) + PairwiseList(...) + AKMCount(2) + AKMList(...) + RSNCap(2)
-
-    @Test func wpa2WithCCMP() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]  // CCMP (AES)
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]  // CCMP
-        let akmCount = u16le(1)
-        let akmSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x02]  // WPA2
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akmSuite + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
+    @Test func pskWithCCMP() {
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x02]))
         #expect(result.groupCipher == "CCMP (AES)")
         #expect(result.pairwiseCiphers == ["CCMP (AES)"])
-        #expect(result.akmSuites == ["WPA2"])
+        #expect(result.akmSuites == ["PSK"])
         #expect(result.supportsWPA3 == false)
-        #expect(result.securitySummary == "WPA2 (CCMP)")
+        #expect(result.supports80211r == false)
+        #expect(result.securitySummary == "PSK (CCMP)")
     }
 
-    @Test func wpa3SAE() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]  // CCMP
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(1)
-        let akmSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x08]  // SAE (WPA3)
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akmSuite + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
+    @Test func saeIsWPA3ButNotFastTransition() {
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x08]))
+        #expect(result.akmSuites == ["SAE"])
         #expect(result.supportsWPA3 == true)
+        #expect(result.supports80211r == false)
         #expect(result.securitySummary == "SAE (WPA3) (CCMP)")
-        #expect(result.akmSuites == ["SAE (WPA3)"])
     }
 
-    @Test func wpa3FT_SAE() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(1)
-        let akmSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x09]  // FT-SAE (WPA3)
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akmSuite + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
+    @Test func ftSAEIsWPA3AndFastTransition() {
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x09]))
+        #expect(result.akmSuites == ["FT-SAE"])
         #expect(result.supportsWPA3 == true)
-        #expect(result.supports80211r == true)  // FT variants imply 802.11r
-        #expect(result.akmSuites == ["FT-SAE (WPA3)"])
+        #expect(result.supports80211r == true)
     }
 
-    @Test func fastTransition8021X() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(1)
-        let akmSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x03]  // FT/802.1X
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akmSuite + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
-        #expect(result.supports80211r == true)
+    @Test func fastTransitionAKMsSet80211r() {
+        for selector: UInt8 in [0x03, 0x04, 0x09, 0x0D, 0x10, 0x11] {
+            let result = IEParser.parse(data: rsnIE(akmSuites: [selector]))
+            #expect(result.supports80211r == true, "selector 0x\(String(selector, radix: 16))")
+        }
+    }
+
+    @Test func ordinaryAKMsDoNotSetWPA3OrFastTransition() {
+        for selector: UInt8 in [0x01, 0x02, 0x05, 0x06, 0x0B] {
+            let result = IEParser.parse(data: rsnIE(akmSuites: [selector]))
+            #expect(result.supportsWPA3 == false, "selector 0x\(String(selector, radix: 16))")
+            #expect(result.supports80211r == false, "selector 0x\(String(selector, radix: 16))")
+        }
+    }
+
+    @Test func suiteB192IsWPA3Enterprise() {
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x0C]))
+        #expect(result.akmSuites == ["802.1X-Suite-B-192"])
+        #expect(result.supportsWPA3 == true)
+        #expect(result.supports80211r == false)
+    }
+
+    @Test func oweIsEnhancedOpenNotWPA3OrFastTransition() {
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x12]))
+        #expect(result.akmSuites == ["OWE"])
         #expect(result.supportsWPA3 == false)
+        #expect(result.supports80211r == false)
+        #expect(result.securitySummary == "OWE (CCMP)")
     }
 
-    @Test func fastTransitionPSK() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(1)
-        let akmSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]  // FT/PSK
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akmSuite + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
-        #expect(result.supports80211r == true)
+    @Test func transitionModeContainsPSKAndSAE() {
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x02, 0x08]))
+        #expect(result.akmSuites.contains("PSK"))
+        #expect(result.akmSuites.contains("SAE"))
+        #expect(result.supportsWPA3 == true)
+        #expect(result.supports80211r == false)
+    }
+
+    @Test func legacyWPAOUIInsideRSNIsRejected() {
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x08], oui: [0x00, 0x50, 0xF2]))
+        #expect(result.groupCipher == "Unknown")
+        #expect(result.pairwiseCiphers == ["Unknown"])
+        #expect(result.akmSuites == ["Unknown"])
+        #expect(result.supportsWPA3 == false)
+        #expect(result.supports80211r == false)
     }
 
     @Test func pmfCapable80211w() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(1)
-        let akmSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x02]
-        // RSN Capabilities: bit 7 = PMF capable
-        let rsnCap = u16le(1 << 7)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akmSuite + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x02], rsnCapabilities: 1 << 7))
         #expect(result.supports80211w == true)
     }
 
     @Test func pmfNotCapable() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(1)
-        let akmSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x02]
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akmSuite + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
+        let result = IEParser.parse(data: rsnIE(akmSuites: [0x02]))
         #expect(result.supports80211w == false)
-    }
-
-    @Test func multipleAKMSuites() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(2)
-        let akm1: [UInt8] = [0x00, 0x50, 0xF2, 0x02]  // WPA2
-        let akm2: [UInt8] = [0x00, 0x50, 0xF2, 0x08]  // SAE (WPA3)
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akm1 + akm2 + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
-        #expect(result.akmSuites.count == 2)
-        #expect(result.akmSuites.contains("WPA2"))
-        #expect(result.akmSuites.contains("SAE (WPA3)"))
-        #expect(result.supportsWPA3 == true)
     }
 
     @Test func rsnBodyTooShort() {
@@ -786,14 +761,14 @@ struct IEParserCombinedTests {
         // VHT Op: 80 MHz (full five-byte payload)
         let vhtOp = Data([192, 5] + vhtOperationPayload(channelWidth: 1))
 
-        // RSN: WPA2 + SAE (WPA3), PMF capable
+        // RSN: PSK + SAE (WPA3), PMF capable
         let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]  // CCMP
+        let groupCipher: [UInt8] = [0x00, 0x0F, 0xAC, 0x04]  // CCMP
         let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
+        let pairwiseSuite: [UInt8] = [0x00, 0x0F, 0xAC, 0x04]
         let akmCount = u16le(2)
-        let akm1: [UInt8] = [0x00, 0x50, 0xF2, 0x02]  // WPA2
-        let akm2: [UInt8] = [0x00, 0x50, 0xF2, 0x08]  // SAE (WPA3)
+        let akm1: [UInt8] = [0x00, 0x0F, 0xAC, 0x02]  // PSK
+        let akm2: [UInt8] = [0x00, 0x0F, 0xAC, 0x08]  // SAE
         let rsnCap = u16le(1 << 7)  // PMF capable
         let rsnBody = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akm1 + akm2 + rsnCap
         let rsn = Data([48, UInt8(rsnBody.count)] + rsnBody)
@@ -823,7 +798,7 @@ struct IEParserCombinedTests {
         #expect(result.supports80211w == true)
         #expect(result.supports80211v == true)
         #expect(result.countryCode == "US ")
-        #expect(result.securitySummary == "SAE (WPA3)/WPA2 (CCMP)")
+        #expect(result.securitySummary == "SAE (WPA3)/PSK (CCMP)")
     }
 
     @Test func emptyData() {
@@ -857,54 +832,77 @@ struct IEParserCombinedTests {
 
 struct IEParserCipherAKMTests {
     @Test func knownCiphers() {
-        // Test that RSN parsing produces correct cipher names
-        let version = u16le(1)
-        // Group: TKIP
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x02]
-        let pairwiseCount = u16le(2)
-        let pairwise1: [UInt8] = [0x00, 0x50, 0xF2, 0x07]  // GCMP-128
-        let pairwise2: [UInt8] = [0x00, 0x50, 0xF2, 0x04]  // CCMP (AES)
-        let akmCount = u16le(1)
-        let akm: [UInt8] = [0x00, 0x50, 0xF2, 0x02]  // WPA2
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwise1 + pairwise2 + akmCount + akm + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
+        let result = IEParser.parse(data: rsnIE(
+            groupCipher: 0x02,
+            pairwiseCiphers: [0x08, 0x04],
+            akmSuites: [0x02]
+        ))
 
         #expect(result.groupCipher == "TKIP")
         #expect(result.pairwiseCiphers == ["GCMP-128", "CCMP (AES)"])
     }
 
-    @Test func knownAKMs() {
-        // WPA (not WPA2)
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x02]  // TKIP
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x02]  // TKIP
-        let akmCount = u16le(1)
-        let akm: [UInt8] = [0x00, 0x50, 0xF2, 0x01]  // WPA
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akm + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
-
-        #expect(result.akmSuites == ["WPA"])
-        #expect(result.securitySummary == "WPA (TKIP)")
+    @Test func cipherSelectorsSevenThroughThirteenUseStandardRSNMapping() {
+        let result = IEParser.parse(data: rsnIE(
+            pairwiseCiphers: [0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D],
+            akmSuites: [0x02]
+        ))
+        #expect(result.pairwiseCiphers == [
+            "No Group Addressed",
+            "GCMP-128",
+            "GCMP-256",
+            "CCMP-256",
+            "BIP-GMAC-128",
+            "BIP-GMAC-256",
+            "BIP-CMAC-256"
+        ])
     }
 
-    @Test func oweAKM() {
-        let version = u16le(1)
-        let groupCipher: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let pairwiseCount = u16le(1)
-        let pairwiseSuite: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-        let akmCount = u16le(1)
-        let akm: [UInt8] = [0x00, 0x50, 0xF2, 0x12]  // OWE
-        let rsnCap = u16le(0)
-        let body = version + groupCipher + pairwiseCount + pairwiseSuite + akmCount + akm + rsnCap
-        let data = singleIE(tag: 48, value: body)
-        let result = IEParser.parse(data: data)
+    @Test func legacyWPAOUIIsUnknownCipherInRSN() {
+        let result = IEParser.parse(data: rsnIE(
+            groupCipher: 0x04,
+            pairwiseCiphers: [0x04],
+            akmSuites: [0x02],
+            oui: [0x00, 0x50, 0xF2]
+        ))
+        #expect(result.groupCipher == "Unknown")
+        #expect(result.pairwiseCiphers == ["Unknown"])
+    }
 
-        #expect(result.akmSuites == ["OWE"])
-        #expect(result.supportsWPA3 == false)
+    @Test func knownAKMsUseStandardRSNNames() {
+        let result = IEParser.parse(data: rsnIE(
+            groupCipher: 0x02,
+            pairwiseCiphers: [0x02],
+            akmSuites: [0x01]
+        ))
+        #expect(result.akmSuites == ["802.1X"])
+        #expect(result.securitySummary == "802.1X (TKIP)")
+    }
+
+    @Test func allKnownRSNAKMSelectorsHaveStandardNames() {
+        let expected: [(UInt8, String)] = [
+            (0x01, "802.1X"),
+            (0x02, "PSK"),
+            (0x03, "FT/802.1X"),
+            (0x04, "FT/PSK"),
+            (0x05, "802.1X-SHA256"),
+            (0x06, "PSK-SHA256"),
+            (0x07, "TDLS"),
+            (0x08, "SAE"),
+            (0x09, "FT-SAE"),
+            (0x0B, "802.1X-Suite-B"),
+            (0x0C, "802.1X-Suite-B-192"),
+            (0x0D, "FT/802.1X-SHA384"),
+            (0x0E, "FILS-SHA256"),
+            (0x0F, "FILS-SHA384"),
+            (0x10, "FT-FILS-SHA256"),
+            (0x11, "FT-FILS-SHA384"),
+            (0x12, "OWE")
+        ]
+
+        for (selector, name) in expected {
+            let result = IEParser.parse(data: rsnIE(akmSuites: [selector]))
+            #expect(result.akmSuites == [name], "selector 0x\(String(selector, radix: 16))")
+        }
     }
 }

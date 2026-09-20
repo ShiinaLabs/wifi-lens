@@ -148,14 +148,18 @@ struct IEData {
         // Collect distinct security levels present
         var labels: [String] = []
 
-        // WPA3 variants
-        let wpa3Suites = akmSuites.filter { $0.contains("WPA3") }
+        // WPA3 variants. The AKM names themselves stay protocol-accurate;
+        // the WPA3 display label is added only in this user-facing summary.
+        let wpa3AKMNames: Set<String> = ["SAE", "FT-SAE", "802.1X-Suite-B-192"]
+        let wpa3Suites = akmSuites
+            .filter { wpa3AKMNames.contains($0) }
+            .map { "\($0) (WPA3)" }
         if !wpa3Suites.isEmpty {
             labels.append(wpa3Suites.joined(separator: "/"))
         }
 
         // WPA2 variants (excluding WPA3)
-        let wpa2Suites = akmSuites.filter { !$0.contains("WPA3") && ($0.contains("WPA2") || $0.contains("802.1X") || $0.contains("PSK") || $0.contains("FT/") || $0.contains("SHA256") || $0.contains("SuiteB")) }
+        let wpa2Suites = akmSuites.filter { !wpa3AKMNames.contains($0) && ($0.contains("WPA2") || $0.contains("802.1X") || $0.contains("PSK") || $0.contains("FT/") || $0.contains("SHA256") || $0.contains("SuiteB") || $0.contains("Suite-B")) }
         if !wpa2Suites.isEmpty {
             labels.append(wpa2Suites.joined(separator: "/"))
         }
@@ -221,14 +225,9 @@ enum IEParser {
     // Bit numbering follows 802.11: bit 0 is LSB of byte 0
     private static let extCapBit_BSS_Transition: Int = 19     // 802.11v
 
-    // RSN AKM Suite OUI values
-    private static let akmSuiteWPA: [UInt8] = [0x00, 0x50, 0xF2, 0x01]
-    private static let akmSuiteWPA2: [UInt8] = [0x00, 0x50, 0xF2, 0x02]
-    private static let akmSuiteFT8021X: [UInt8] = [0x00, 0x50, 0xF2, 0x03]
-    private static let akmSuiteFTPSK: [UInt8] = [0x00, 0x50, 0xF2, 0x04]
-    private static let akmSuiteSAE: [UInt8] = [0x00, 0x50, 0xF2, 0x08]      // WPA3
-    private static let akmSuiteFT_SAE: [UInt8] = [0x00, 0x50, 0xF2, 0x09]   // WPA3
-    private static let akmSuiteOWE: [UInt8] = [0x00, 0x50, 0xF2, 0x12]
+    // RSN suite OUI. Legacy WPA's 00:50:F2 OUI belongs to Vendor Specific
+    // elements and must not be accepted inside an RSN element.
+    private static let rsnOUI: [UInt8] = [0x00, 0x0F, 0xAC]
 
     static func parse(data: Data) -> IEData {
         var result = IEData()
@@ -296,11 +295,6 @@ enum IEParser {
             }
 
             offset += length
-        }
-
-        // If we have FT AKMs (FT over 802.1X or FT PSK), 802.11r is supported
-        if result.akmSuites.contains("FT/802.1X") || result.akmSuites.contains("FT/PSK") {
-            result.supports80211r = true
         }
 
         return result
@@ -508,12 +502,10 @@ enum IEParser {
             if !result.akmSuites.contains(name) {
                 result.akmSuites.append(name)
             }
-            // Check for WPA3
-            if suite == akmSuiteSAE || suite == akmSuiteFT_SAE {
+            if isWPA3AKM(suite) {
                 result.supportsWPA3 = true
             }
-            // Check for 802.11r (FT)
-            if suite == akmSuiteFT8021X || suite == akmSuiteFTPSK || suite == akmSuiteFT_SAE {
+            if isFastTransitionAKM(suite) {
                 result.supports80211r = true
             }
             pos += 4
@@ -608,49 +600,75 @@ enum IEParser {
         return (mcs: maxMCS, streams: maxStreams)
     }
 
-    /// Returns true if `suite` starts with a known Wi‑Fi Alliance OUI.
-    private static func isWFA(_ suite: [UInt8]) -> Bool {
+    private static func isRSNSuite(_ suite: [UInt8]) -> Bool {
         suite.count == 4
-            && suite[0] == 0x00
-            && ((suite[1] == 0x0F && suite[2] == 0xAC)   // WFA OUI (common)
-                || (suite[1] == 0x50 && suite[2] == 0xF2)) // WFA OUI (legacy)
+            && suite[0] == rsnOUI[0]
+            && suite[1] == rsnOUI[1]
+            && suite[2] == rsnOUI[2]
     }
 
     private static func cipherName(_ suite: [UInt8]) -> String {
-        guard isWFA(suite) else { return "Unknown" }
+        guard isRSNSuite(suite) else { return "Unknown" }
         switch suite[3] {
+        case 0x00: return "None"
+        case 0x01: return "WEP-40"
         case 0x02: return "TKIP"
         case 0x04: return "CCMP (AES)"
         case 0x05: return "WEP-104"
-        case 0x06: return "BIP-CMAC"
-        case 0x07: return "GCMP-128"
-        case 0x08: return "GCMP-256"
-        case 0x09: return "CCMP-256"
-        case 0x0A: return "BIP-GMAC-128"
-        case 0x0B: return "BIP-GMAC-256"
-        case 0x0C: return "BIP-CMAC-256"
+        case 0x06: return "BIP-CMAC-128"
+        case 0x07: return "No Group Addressed"
+        case 0x08: return "GCMP-128"
+        case 0x09: return "GCMP-256"
+        case 0x0A: return "CCMP-256"
+        case 0x0B: return "BIP-GMAC-128"
+        case 0x0C: return "BIP-GMAC-256"
+        case 0x0D: return "BIP-CMAC-256"
         default: return "Unknown"
         }
     }
 
     private static func akmSuiteName(_ suite: [UInt8]) -> String {
-        guard isWFA(suite) else { return "Unknown" }
-        let isLegacy = suite[1] == 0x50 && suite[2] == 0xF2
+        guard isRSNSuite(suite) else { return "Unknown" }
         switch suite[3] {
-        case 0x01: return isLegacy ? "WPA" : "802.1X"
-        case 0x02: return isLegacy ? "WPA2" : "PSK"
+        case 0x01: return "802.1X"
+        case 0x02: return "PSK"
         case 0x03: return "FT/802.1X"
         case 0x04: return "FT/PSK"
-        case 0x05: return isLegacy ? "WPA2-SHA256" : "WPA2"
-        case 0x06: return isLegacy ? "PSK-SHA256" : "PSK-SHA256"
+        case 0x05: return "802.1X-SHA256"
+        case 0x06: return "PSK-SHA256"
         case 0x07: return "TDLS"
-        case 0x08: return "SAE (WPA3)"
-        case 0x09: return "FT-SAE (WPA3)"
+        case 0x08: return "SAE"
+        case 0x09: return "FT-SAE"
         case 0x0A: return "AP PeerKey"
-        case 0x0B: return "WPA2-SuiteB"
-        case 0x0C: return "WPA2-SuiteB"
+        case 0x0B: return "802.1X-Suite-B"
+        case 0x0C: return "802.1X-Suite-B-192"
+        case 0x0D: return "FT/802.1X-SHA384"
+        case 0x0E: return "FILS-SHA256"
+        case 0x0F: return "FILS-SHA384"
+        case 0x10: return "FT-FILS-SHA256"
+        case 0x11: return "FT-FILS-SHA384"
         case 0x12: return "OWE"
         default: return "Unknown"
+        }
+    }
+
+    private static func isWPA3AKM(_ suite: [UInt8]) -> Bool {
+        guard isRSNSuite(suite) else { return false }
+        switch suite[3] {
+        case 0x08, 0x09, 0x0C:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static func isFastTransitionAKM(_ suite: [UInt8]) -> Bool {
+        guard isRSNSuite(suite) else { return false }
+        switch suite[3] {
+        case 0x03, 0x04, 0x09, 0x0D, 0x10, 0x11:
+            return true
+        default:
+            return false
         }
     }
 }
