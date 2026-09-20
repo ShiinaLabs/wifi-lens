@@ -385,7 +385,10 @@ enum IEParser {
         case 1:
             // Linux/mac80211 uses this encoding for 80 MHz and for the
             // interop form of 160/80+80. Segment spacing disambiguates them.
-            guard segment1 != 0 else {
+            // A zero center segment is the ordinary 80 MHz encoding. Treat
+            // either zero segment as 80 MHz rather than inferring a
+            // non-contiguous pair from an incomplete operation element.
+            guard segment0 != 0, segment1 != 0 else {
                 result.vhtChannelOperation = .eightyMHz
                 return
             }
@@ -393,7 +396,7 @@ enum IEParser {
             let segmentDifference = abs(segment1 - segment0)
             if segmentDifference == 8 {
                 result.vhtChannelOperation = .oneSixtyMHz
-            } else if segmentDifference > 8 {
+            } else if segmentDifference > 16 {
                 result.vhtChannelOperation = .eightyPlusEightyMHz
             } else {
                 result.vhtChannelOperation = .eightyMHz

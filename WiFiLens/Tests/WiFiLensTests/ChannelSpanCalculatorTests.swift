@@ -256,7 +256,7 @@ struct ChannelSpanCalculatorTests {
             bssid: "AA:BB:CC:DD:EE:88",
             rssi: -50,
             channel: WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 80),
-            ieData: Data([192, 5, 3, 42, 58, 0, 0])
+            ieData: Data([192, 5, 3, 42, 106, 0, 0])
         )
 
         let series = ChannelSpanCalculator.toSeriesData(

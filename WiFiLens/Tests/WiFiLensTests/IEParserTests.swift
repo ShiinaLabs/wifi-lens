@@ -321,14 +321,34 @@ struct IEParserVHTOperationTests {
         #expect(result.operatingChannelWidth == .some(.oneSixtyMHz))
     }
 
-    @Test func newStyle80plus80UsesSeparatedSegments() {
+    @Test func newStyle80MHzKeepsAdjacentSegmentsTogether() {
         let data = singleIE(
             tag: 192,
             value: vhtOperationPayload(channelWidth: 1, segment0: 42, segment1: 58)
         )
         let result = IEParser.parse(data: data)
+        #expect(result.vhtChannelOperation == .some(.eightyMHz))
+        #expect(result.operatingChannelWidth == .some(.eightyMHz))
+    }
+
+    @Test func newStyle80plus80UsesWidelySeparatedSegments() {
+        let data = singleIE(
+            tag: 192,
+            value: vhtOperationPayload(channelWidth: 1, segment0: 42, segment1: 106)
+        )
+        let result = IEParser.parse(data: data)
         #expect(result.vhtChannelOperation == .some(.eightyPlusEightyMHz))
         #expect(result.operatingChannelWidth == .some(.eightyPlusEightyMHz))
+    }
+
+    @Test func newStyle80MHzRejectsZeroCenterSegmentPair() {
+        let data = singleIE(
+            tag: 192,
+            value: vhtOperationPayload(channelWidth: 1, segment0: 0, segment1: 106)
+        )
+        let result = IEParser.parse(data: data)
+        #expect(result.vhtChannelOperation == .some(.eightyMHz))
+        #expect(result.operatingChannelWidth == .some(.eightyMHz))
     }
 
     @Test func malformedVHTOperationDoesNotInventWidth() {

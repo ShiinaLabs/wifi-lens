@@ -88,7 +88,7 @@ import MCP
             bssid: "aa:bb:cc:dd:ee:88",
             channelNumber: 36,
             band: .band5GHz,
-            ieData: Data([192, 5, 3, 42, 58, 0, 0])
+            ieData: Data([192, 5, 3, 42, 106, 0, 0])
         )
 
         let result = MCPServer.handleCallTool(

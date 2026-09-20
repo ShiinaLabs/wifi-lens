@@ -162,7 +162,7 @@ struct AdapterTests {
 
     @Test("Adapt preserves the CoreWLAN fallback for non-contiguous VHT 80+80")
     func adaptUsesFallbackForVHT80Plus80() {
-        let vht80plus80 = Data([192, 5, 3, 42, 58, 0, 0])
+        let vht80plus80 = Data([192, 5, 3, 42, 106, 0, 0])
         let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 80)
         let network = WiFiNetwork(
             ssid: "NonContiguous",
