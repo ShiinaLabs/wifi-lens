@@ -571,42 +571,53 @@ struct IEParserExtendedCapabilitiesTests {
         #expect(result.supports80211v == false)
     }
 
-    @Test func supports80211k() {
-        // bit 32 → byte 4 (32/8=4), bit position 0 (32%8=0)
+    @Test func qosMapBitDoesNotImply80211k() {
+        // Extended Capabilities bit 32 is QoS Map, not 802.11k.
         var ec = [UInt8](repeating: 0, count: 5)
         ec[4] = 0x01
         let data = singleIE(tag: 127, value: ec)
         let result = IEParser.parse(data: data)
-        #expect(result.supports80211k == true)
+        #expect(result.supports80211k == false)
     }
 
-    @Test func supports80211rViaFT_Over_DS() {
-        // bit 5 → byte 0 (5/8=0), bit position 5 (5%8=5)
+    @Test func reservedBit5DoesNotImply80211r() {
+        // Extended Capabilities bit 5 is reserved, not 802.11r.
         var ec = [UInt8](repeating: 0, count: 5)
         ec[0] = 1 << 5  // 0x20
         let data = singleIE(tag: 127, value: ec)
         let result = IEParser.parse(data: data)
-        #expect(result.supports80211r == true)
+        #expect(result.supports80211r == false)
     }
 
-    @Test func allBitsSet() {
-        var ec = [UInt8](repeating: 0xFF, count: 5)
-        // Fix: 802.11v bit 19 check doesn't need clearing, but 802.11k from
-        // RM tag needs the tag present. We only test Extended Cap bits here.
-        // Clear the 802.11k from bit 32 since it's covered by its own test.
-        ec[4] = 0xFE  // clear bit 32 to isolate ext cap detection
+    @Test func extendedCapabilitiesOnlyDerive80211v() {
+        let ec = [UInt8](repeating: 0xFF, count: 5)
         let data = singleIE(tag: 127, value: ec)
         let result = IEParser.parse(data: data)
         #expect(result.supports80211v == true)
-        #expect(result.supports80211r == true)
+        #expect(result.supports80211k == false)
+        #expect(result.supports80211r == false)
     }
 
     @Test func shortExtendedCapabilitiesDoesNotCrash() {
-        // Only 2 bytes — bit 32 (byte 4) is out of range, should gracefully return false
+        // Only 2 bytes — bit 19 is out of range, should gracefully return false
         let ec: [UInt8] = [0xFF, 0xFF]
         let data = singleIE(tag: 127, value: ec)
         let result = IEParser.parse(data: data)
-        #expect(result.supports80211k == false)  // can't check bit 32
+        #expect(result.supports80211v == false)
+    }
+
+    @Test func standardIEsProvideKAndRSeparately() {
+        var ec = [UInt8](repeating: 0, count: 3)
+        ec[2] = 1 << 3 // Extended Capabilities bit 19 → 802.11v
+        let extCapabilities = singleIE(tag: 127, value: ec)
+        let rmEnabled = singleIE(tag: 70, value: [0x01, 0x00, 0x00, 0x00, 0x00])
+        let mobilityDomain = singleIE(tag: 54, value: [0x01, 0x02, 0x00])
+
+        let result = IEParser.parse(data: extCapabilities + rmEnabled + mobilityDomain)
+
+        #expect(result.supports80211v == true)
+        #expect(result.supports80211k == true)
+        #expect(result.supports80211r == true)
     }
 }
 
@@ -614,10 +625,22 @@ struct IEParserExtendedCapabilitiesTests {
 
 struct IEParserRMEnabledTests {
     @Test func rmEnabledTagSets80211k() {
-        // RM Enabled Capabilities IE: any body
+        // RRM Enabled Capabilities IE: five-byte body.
         let data = singleIE(tag: 70, value: [0x01, 0x00, 0x00, 0x00, 0x00])
         let result = IEParser.parse(data: data)
         #expect(result.supports80211k == true)
+    }
+
+    @Test func rmEnabledFourByteBodyIsRejected() {
+        let data = singleIE(tag: 70, value: [0x01, 0x00, 0x00, 0x00])
+        let result = IEParser.parse(data: data)
+        #expect(result.supports80211k == false)
+    }
+
+    @Test func rmEnabledEmptyBodyIsRejected() {
+        let data = singleIE(tag: 70, value: [])
+        let result = IEParser.parse(data: data)
+        #expect(result.supports80211k == false)
     }
 }
 
@@ -632,8 +655,15 @@ struct IEParserMobilityDomainTests {
     }
 
     @Test func mobilityDomainTooShort() {
-        // Length < 2 → no FT
+        // Missing the two-byte MDID and one-byte FT capability/policy.
         let data = singleIE(tag: 54, value: [0x01])
+        let result = IEParser.parse(data: data)
+        #expect(result.supports80211r == false)
+    }
+
+    @Test func mobilityDomainMissingFTCapabilityIsRejected() {
+        // Two-byte MDID without the required FT Capability & Policy byte.
+        let data = singleIE(tag: 54, value: [0x01, 0x02])
         let result = IEParser.parse(data: data)
         #expect(result.supports80211r == false)
     }

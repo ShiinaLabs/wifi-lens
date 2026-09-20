@@ -220,8 +220,6 @@ enum IEParser {
     // Extended Capabilities bit positions (within the IE data bytes)
     // Bit numbering follows 802.11: bit 0 is LSB of byte 0
     private static let extCapBit_BSS_Transition: Int = 19     // 802.11v
-    private static let extCapBit_RM_Capable: Int = 32          // 802.11k
-    private static let extCapBit_FT_Over_DS: Int = 5           // 802.11r
 
     // RSN AKM Suite OUI values
     private static let akmSuiteWPA: [UInt8] = [0x00, 0x50, 0xF2, 0x01]
@@ -278,11 +276,15 @@ enum IEParser {
                 parseExtendedCapabilities(ieData, into: &result)
 
             case tagRMEnabled:
-                result.supports80211k = true
+                // RRM Enabled Capabilities is a five-byte IE. Do not infer
+                // 802.11k from an empty or truncated element.
+                if ieData.count >= 5 {
+                    result.supports80211k = true
+                }
 
             case tagMobilityDomain:
                 // If Mobility Domain IE is present, 802.11r FT is active
-                if length >= 2 {
+                if ieData.count >= 3 {
                     result.supports80211r = true
                 }
 
@@ -537,14 +539,10 @@ enum IEParser {
             return (data[byteIdx] & (1 << bitInByte)) != 0
         }
 
-        // 802.11v: BSS Transition bit (19)
-        result.supports80211v = isSet(19)
-
-        // 802.11k: RM Capable bit (32)
-        if isSet(32) { result.supports80211k = true }
-
-        // 802.11r: FT over DS (5) — complement to FT AKM in RSN
-        if isSet(5) { result.supports80211r = true }
+        // Extended Capabilities currently contributes only 802.11v.
+        // 802.11k comes from the RRM Enabled Capabilities IE and 802.11r
+        // comes from Mobility Domain or FT AKM sources.
+        result.supports80211v = isSet(extCapBit_BSS_Transition)
     }
 
     // MARK: - Helpers
