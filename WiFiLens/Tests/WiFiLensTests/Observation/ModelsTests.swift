@@ -123,6 +123,27 @@ struct AdapterTests {
         #expect(observation.capabilities.channelWidth == 20)
     }
 
+    @Test("HE Capabilities extension reports ax PHY mode")
+    func adaptRecognizesHECapabilitiesAsWiFi6() {
+        // Standard HE Capabilities Extension IE: extension ID 35, followed by
+        // 17 fixed MAC/PHY bytes and the required <=80 MHz MCS/NSS bytes.
+        let heBody = [UInt8](arrayLiteral: 0x23)
+            + [UInt8](repeating: 0, count: 21)
+        let ieData = Data([255, UInt8(heBody.count)] + heBody)
+        let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 80)
+        let network = WiFiNetwork(
+            ssid: "WiFi6",
+            bssid: "AA:BB:CC:DD:EE:35",
+            rssi: -50,
+            channel: channel,
+            ieData: ieData
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        #expect(observation.capabilities.phyMode == "ax")
+    }
+
     @Test("Adapt reports 40 MHz only when HT operation has a secondary channel")
     func adaptUsesHT40Operation() {
         var htOperation = [UInt8](repeating: 0, count: 22)

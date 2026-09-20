@@ -672,7 +672,7 @@ struct IEParserHECapabilitiesTests {
         #expect(result.heSupported == true)
     }
 
-    @Test func heCapabilitiesRejectsTruncatedFixedPayload() {
+    @Test func heCapabilitiesRejectsTruncatedBaseMCSNSS() {
         let body = [0x23] + [UInt8](repeating: 0, count: 20)
         let data = singleIE(tag: 255, value: body)
         let result = IEParser.parse(data: data)
@@ -711,6 +711,15 @@ struct IEParserHECapabilitiesTests {
 
     @Test func heOperationExtensionIsIgnored() {
         let body = [0x24] + heCapabilitiesPayload()
+        let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == false)
+    }
+
+    @Test func legacyPseudoVendorHEFormatIsRejected() {
+        // This is the old, incorrect tag-255 vendor/WFA fixture. It must not
+        // be accepted as a standard HE Capabilities Extension IE.
+        let body: [UInt8] = [0x00, 0x0F, 0xAC, 0x06, 0x00, 0x00, 0x00]
         let data = singleIE(tag: 255, value: body)
         let result = IEParser.parse(data: data)
         #expect(result.heSupported == false)
