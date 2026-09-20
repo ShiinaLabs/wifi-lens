@@ -211,7 +211,11 @@ enum IEParser {
     private static let tagExtendedCapabilities: UInt8 = 127
     private static let tagVHTCapabilities: UInt8 = 191
     private static let tagVHTOperation: UInt8 = 192
-    private static let tagHECapabilities: UInt8 = 255  // vendor-specific with WFA OUI
+    private static let tagExtension: UInt8 = 255
+
+    // Extension Element IDs (Element ID Extension, tag 255)
+    private static let extensionIDHECapabilities: UInt8 = 35
+    private static let extensionIDHEOperation: UInt8 = 36
 
     // Extended Capabilities bit positions (within the IE data bytes)
     // Bit numbering follows 802.11: bit 0 is LSB of byte 0
@@ -282,15 +286,8 @@ enum IEParser {
                     result.supports80211r = true
                 }
 
-            case tagHECapabilities:
-                // HE Capabilities is vendor-specific with WFA OUI
-                if length >= 7 && ieData[0] == 0x00 && ieData[1] == 0x0F && ieData[2] == 0xAC {
-                    // WFA OUI, element ID 0x06 = HE Capabilities
-                    // The actual HE capabilities start after the vendor header
-                    if ieData[3] == 0x06 {
-                        result.heSupported = true
-                    }
-                }
+            case tagExtension:
+                parseExtensionElement(ieData, into: &result)
 
             default:
                 break
@@ -411,6 +408,62 @@ enum IEParser {
             // Reserved channel-width values are unknown.
             result.vhtChannelOperation = nil
         }
+    }
+
+    // MARK: - Extension Elements
+
+    private static func parseExtensionElement(_ data: [UInt8], into result: inout IEData) {
+        guard let extensionID = data.first else { return }
+
+        switch extensionID {
+        case extensionIDHECapabilities:
+            let payload = Array(data.dropFirst())
+            if isValidHECapabilities(payload) {
+                result.heSupported = true
+            }
+        case extensionIDHEOperation:
+            // HE Operation is intentionally left for a later parsing round.
+            break
+        default:
+            break
+        }
+    }
+
+    /// Checks the variable-length HE Capabilities payload without interpreting
+    /// its individual capability bits. The fixed HE MAC/PHY fields are
+    /// followed by MCS/NSS fields selected by PHY capability bits and an
+    /// optional PPE Threshold field.
+    private static func isValidHECapabilities(_ data: [UInt8]) -> Bool {
+        let fixedCapabilitiesLength = 17  // 6-byte MAC + 11-byte PHY
+        let baseMCSNSSLength = 4          // MCS/NSS for <= 80 MHz
+
+        guard data.count >= fixedCapabilitiesLength else { return false }
+
+        // PHY Capabilities byte 0 is at payload offset 6. Its width bits
+        // select optional 160 MHz and 80+80 MHz MCS/NSS fields.
+        let phyCapabilitiesByte0 = data[6]
+        var requiredLength = fixedCapabilitiesLength + baseMCSNSSLength
+        if (phyCapabilitiesByte0 & 0x08) != 0 {
+            requiredLength += 4  // 160 MHz MCS/NSS
+        }
+        if (phyCapabilitiesByte0 & 0x10) != 0 {
+            requiredLength += 4  // 80+80 MHz MCS/NSS
+        }
+        guard data.count >= requiredLength else { return false }
+
+        // PHY Capabilities byte 6 is at payload offset 12. If PPE Threshold
+        // information is present, the first byte is its header and the rest
+        // is a bit-packed field whose size depends on RU and NSS counts.
+        let phyCapabilitiesByte6 = data[12]
+        guard (phyCapabilitiesByte6 & 0x80) != 0 else { return true }
+        guard data.count > requiredLength else { return false }
+
+        let ppeHeader = data[requiredLength]
+        let ruCount = (ppeHeader & 0x78).nonzeroBitCount
+        let nssCount = Int(ppeHeader & 0x07) + 1
+        let ppeBits = 7 + ruCount * nssCount * 6
+        let ppeLength = (ppeBits + 7) / 8
+        return data.count >= requiredLength + ppeLength
     }
 
     // MARK: - RSN (WPA2/WPA3)

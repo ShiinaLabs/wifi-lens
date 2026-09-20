@@ -26,6 +26,36 @@ private func vhtOperationPayload(
     [channelWidth, segment0, segment1, 0xFF, 0xFF]
 }
 
+/// HE Capabilities payload after the Extension ID byte.
+private func heCapabilitiesPayload(
+    phyByte0: UInt8 = 0,
+    phyByte6: UInt8 = 0,
+    ppeHeader: UInt8? = nil
+) -> [UInt8] {
+    var payload = [UInt8](repeating: 0, count: 17) // HE MAC (6) + PHY (11)
+    payload[6] = phyByte0
+    payload[12] = phyByte6
+    payload += [UInt8](repeating: 0, count: 4) // <= 80 MHz MCS/NSS
+
+    if (phyByte0 & 0x08) != 0 {
+        payload += [UInt8](repeating: 0, count: 4) // 160 MHz MCS/NSS
+    }
+    if (phyByte0 & 0x10) != 0 {
+        payload += [UInt8](repeating: 0, count: 4) // 80+80 MHz MCS/NSS
+    }
+
+    if (phyByte6 & 0x80) != 0, let ppeHeader {
+        payload.append(ppeHeader)
+        let ruCount = (ppeHeader & 0x78).nonzeroBitCount
+        let nssCount = Int(ppeHeader & 0x07) + 1
+        let ppeBits = 7 + ruCount * nssCount * 6
+        let ppeLength = (ppeBits + 7) / 8
+        payload += [UInt8](repeating: 0, count: max(0, ppeLength - 1))
+    }
+
+    return payload
+}
+
 // MARK: - SSID
 
 struct IEParserSSIDTests {
@@ -609,38 +639,92 @@ struct IEParserMobilityDomainTests {
     }
 }
 
-// MARK: - HE Capabilities (802.11ax, tag 255)
+// MARK: - HE Capabilities (802.11ax Extension IE 255, extension ID 35)
 
 struct IEParserHECapabilitiesTests {
     @Test func heCapabilitiesDetected() {
-        // Vendor-specific IE: OUI(3) + OUI type(1) + data
-        // WFA OUI = 00:0F:AC, HE Capabilities type = 0x06
-        let body: [UInt8] = [0x00, 0x0F, 0xAC, 0x06, 0x00, 0x00, 0x00]
+        let body = [0x23] + heCapabilitiesPayload()
         let data = singleIE(tag: 255, value: body)
         let result = IEParser.parse(data: data)
         #expect(result.heSupported == true)
     }
 
-    @Test func wrongOUINoHE() {
-        // Different OUI
-        let body: [UInt8] = [0x00, 0x10, 0x18, 0x06, 0x00, 0x00, 0x00]
+    @Test func heCapabilitiesSupportsOptional160MHzMCSNSS() {
+        let body = [0x23] + heCapabilitiesPayload(phyByte0: 0x08)
+        let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == true)
+    }
+
+    @Test func heCapabilitiesSupportsOptional80Plus80MHzMCSNSS() {
+        let body = [0x23] + heCapabilitiesPayload(phyByte0: 0x10)
+        let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == true)
+    }
+
+    @Test func heCapabilitiesSupportsPPEThreshold() {
+        // One RU bit, one spatial stream: header + one packed data byte.
+        let payload = heCapabilitiesPayload(phyByte6: 0x80, ppeHeader: 0x08)
+        let body = [0x23] + payload
+        let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == true)
+    }
+
+    @Test func heCapabilitiesRejectsTruncatedFixedPayload() {
+        let body = [0x23] + [UInt8](repeating: 0, count: 20)
         let data = singleIE(tag: 255, value: body)
         let result = IEParser.parse(data: data)
         #expect(result.heSupported == false)
     }
 
-    @Test func wrongOUITypeNoHE() {
-        // WFA OUI but wrong type (not 0x06)
-        let body: [UInt8] = [0x00, 0x0F, 0xAC, 0x04, 0x00, 0x00, 0x00]
+    @Test func heCapabilitiesRejectsTruncatedOptionalMCSNSS() {
+        let payload = heCapabilitiesPayload(phyByte0: 0x08)
+        let body = [0x23] + [UInt8](payload.dropLast())
         let data = singleIE(tag: 255, value: body)
         let result = IEParser.parse(data: data)
         #expect(result.heSupported == false)
     }
 
-    @Test func tooShortNoHE() {
-        // Too short for OUI + type check
-        let body: [UInt8] = [0x00, 0x0F, 0xAC]
+    @Test func heCapabilitiesRejectsTruncatedPPEThreshold() {
+        let payload = heCapabilitiesPayload(phyByte6: 0x80, ppeHeader: 0x08)
+        let body = [0x23] + [UInt8](payload.dropLast())
         let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == false)
+    }
+
+    @Test func heCapabilitiesRejectsMissingPPEHeader() {
+        let body = [0x23] + heCapabilitiesPayload(phyByte6: 0x80)
+        let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == false)
+    }
+
+    @Test func nonHEExtensionIsIgnored() {
+        let body = [0x25] + heCapabilitiesPayload()
+        let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == false)
+    }
+
+    @Test func heOperationExtensionIsIgnored() {
+        let body = [0x24] + heCapabilitiesPayload()
+        let data = singleIE(tag: 255, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == false)
+    }
+
+    @Test func vendorSpecificElementIsNotHECapabilities() {
+        let body = [0x00, 0x0F, 0xAC, 0x06] + heCapabilitiesPayload()
+        let data = singleIE(tag: 221, value: body)
+        let result = IEParser.parse(data: data)
+        #expect(result.heSupported == false)
+    }
+
+    @Test func emptyExtensionIsIgnored() {
+        let data = singleIE(tag: 255, value: [])
         let result = IEParser.parse(data: data)
         #expect(result.heSupported == false)
     }
