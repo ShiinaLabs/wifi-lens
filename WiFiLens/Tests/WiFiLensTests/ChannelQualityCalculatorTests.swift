@@ -59,6 +59,28 @@ struct ChannelQualityCalculatorTests {
         #expect(r160.first(where: { $0.channel == 44 })?.qualityScore == 64)
     }
 
+    @Test func nonContiguous80Plus80Uses80MHzScalarFallback() async throws {
+        let width80 = ChannelQualityCalculator.compute(
+            aps: [ChannelQualityCalculator.APInfo(
+                channel: 44, rssi: -30, channelWidth: "80", band: "5"
+            )],
+            currentChannel: nil,
+            supportedBands: ["5"]
+        )
+        let width80Plus80 = ChannelQualityCalculator.compute(
+            aps: [ChannelQualityCalculator.APInfo(
+                channel: 44, rssi: -30, channelWidth: "80+80", band: "5"
+            )],
+            currentChannel: nil,
+            supportedBands: ["5"]
+        )
+
+        #expect(width80.first(where: { $0.channel == 44 })?.qualityScore ==
+            width80Plus80.first(where: { $0.channel == 44 })?.qualityScore)
+        #expect(width80.first(where: { $0.channel == 40 })?.qualityScore ==
+            width80Plus80.first(where: { $0.channel == 40 })?.qualityScore)
+    }
+
     @Test func band24Multiplier() async throws {
         // 2.4 GHz band: bandMul=1.8
         // rssiWeight = (50)/70 = 0.714, penalty = 1.0*0.714*1.0*1.8*18.0 ≈ 23.1 → 23, score = 77

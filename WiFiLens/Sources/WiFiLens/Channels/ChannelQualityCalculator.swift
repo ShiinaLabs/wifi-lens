@@ -386,10 +386,10 @@ enum ChannelQualityCalculator {
             guard factor > 0 else { continue }
             let rssiWeight = max(0, min(1, Double(ap.rssi + 100) / 70.0))
             let widthMul: Double = switch ap.channelWidth {
-            case "160": 2.0
-            case "80":  1.5
-            case "40":  1.2
-            default:    1.0
+            case "160":     2.0
+            case "80", "80+80": 1.5
+            case "40":      1.2
+            default:         1.0
             }
             let bandMul: Double = band == "24" ? 1.8 : 1.0
             penalty += factor * rssiWeight * widthMul * bandMul * 18.0
@@ -423,7 +423,15 @@ enum ChannelQualityCalculator {
         // channels carry data only). widthMul in computeInterference partially
         // compensates wider APs.
         guard let channelBand = ChannelBand(id: band) else { return 0 }
-        let apWidth = Int(other.channelWidth) ?? 20
+        // 80+80 is non-contiguous and cannot be represented by the scalar
+        // channelBlock model. Use one 80 MHz segment for defensive geometry.
+        let apWidth: Int = switch other.channelWidth {
+        case "160": 160
+        case "80", "80+80": 80
+        case "40": 40
+        case "20": 20
+        default: 20
+        }
         let candidateSpan = ChannelSpanCalculator.channelBlock(
             primaryChannel: channel, widthMHz: 20, band: channelBand, spanDirection: nil
         )

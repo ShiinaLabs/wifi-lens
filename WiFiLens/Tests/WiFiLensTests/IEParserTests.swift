@@ -296,7 +296,10 @@ struct IEParserVHTOperationTests {
 
     @Test func channelWidth80plus80() {
         // Direct/deprecated Channel Width byte = 3 → non-contiguous 80+80.
-        let data = singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 3))
+        let data = singleIE(
+            tag: 192,
+            value: vhtOperationPayload(channelWidth: 3, segment0: 42, segment1: 106)
+        )
         let result = IEParser.parse(data: data)
         #expect(result.vhtChannelOperation == .some(.eightyPlusEightyMHz))
         #expect(result.operatingChannelWidth == .some(.eightyPlusEightyMHz))

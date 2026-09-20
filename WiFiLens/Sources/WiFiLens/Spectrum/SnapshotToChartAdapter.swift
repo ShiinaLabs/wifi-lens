@@ -11,7 +11,7 @@ enum SnapshotToChartAdapter {
     static func channelWidthMHz(from widthStr: String) -> Int {
         switch widthStr {
         case "160": return 160
-        case "80":  return 80
+        case "80", "80+80": return 80
         case "40":  return 40
         case "20":  return 20
         default:    return 20
