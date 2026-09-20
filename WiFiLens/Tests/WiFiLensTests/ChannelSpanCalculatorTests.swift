@@ -4,10 +4,14 @@ import Testing
 
 struct ChannelSpanCalculatorTests {
 
-    private func htOperationIE(primaryChannel: UInt8, offset: UInt8) -> Data {
+    private func htOperationIE(
+        primaryChannel: UInt8,
+        offset: UInt8,
+        staChannelWidthAny: Bool = false
+    ) -> Data {
         var payload = [UInt8](repeating: 0, count: 22)
         payload[0] = primaryChannel
-        payload[1] = offset & 0x03
+        payload[1] = (offset & 0x03) | (staChannelWidthAny ? 0x04 : 0)
         return Data([61, UInt8(payload.count)] + payload)
     }
 
@@ -216,7 +220,7 @@ struct ChannelSpanCalculatorTests {
             bssid: "AA:BB:CC:DD:EE:22",
             rssi: -50,
             channel: WiFiChannel(band: .band24GHz, channelNumber: 6, channelWidthMHz: 40),
-            ieData: htOperationIE(primaryChannel: 6, offset: 1)
+            ieData: htOperationIE(primaryChannel: 6, offset: 1, staChannelWidthAny: true)
         )
         let below = WiFiNetwork(
             ssid: "Below",
@@ -230,7 +234,7 @@ struct ChannelSpanCalculatorTests {
                 channelWidthMHz: 40,
                 spanDirection: .upper
             ),
-            ieData: htOperationIE(primaryChannel: 11, offset: 3)
+            ieData: htOperationIE(primaryChannel: 11, offset: 3, staChannelWidthAny: true)
         )
 
         let series = ChannelSpanCalculator.toSeriesData(

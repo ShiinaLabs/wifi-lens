@@ -64,7 +64,7 @@ import MCP
         ht20[1] = 0
         var ht40 = [UInt8](repeating: 0, count: 22)
         ht40[0] = 6
-        ht40[1] = 1
+        ht40[1] = 0x05 // STA Channel Width Any + secondary channel above
 
         let known20 = makeNetwork(
             bssid: "aa:bb:cc:dd:ee:20",

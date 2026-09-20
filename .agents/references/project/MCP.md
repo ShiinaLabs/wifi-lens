@@ -56,7 +56,7 @@ List nearby Wi‑Fi networks. Returns an array of network objects.
 ]
 ```
 
-Fields are derived from the latest scan and parsed Information Elements (IE). `phyMode` labels are `ax` (Wi‑Fi 6/6E), `ac`, `n`, or empty. `channelWidth` is the IE-derived current operating width: `160`, `80`, `40`, `20`, or empty when the width is unknown, with wider VHT operation values taking precedence over HT Operation. An HT Operation secondary-channel offset of `0` produces a known `20`; offsets `1` and `3` produce `40`; a reserved offset or missing/malformed HT Operation remains empty. HT Capabilities support alone does not produce a `40` result.
+Fields are derived from the latest scan and parsed Information Elements (IE). `phyMode` labels are `ax` (Wi‑Fi 6/6E), `ac`, `n`, or empty. `channelWidth` is the IE-derived current operating width: `160`, `80`, `40`, `20`, or empty when the width is unknown, with wider VHT operation values taking precedence over HT Operation. An HT Operation secondary-channel offset of `0` produces a known `20`; offsets `1` and `3` produce `40` only when the STA Channel Width bit is set, otherwise the operation is treated as explicit `20`; a reserved offset or missing/malformed HT Operation remains empty. HT Capabilities support alone does not produce a `40` result.
 
 ### `get_network_detail`
 

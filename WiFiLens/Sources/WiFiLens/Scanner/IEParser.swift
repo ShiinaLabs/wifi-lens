@@ -256,18 +256,23 @@ enum IEParser {
 
     private static func parseHTOperation(_ data: [UInt8], into result: inout IEData) {
         // Byte 0 is the primary channel. Byte 1's HT Operation Information
-        // subset carries the secondary channel offset. Its STA Channel Width
-        // bit is a separate station capability and is intentionally not used
-        // to determine the BSS operating width here.
+        // subset carries both the secondary channel offset (bits 0–1) and the
+        // STA Channel Width flag (bit 2). An offset of 1 or 3 is an active
+        // HT40 secondary channel only when that flag is set; otherwise the
+        // operation is explicitly 20 MHz.
         guard data.count >= 2 else { return }
-        let secondaryChannelOffset = data[1] & 0x03
+        let operationInfo = data[1]
+        let secondaryChannelOffset = operationInfo & 0x03
+        let staChannelWidthAny = (operationInfo & 0x04) != 0
         switch secondaryChannelOffset {
         case 0:
             result.htChannelOperation = .twentyMHz
-        case 1:
+        case 1 where staChannelWidthAny:
             result.htChannelOperation = .fortyMHzAbove
-        case 3:
+        case 3 where staChannelWidthAny:
             result.htChannelOperation = .fortyMHzBelow
+        case 1, 3:
+            result.htChannelOperation = .twentyMHz
         default:
             // Offset 2 is reserved. Keep the operation unknown rather than
             // treating a malformed/reserved value as an explicit 20 MHz state.

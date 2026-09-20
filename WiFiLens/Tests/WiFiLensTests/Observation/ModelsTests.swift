@@ -127,7 +127,7 @@ struct AdapterTests {
     func adaptUsesHT40Operation() {
         var htOperation = [UInt8](repeating: 0, count: 22)
         htOperation[0] = 6 // primary channel
-        htOperation[1] = 1 // secondary channel above
+        htOperation[1] = 0x05 // STA Channel Width Any + secondary channel above
         let ieData = Data([61, UInt8(htOperation.count)] + htOperation)
         let channel = WiFiChannel(band: .band24GHz, channelNumber: 6, channelWidthMHz: 20)
         let network = WiFiNetwork(
