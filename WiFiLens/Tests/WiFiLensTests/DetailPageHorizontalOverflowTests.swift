@@ -45,6 +45,18 @@ struct DetailPageHorizontalOverflowTests {
         return (controller, window)
     }
 
+    private func scrollViews(in root: NSView) -> [NSScrollView] {
+        var result: [NSScrollView] = []
+        func walk(_ subject: NSView) {
+            if let scroll = subject as? NSScrollView {
+                result.append(scroll)
+            }
+            subject.subviews.forEach(walk)
+        }
+        walk(root)
+        return result
+    }
+
     /// The width the content requires when the column proposes `width`. A page with a
     /// `minWidth` hint above the proposal reports that minimum — the clipping regression.
     private func requiredWidth(of view: some View, width: CGFloat = Self.detailWidth) -> CGFloat {
@@ -220,13 +232,43 @@ struct DetailPageHorizontalOverflowTests {
     @Test("Channels simple cards keep localized metrics in a compact panel")
     func channelsSimpleCardsKeepLocalizedMetricsCompact() {
         let viewModel = makeScannerViewModel(ssid: "Office")
+        let russianLocale = Locale(identifier: "ru")
         let view = ChannelQualityView(channels: viewModel.channelRecommendations, mode: .simple)
+            .environment(\.locale, russianLocale)
         let size = scrollDocumentSize(of: view)
 
         #expect(
             (size?.height ?? 0) <= 280,
             "Channel cards should keep the localized metric panel to the same compact three-row shape as the English layout; measured document height: \(size?.height ?? 0)"
         )
+
+        #expect(String(localized: "channels.card.co_label", locale: russianLocale) == "Совп.:")
+        #expect(String(localized: "channels.card.adj_label", locale: russianLocale) == "· Сосед.:")
+    }
+
+    @Test("Russian compact table headers preserve readable technical terminology")
+    func russianCompactTableHeadersPreserveReadableTechnicalTerminology() {
+        let locale = Locale(identifier: "ru")
+
+        #expect(String(localized: "channels.table.col.aps", locale: locale) == "AP")
+        #expect(String(localized: "channels.table.col.adjacent", locale: locale) == "Сосед.")
+        #expect(String(localized: "channels.table.col.co_ch", locale: locale) == "Совп.")
+        #expect(String(localized: "channels.table.col.ch", locale: locale) == "Канал")
+        #expect(String(localized: "channels.table.col.score", locale: locale) == "Оценка")
+        #expect(String(localized: "channels.table.col.class", locale: locale) == "Класс")
+        #expect(String(localized: "table.column.lock", locale: locale) == "Блок.")
+    }
+
+    @Test("Channels table keeps the existing vertical-only scrolling model")
+    func channelsTableKeepsVerticalOnlyScrolling() {
+        let viewModel = makeScannerViewModel(ssid: "Office")
+        let view = ChannelQualityView(channels: viewModel.channelRecommendations, mode: .table)
+            .environment(\.locale, Locale(identifier: "ru"))
+        let (controller, _) = host(view)
+        let tableScroll = scrollViews(in: controller.view).first
+
+        #expect(tableScroll?.hasVerticalScroller == true)
+        #expect(tableScroll?.hasHorizontalScroller == false)
     }
 
     @Test("Channels table mode fits the minimum detail width")

@@ -37,18 +37,18 @@ struct NativeTableView: NSViewRepresentable {
 
         let visibilityColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("visibility"))
         visibilityColumn.title = String(localized: "table.column.visibility", comment: "Visibility column header in network table")
-        visibilityColumn.width = 80
-        visibilityColumn.minWidth = 70
-        visibilityColumn.maxWidth = 100
+        visibilityColumn.width = 42
+        visibilityColumn.minWidth = 38
+        visibilityColumn.maxWidth = 46
         visibilityColumn.isEditable = false
         tableView.addTableColumn(visibilityColumn)
 
         if onToggleVisibilityLocked != nil {
             let lockColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("lock"))
             lockColumn.title = String(localized: "table.column.lock", comment: "Lock column header in network table")
-            lockColumn.width = 90
-            lockColumn.minWidth = 80
-            lockColumn.maxWidth = 110
+            lockColumn.width = 28
+            lockColumn.minWidth = 24
+            lockColumn.maxWidth = 32
             lockColumn.isEditable = false
             tableView.addTableColumn(lockColumn)
         }

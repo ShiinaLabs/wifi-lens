@@ -151,3 +151,4 @@ Standardized terms for `en`, `de`, `es`, `fr`, `ja`, `ru`, `zh-Hans` translation
 5. Avoid unnecessary English loanwords when an established Russian networking or macOS term exists.
 6. Use `…` for ellipses and Russian decimal commas in localized prose/units where the value is literal.
 7. Product and brand names (`WiFi Lens`, `Finder`, `App Store`, `GitHub`, carrier names) are not translated.
+8. Compact table and card metrics use concise terms: keep `AP`, and use `Сосед.`, `Совп.`, and `Блок.` where the UI compares adjacent, co-channel, or lock metrics. Full explanatory wording belongs in prose, not narrow headers.

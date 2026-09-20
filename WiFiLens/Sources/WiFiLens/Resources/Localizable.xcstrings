@@ -12868,7 +12868,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Смежные каналы"
+            "value": "Сосед."
           }
         }
       }
@@ -12916,7 +12916,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Точки доступа"
+            "value": "AP"
           }
         }
       }
@@ -12964,7 +12964,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Диапазон"
+            "value": "Диап."
           }
         }
       }
@@ -13108,7 +13108,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На том же канале"
+            "value": "Совп."
           }
         }
       }
@@ -13156,7 +13156,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Помехи"
+            "value": "Помех."
           }
         }
       }
@@ -13204,7 +13204,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Уровень"
+            "value": "Уров."
           }
         }
       }
@@ -13252,7 +13252,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Перекрытие"
+            "value": "Перекр."
           }
         }
       }
@@ -43747,7 +43747,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ширина канала"
+            "value": "Шир."
           }
         }
       }
@@ -43843,7 +43843,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Код страны"
+            "value": "Код"
           }
         }
       }
@@ -44035,7 +44035,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Скрытая сеть"
+            "value": "Скр."
           }
         }
       }
@@ -44083,7 +44083,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Блокировка"
+            "value": "Блок."
           }
         }
       }
@@ -44227,7 +44227,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Безопасность"
+            "value": "Безоп."
           }
         }
       }
@@ -44275,7 +44275,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Последнее обнаружение"
+            "value": "Обнар."
           }
         }
       }
@@ -44418,7 +44418,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Видимость"
+            "value": "Вид."
           }
         }
       }
