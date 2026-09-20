@@ -30,7 +30,10 @@ enum NetworkTableRowSorter {
         case "rssi": cmp = a.rssi > b.rssi ? .orderedAscending : a.rssi < b.rssi ? .orderedDescending : .orderedSame
         case "bssid": cmp = a.bssid.localizedCaseInsensitiveCompare(b.bssid)
         case "phyMode": cmp = a.phyMode.localizedCaseInsensitiveCompare(b.phyMode)
-        case "channelWidth": cmp = Int(a.channelWidth) ?? 0 < Int(b.channelWidth) ?? 0 ? .orderedAscending : Int(a.channelWidth) ?? 0 > Int(b.channelWidth) ?? 0 ? .orderedDescending : .orderedSame
+        case "channelWidth":
+            let aWidth = channelWidthSortValue(a.channelWidth)
+            let bWidth = channelWidthSortValue(b.channelWidth)
+            cmp = aWidth < bWidth ? .orderedAscending : aWidth > bWidth ? .orderedDescending : .orderedSame
         case "supportsK": cmp = a.supportsK == b.supportsK ? .orderedSame : a.supportsK ? .orderedDescending : .orderedAscending
         case "supportsR": cmp = a.supportsR == b.supportsR ? .orderedSame : a.supportsR ? .orderedDescending : .orderedAscending
         case "supportsV": cmp = a.supportsV == b.supportsV ? .orderedSame : a.supportsV ? .orderedDescending : .orderedAscending
@@ -48,6 +51,13 @@ enum NetworkTableRowSorter {
         case .orderedAscending: return .orderedDescending
         case .orderedDescending: return .orderedAscending
         case .orderedSame: return .orderedSame
+        }
+    }
+
+    private static func channelWidthSortValue(_ width: String) -> Int {
+        switch width {
+        case "80+80": return 80
+        default: return Int(width) ?? 0
         }
     }
 }

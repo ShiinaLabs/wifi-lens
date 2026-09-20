@@ -11,6 +11,9 @@ struct NetworkSnapshot: Codable {
     let band: String
     let phyMode: String
     let channelWidth: String
+    /// Scalar width used for historical chart geometry. Unknown IE labels use
+    /// the CoreWLAN fallback; non-contiguous 80+80 uses one 80 MHz segment.
+    let channelWidthMHz: Int
     let mcs: String
     let nss: String
     let security: String
@@ -30,6 +33,7 @@ struct NetworkSnapshot: Codable {
         band: String,
         phyMode: String,
         channelWidth: String,
+        channelWidthMHz: Int? = nil,
         mcs: String,
         nss: String,
         security: String,
@@ -48,6 +52,7 @@ struct NetworkSnapshot: Codable {
         self.band = band
         self.phyMode = phyMode
         self.channelWidth = channelWidth
+        self.channelWidthMHz = channelWidthMHz ?? Self.scalarWidth(for: channelWidth)
         self.mcs = mcs
         self.nss = nss
         self.security = security
@@ -69,6 +74,8 @@ struct NetworkSnapshot: Codable {
         band = try container.decode(String.self, forKey: .band)
         phyMode = try container.decode(String.self, forKey: .phyMode)
         channelWidth = try container.decode(String.self, forKey: .channelWidth)
+        channelWidthMHz = try container.decodeIfPresent(Int.self, forKey: .channelWidthMHz)
+            ?? Self.scalarWidth(for: channelWidth)
         mcs = try container.decode(String.self, forKey: .mcs)
         nss = try container.decode(String.self, forKey: .nss)
         security = try container.decode(String.self, forKey: .security)
@@ -78,5 +85,15 @@ struct NetworkSnapshot: Codable {
         supportsV = try container.decode(Bool.self, forKey: .supportsV)
         supportsWPA3 = try container.decode(Bool.self, forKey: .supportsWPA3)
         isHiddenSSID = try container.decodeIfPresent(Bool.self, forKey: .isHiddenSSID) ?? false
+    }
+
+    static func scalarWidth(for label: String) -> Int {
+        switch label {
+        case "160": return 160
+        case "80", "80+80": return 80
+        case "40": return 40
+        case "20": return 20
+        default: return 20
+        }
     }
 }

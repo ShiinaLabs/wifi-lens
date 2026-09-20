@@ -6,15 +6,10 @@ import ChartLens
 /// Mirrors ChannelSpanCalculator.toSeriesData() but operates on snapshots instead of WiFiNetwork.
 enum SnapshotToChartAdapter {
 
-    /// Parse channel width string ("160"/"80"/"40"/"20"/"") to MHz integer.
+    /// Parse scalar channel widths for geometry. 80+80 remains non-contiguous
+    /// and uses the existing narrow fallback until segment centers are modeled.
     static func channelWidthMHz(from widthStr: String) -> Int {
-        switch widthStr {
-        case "160": return 160
-        case "80":  return 80
-        case "40":  return 40
-        case "20":  return 20
-        default:    return 20
-        }
+        NetworkSnapshot.scalarWidth(for: widthStr)
     }
 
     /// For each BSSID in the session, find the snapshot whose timestamp is closest to `targetTime`.
@@ -52,7 +47,7 @@ enum SnapshotToChartAdapter {
         for (bssid, snap) in snapshotsByBSSID {
             guard let snapBand = ChannelBand(id: snap.band), snapBand == band else { continue }
 
-            let widthMHz = channelWidthMHz(from: snap.channelWidth)
+            let widthMHz = snap.channelWidthMHz
             let (left, right) = ChannelSpanCalculator.channelBlock(
                 primaryChannel: snap.channel,
                 widthMHz: widthMHz,

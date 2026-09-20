@@ -147,12 +147,21 @@ struct WiFiNetworkTests {
 // MARK: - ScannerViewModel behavior
 
 @Suite("ScannerViewModel behavior") @MainActor struct ScannerViewModelBehaviorTests {
-    private func makeNetwork(ssid: String?, bssid: String, band: ChannelBand, channel: Int, rssi: Int = -50) -> WiFiNetwork {
+    private func makeNetwork(
+        ssid: String?,
+        bssid: String,
+        band: ChannelBand,
+        channel: Int,
+        channelWidthMHz: Int = 20,
+        rssi: Int = -50,
+        ieData: Data? = nil
+    ) -> WiFiNetwork {
         WiFiNetwork(
             ssid: ssid,
             bssid: bssid,
             rssi: rssi,
-            channel: WiFiChannel(band: band, channelNumber: channel, channelWidthMHz: 20)
+            channel: WiFiChannel(band: band, channelNumber: channel, channelWidthMHz: channelWidthMHz),
+            ieData: ieData
         )
     }
 
@@ -172,6 +181,42 @@ struct WiFiNetworkTests {
         #expect(vm.cachedCombinedTableRows.count == 3)
         #expect(vm.cachedBandSummary.contains(": 2"))
         #expect(vm.cachedBandSummary.contains(": 1"))
+    }
+
+    @Test("table width labels distinguish known 20 MHz from unknown")
+    func tableWidthLabelsDistinguishKnown20FromUnknown() {
+        var ht20 = [UInt8](repeating: 0, count: 22)
+        ht20[0] = 6
+        ht20[1] = 0
+        let known20 = WiFiNetwork(
+            ssid: "Known20",
+            bssid: "00:11:22:33:44:20",
+            rssi: -50,
+            channel: WiFiChannel(band: .band24GHz, channelNumber: 6),
+            ieData: Data([61, UInt8(ht20.count)] + ht20)
+        )
+        let unknown = WiFiNetwork(
+            ssid: "Unknown",
+            bssid: "00:11:22:33:44:21",
+            rssi: -55,
+            channel: WiFiChannel(band: .band24GHz, channelNumber: 11),
+            ieData: Data([61, 1, 11])
+        )
+        let vht80 = WiFiNetwork(
+            ssid: "VHT80",
+            bssid: "00:11:22:33:44:80",
+            rssi: -52,
+            channel: WiFiChannel(band: .band5GHz, channelNumber: 36),
+            ieData: Data([192, 5, 1, 42, 0, 0, 0])
+        )
+        let vm = ScannerViewModel()
+
+        vm.debugApplyNetworksForTesting([known20, unknown, vht80], supportedBands: [.band24GHz, .band5GHz])
+
+        let rowsByID = Dictionary(uniqueKeysWithValues: vm.cachedCombinedTableRows.map { ($0.id, $0) })
+        #expect(rowsByID[known20.id]?.channelWidth == "20")
+        #expect(rowsByID[unknown.id]?.channelWidth == "")
+        #expect(rowsByID[vht80.id]?.channelWidth == "80")
     }
 
     @Test("caches update when a new scan arrives")
@@ -313,5 +358,24 @@ struct WiFiNetworkTests {
             vm.signalHistory.allSnapshots[network.bssid]?.map(\.timestamp)
                 == [firstScan, secondScan, thirdScan]
         )
+    }
+
+    @Test("snapshot keeps CoreWLAN scalar width when IE operation width is unknown")
+    func snapshotPreservesScalarWidthForUnknownIEOperation() {
+        let vm = ScannerViewModel()
+        let network = makeNetwork(
+            ssid: "Unknown width",
+            bssid: "00:11:22:33:44:80",
+            band: .band5GHz,
+            channel: 36,
+            channelWidthMHz: 80,
+            ieData: Data([61, 1, 36])
+        )
+
+        vm.debugApplyNetworksForTesting([network], supportedBands: [.band5GHz])
+
+        let snapshot = vm.signalHistory.allSnapshots[network.bssid]?.last
+        #expect(snapshot?.channelWidth == "")
+        #expect(snapshot?.channelWidthMHz == 80)
     }
 }

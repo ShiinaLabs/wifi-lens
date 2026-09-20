@@ -637,6 +637,7 @@ final class ScannerViewModel {
             band: network.channel.band.id,
             phyMode: phyMode,
             channelWidth: channelWidth,
+            channelWidthMHz: network.channel.channelWidthMHz,
             mcs: mcs,
             nss: nss,
             security: security,
@@ -1038,10 +1039,7 @@ final class ScannerViewModel {
     }
 
     private func chanWidthLabel(_ ie: IEData) -> String {
-        if ie.supports160MHz { return "160" }
-        if ie.supports80MHz { return "80" }
-        if ie.supports40MHz { return "40" }
-        return ""
+        ie.operatingChannelWidth?.label ?? ""
     }
 }
 

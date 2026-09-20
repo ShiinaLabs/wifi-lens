@@ -4,7 +4,7 @@ import AppKit
 
 @MainActor
 struct NetworkTableRowSorterTests {
-    private func row(_ id: String, rssi: Int, ssid: String) -> NetworkTableRow {
+    private func row(_ id: String, rssi: Int, ssid: String, channelWidth: String = "80") -> NetworkTableRow {
         NetworkTableRow(
             id: id,
             bandID: "5",
@@ -17,7 +17,7 @@ struct NetworkTableRowSorterTests {
             color: .blue,
             isFilteredOut: false,
             phyMode: "ax",
-            channelWidth: "80",
+            channelWidth: channelWidth,
             supportsK: true,
             supportsR: false,
             supportsV: true,
@@ -64,5 +64,25 @@ struct NetworkTableRowSorterTests {
             by: [NSSortDescriptor(key: "rssi", ascending: true)]
         )
         #expect(ascendingSorted.map(\.id) == ["strong", "weak"])
+    }
+
+    @Test func sortsVHT80Plus80ByScalarWidth() {
+        let rows = [
+            row("80plus80", rssi: -50, ssid: "80+80", channelWidth: "80+80"),
+            row("40", rssi: -50, ssid: "40", channelWidth: "40"),
+            row("160", rssi: -50, ssid: "160", channelWidth: "160"),
+        ]
+
+        let ascending = NetworkTableRowSorter.sort(
+            rows,
+            by: [NSSortDescriptor(key: "channelWidth", ascending: true)]
+        )
+        #expect(ascending.map(\.id) == ["40", "80plus80", "160"])
+
+        let descending = NetworkTableRowSorter.sort(
+            rows,
+            by: [NSSortDescriptor(key: "channelWidth", ascending: false)]
+        )
+        #expect(descending.map(\.id) == ["160", "80plus80", "40"])
     }
 }

@@ -176,6 +176,20 @@ import ChartLens
         #expect(score > 85)
     }
 
+    @Test func computeScoreTreatsVHT80Plus80AsWideOperation() {
+        let score = BandChartViewModel.computeScore(
+            rssi: -30, channelCount: 1,
+            supportsK: true, supportsR: true, supportsV: true,
+            channelWidth: "80+80"
+        )
+        let score80 = BandChartViewModel.computeScore(
+            rssi: -30, channelCount: 1,
+            supportsK: true, supportsR: true, supportsV: true,
+            channelWidth: "80"
+        )
+        #expect(score == score80)
+    }
+
     @Test func computeScorePoorConditions() {
         let score = BandChartViewModel.computeScore(
             rssi: -90, channelCount: 10,
@@ -461,10 +475,31 @@ import ChartLens
     @Test func channelWidthMHzParsesCorrectly() {
         #expect(SnapshotToChartAdapter.channelWidthMHz(from: "160") == 160)
         #expect(SnapshotToChartAdapter.channelWidthMHz(from: "80") == 80)
+        #expect(SnapshotToChartAdapter.channelWidthMHz(from: "80+80") == 80)
         #expect(SnapshotToChartAdapter.channelWidthMHz(from: "40") == 40)
         #expect(SnapshotToChartAdapter.channelWidthMHz(from: "20") == 20)
         #expect(SnapshotToChartAdapter.channelWidthMHz(from: "") == 20)
         #expect(SnapshotToChartAdapter.channelWidthMHz(from: "invalid") == 20)
+    }
+
+    @Test func toSeriesDataUsesNarrowFallbackForVHT80Plus80() {
+        let snapshot = NetworkSnapshot(
+            timestamp: Date(), bssid: "aa:bb:cc:dd:ee:80", ssid: "NonContiguous",
+            rssi: -50, channel: 36, band: "5", phyMode: "ac",
+            channelWidth: "80+80", mcs: "", nss: "", security: "",
+            country: "", supportsK: false, supportsR: false,
+            supportsV: false, supportsWPA3: false, isHiddenSSID: false
+        )
+
+        let series = SnapshotToChartAdapter.toSeriesData(
+            snapshotsByBSSID: [snapshot.bssid: snapshot],
+            band: .band5GHz,
+            colorHasher: SSIDColorHasher()
+        )
+
+        #expect(series.first?.left == 34)
+        #expect(series.first?.right == 50)
+        #expect(series.first?.channelWidth == "80+80")
     }
 
     @Test func toSeriesDataFiltersByBand() {

@@ -219,7 +219,12 @@ extension BandChartViewModel {
         let protoCount = [supportsK, supportsR, supportsV].filter { $0 }.count
         let protoScore = [0, 40, 70, 100][protoCount]
         let widthScore: Int = switch channelWidth {
-        case "160": 100; case "80": 75; case "40": 50; default: 25
+        // 80+80 has no scalar geometry in this model; score it like its
+        // single 80 MHz segment rather than implying a contiguous 160 MHz span.
+        case "160": 100
+        case "80", "80+80": 75
+        case "40": 50
+        default: 25
         }
         let total = Double(rssiScore) * 0.4 + Double(congScore) * 0.3 + Double(protoScore) * 0.2 + Double(widthScore) * 0.1
         return Int(total.rounded())
