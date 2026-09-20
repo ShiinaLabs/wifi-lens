@@ -116,7 +116,11 @@ enum ChannelSpanCalculator {
             let band = nw.channel.band
             let reportedChannel = nw.channel.channelNumber
             let widthMHz = nw.channel.channelWidthMHz
-            let spanDir = nw.channel.spanDirection
+            let ie = nw.ieData.map { IEParser.parse(data: $0) }
+            // Prefer the explicit HT secondary-channel direction when it is
+            // available; CoreWLAN remains the fallback for non-HT or unknown
+            // operation data.
+            let spanDir = ie?.htChannelOperation?.spanDirection ?? nw.channel.spanDirection
 
             let (left, right) = channelBlock(
                 primaryChannel: reportedChannel,
@@ -129,8 +133,6 @@ enum ChannelSpanCalculator {
 
             // Stable ID across scans: caller guarantees no duplicate (bssid, channel, band) tuples
             let stableID = "\(nw.bssid)-\(reportedChannel)-\(band.rawValue)"
-
-            let ie = nw.ieData.map { IEParser.parse(data: $0) }
 
             let trend = trends[nw.bssid]
             let arrow: String = {
@@ -187,7 +189,6 @@ enum ChannelSpanCalculator {
     private static func widthLabel(_ ie: IEData) -> String {
         if ie.supports160MHz { return "160" }
         if ie.supports80MHz { return "80" }
-        if ie.operating40MHz { return "40" }
-        return ""
+        return ie.htChannelOperation.map { "\($0.widthMHz)" } ?? ""
     }
 }

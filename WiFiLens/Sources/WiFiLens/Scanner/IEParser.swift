@@ -1,5 +1,31 @@
 import Foundation
 
+/// The BSS channel operation advertised by the HT Operation element.
+///
+/// An absent value on `IEData` means that the HT Operation element was not
+/// present or could not be parsed. This is intentionally separate from
+/// `.twentyMHz`, which is an explicit secondary-channel offset of zero.
+enum HTChannelOperation: Equatable, Sendable {
+    case twentyMHz
+    case fortyMHzAbove
+    case fortyMHzBelow
+
+    var widthMHz: Int {
+        switch self {
+        case .twentyMHz: 20
+        case .fortyMHzAbove, .fortyMHzBelow: 40
+        }
+    }
+
+    var spanDirection: SpanDirection? {
+        switch self {
+        case .twentyMHz: nil
+        case .fortyMHzAbove: .upper
+        case .fortyMHzBelow: .lower
+        }
+    }
+}
+
 /// Parsed 802.11 information elements and derived capabilities from beacon/probe response data.
 struct IEData {
     /// Whether 802.11k (Radio Measurement) is supported
@@ -22,8 +48,9 @@ struct IEData {
     // Channel width capability and current operation
     /// Whether HT Capabilities advertise 20/40 MHz support.
     var supports40MHz: Bool = false
-    /// Whether the AP is currently operating with a 40 MHz secondary channel.
-    var operating40MHz: Bool = false
+    /// The current BSS channel operation from HT Operation, when available.
+    /// A missing value means the operation is unknown, not that it is 20 MHz.
+    var htChannelOperation: HTChannelOperation?
     var supports80MHz: Bool = false
     var supports160MHz: Bool = false
 
@@ -229,11 +256,23 @@ enum IEParser {
 
     private static func parseHTOperation(_ data: [UInt8], into result: inout IEData) {
         // Byte 0 is the primary channel. Byte 1's HT Operation Information
-        // subset carries the secondary channel offset and indicates whether
-        // 40 MHz is currently in use.
+        // subset carries the secondary channel offset. Its STA Channel Width
+        // bit is a separate station capability and is intentionally not used
+        // to determine the BSS operating width here.
         guard data.count >= 2 else { return }
         let secondaryChannelOffset = data[1] & 0x03
-        result.operating40MHz = secondaryChannelOffset == 1 || secondaryChannelOffset == 3
+        switch secondaryChannelOffset {
+        case 0:
+            result.htChannelOperation = .twentyMHz
+        case 1:
+            result.htChannelOperation = .fortyMHzAbove
+        case 3:
+            result.htChannelOperation = .fortyMHzBelow
+        default:
+            // Offset 2 is reserved. Keep the operation unknown rather than
+            // treating a malformed/reserved value as an explicit 20 MHz state.
+            result.htChannelOperation = nil
+        }
     }
 
     // MARK: - VHT Capabilities (802.11ac)

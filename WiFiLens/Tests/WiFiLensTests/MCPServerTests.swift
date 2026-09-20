@@ -10,10 +10,11 @@ import MCP
         bssid: String = "aa:bb:cc:dd:ee:ff",
         rssi: Int = -50,
         channelNumber: Int = 6,
-        band: ChannelBand = .band24GHz
+        band: ChannelBand = .band24GHz,
+        ieData: Data? = nil
     ) -> WiFiNetwork {
         let ch = WiFiChannel(band: band, channelNumber: channelNumber)
-        return WiFiNetwork(ssid: ssid, bssid: bssid, rssi: rssi, channel: ch)
+        return WiFiNetwork(ssid: ssid, bssid: bssid, rssi: rssi, channel: ch, ieData: ieData)
     }
 
     private func resultText(from result: CallTool.Result) -> String {
@@ -55,6 +56,44 @@ import MCP
         let result = MCPServer.handleCallTool(name: "scan_networks", arguments: nil, networks: [])
         let json = resultJSON(from: result) as? [[String: Any]]
         #expect(json?.isEmpty == true)
+    }
+
+    @Test func scanNetworksWidthLabelsDistinguishKnown20FromUnknown() {
+        var ht20 = [UInt8](repeating: 0, count: 22)
+        ht20[0] = 6
+        ht20[1] = 0
+        var ht40 = [UInt8](repeating: 0, count: 22)
+        ht40[0] = 6
+        ht40[1] = 1
+
+        let known20 = makeNetwork(
+            bssid: "aa:bb:cc:dd:ee:20",
+            ieData: Data([61, UInt8(ht20.count)] + ht20)
+        )
+        let unknown = makeNetwork(
+            bssid: "aa:bb:cc:dd:ee:21",
+            ieData: Data([61, 1, 6])
+        )
+        let known40 = makeNetwork(
+            bssid: "aa:bb:cc:dd:ee:40",
+            ieData: Data([61, UInt8(ht40.count)] + ht40)
+        )
+
+        let result = MCPServer.handleCallTool(
+            name: "scan_networks",
+            arguments: nil,
+            networks: [known20, unknown, known40]
+        )
+        let json = resultJSON(from: result) as? [[String: Any]]
+        let widths: [String: String] = Dictionary(uniqueKeysWithValues: json?.compactMap { entry in
+            guard let bssid = entry["bssid"] as? String,
+                  let width = entry["channelWidth"] as? String else { return nil }
+            return (bssid, width)
+        } ?? [])
+
+        #expect(widths[known20.bssid] == "20")
+        #expect(widths[unknown.bssid] == "")
+        #expect(widths[known40.bssid] == "40")
     }
 
     // MARK: - get_network_detail

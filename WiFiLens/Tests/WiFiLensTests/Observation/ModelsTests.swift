@@ -109,7 +109,7 @@ struct AdapterTests {
         htOperation[1] = 0 // no secondary channel
         let ieData = Data([45, UInt8(htCapabilities.count)] + htCapabilities)
             + Data([61, UInt8(htOperation.count)] + htOperation)
-        let channel = WiFiChannel(band: .band24GHz, channelNumber: 11, channelWidthMHz: 20)
+        let channel = WiFiChannel(band: .band24GHz, channelNumber: 11, channelWidthMHz: 80)
         let network = WiFiNetwork(
             ssid: "TwentyMHz",
             bssid: "AA:BB:CC:DD:EE:11",
@@ -124,7 +124,7 @@ struct AdapterTests {
     }
 
     @Test("Adapt reports 40 MHz only when HT operation has a secondary channel")
-    func adaptUsesOperating40MHz() {
+    func adaptUsesHT40Operation() {
         var htOperation = [UInt8](repeating: 0, count: 22)
         htOperation[0] = 6 // primary channel
         htOperation[1] = 1 // secondary channel above
@@ -141,5 +141,64 @@ struct AdapterTests {
         let observation = NetworkObservationAdapter.adapt(network)
 
         #expect(observation.capabilities.channelWidth == 40)
+    }
+
+    @Test("Adapt preserves the CoreWLAN fallback when HT operation is unknown")
+    func adaptUsesFallbackForUnknownHTOperation() {
+        let malformedHTOperation = Data([61, 1, 6])
+        let channel = WiFiChannel(band: .band24GHz, channelNumber: 6, channelWidthMHz: 80)
+        let network = WiFiNetwork(
+            ssid: "UnknownWidth",
+            bssid: "AA:BB:CC:DD:EE:41",
+            rssi: -50,
+            channel: channel,
+            ieData: malformedHTOperation
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        #expect(observation.capabilities.channelWidth == 80)
+    }
+
+    @Test("VHT operation remains higher priority than explicit HT 20 MHz")
+    func adaptPreservesVHTWidthPriority() {
+        var htOperation = [UInt8](repeating: 0, count: 22)
+        htOperation[0] = 36
+        htOperation[1] = 0
+        let ieData = Data([61, UInt8(htOperation.count)] + htOperation)
+            + Data([192, 1, 1])
+        let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 20)
+        let network = WiFiNetwork(
+            ssid: "VHTWide",
+            bssid: "AA:BB:CC:DD:EE:42",
+            rssi: -50,
+            channel: channel,
+            ieData: ieData
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        #expect(observation.capabilities.channelWidth == 80)
+    }
+
+    @Test("VHT 160 MHz remains higher priority than explicit HT 20 MHz")
+    func adaptPreservesVHT160WidthPriority() {
+        var htOperation = [UInt8](repeating: 0, count: 22)
+        htOperation[0] = 36
+        htOperation[1] = 0
+        let ieData = Data([61, UInt8(htOperation.count)] + htOperation)
+            + Data([192, 1, 2])
+        let channel = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 20)
+        let network = WiFiNetwork(
+            ssid: "VHT160Wide",
+            bssid: "AA:BB:CC:DD:EE:43",
+            rssi: -50,
+            channel: channel,
+            ieData: ieData
+        )
+
+        let observation = NetworkObservationAdapter.adapt(network)
+
+        #expect(observation.capabilities.channelWidth == 160)
     }
 }

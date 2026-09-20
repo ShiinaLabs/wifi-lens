@@ -141,7 +141,8 @@ struct IEParserHTOperationTests {
         let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 6, secondaryChannelOffset: 1))
         let result = IEParser.parse(data: data)
         #expect(result.supports40MHz == false)
-        #expect(result.operating40MHz == true)
+        #expect(result.htChannelOperation == .some(.fortyMHzAbove))
+        #expect(result.htChannelOperation?.spanDirection == .upper)
     }
 
     @Test func htOperation40MHzBelow() {
@@ -149,7 +150,8 @@ struct IEParserHTOperationTests {
         let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 11, secondaryChannelOffset: 3))
         let result = IEParser.parse(data: data)
         #expect(result.supports40MHz == false)
-        #expect(result.operating40MHz == true)
+        #expect(result.htChannelOperation == .some(.fortyMHzBelow))
+        #expect(result.htChannelOperation?.spanDirection == .lower)
     }
 
     @Test func htOperation20MHzOnly() {
@@ -157,7 +159,7 @@ struct IEParserHTOperationTests {
         let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 6, secondaryChannelOffset: 0))
         let result = IEParser.parse(data: data)
         #expect(result.supports40MHz == false)
-        #expect(result.operating40MHz == false)
+        #expect(result.htChannelOperation == .some(.twentyMHz))
     }
 
     @Test func primaryChannel11DoesNotImply40MHz() {
@@ -166,14 +168,20 @@ struct IEParserHTOperationTests {
         let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 11, secondaryChannelOffset: 0))
         let result = IEParser.parse(data: data)
         #expect(result.supports40MHz == false)
-        #expect(result.operating40MHz == false)
+        #expect(result.htChannelOperation == .some(.twentyMHz))
     }
 
     @Test func htOperationPayloadTooShort() {
         for payload in [[], [UInt8(11)]] {
             let result = IEParser.parse(data: singleIE(tag: 61, value: payload))
-            #expect(result.operating40MHz == false)
+            #expect(result.htChannelOperation == nil)
         }
+    }
+
+    @Test func htOperationReservedSecondaryChannelOffsetIsUnknown() {
+        let data = singleIE(tag: 61, value: htOperationPayload(primaryChannel: 6, secondaryChannelOffset: 2))
+        let result = IEParser.parse(data: data)
+        #expect(result.htChannelOperation == nil)
     }
 
     @Test func capabilitiesCanSupport40MHzWhileOperationUses20MHz() {
@@ -183,7 +191,14 @@ struct IEParserHTOperationTests {
         let data = singleIE(tag: 45, value: htCapabilities) + singleIE(tag: 61, value: htOperation)
         let result = IEParser.parse(data: data)
         #expect(result.supports40MHz == true)
-        #expect(result.operating40MHz == false)
+        #expect(result.htChannelOperation == .some(.twentyMHz))
+    }
+
+    @Test func capabilityAndOperationRemainIndependentWhenOperating40MHz() {
+        let htOperation = htOperationPayload(primaryChannel: 6, secondaryChannelOffset: 1)
+        let result = IEParser.parse(data: singleIE(tag: 61, value: htOperation))
+        #expect(result.supports40MHz == false)
+        #expect(result.htChannelOperation == .some(.fortyMHzAbove))
     }
 }
 

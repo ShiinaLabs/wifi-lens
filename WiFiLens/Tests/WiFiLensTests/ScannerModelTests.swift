@@ -174,6 +174,34 @@ struct WiFiNetworkTests {
         #expect(vm.cachedBandSummary.contains(": 1"))
     }
 
+    @Test("table width labels distinguish known 20 MHz from unknown")
+    func tableWidthLabelsDistinguishKnown20FromUnknown() {
+        var ht20 = [UInt8](repeating: 0, count: 22)
+        ht20[0] = 6
+        ht20[1] = 0
+        let known20 = WiFiNetwork(
+            ssid: "Known20",
+            bssid: "00:11:22:33:44:20",
+            rssi: -50,
+            channel: WiFiChannel(band: .band24GHz, channelNumber: 6),
+            ieData: Data([61, UInt8(ht20.count)] + ht20)
+        )
+        let unknown = WiFiNetwork(
+            ssid: "Unknown",
+            bssid: "00:11:22:33:44:21",
+            rssi: -55,
+            channel: WiFiChannel(band: .band24GHz, channelNumber: 11),
+            ieData: Data([61, 1, 11])
+        )
+        let vm = ScannerViewModel()
+
+        vm.debugApplyNetworksForTesting([known20, unknown], supportedBands: [.band24GHz])
+
+        let rowsByID = Dictionary(uniqueKeysWithValues: vm.cachedCombinedTableRows.map { ($0.id, $0) })
+        #expect(rowsByID[known20.id]?.channelWidth == "20")
+        #expect(rowsByID[unknown.id]?.channelWidth == "")
+    }
+
     @Test("caches update when a new scan arrives")
     func cachesUpdateOnNewScan() {
         let vm = ScannerViewModel()

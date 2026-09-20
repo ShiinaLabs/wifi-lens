@@ -1040,8 +1040,7 @@ final class ScannerViewModel {
     private func chanWidthLabel(_ ie: IEData) -> String {
         if ie.supports160MHz { return "160" }
         if ie.supports80MHz { return "80" }
-        if ie.operating40MHz { return "40" }
-        return ""
+        return ie.htChannelOperation.map { "\($0.widthMHz)" } ?? ""
     }
 }
 

@@ -1,7 +1,15 @@
+import Foundation
 import Testing
 @testable import WiFi_Lens
 
 struct ChannelSpanCalculatorTests {
+
+    private func htOperationIE(primaryChannel: UInt8, offset: UInt8) -> Data {
+        var payload = [UInt8](repeating: 0, count: 22)
+        payload[0] = primaryChannel
+        payload[1] = offset & 0x03
+        return Data([61, UInt8(payload.count)] + payload)
+    }
 
     // MARK: - channelHalfSpan
 
@@ -175,5 +183,66 @@ struct ChannelSpanCalculatorTests {
             primaryChannel: 5, widthMHz: 20, band: .band6GHz, spanDirection: nil)
         #expect(left == 3)
         #expect(right == 7)
+    }
+
+    @Test func seriesWidthLabelDistinguishesKnown20FromUnknown() {
+        let known20 = WiFiNetwork(
+            ssid: "Known20",
+            bssid: "AA:BB:CC:DD:EE:20",
+            rssi: -50,
+            channel: WiFiChannel(band: .band24GHz, channelNumber: 6, channelWidthMHz: 20),
+            ieData: htOperationIE(primaryChannel: 6, offset: 0)
+        )
+        let unknown = WiFiNetwork(
+            ssid: "Unknown",
+            bssid: "AA:BB:CC:DD:EE:21",
+            rssi: -55,
+            channel: WiFiChannel(band: .band24GHz, channelNumber: 11, channelWidthMHz: 20),
+            ieData: Data([61, 1, 11])
+        )
+
+        let series = ChannelSpanCalculator.toSeriesData(
+            [known20, unknown],
+            colorHasher: SSIDColorHasher()
+        )
+
+        #expect(series.first(where: { $0.bssid == known20.bssid })?.channelWidth == "20")
+        #expect(series.first(where: { $0.bssid == unknown.bssid })?.channelWidth == "")
+    }
+
+    @Test func seriesUsesHTOperationDirectionFor24GHz40MHzGeometry() {
+        let above = WiFiNetwork(
+            ssid: "Above",
+            bssid: "AA:BB:CC:DD:EE:22",
+            rssi: -50,
+            channel: WiFiChannel(band: .band24GHz, channelNumber: 6, channelWidthMHz: 40),
+            ieData: htOperationIE(primaryChannel: 6, offset: 1)
+        )
+        let below = WiFiNetwork(
+            ssid: "Below",
+            bssid: "AA:BB:CC:DD:EE:23",
+            rssi: -55,
+            // Deliberately disagree with the IE to verify the explicit BSS
+            // operation direction takes precedence over CoreWLAN metadata.
+            channel: WiFiChannel(
+                band: .band24GHz,
+                channelNumber: 11,
+                channelWidthMHz: 40,
+                spanDirection: .upper
+            ),
+            ieData: htOperationIE(primaryChannel: 11, offset: 3)
+        )
+
+        let series = ChannelSpanCalculator.toSeriesData(
+            [above, below],
+            colorHasher: SSIDColorHasher()
+        )
+
+        let aboveSeries = series.first(where: { $0.bssid == above.bssid })
+        let belowSeries = series.first(where: { $0.bssid == below.bssid })
+        #expect(aboveSeries?.left == 4)
+        #expect(aboveSeries?.right == 12)
+        #expect(belowSeries?.left == 5)
+        #expect(belowSeries?.right == 13)
     }
 }
