@@ -90,9 +90,11 @@ struct AdapterTests {
 
     @Test("Adapt uses channelWidthMHz fallback when IE lacks width support")
     func adaptWidthFallback() {
-        // HT Capabilities (tag 45): 2 bytes, bit 1 clear = no 40MHz
+        // HT Capabilities (tag 45): complete 26-byte body, bit 1 clear = no 40MHz
         // VHT Operation (tag 192): chWidth 0 = 20/40 only
-        let ieData = Data([45, 2, 0, 0, 192, 5, 0, 36, 0, 0, 0])
+        let htCapabilities = [UInt8](repeating: 0, count: 26)
+        let ieData = Data([45, UInt8(htCapabilities.count)] + htCapabilities)
+            + Data([192, 5, 0, 36, 0, 0, 0])
         let ch = WiFiChannel(band: .band5GHz, channelNumber: 36, channelWidthMHz: 80)
         let nw = WiFiNetwork(ssid: "WideNet", bssid: "AA:BB:CC:DD:EE:FF", rssi: -50, channel: ch, ieData: ieData)
         let obs = NetworkObservationAdapter.adapt(nw)
@@ -102,7 +104,7 @@ struct AdapterTests {
 
     @Test("Adapt reports 20 MHz when HT capabilities allow 40 MHz but operation is 20 MHz")
     func adaptUsesOperatingWidthOverCapability() {
-        var htCapabilities = [UInt8](repeating: 0, count: 19)
+        var htCapabilities = [UInt8](repeating: 0, count: 26)
         htCapabilities[0] = 0x02 // 20/40 MHz capable
         var htOperation = [UInt8](repeating: 0, count: 22)
         htOperation[0] = 11 // primary channel

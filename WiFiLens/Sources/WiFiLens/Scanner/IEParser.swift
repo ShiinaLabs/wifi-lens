@@ -127,7 +127,6 @@ struct IEData {
 
     // Raw info
     var maxMCSIndex: Int?
-    var maxVHTMCSIndex: Int?
     var spatialStreams: Int?
 
     // Security
@@ -158,16 +157,20 @@ struct IEData {
             labels.append(wpa3Suites.joined(separator: "/"))
         }
 
-        // WPA2 variants (excluding WPA3)
-        let wpa2Suites = akmSuites.filter { !wpa3AKMNames.contains($0) && ($0.contains("WPA2") || $0.contains("802.1X") || $0.contains("PSK") || $0.contains("FT/") || $0.contains("SHA256") || $0.contains("SuiteB") || $0.contains("Suite-B")) }
-        if !wpa2Suites.isEmpty {
-            labels.append(wpa2Suites.joined(separator: "/"))
+        // RSN variants (excluding WPA3). These are the names produced by the
+        // RSN parser; legacy WPA labels are intentionally not synthesized here.
+        let rsnSuites = akmSuites.filter { suite in
+            !wpa3AKMNames.contains(suite)
+                && (suite == "802.1X"
+                    || suite == "PSK"
+                    || suite.hasPrefix("FT/")
+                    || suite.contains("SHA256")
+                    || suite.contains("SHA384")
+                    || suite.contains("Suite-B")
+                    || suite.contains("FILS"))
         }
-
-        // WPA (legacy)
-        let wpaSuites = akmSuites.filter { $0 == "WPA" }
-        if !wpaSuites.isEmpty {
-            labels.append("WPA")
+        if !rsnSuites.isEmpty {
+            labels.append(rsnSuites.joined(separator: "/"))
         }
 
         // OWE / other
@@ -188,9 +191,8 @@ struct IEData {
         return joined
     }
 
-    /// MCS summary: e.g. "7" or "9" (VHT)
+    /// MCS summary derived from the trusted HT MCS bitmask.
     var mcsSummary: String {
-        if let vht = maxVHTMCSIndex { return "\(vht)" }
         if let ht = maxMCSIndex { return "\(ht)" }
         return ""
     }
@@ -252,15 +254,18 @@ enum IEParser {
                 }
 
             case tagHTCapabilities:
+                guard ieData.count >= 26 else { break }
                 result.htSupported = true
                 parseHTCapabilities(ieData, into: &result)
 
             case tagVHTCapabilities:
+                guard ieData.count >= 12 else { break }
                 result.vhtSupported = true
                 // VHT MCS/NSS from CoreWLAN's IE data is unreliable — the
                 // MCS Map bytes are replaced with fixed markers.  We rely on
-                // HT MCS (which is always present on VHT APs for backwards
-                // compatibility) instead of calling parseVHTCapabilities.
+                // trusted HT MCS (which is normally present on VHT APs for
+                // backwards compatibility) and intentionally do not parse the
+                // unreliable VHT MCS map.
 
             case tagHTOperation:
                 parseHTOperation(ieData, into: &result)
@@ -303,7 +308,7 @@ enum IEParser {
     // MARK: - HT Capabilities (802.11n)
 
     private static func parseHTCapabilities(_ data: [UInt8], into result: inout IEData) {
-        guard data.count >= 2 else { return }
+        guard data.count >= 26 else { return }
         let htCapInfo = (UInt16(data[0]) | (UInt16(data[1]) << 8))
 
         // Channel width: bit 1
@@ -313,8 +318,9 @@ enum IEParser {
         // Rx MCS Bitmask occupies the first 10 bytes of the MCS Set (bits 0–79).
         if data.count >= 13 {
             let mcsBytes = Array(data[3..<min(13, data.count)])
-            result.maxMCSIndex = maxMCSSpatialStreams(mcsBytes).mcs
-            result.spatialStreams = maxMCSSpatialStreams(mcsBytes).streams
+            let mcs = maxMCSSpatialStreams(mcsBytes)
+            result.maxMCSIndex = mcs.mcs
+            result.spatialStreams = mcs.streams
         }
     }
 
@@ -324,7 +330,7 @@ enum IEParser {
         // STA Channel Width flag (bit 2). An offset of 1 or 3 is an active
         // HT40 secondary channel only when that flag is set; otherwise the
         // operation is explicitly 20 MHz.
-        guard data.count >= 2 else { return }
+        guard data.count >= 22 else { return }
         let operationInfo = data[1]
         let secondaryChannelOffset = operationInfo & 0x03
         let staChannelWidthAny = (operationInfo & 0x04) != 0
@@ -341,23 +347,6 @@ enum IEParser {
             // Offset 2 is reserved. Keep the operation unknown rather than
             // treating a malformed/reserved value as an explicit 20 MHz state.
             result.htChannelOperation = nil
-        }
-    }
-
-    // MARK: - VHT Capabilities (802.11ac)
-
-    private static func parseVHTCapabilities(_ data: [UInt8], into result: inout IEData) {
-        guard data.count >= 4 else { return }
-        // Max MPDU length, channel width, etc. are in VHT Cap Info
-        // For this implementation, we infer channel width from VHT Operation IE
-
-        // Rx VHT-MCS Map (starts at byte 4, after 4-byte VHT Cap Info)
-        if data.count >= 6 {
-            let vhtMCS = maxVHTMCS(data)
-            result.maxVHTMCSIndex = vhtMCS.mcs
-            if vhtMCS.streams > (result.spatialStreams ?? 0) {
-                result.spatialStreams = vhtMCS.streams
-            }
         }
     }
 
@@ -468,23 +457,25 @@ enum IEParser {
         guard data.count >= 2 else { return }
         var pos = 2
 
-        // Group cipher suite
-        if pos + 4 <= data.count {
-            result.groupCipher = cipherName(Array(data[pos..<pos+4]))
-            pos += 4
-        }
+        // Parse into locals first. A declared suite count that cannot fit in
+        // the remaining payload invalidates the whole RSN element, so a
+        // truncated element cannot leave partial cipher or security state.
+        guard pos + 4 <= data.count else { return }
+        let parsedGroupCipher = cipherName(Array(data[pos..<pos + 4]))
+        pos += 4
 
         // Pairwise cipher count
         guard pos + 2 <= data.count else { return }
         let pairwiseCount = Int(UInt16(data[pos]) | (UInt16(data[pos+1]) << 8))
         pos += 2
+        guard pairwiseCount > 0, pairwiseCount <= (data.count - pos) / 4 else { return }
 
         // Pairwise cipher suites
+        var parsedPairwiseCiphers: [String] = []
         for _ in 0..<pairwiseCount {
-            guard pos + 4 <= data.count else { break }
-            let name = cipherName(Array(data[pos..<pos+4]))
-            if !result.pairwiseCiphers.contains(name) {
-                result.pairwiseCiphers.append(name)
+            let name = cipherName(Array(data[pos..<pos + 4]))
+            if !parsedPairwiseCiphers.contains(name) {
+                parsedPairwiseCiphers.append(name)
             }
             pos += 4
         }
@@ -493,29 +484,46 @@ enum IEParser {
         guard pos + 2 <= data.count else { return }
         let akmCount = Int(UInt16(data[pos]) | (UInt16(data[pos+1]) << 8))
         pos += 2
+        guard akmCount > 0, akmCount <= (data.count - pos) / 4 else { return }
 
         // AKM suites
+        var parsedAKMSuites: [String] = []
+        var parsedSupportsWPA3 = false
+        var parsedSupports80211r = false
         for _ in 0..<akmCount {
-            guard pos + 4 <= data.count else { break }
-            let suite = Array(data[pos..<pos+4])
+            let suite = Array(data[pos..<pos + 4])
             let name = akmSuiteName(suite)
-            if !result.akmSuites.contains(name) {
-                result.akmSuites.append(name)
+            if !parsedAKMSuites.contains(name) {
+                parsedAKMSuites.append(name)
             }
             if isWPA3AKM(suite) {
-                result.supportsWPA3 = true
+                parsedSupportsWPA3 = true
             }
             if isFastTransitionAKM(suite) {
-                result.supports80211r = true
+                parsedSupports80211r = true
             }
             pos += 4
         }
 
         // PMF (802.11w) capabilities
+        var parsedSupports80211w: Bool?
         if pos + 2 <= data.count {
             let rsnCap = UInt16(data[pos]) | (UInt16(data[pos+1]) << 8)
             // PMF required: bit 6, PMF capable: bit 7
-            result.supports80211w = (rsnCap & (1 << 7)) != 0
+            parsedSupports80211w = (rsnCap & (1 << 7)) != 0
+        }
+
+        result.groupCipher = parsedGroupCipher
+        for cipher in parsedPairwiseCiphers where !result.pairwiseCiphers.contains(cipher) {
+            result.pairwiseCiphers.append(cipher)
+        }
+        for suite in parsedAKMSuites where !result.akmSuites.contains(suite) {
+            result.akmSuites.append(suite)
+        }
+        result.supportsWPA3 = result.supportsWPA3 || parsedSupportsWPA3
+        result.supports80211r = result.supports80211r || parsedSupports80211r
+        if let parsedSupports80211w {
+            result.supports80211w = parsedSupports80211w
         }
     }
 
@@ -539,65 +547,30 @@ enum IEParser {
 
     // MARK: - Helpers
 
-    private static func maxMCSSpatialStreams(_ mcsBytes: [UInt8]) -> (mcs: Int, streams: Int) {
-        // HT Rx MCS bitmask: 77 bits across 10 bytes.
-        // Find the highest supported global MCS index, then derive per-stream
-        // MCS (0–7) and spatial-stream count from it.
+    private static func maxMCSSpatialStreams(_ mcsBytes: [UInt8]) -> (mcs: Int?, streams: Int?) {
+        // Only the normal HT MCS 0...31 range maps cleanly to the compact
+        // per-stream UI model. MCS 32 and higher use encodings this model does
+        // not represent, so ignore them instead of guessing an NSS.
         var highestGlobal = -1
-        for byteIndex in 0..<mcsBytes.count {
+        for byteIndex in 0..<min(mcsBytes.count, 4) {
             let byte = mcsBytes[byteIndex]
-            if byte == 0 { continue }
-            for bit in 0..<8 {
-                let global = byteIndex * 8 + bit
-                if global > 76 { break }
-                if (byte & (1 << bit)) != 0 {
-                    highestGlobal = max(highestGlobal, global)
-                }
+            for bit in 0..<8 where (byte & (1 << bit)) != 0 {
+                highestGlobal = max(highestGlobal, byteIndex * 8 + bit)
             }
         }
 
-        guard highestGlobal >= 0 else { return (mcs: 0, streams: 0) }
+        guard highestGlobal >= 0 else { return (mcs: nil, streams: nil) }
 
-        // Number of spatial streams for equal-modulation MCS (0–31)
-        let ss: Int
+        let streams: Int
         switch highestGlobal {
-        case 0...7:   ss = 1
-        case 8...15:  ss = 2
-        case 16...23: ss = 3
-        case 24...31: ss = 4
-        default:      ss = min(highestGlobal / 8 + 1, 4)
+        case 0...7:   streams = 1
+        case 8...15:  streams = 2
+        case 16...23: streams = 3
+        case 24...31: streams = 4
+        default:      return (mcs: nil, streams: nil)
         }
 
-        return (mcs: highestGlobal % 8, streams: ss)
-    }
-
-    private static func maxVHTMCS(_ data: [UInt8]) -> (mcs: Int?, streams: Int) {
-        // VHT Capabilities Info is 4 bytes (data[0..3]).
-        // Rx VHT-MCS Map is 2 bytes at data[4..5]: 2 bits per stream (0=not supported,
-        // 1=MCS 0–7, 2=MCS 0–8, 3=MCS 0–9).
-        guard data.count >= 6 else { return (nil, 0) }
-        let rxMcsMap = UInt16(data[4]) | (UInt16(data[5]) << 8)
-
-        // First pass: find the maximum MCS level across all streams.
-        var maxMCS = 0
-        for stream in 0..<8 {
-            let mcsField = (rxMcsMap >> (stream * 2)) & 0x03
-            if mcsField > 0 {
-                maxMCS = max(maxMCS, 6 + Int(mcsField))  // 1→7, 2→8, 3→9
-            }
-        }
-        guard maxMCS > 0 else { return (nil, 0) }
-
-        // Second pass: count streams that support the max MCS level.
-        let requiredField = maxMCS - 6  // 7→1, 8→2, 9→3
-        var maxStreams = 0
-        for stream in 0..<8 {
-            let mcsField = (rxMcsMap >> (stream * 2)) & 0x03
-            if mcsField >= requiredField {
-                maxStreams = stream + 1
-            }
-        }
-        return (mcs: maxMCS, streams: maxStreams)
+        return (mcs: highestGlobal % 8, streams: streams)
     }
 
     private static func isRSNSuite(_ suite: [UInt8]) -> Bool {

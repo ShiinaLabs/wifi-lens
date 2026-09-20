@@ -120,15 +120,15 @@ struct IEParserCountryTests {
 
 struct IEParserHTCapabilitiesTests {
     @Test func htSupportedFlag() {
-        // HT Cap body: Info(2) + A-MPDU(1) + MCS Set(16) = 19 bytes min
-        let body = [UInt8](repeating: 0, count: 19)
+        // HT Capabilities is a fixed 26-byte body.
+        let body = [UInt8](repeating: 0, count: 26)
         let data = singleIE(tag: 45, value: body)
         let result = IEParser.parse(data: data)
         #expect(result.htSupported == true)
     }
 
     @Test func supports40MHz() {
-        var body = [UInt8](repeating: 0, count: 19)
+        var body = [UInt8](repeating: 0, count: 26)
         // HT Cap Info bytes 0-1: set bit 1 (Supported Channel Width Set)
         body[0] = 0x02  // bit 1 = 1
         let data = singleIE(tag: 45, value: body)
@@ -137,7 +137,7 @@ struct IEParserHTCapabilitiesTests {
     }
 
     @Test func no40MHz() {
-        var body = [UInt8](repeating: 0, count: 19)
+        var body = [UInt8](repeating: 0, count: 26)
         body[0] = 0x00  // bit 1 = 0
         let data = singleIE(tag: 45, value: body)
         let result = IEParser.parse(data: data)
@@ -145,8 +145,7 @@ struct IEParserHTCapabilitiesTests {
     }
 
     @Test func mcsAndStreamsSingleStream() {
-        // IE body: Info(2) + A-MPDU(1) + MCS Set(16)
-        var body = [UInt8](repeating: 0, count: 19)
+        var body = [UInt8](repeating: 0, count: 26)
         // Rx MCS bitmask at offset 3: set MCS 0-7 (all 8 bits in byte 3)
         body[3] = 0xFF  // per-stream MCS 7, 1 spatial stream
         let data = singleIE(tag: 45, value: body)
@@ -156,7 +155,7 @@ struct IEParserHTCapabilitiesTests {
     }
 
     @Test func mcsAndStreamsTwoStreams() {
-        var body = [UInt8](repeating: 0, count: 19)
+        var body = [UInt8](repeating: 0, count: 26)
         body[3] = 0xFF  // MCS 0-7
         // byte 4 (MCS 8-15): set bit 4 → global MCS 12 → per-stream MCS 4, 2 streams
         body[4] = 0x10
@@ -167,7 +166,7 @@ struct IEParserHTCapabilitiesTests {
     }
 
     @Test func mcsAndStreamsThreeStreams() {
-        var body = [UInt8](repeating: 0, count: 19)
+        var body = [UInt8](repeating: 0, count: 26)
         body[3] = 0xFF  // MCS 0-7
         body[4] = 0xFF  // MCS 8-15
         // byte 5: MCS 16-23 — set bit 7 → global MCS 23 → per-stream MCS 7, 3 streams
@@ -179,11 +178,28 @@ struct IEParserHTCapabilitiesTests {
     }
 
     @Test func htCapBodyTooShort() {
-        let body = [UInt8](repeating: 0, count: 2)  // only 2 bytes
-        let data = singleIE(tag: 45, value: body)
-        let result = IEParser.parse(data: data)
-        #expect(result.htSupported == true)  // flag set before parsing depth
+        for length in [0, 2, 25] {
+            let body = [UInt8](repeating: 0, count: length)
+            let result = IEParser.parse(data: singleIE(tag: 45, value: body))
+            #expect(result.htSupported == false)
+            #expect(result.maxMCSIndex == nil)
+        }
+    }
+
+    @Test func mcs32DoesNotInferMCSOrNSS() {
+        var body = [UInt8](repeating: 0, count: 26)
+        body[7] = 0x01 // Global MCS 32, outside the simple 0...31 model.
+        let result = IEParser.parse(data: singleIE(tag: 45, value: body))
         #expect(result.maxMCSIndex == nil)
+        #expect(result.spatialStreams == nil)
+    }
+
+    @Test func mcs33PlusDoesNotInferMCSOrNSS() {
+        var body = [UInt8](repeating: 0, count: 26)
+        body[7] = 0x06 // Global MCS 33 and 34 only.
+        let result = IEParser.parse(data: singleIE(tag: 45, value: body))
+        #expect(result.maxMCSIndex == nil)
+        #expect(result.spatialStreams == nil)
     }
 }
 
@@ -243,7 +259,7 @@ struct IEParserHTOperationTests {
     }
 
     @Test func htOperationPayloadTooShort() {
-        for payload in [[], [UInt8(11)]] {
+        for payload in [[], [UInt8(11)], [UInt8](repeating: 0, count: 2), [UInt8](repeating: 0, count: 21)] {
             let result = IEParser.parse(data: singleIE(tag: 61, value: payload))
             #expect(result.htChannelOperation == nil)
         }
@@ -274,7 +290,7 @@ struct IEParserHTOperationTests {
     }
 
     @Test func capabilitiesCanSupport40MHzWhileOperationUses20MHz() {
-        var htCapabilities = [UInt8](repeating: 0, count: 19)
+        var htCapabilities = [UInt8](repeating: 0, count: 26)
         htCapabilities[0] = 0x02 // HT Capabilities: 20/40 MHz capable.
         let htOperation = htOperationPayload(primaryChannel: 11, secondaryChannelOffset: 0)
         let data = singleIE(tag: 45, value: htCapabilities) + singleIE(tag: 61, value: htOperation)
@@ -299,7 +315,7 @@ struct IEParserHTOperationTests {
 
 struct IEParserVHTCapabilitiesTests {
     @Test func vhtSupportedFlag() {
-        // VHT Cap body: Info(4) + MCS Set(8) = 12 bytes
+        // VHT Capabilities is a fixed 12-byte body.
         let body = [UInt8](repeating: 0, count: 12)
         let data = singleIE(tag: 191, value: body)
         let result = IEParser.parse(data: data)
@@ -314,16 +330,15 @@ struct IEParserVHTCapabilitiesTests {
         let data = singleIE(tag: 191, value: body)
         let result = IEParser.parse(data: data)
         #expect(result.vhtSupported == true)
-        #expect(result.maxVHTMCSIndex == nil)
         #expect(result.spatialStreams == nil)  // no HT IE, so no NSS either
     }
 
     @Test func vhtBodyTooShort() {
-        let body = [UInt8](repeating: 0, count: 5)  // too short for Rx MCS Map
-        let data = singleIE(tag: 191, value: body)
-        let result = IEParser.parse(data: data)
-        #expect(result.vhtSupported == true)
-        #expect(result.maxVHTMCSIndex == nil)
+        for length in [0, 5, 11] {
+            let body = [UInt8](repeating: 0, count: length)
+            let result = IEParser.parse(data: singleIE(tag: 191, value: body))
+            #expect(result.vhtSupported == false)
+        }
     }
 }
 
@@ -407,10 +422,17 @@ struct IEParserVHTOperationTests {
     }
 
     @Test func malformedVHTOperationDoesNotInventWidth() {
-        let data = singleIE(tag: 192, value: [0x01, 42, 0, 0])
-        let result = IEParser.parse(data: data)
-        #expect(result.vhtChannelOperation == nil)
-        #expect(result.operatingChannelWidth == nil)
+        for payload in [
+            [],
+            [UInt8(0x01)],
+            [UInt8(0x01), 42],
+            [UInt8(0x01), 42, 0],
+            [UInt8(0x01), 42, 0, 0]
+        ] {
+            let result = IEParser.parse(data: singleIE(tag: 192, value: payload))
+            #expect(result.vhtChannelOperation == nil)
+            #expect(result.operatingChannelWidth == nil)
+        }
     }
 
     @Test func reservedVHTChannelWidthIsUnknown() {
@@ -524,6 +546,48 @@ struct IEParserRSNTests {
         let result = IEParser.parse(data: data)
         #expect(result.akmSuites.isEmpty)
         #expect(result.groupCipher == nil)
+    }
+
+    @Test func truncatedPairwiseCountDoesNotProducePartialSecurity() {
+        let body = u16le(1)
+            + rsnSuite(0x04)
+            + u16le(2)
+            + rsnSuite(0x04) // Only one pairwise suite is present.
+        let result = IEParser.parse(data: singleIE(tag: 48, value: body))
+        #expect(result.groupCipher == nil)
+        #expect(result.pairwiseCiphers.isEmpty)
+        #expect(result.akmSuites.isEmpty)
+        #expect(result.supportsWPA3 == false)
+        #expect(result.supports80211r == false)
+    }
+
+    @Test func truncatedAKMCountDoesNotProduceWPA3OrFastTransition() {
+        let body = u16le(1)
+            + rsnSuite(0x04)
+            + u16le(1)
+            + rsnSuite(0x04)
+            + u16le(2)
+            + rsnSuite(0x08) // SAE is present, but the declared second suite is missing.
+        let result = IEParser.parse(data: singleIE(tag: 48, value: body))
+        #expect(result.groupCipher == nil)
+        #expect(result.pairwiseCiphers.isEmpty)
+        #expect(result.akmSuites.isEmpty)
+        #expect(result.supportsWPA3 == false)
+        #expect(result.supports80211r == false)
+    }
+
+    @Test func zeroAKMCountDoesNotProduceSecurityCapability() {
+        let body = u16le(1)
+            + rsnSuite(0x04)
+            + u16le(1)
+            + rsnSuite(0x04)
+            + u16le(0)
+        let result = IEParser.parse(data: singleIE(tag: 48, value: body))
+        #expect(result.groupCipher == nil)
+        #expect(result.pairwiseCiphers.isEmpty)
+        #expect(result.akmSuites.isEmpty)
+        #expect(result.supportsWPA3 == false)
+        #expect(result.supports80211r == false)
     }
 }
 
@@ -752,7 +816,7 @@ struct IEParserCombinedTests {
         let ssid = singleIE(tag: 0, value: [0x48, 0x6F, 0x6D, 0x65])  // "Home"
 
         // HT Cap: 40 MHz, MCS 0-15 (2 streams)
-        var htBody = [UInt8](repeating: 0, count: 19)
+        var htBody = [UInt8](repeating: 0, count: 26)
         htBody[0] = 0x02  // 40 MHz capable
         htBody[3] = 0xFF  // MCS 0-7
         htBody[4] = 0xFF  // MCS 8-15
