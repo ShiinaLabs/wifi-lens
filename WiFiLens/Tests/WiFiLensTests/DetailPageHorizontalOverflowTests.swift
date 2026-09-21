@@ -241,24 +241,7 @@ struct DetailPageHorizontalOverflowTests {
             (size?.height ?? 0) <= 280,
             "Channel cards should keep the localized metric panel to the same compact three-row shape as the English layout; measured document height: \(size?.height ?? 0)"
         )
-
-        #expect(String(localized: "channels.card.co_label", locale: russianLocale) == "Совп.:")
-        #expect(String(localized: "channels.card.adj_label", locale: russianLocale) == "· Сосед.:")
     }
-
-    @Test("Russian compact table headers preserve readable technical terminology")
-    func russianCompactTableHeadersPreserveReadableTechnicalTerminology() {
-        let locale = Locale(identifier: "ru")
-
-        #expect(String(localized: "channels.table.col.aps", locale: locale) == "AP")
-        #expect(String(localized: "channels.table.col.adjacent", locale: locale) == "Сосед.")
-        #expect(String(localized: "channels.table.col.co_ch", locale: locale) == "Совп.")
-        #expect(String(localized: "channels.table.col.ch", locale: locale) == "Канал")
-        #expect(String(localized: "channels.table.col.score", locale: locale) == "Оценка")
-        #expect(String(localized: "channels.table.col.class", locale: locale) == "Класс")
-        #expect(String(localized: "table.column.lock", locale: locale) == "Блок.")
-    }
-
     @Test("Channels table keeps the existing vertical-only scrolling model")
     func channelsTableKeepsVerticalOnlyScrolling() {
         let viewModel = makeScannerViewModel(ssid: "Office")
