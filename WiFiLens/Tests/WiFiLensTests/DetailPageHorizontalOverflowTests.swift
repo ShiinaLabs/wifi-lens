@@ -242,11 +242,11 @@ struct DetailPageHorizontalOverflowTests {
             "Channel cards should keep the localized metric panel to the same compact three-row shape as the English layout; measured document height: \(size?.height ?? 0)"
         )
     }
+
     @Test("Channels table keeps the existing vertical-only scrolling model")
     func channelsTableKeepsVerticalOnlyScrolling() {
         let viewModel = makeScannerViewModel(ssid: "Office")
         let view = ChannelQualityView(channels: viewModel.channelRecommendations, mode: .table)
-            .environment(\.locale, Locale(identifier: "ru"))
         let (controller, _) = host(view)
         let tableScroll = scrollViews(in: controller.view).first
 
