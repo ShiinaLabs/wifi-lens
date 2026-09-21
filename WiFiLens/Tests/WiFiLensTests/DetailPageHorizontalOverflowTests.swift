@@ -45,6 +45,18 @@ struct DetailPageHorizontalOverflowTests {
         return (controller, window)
     }
 
+    private func scrollViews(in root: NSView) -> [NSScrollView] {
+        var result: [NSScrollView] = []
+        func walk(_ subject: NSView) {
+            if let scroll = subject as? NSScrollView {
+                result.append(scroll)
+            }
+            subject.subviews.forEach(walk)
+        }
+        walk(root)
+        return result
+    }
+
     /// The width the content requires when the column proposes `width`. A page with a
     /// `minWidth` hint above the proposal reports that minimum — the clipping regression.
     private func requiredWidth(of view: some View, width: CGFloat = Self.detailWidth) -> CGFloat {
@@ -215,6 +227,31 @@ struct DetailPageHorizontalOverflowTests {
         let view = ChannelQualityView(channels: viewModel.channelRecommendations, mode: .simple)
         assertFitsWidth(view)
         assertNoScrollClipping(view)
+    }
+
+    @Test("Channels simple cards keep localized metrics in a compact panel")
+    func channelsSimpleCardsKeepLocalizedMetricsCompact() {
+        let viewModel = makeScannerViewModel(ssid: "Office")
+        let russianLocale = Locale(identifier: "ru")
+        let view = ChannelQualityView(channels: viewModel.channelRecommendations, mode: .simple)
+            .environment(\.locale, russianLocale)
+        let size = scrollDocumentSize(of: view)
+
+        #expect(
+            (size?.height ?? 0) <= 280,
+            "Channel cards should keep the localized metric panel to the same compact three-row shape as the English layout; measured document height: \(size?.height ?? 0)"
+        )
+    }
+    @Test("Channels table keeps the existing vertical-only scrolling model")
+    func channelsTableKeepsVerticalOnlyScrolling() {
+        let viewModel = makeScannerViewModel(ssid: "Office")
+        let view = ChannelQualityView(channels: viewModel.channelRecommendations, mode: .table)
+            .environment(\.locale, Locale(identifier: "ru"))
+        let (controller, _) = host(view)
+        let tableScroll = scrollViews(in: controller.view).first
+
+        #expect(tableScroll?.hasVerticalScroller == true)
+        #expect(tableScroll?.hasHorizontalScroller == false)
     }
 
     @Test("Channels table mode fits the minimum detail width")

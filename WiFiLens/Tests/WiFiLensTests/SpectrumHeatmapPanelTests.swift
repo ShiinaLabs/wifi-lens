@@ -60,11 +60,14 @@ import SwiftUI
 
     @Test func currentBandAggregateAccessibilityLabelUsesRSSIContext() {
         let label = SpectrumHeatmapPanel.aggregateAccessibilityLabel(for: .band5GHz)
+        let normalized = label
+            .replacingOccurrences(of: "−", with: "-")
+            .replacingOccurrences(of: "дБм", with: "dBm")
 
-        #expect(label.contains("5 GHz"))
-        #expect(label.contains("RSSI"))
-        #expect(label.contains("-100"))
-        #expect(label.contains("-30 dBm"))
+        #expect(normalized.contains(ChannelBand.band5GHz.displayName))
+        #expect(normalized.contains("RSSI"))
+        #expect(normalized.contains("-100"))
+        #expect(normalized.contains("-30 dBm"))
     }
 
     @Test func axesUseSpectrumRSSIRangeAndNoTimeLabels() {

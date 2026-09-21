@@ -140,4 +140,50 @@ struct NetworkTableRowTests {
         #expect(visibilityID == row.id)
         #expect(lockID == row.id)
     }
+
+    @Test("Native network table keeps compact visibility and lock columns")
+    func nativeTableKeepsCompactVisibilityAndLockColumns() {
+        let view = NativeTableView(
+            rows: [makeRow()],
+            selectedID: Binding<String?>.constant(nil),
+            sortOrder: Binding<[NSSortDescriptor]>.constant([]),
+            hiddenColumns: Binding<Set<String>>.constant([]),
+            isVendorColumnAvailable: false,
+            onToggleVisibility: { _ in },
+            onToggleVisibilityLocked: { _ in }
+        )
+        let controller = NSHostingController(rootView: view)
+        let window = NSWindow(contentViewController: controller)
+        window.setContentSize(NSSize(width: 1200, height: 360))
+        window.layoutIfNeeded()
+
+        var tableView: NSTableView?
+        func walk(_ subject: NSView) {
+            if tableView == nil, let table = subject as? NSTableView {
+                tableView = table
+                return
+            }
+            subject.subviews.forEach(walk)
+        }
+        walk(controller.view)
+
+        #expect(tableView != nil)
+        guard let tableView else { return }
+
+        let visibility = tableView.tableColumns.first {
+            $0.identifier.rawValue == "visibility"
+        }
+        let lock = tableView.tableColumns.first {
+            $0.identifier.rawValue == "lock"
+        }
+
+        #expect((visibility?.width ?? 0) >= 38)
+        #expect((visibility?.width ?? 0) <= 46)
+        #expect(visibility?.minWidth == 38)
+        #expect(visibility?.maxWidth == 46)
+        #expect((lock?.width ?? 0) >= 24)
+        #expect((lock?.width ?? 0) <= 32)
+        #expect(lock?.minWidth == 24)
+        #expect(lock?.maxWidth == 32)
+    }
 }
