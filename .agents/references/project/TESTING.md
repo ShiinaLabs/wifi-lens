@@ -35,6 +35,27 @@ Swift Testing target injected into the app process via `TEST_HOST` for `@testabl
 
 Covered modules: `ChannelSpanCalculator`, `IEParser`, `SSIDColorHasher`, `ChannelQualityCalculator`, `NetworkTableRow`, `BandChartViewModel`, `BandChartLayout`, `SnapshotToChartAdapter`.
 
+### Test Selection Policy
+
+Automated tests should protect meaningful user-observable behavior, non-trivial logic, or stable contracts.
+
+- Pure localization, copy, wording, or terminology changes generally do not require new unit tests.
+- Do not assert the exact translated text of a localization key unless that exact text is itself a stable contract.
+- Do not freeze incidental implementation details such as exact widths, padding values, font choices, layout priorities, or specific scroll-view configuration merely because they were involved in a previous bug.
+- For UI regressions, test the observable result instead, such as overflow, clipping, inaccessible content, incorrect interaction behavior, or broken layout at supported window sizes.
+- Fixing a bug does not automatically require a new regression test. Add one when the affected behavior contains meaningful logic, is reasonably likely to regress, or has sufficient product risk to justify long-term maintenance.
+- If an existing behavior-level test already protects the same regression, do not add another implementation-specific test for the same issue.
+- A test claiming to exercise a specific localization or locale must verify that the localization lookup mechanism uses that locale. Do not assume that setting a SwiftUI environment locale changes localization performed outside that environment.
+- Prefer semantic assertions over implementation-mirroring assertions.
+
+Before adding a test, use this decision rule:
+
+```text
+If this test fails, what user-visible behavior or stable contract is broken?
+```
+
+If the answer is only that an internal number changed, a translated sentence changed, or the implementation changed while behavior remained correct, the test usually should not exist.
+
 ### Edition Composition Registration
 
 Edition-composition tests verify the shared-shell contract while each target

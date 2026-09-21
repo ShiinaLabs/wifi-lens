@@ -20,7 +20,8 @@ Closes #
 
 ## Testing
 
-<!-- Describe the checks you ran and their results. Remove items that do not apply. -->
+<!-- Describe the checks you ran and their results. Remove items that do not apply.
+Automated tests should cover meaningful logic or behavior, not localized copy or incidental implementation details. -->
 
 - [ ] Built the open-source edition successfully
 - [ ] Ran the relevant unit tests
@@ -42,7 +43,7 @@ Commands or additional testing details:
 
 * [ ] This pull request contains one focused logical change.
 * [ ] I did not include unrelated refactoring or formatting changes.
-* [ ] I added or updated tests where practical.
+* [ ] I added or updated tests where they provide meaningful regression coverage; pure localization, copy, and terminology changes generally do not require new unit tests.
 * [ ] I did not remove, skip, or weaken tests merely to make the change pass.
 * [ ] User-facing strings use the project localization system.
 * [ ] Documentation was updated where behavior changed.
