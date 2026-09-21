@@ -260,12 +260,12 @@ private struct ChannelCard: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 HStack(spacing: 4) {
-                    Text("channels.card.co_label", comment: "Co-channel label on detail card")
+                    Text(String(localized: "channels.card.co_label", comment: "Co-channel label on detail card"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("\(channel.coChannelCount)")
                         .font(.callout.weight(.medium))
-                    Text("channels.card.adj_label", comment: "Adjacent channel label on detail card")
+                    Text(String(localized: "channels.card.adj_label", comment: "Adjacent channel label on detail card"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("\(channel.adjacentCount)")
@@ -282,7 +282,7 @@ private struct ChannelCard: View {
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(overlapColor(channel.overlapLevel).opacity(0.12))
                         .clipShape(RoundedRectangle(cornerRadius: 4))
-                    Text("channels.card.overlap_label", comment: "Overlap label on detail card")
+                    Text(String(localized: "channels.card.overlap_label", comment: "Overlap label on detail card"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
