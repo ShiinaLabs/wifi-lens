@@ -3375,7 +3375,7 @@
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.9.6;
+				minimumVersion = 2.10.0;
 			};
 		};
 		C0A7A1B2C3D4E5F678900001 /* XCRemoteSwiftPackageReference "chart-lens" */ = {
