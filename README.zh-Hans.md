@@ -4,8 +4,6 @@
 
 WiFi Lens Pro 将实时 Wi-Fi 分析、网络诊断、持续监控、Timeline 历史、Statistics 和 Insights 汇聚在一款原生 macOS 应用中。
 
-**WiFi Lens Pro 是完整的 WiFi Lens 产品。**
-
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>获取 WiFi Lens Pro</strong></a>
   &nbsp;·&nbsp;
@@ -16,7 +14,7 @@ WiFi Lens Pro 将实时 Wi-Fi 分析、网络诊断、持续监控、Timeline �
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="在 Mac App Store 下载" width="190"></a>
 </p>
 
-<p align="center"><img alt="WiFi Lens 在 macOS 上展示 Wi-Fi 频谱分析" src="assets/screenshot-hero.webp" width="800"></p>
+<p align="center"><img alt="WiFi Lens Pro 在 macOS 上展示 Event Timeline 历史记录" src="assets/screenshot-timeline.webp" width="800"></p>
 
 <p align="center">macOS 14+ &nbsp;·&nbsp; Apple Silicon 与 Intel &nbsp;·&nbsp; 无遥测</p>
 
@@ -26,7 +24,7 @@ WiFi Lens Pro 将实时 Wi-Fi 分析、网络诊断、持续监控、Timeline �
   🤖 <strong>面向 AI 工作流的 MCP</strong> — 让兼容客户端读取 Mac 上的实时 Wi-Fi 数据
 </p>
 
-<p align="center"><sub>本仓库包含 WiFi Lens 开源版，用于基础本地分析、开发、源码查看和社区贡献。</sub></p>
+<p align="center"><sub>本仓库包含 WiFi Lens 开源版，用于实时本地分析、开发、源码查看和社区贡献。</sub></p>
 
 ---
 

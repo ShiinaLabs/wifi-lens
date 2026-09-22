@@ -4,8 +4,6 @@
 
 WiFi Lens Proは、リアルタイムWi-Fi分析、ネットワーク診断、継続的なモニタリング、Timeline履歴、Statistics、Insightsを、ネイティブmacOSアプリにまとめます。
 
-**WiFi Lens ProはWiFi Lensの完全版です。**
-
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Proを入手</strong></a>
   &nbsp;·&nbsp;
@@ -16,7 +14,7 @@ WiFi Lens Proは、リアルタイムWi-Fi分析、ネットワーク診断、�
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Mac App Storeからダウンロード" width="190"></a>
 </p>
 
-<p align="center"><img alt="macOSでWi-Fiスペクトラムを分析するWiFi Lens" src="assets/screenshot-hero.webp" width="800"></p>
+<p align="center"><img alt="macOSで接続履歴を表示するWiFi Lens ProのEvent Timeline" src="assets/screenshot-timeline.webp" width="800"></p>
 
 <p align="center">macOS 14以降 &nbsp;·&nbsp; Apple Silicon / Intel &nbsp;·&nbsp; テレメトリーなし</p>
 
@@ -26,7 +24,7 @@ WiFi Lens Proは、リアルタイムWi-Fi分析、ネットワーク診断、�
   🤖 <strong>AIワークフロー向けMCP</strong> — 対応クライアントからMac上のリアルタイムWi-Fiデータに接続
 </p>
 
-<p align="center"><sub>このリポジトリには、基本的なローカル分析、開発、ソースコードの確認、コミュニティへの貢献のためのオープンソース版が含まれています。</sub></p>
+<p align="center"><sub>このリポジトリには、リアルタイムのローカル分析、開発、ソースコードの確認、コミュニティへの貢献のためのオープンソース版が含まれています。</sub></p>
 
 ---
 

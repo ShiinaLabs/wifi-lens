@@ -4,8 +4,6 @@
 
 WiFi Lens Pro combina análisis Wi-Fi en directo, diagnóstico de red, monitorización continua, historial de Timeline, Statistics e Insights en una app nativa para macOS.
 
-**WiFi Lens Pro es el producto completo de WiFi Lens.**
-
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtener WiFi Lens Pro</strong></a>
   &nbsp;·&nbsp;
@@ -16,7 +14,7 @@ WiFi Lens Pro combina análisis Wi-Fi en directo, diagnóstico de red, monitoriz
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Descargar en el Mac App Store" width="190"></a>
 </p>
 
-<p align="center"><img alt="WiFi Lens mostrando análisis del espectro Wi-Fi en macOS" src="assets/screenshot-hero.webp" width="800"></p>
+<p align="center"><img alt="WiFi Lens Pro mostrando el historial de Event Timeline en macOS" src="assets/screenshot-timeline.webp" width="800"></p>
 
 <p align="center">macOS 14+ &nbsp;·&nbsp; Apple Silicon e Intel &nbsp;·&nbsp; Sin telemetría</p>
 
@@ -26,7 +24,7 @@ WiFi Lens Pro combina análisis Wi-Fi en directo, diagnóstico de red, monitoriz
   🤖 <strong>MCP para flujos de IA</strong> — Conecta clientes compatibles con los datos Wi-Fi en directo de tu Mac
 </p>
 
-<p align="center"><sub>Este repositorio contiene la edición de código abierto de WiFi Lens para análisis local básico, desarrollo, inspección del código y contribuciones de la comunidad.</sub></p>
+<p align="center"><sub>Este repositorio contiene la edición de código abierto de WiFi Lens para análisis local en directo, desarrollo, inspección del código y contribuciones de la comunidad.</sub></p>
 
 ---
 
