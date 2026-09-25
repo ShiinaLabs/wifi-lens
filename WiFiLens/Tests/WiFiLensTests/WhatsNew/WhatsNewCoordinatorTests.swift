@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import MarkdownKit
 import Testing
 @testable import WiFi_Lens
 
@@ -81,6 +82,14 @@ final class WhatsNewCoordinatorTests {
 
     // MARK: - Markdown renderer
 
+    @Test func rendererUsesSharedMarkdownKitImplementation() {
+        let markdown = "# Heading\n\n- Item\n\n[link](https://example.com)"
+        let appOutput = MarkdownRenderer.render(markdown, pointSize: 13)
+        let packageOutput = MarkdownKit.MarkdownRenderer.render(markdown, pointSize: 13)
+
+        #expect(appOutput.isEqual(to: packageOutput))
+    }
+
     @Test func renderHeadingIsLargerAndBold() {
         let ns = MarkdownRenderer.render("# Heading", pointSize: 13)
         let attrs = ns.attributes(at: 0, effectiveRange: nil)
@@ -136,11 +145,11 @@ final class WhatsNewCoordinatorTests {
         #expect((style?.headIndent ?? 0) > 0)
     }
 
-    @Test func renderTableIsDroppedGracefully() {
-        // Tables are outside the What's New Markdown subset; cell content is
-        // intentionally dropped rather than rendered.
+    @Test func renderUnsupportedTableFallsBackToPlainText() {
+        // MarkdownKit does not format tables, but Foundation's parsed cell text
+        // remains readable in its plain-text fallback.
         let ns = MarkdownRenderer.render("| a | b |\n|---|---|\n| 1 | 2 |", pointSize: 13)
-        #expect(ns.string.isEmpty)
+        #expect(ns.string == "ab12")
     }
 
     // MARK: - Helpers

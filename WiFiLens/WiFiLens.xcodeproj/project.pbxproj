@@ -126,6 +126,9 @@
 		A720C0010000000000000002 /* WiFiConnectionTransitionClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A720C0010000000000000001 /* WiFiConnectionTransitionClassifier.swift */; };
 		A952EA4DBE85899D61989DF9 /* SSIDColorHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD8F4CBC15819F4DB5C5510 /* SSIDColorHasher.swift */; };
 		AA4D4D9D9D1C2FA5D32CC290 /* ChannelQualityCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCB49F38A652E6A07BD027F /* ChannelQualityCalculatorTests.swift */; };
+		C0A7A1B2C3D4E5F678900012 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900006 /* MarkdownKit */; };
+		C0A7A1B2C3D4E5F678900013 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900007 /* MarkdownKit */; };
+		C0A7A1B2C3D4E5F678900014 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900008 /* MarkdownKit */; };
 		ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */; };
 		ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000003 /* DebugMultiAPScenario.swift */; };
 		ADB001000000000000000005 /* DebugMultiAPScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000003 /* DebugMultiAPScenario.swift */; };
@@ -1017,6 +1020,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB8FCB212FF6C5DF00BB2929 /* Sparkle in Frameworks */,
+				C0A7A1B2C3D4E5F678900012 /* MarkdownKit in Frameworks */,
 				1E5141F704005BF06DB684A1 /* CoreWLAN.framework in Frameworks */,
 				B9AB60F3D002A7B9123D2520 /* CoreLocation.framework in Frameworks */,
 				FB0573B42FBBEAE4005F8214 /* MCP in Frameworks */,
@@ -1032,6 +1036,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB1E32972FC7316C009D1BDC /* CoreWLAN.framework in Frameworks */,
+				C0A7A1B2C3D4E5F678900013 /* MarkdownKit in Frameworks */,
 				FBBD0F912FE78D5A0027958D /* ChartLens in Frameworks */,
 				C0A7A1B2C3D4E5F678900011 /* SplitView in Frameworks */,
 				FB1E32982FC7316C009D1BDC /* CoreLocation.framework in Frameworks */,
@@ -1045,6 +1050,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0A7A1B2C3D4E5F678900015 /* WiFiLensTests Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0A7A1B2C3D4E5F678900014 /* MarkdownKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1905,6 +1918,7 @@
 			buildConfigurationList = CA65A170FF00C1566D44BBC0 /* Build configuration list for PBXNativeTarget "WiFiLensTests" */;
 			buildPhases = (
 				B5CA93E4929E701BE84D66BD /* Sources */,
+				C0A7A1B2C3D4E5F678900015 /* WiFiLensTests Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1913,6 +1927,7 @@
 			);
 			name = WiFiLensTests;
 			packageProductDependencies = (
+				C0A7A1B2C3D4E5F678900008 /* MarkdownKit */,
 			);
 			productName = WiFiLensTests;
 			productReference = 8F405489976429A068F15F86 /* WiFiLensTests.xctest */;
@@ -1940,6 +1955,7 @@
 				FB85B8A82FE6526D00D2D391 /* ChartLens */,
 				C0A7A1B2C3D4E5F678900003 /* SplitView */,
 				FB8FCB202FF6C5DF00BB2929 /* Sparkle */,
+				C0A7A1B2C3D4E5F678900006 /* MarkdownKit */,
 			);
 			productName = WiFiLens;
 			productReference = BD784856886985BCC6FC4F02 /* WiFi Lens.app */;
@@ -1966,6 +1982,7 @@
 				FB1E32452FC7316C009D1BDC /* Logging */,
 				FBBD0F902FE78D5A0027958D /* ChartLens */,
 				C0A7A1B2C3D4E5F678900004 /* SplitView */,
+				C0A7A1B2C3D4E5F678900007 /* MarkdownKit */,
 			);
 			productName = WiFiLens;
 			productReference = FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */;
@@ -2073,6 +2090,7 @@
 				C0A7A1B2C3D4E5F678900001 /* XCRemoteSwiftPackageReference "chart-lens" */,
 				C0A7A1B2C3D4E5F678900002 /* XCRemoteSwiftPackageReference "SplitView" */,
 				FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BD4D8FFAAD7E961D9EE4F5FE /* Products */;
@@ -3394,6 +3412,14 @@
 				revision = ed017042512b9b6a508b240b12eab675c2412aea;
 			};
 		};
+		C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ShiinaLabs/MarkdownKit.git";
+			requirement = {
+				kind = revision;
+				revision = f399a6674d6efb5a7d9b2f1dfb8e1e6504f3bba2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -3441,6 +3467,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C0A7A1B2C3D4E5F678900002 /* XCRemoteSwiftPackageReference "SplitView" */;
 			productName = SplitView;
+		};
+		C0A7A1B2C3D4E5F678900006 /* MarkdownKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */;
+			productName = MarkdownKit;
+		};
+		C0A7A1B2C3D4E5F678900007 /* MarkdownKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */;
+			productName = MarkdownKit;
+		};
+		C0A7A1B2C3D4E5F678900008 /* MarkdownKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */;
+			productName = MarkdownKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

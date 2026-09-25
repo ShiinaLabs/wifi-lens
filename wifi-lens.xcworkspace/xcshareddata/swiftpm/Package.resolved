@@ -1,5 +1,5 @@
 {
-  "originHash" : "4be5c3732f622cb41fadeaf9a655cf2427581822c4ba85c9f11a7e93b4c2c5fa",
+  "originHash" : "bca8dba2fdc9353a65c0688fac83c678ce09bf01c65f4601352f7ccd1661da79",
   "pins" : [
     {
       "identity" : "chart-lens",
@@ -19,12 +19,20 @@
       }
     },
     {
+      "identity" : "markdownkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ShiinaLabs/MarkdownKit.git",
+      "state" : {
+        "revision" : "f399a6674d6efb5a7d9b2f1dfb8e1e6504f3bba2"
+      }
+    },
+    {
       "identity" : "sparkle",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",
       "state" : {
-        "revision" : "ac2def288cbff5cfc7df3ffef6abdf45b72bcb0a",
-        "version" : "2.9.6"
+        "revision" : "eef1a539a373c1f1a320624b1130fc5de7b2e100",
+        "version" : "2.10.0"
       }
     },
     {
