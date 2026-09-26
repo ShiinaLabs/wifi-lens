@@ -353,6 +353,7 @@ private struct AppRootView: View {
                 GuidanceCoordinator.shared.recordAppActive()
                 await viewModel.start()
                 roamingViewModel.handleWiFiPowerStateChange(viewModel.wifiPowerState)
+                EditionComposition.mainWindowDidFinishStartup(sceneState.id)
             }
             updateMCPServer()
         }
@@ -452,6 +453,8 @@ private struct WindowAccessor: NSViewRepresentable {
         window.titleVisibility = .visible
         MainWindowSizing.applyMinimumSize(to: window)
 
+        EditionComposition.configureMainWindow(window)
+
         guard let visibleFrame = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame else {
             return
         }
@@ -491,11 +494,11 @@ final class MainWindowSceneState {
     init(
         id: UUID = UUID(),
         editionWindowState: AnyObject? = nil,
-        selectedPage: SidebarPage = .overview
+        selectedPage: SidebarPage? = nil
     ) {
         self.id = id
         self.editionWindowState = editionWindowState ?? EditionComposition.makeMainWindowState()
-        self.selectedPage = selectedPage
+        self.selectedPage = selectedPage ?? EditionComposition.initialMainWindowRoute
     }
 
     func route(to page: SidebarPage) {
@@ -1009,7 +1012,7 @@ struct WiFiLensApp: App {
     @State private var viewModel: ScannerViewModel
     @State private var macVendorDatabaseManager: MACVendorDatabaseManager
     private let macVendorDatabaseSummary: MACVendorBundledDatabaseSummary?
-    @State private var roamingViewModel = RoamingTestViewModel()
+    @State private var roamingViewModel: RoamingTestViewModel
     @State private var apRadarViewModel: APRadarViewModel
     @State private var bleViewModel: BLEViewModel?
     /// Declared before `sparkleUpdater` so the existing-install migration
@@ -1048,6 +1051,7 @@ struct WiFiLensApp: App {
             observationRuntime: observationRuntime,
             vendorResolver: vendorResolver
         ))
+        _roamingViewModel = State(initialValue: EditionComposition.makeRoamingViewModel())
         _apRadarViewModel = State(initialValue: APRadarViewModel(
             observationRuntime: observationRuntime
         ))

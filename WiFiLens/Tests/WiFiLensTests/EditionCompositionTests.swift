@@ -5,6 +5,24 @@ import Testing
 struct EditionCompositionTests {
 
     @MainActor
+    @Test("OSS main windows begin on the edition-selected route")
+    func mainWindowUsesEditionSelectedInitialRoute() {
+        let defaultScene = MainWindowSceneState()
+        let fallbackScene = MainWindowSceneState(selectedPage: nil)
+
+        #expect(defaultScene.selectedPage == EditionComposition.initialMainWindowRoute)
+        #expect(fallbackScene.selectedPage == EditionComposition.initialMainWindowRoute)
+    }
+
+    @MainActor
+    @Test("edition composition creates the roaming presentation model")
+    func editionCompositionCreatesRoamingViewModel() {
+        let viewModel = EditionComposition.makeRoamingViewModel()
+
+        #expect(viewModel.state == .idle)
+    }
+
+    @MainActor
     @Test("spectrum charts are inactive until a window leases the route")
     func spectrumChartsStartInactive() {
         let chart = BandChartViewModel(band: .band24GHz)

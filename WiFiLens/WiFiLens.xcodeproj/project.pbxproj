@@ -223,6 +223,13 @@
 		EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000023 /* ProReviewRequestBridge.swift */; };
 		EC20000000000000000000026 /* FeedbackContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000025 /* FeedbackContact.swift */; };
 		EC20000000000000000000028 /* DemoAnalysisData.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000027 /* DemoAnalysisData.swift */; };
+		A55100000000000000000010 /* AppStage in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000009 /* AppStage */; };
+		A55100000000000000000017 /* AppStageMac in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000016 /* AppStageMac */; };
+		A55100000000000000000011 /* ProDemoLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000001 /* ProDemoLaunch.swift */; };
+		A55100000000000000000012 /* ProDemoCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000002 /* ProDemoCoordinator.swift */; };
+		A55100000000000000000013 /* RoamingHandoffScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000003 /* RoamingHandoffScenario.swift */; };
+		A55100000000000000000014 /* DemoRoamingProbeProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000004 /* DemoRoamingProbeProvider.swift */; };
+		A55100000000000000000015 /* DemoGatewayLatencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000005 /* DemoGatewayLatencyProvider.swift */; };
 		ECCBBEBFAF59A2E2035CE1FF /* BLEViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7BA76DD3B1E6198BDAEEA7 /* BLEViewModel.swift */; };
 		ED1000000000000000000002 /* AnalysisSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1000000000000000000001 /* AnalysisSnapshotTests.swift */; };
 		ED1000000000000000000004 /* AnalysisSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1000000000000000000003 /* AnalysisSnapshot.swift */; };
@@ -795,6 +802,11 @@
 		EC20000000000000000000023 /* ProReviewRequestBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProReviewRequestBridge.swift; sourceTree = "<group>"; };
 		EC20000000000000000000025 /* FeedbackContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackContact.swift; sourceTree = "<group>"; };
 		EC20000000000000000000027 /* DemoAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAnalysisData.swift; sourceTree = "<group>"; };
+		A55100000000000000000001 /* ProDemoLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoLaunch.swift; sourceTree = "<group>"; };
+		A55100000000000000000002 /* ProDemoCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoCoordinator.swift; sourceTree = "<group>"; };
+		A55100000000000000000003 /* RoamingHandoffScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingHandoffScenario.swift; sourceTree = "<group>"; };
+		A55100000000000000000004 /* DemoRoamingProbeProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRoamingProbeProvider.swift; sourceTree = "<group>"; };
+		A55100000000000000000005 /* DemoGatewayLatencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoGatewayLatencyProvider.swift; sourceTree = "<group>"; };
 		ED1000000000000000000001 /* AnalysisSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSnapshotTests.swift; sourceTree = "<group>"; };
 		ED1000000000000000000003 /* AnalysisSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSnapshot.swift; sourceTree = "<group>"; };
 		ED2000000000000000000001 /* AnalysisNetworkScopeIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisNetworkScopeIntegrationTests.swift; sourceTree = "<group>"; };
@@ -1043,6 +1055,8 @@
 				FB1E32992FC7316C009D1BDC /* MCP in Frameworks */,
 				FB1E329A2FC7316C009D1BDC /* CoreBluetooth.framework in Frameworks */,
 				FB1E329B2FC7316C009D1BDC /* Logging in Frameworks */,
+				A55100000000000000000010 /* AppStage in Frameworks */,
+				A55100000000000000000017 /* AppStageMac in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1583,6 +1597,7 @@
 		FBD0A4442FE5BEAC003658AD /* Pro */ = {
 			isa = PBXGroup;
 			children = (
+				A55100000000000000000006 /* Demo */,
 				EC2000000000000000000000B /* App */,
 				EC20000000000000000000015 /* Analysis */,
 				FBD0A4762FE5C06000000023 /* Events */,
@@ -1596,6 +1611,26 @@
 			name = Pro;
 			path = ../Pro;
 			sourceTree = SOURCE_ROOT;
+		};
+		A55100000000000000000006 /* Demo */ = {
+			isa = PBXGroup;
+			children = (
+				A55100000000000000000001 /* ProDemoLaunch.swift */,
+				A55100000000000000000002 /* ProDemoCoordinator.swift */,
+				A55100000000000000000007 /* Roaming */,
+			);
+			path = Demo;
+			sourceTree = "<group>";
+		};
+		A55100000000000000000007 /* Roaming */ = {
+			isa = PBXGroup;
+			children = (
+				A55100000000000000000003 /* RoamingHandoffScenario.swift */,
+				A55100000000000000000004 /* DemoRoamingProbeProvider.swift */,
+				A55100000000000000000005 /* DemoGatewayLatencyProvider.swift */,
+			);
+			path = Roaming;
+			sourceTree = "<group>";
 		};
 		FBD0A4562FE5C06000000003 /* MenuBar */ = {
 			isa = PBXGroup;
@@ -1983,6 +2018,8 @@
 				FBBD0F902FE78D5A0027958D /* ChartLens */,
 				C0A7A1B2C3D4E5F678900004 /* SplitView */,
 				C0A7A1B2C3D4E5F678900007 /* MarkdownKit */,
+				A55100000000000000000009 /* AppStage */,
+				A55100000000000000000016 /* AppStageMac */,
 			);
 			productName = WiFiLens;
 			productReference = FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */;
@@ -2091,6 +2128,7 @@
 				C0A7A1B2C3D4E5F678900002 /* XCRemoteSwiftPackageReference "SplitView" */,
 				FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
+				A55100000000000000000008 /* XCRemoteSwiftPackageReference "AppStage" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BD4D8FFAAD7E961D9EE4F5FE /* Products */;
@@ -2487,6 +2525,11 @@
 				ND0000000000000000000041 /* NetworkDiagnosticsViewModel.swift in Sources */,
 				ND0000000000000000000044 /* NetworkDiagnosticsView.swift in Sources */,
 				EC20000000000000000000004 /* ProEditionComposition.swift in Sources */,
+				A55100000000000000000011 /* ProDemoLaunch.swift in Sources */,
+				A55100000000000000000012 /* ProDemoCoordinator.swift in Sources */,
+				A55100000000000000000013 /* RoamingHandoffScenario.swift in Sources */,
+				A55100000000000000000014 /* DemoRoamingProbeProvider.swift in Sources */,
+				A55100000000000000000015 /* DemoGatewayLatencyProvider.swift in Sources */,
 				EC20000000000000000000006 /* ProTimelineCompositionView.swift in Sources */,
 				EC20000000000000000000008 /* ProSettingsComposition.swift in Sources */,
 				EC2000000000000000000000A /* ProMenuBarComposition.swift in Sources */,
@@ -3420,6 +3463,14 @@
 				revision = f399a6674d6efb5a7d9b2f1dfb8e1e6504f3bba2;
 			};
 		};
+		A55100000000000000000008 /* XCRemoteSwiftPackageReference "AppStage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ShiinaLabs/AppStage.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -3482,6 +3533,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */;
 			productName = MarkdownKit;
+		};
+		A55100000000000000000009 /* AppStage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A55100000000000000000008 /* XCRemoteSwiftPackageReference "AppStage" */;
+			productName = AppStage;
+		};
+		A55100000000000000000016 /* AppStageMac */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A55100000000000000000008 /* XCRemoteSwiftPackageReference "AppStage" */;
+			productName = AppStageMac;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -39,6 +39,17 @@ enum EditionComposition {
     static func makeMainWindowState() -> AnyObject { NSObject() }
 
     @MainActor
+    static func makeRoamingViewModel() -> RoamingTestViewModel { RoamingTestViewModel() }
+
+    static var initialMainWindowRoute: SidebarPage { .overview }
+
+    @MainActor
+    static func configureMainWindow(_ window: NSWindow) {}
+
+    @MainActor
+    static func mainWindowDidFinishStartup(_ windowID: UUID) {}
+
+    @MainActor
     static func registerMainWindowState(_ state: AnyObject, for windowID: UUID) -> Bool { true }
 
     @MainActor
