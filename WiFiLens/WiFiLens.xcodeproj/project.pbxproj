@@ -3491,7 +3491,7 @@
 			repositoryURL = "https://github.com/ShiinaLabs/AppStage.git";
 				requirement = {
 					kind = exactVersion;
-					version = 0.4.3;
+					version = 0.5.0;
 				};
 		};
 /* End XCRemoteSwiftPackageReference section */

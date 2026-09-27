@@ -6,8 +6,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ShiinaLabs/AppStage.git",
       "state" : {
-        "revision" : "48153e37eb1277c6f38af8f973895aa66b515484",
-        "version" : "0.4.0"
+        "revision" : "8ff5661785f3032de15ef518b0e796926622882f",
+        "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "axe",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lnquy/axe.git",
+      "state" : {
+        "revision" : "9d6faa2724ce95b5acc24685de692dc832b990b4",
+        "version" : "0.1.0"
       }
     },
     {
