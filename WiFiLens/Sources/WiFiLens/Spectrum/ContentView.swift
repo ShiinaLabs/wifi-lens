@@ -76,6 +76,7 @@ struct ContentView: View {
         // at the minimum window size, clipping the right edge. Keep only the ideals as
         // page layout hints.
         .frame(idealWidth: 1000, idealHeight: 700)
+        .coordinateSpace(name: "wifi-lens.spectrum")
         .onChange(of: viewModel.hiddenBands) { _, _ in viewModel.applyGlobalFilterToBands() }
         .onChange(of: viewModel.hideHiddenSSIDs) { _, _ in viewModel.applyGlobalFilterToBands() }
     }

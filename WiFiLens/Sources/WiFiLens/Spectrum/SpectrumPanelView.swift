@@ -60,8 +60,8 @@ struct SpectrumPanelView: View {
             .background {
                 GeometryReader { proxy in
                     Color.clear.preference(
-                        key: SpectrumDemoTargetFramesPreferenceKey.self,
-                        value: ["panel-\(panelID.rawValue)-view-picker": proxy.frame(in: .named("appstage.cursor"))]
+                        key: SpectrumControlGeometryPreferenceKey.self,
+                        value: ["\(panelID.rawValue)-view-picker": proxy.frame(in: .named("wifi-lens.spectrum"))]
                     )
                 }
             }
@@ -138,8 +138,8 @@ struct SpectrumPanelView: View {
                 .background {
                     GeometryReader { proxy in
                         Color.clear.preference(
-                            key: SpectrumDemoTargetFramesPreferenceKey.self,
-                            value: ["panel-\(panelID.rawValue)-band-picker": proxy.frame(in: .named("appstage.cursor"))]
+                            key: SpectrumControlGeometryPreferenceKey.self,
+                            value: ["\(panelID.rawValue)-band-picker": proxy.frame(in: .named("wifi-lens.spectrum"))]
                         )
                     }
                 }
@@ -191,7 +191,7 @@ struct SpectrumPanelView: View {
 
 }
 
-struct SpectrumDemoTargetFramesPreferenceKey: PreferenceKey {
+struct SpectrumControlGeometryPreferenceKey: PreferenceKey {
     static let defaultValue: [String: CGRect] = [:]
 
     static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
