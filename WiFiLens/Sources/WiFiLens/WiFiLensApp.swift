@@ -71,7 +71,8 @@ private struct AppRootView: View {
     }
 
     private var showsLocationPermissionRequiredView: Bool {
-        !UITestMode.isActive && selectedPage.requiresLocationAuthorization && !hasLocationAuthorization
+        !UITestMode.isActive && !EditionComposition.isControlledDemoSession
+            && selectedPage.requiresLocationAuthorization && !hasLocationAuthorization
     }
 
     private var activeSecondaryToolbarDescriptor: SecondaryToolbarDescriptor? {
@@ -156,7 +157,8 @@ private struct AppRootView: View {
                 accessState: viewModel.accessState,
                 openLocationPreferences: viewModel.locationManager.openLocationPreferences
             )
-        } else if !UITestMode.isActive && selectedPage.requiresWiFi && !viewModel.isWiFiAvailable {
+        } else if !UITestMode.isActive && !EditionComposition.isControlledDemoSession
+                    && selectedPage.requiresWiFi && !viewModel.isWiFiAvailable {
             WiFiOffView()
         } else {
             // Pages stay mounted to preserve page-local state. GeometryReader keeps their
