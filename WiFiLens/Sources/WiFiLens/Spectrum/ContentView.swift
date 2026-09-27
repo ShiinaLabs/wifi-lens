@@ -108,8 +108,8 @@ struct ContentView: View {
                 }
             }
         }
-        .accessibilityIdentifier("spectrum-dashboard")
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("spectrum-dashboard")
     }
 
     private var dashboardToolbar: some View {

@@ -57,6 +57,7 @@ struct SpectrumPanelView: View {
             }
             .pickerStyle(.menu)
             .frame(width: 180)
+            .accessibilityIdentifier("spectrum.\(panelID.rawValue).view-picker")
             .background {
                 GeometryReader { proxy in
                     Color.clear.preference(
@@ -135,6 +136,7 @@ struct SpectrumPanelView: View {
                 }
                 .pickerStyle(.menu)
                 .frame(width: 140)
+                .accessibilityIdentifier("spectrum.\(panelID.rawValue).band-picker")
                 .background {
                     GeometryReader { proxy in
                         Color.clear.preference(
