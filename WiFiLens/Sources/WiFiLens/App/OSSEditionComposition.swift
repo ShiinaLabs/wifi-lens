@@ -3,6 +3,7 @@ import SwiftUI
 
 enum EditionComposition {
     static var isControlledDemoSession: Bool { false }
+    static var shouldStartObservationRuntime: Bool { true }
     static var requiresLiveWiFiAuthorization: Bool { true }
 
     static var guidanceConfiguration: GuidanceConfiguration {

@@ -267,7 +267,9 @@ private struct AppRootView: View {
                     // OSS `.banner` export strategy only: renders while the
                     // coordinator publishes export feedback; no-op in Pro
                     // (`.preserveExisting` never publishes feedback).
-                    ExportSuccessBanner(guidance: GuidanceCoordinator.shared)
+                    if EditionComposition.shouldStartObservationRuntime {
+                        ExportSuccessBanner(guidance: GuidanceCoordinator.shared)
+                    }
                 }
             }
         }
@@ -341,26 +343,33 @@ private struct AppRootView: View {
             // NetworkInfoService are synchronous XPC calls that can stall the
             // test process. Unit tests inject their own stores and fakes.
             if !ProcessInfo.processInfo.isRunningUnderTestHost {
-                var welcomedOnThisLaunch = false
-                if !UITestMode.isActive,
-                   EditionComposition.onboardingConfiguration.welcomeEnabled {
-                    welcomedOnThisLaunch = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
+                if EditionComposition.shouldStartObservationRuntime {
+                    var welcomedOnThisLaunch = false
+                    if !UITestMode.isActive,
+                       EditionComposition.onboardingConfiguration.welcomeEnabled {
+                        welcomedOnThisLaunch = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
+                    }
+                    if !welcomedOnThisLaunch && !EditionComposition.isControlledDemoSession {
+                        whatsNewCoordinator.checkForUpdate()
+                    }
+                    EditionComposition.startLifecycle(observationRuntime: viewModel.observationRuntime)
+                    if !EditionComposition.isControlledDemoSession {
+                        GuidanceCoordinator.shared.recordAppActive()
+                    }
+                    await viewModel.start()
+                    roamingViewModel.handleWiFiPowerStateChange(viewModel.wifiPowerState)
                 }
-                if !welcomedOnThisLaunch && !EditionComposition.isControlledDemoSession {
-                    whatsNewCoordinator.checkForUpdate()
-                }
-                EditionComposition.startLifecycle(observationRuntime: viewModel.observationRuntime)
-                if !EditionComposition.isControlledDemoSession {
-                    GuidanceCoordinator.shared.recordAppActive()
-                }
-                await viewModel.start()
-                roamingViewModel.handleWiFiPowerStateChange(viewModel.wifiPowerState)
                 EditionComposition.mainWindowDidFinishStartup(sceneState.id)
             }
-            updateMCPServer()
+            if EditionComposition.shouldStartObservationRuntime {
+                updateMCPServer()
+            }
         }
         .sheet(isPresented: Binding(
-            get: { onboardingCoordinator.welcomeHostID == sceneState.id },
+            get: {
+                EditionComposition.shouldStartObservationRuntime
+                    && onboardingCoordinator.welcomeHostID == sceneState.id
+            },
             set: { isPresented in
                 if !isPresented, onboardingCoordinator.welcomeHostID == sceneState.id {
                     onboardingCoordinator.releaseWelcome(hostID: sceneState.id)
@@ -395,7 +404,10 @@ private struct AppRootView: View {
             onboardingCoordinator.releaseWelcome(hostID: sceneState.id)
         }
         .sheet(isPresented: Binding(
-            get: { whatsNewCoordinator.shouldShowSheet || whatsNewCoordinator.showSheetFromBadge },
+            get: {
+                EditionComposition.shouldStartObservationRuntime
+                    && (whatsNewCoordinator.shouldShowSheet || whatsNewCoordinator.showSheetFromBadge)
+            },
             set: { if !$0 { whatsNewCoordinator.dismiss() } }
         )) {
             WhatsNewSheetView(
@@ -408,8 +420,10 @@ private struct AppRootView: View {
                 if !EditionComposition.isControlledDemoSession {
                     GuidanceCoordinator.shared.recordAppActive()
                 }
-                apRadarViewModel.handleAppActive()
-                Task { await viewModel.handleSceneDidBecomeActive() }
+                if EditionComposition.shouldStartObservationRuntime {
+                    apRadarViewModel.handleAppActive()
+                    Task { await viewModel.handleSceneDidBecomeActive() }
+                }
             } else if newPhase == .background {
                 // Ordinary `.inactive` (losing focus) must NOT suspend AP
                 // Radar: the user may carry the Mac while the window is not
@@ -1025,7 +1039,9 @@ struct WiFiLensApp: App {
     /// order).
     private let onboardingCoordinator: OnboardingCoordinator = {
         let coordinator = OnboardingCoordinator.shared
-        if !UITestMode.isActive, ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+        if !UITestMode.isActive,
+           !EditionComposition.isControlledDemoSession,
+           ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
             coordinator.migrateExistingInstallationIfNeeded()
         }
         return coordinator
@@ -1078,7 +1094,9 @@ struct WiFiLensApp: App {
             _crashLogText = State(initialValue: log)
             _showCrashLog = State(initialValue: true)
         }
-        let bleOn = UserDefaults.standard.bool(forKey: "bleEnabled") && !UITestMode.isActive
+        let bleOn = UserDefaults.standard.bool(forKey: "bleEnabled")
+            && EditionComposition.shouldStartObservationRuntime
+            && !UITestMode.isActive
         _bleViewModel = State(initialValue: bleOn ? BLEViewModel() : nil)
         AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
     }
@@ -1143,6 +1161,7 @@ struct WiFiLensApp: App {
             }
         }
         .onChange(of: bleEnabled) { _, enabled in
+            guard EditionComposition.shouldStartObservationRuntime else { return }
             if enabled {
                 bleViewModel = BLEViewModel()
             } else {
@@ -1155,10 +1174,10 @@ struct WiFiLensApp: App {
             )
         }
         .onChange(of: mcpEnabled) { _, enabled in
-            updateMCPServer()
+            if EditionComposition.shouldStartObservationRuntime { updateMCPServer() }
         }
         .onChange(of: mcpPort) { _, _ in
-            if mcpEnabled { updateMCPServer() }
+            if EditionComposition.shouldStartObservationRuntime, mcpEnabled { updateMCPServer() }
         }
         .commands {
             CommandGroup(before: .toolbar) {
@@ -1339,10 +1358,12 @@ struct WiFiLensApp: App {
     private func registerMainWindow(_ window: NSWindow?, sceneState: MainWindowSceneState) {
         guard let window else { return }
 
-        routeResources.bind(
-            spectrumViewModels: viewModel.allBandViewModels,
-            bleViewModel: bleViewModel
-        )
+        if EditionComposition.shouldStartObservationRuntime {
+            routeResources.bind(
+                spectrumViewModels: viewModel.allBandViewModels,
+                bleViewModel: bleViewModel
+            )
+        }
 
         let registration = mainWindowLifecycle.register(
             window,
