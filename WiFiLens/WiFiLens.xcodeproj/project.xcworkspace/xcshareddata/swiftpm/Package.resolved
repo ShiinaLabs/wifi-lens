@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ShiinaLabs/AppStage.git",
       "state" : {
-        "revision" : "25abb5595577fb769e6710ddc6682ba15ed7395c",
-        "version" : "0.4.2"
+        "revision" : "092e5bddc420b24c98712b30bde8c5ca75edaa6c",
+        "version" : "0.4.3"
       }
     },
     {

@@ -3489,10 +3489,10 @@
 		A55100000000000000000008 /* XCRemoteSwiftPackageReference "AppStage" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ShiinaLabs/AppStage.git";
-			requirement = {
-				kind = exactVersion;
-				version = 0.4.2;
-			};
+				requirement = {
+					kind = exactVersion;
+					version = 0.4.3;
+				};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
