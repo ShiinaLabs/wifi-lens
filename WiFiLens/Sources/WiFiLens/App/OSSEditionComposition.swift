@@ -2,6 +2,12 @@ import AppKit
 import SwiftUI
 
 enum EditionComposition {
+    @ViewBuilder
+    @MainActor
+    static func roamingPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+    }
+
     static var isControlledDemoSession: Bool { false }
     static var shouldStartObservationRuntime: Bool { true }
     static var requiresLiveWiFiAuthorization: Bool { true }

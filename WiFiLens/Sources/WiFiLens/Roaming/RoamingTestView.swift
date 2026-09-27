@@ -123,8 +123,8 @@ struct RoamingTestView: View {
             }
             Spacer()
         }
-        .accessibilityIdentifier("roaming-idle-state")
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("roaming-idle-state")
     }
 
     // MARK: - Running / Stopped content
@@ -136,8 +136,8 @@ struct RoamingTestView: View {
             trendChart
             transitionTable
         }
-        .accessibilityIdentifier("roaming-active-state")
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("roaming-active-state")
     }
 
     // MARK: - Signal info card
@@ -280,7 +280,7 @@ struct RoamingTestView: View {
                 .controlSize(.small)
                 .help(String(localized: "roaming.control.stop_tooltip", comment: "Tooltip for stop roaming test button"))
                 .accessibilityLabel(String(localized: "roaming.control.stop_tooltip", comment: "Tooltip for stop roaming test button"))
-                .accessibilityIdentifier("roaming-stop-test-button")
+                .accessibilityIdentifier("roaming.stop-button")
             } else {
                 Button {
                     if viewModel.state == .stopped, viewModel.totalSamples > 0 {
@@ -296,7 +296,7 @@ struct RoamingTestView: View {
                 .disabled(!viewModel.canStart)
                 .help(String(localized: "roaming.control.start_tooltip", comment: "Tooltip for start roaming test button"))
                 .accessibilityLabel(String(localized: "roaming.control.start_tooltip", comment: "Tooltip for start roaming test button"))
-                .accessibilityIdentifier("roaming-start-test-button")
+                .accessibilityIdentifier("roaming.start-button")
             }
         }
         .padding(.horizontal, 16)

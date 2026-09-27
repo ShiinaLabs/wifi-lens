@@ -207,11 +207,13 @@ private struct AppRootView: View {
                         .allowsHitTesting(selectedPage == .networkDiagnostics)
                         .accessibilityIdentifier("page-networkDiagnostics")
 
-                    RoamingTestView(viewModel: roamingViewModel)
+                    EditionComposition.roamingPageContent {
+                        RoamingTestView(viewModel: roamingViewModel)
+                    }
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("page-roaming")
                         .opacity(selectedPage == .roaming ? 1 : 0)
                         .allowsHitTesting(selectedPage == .roaming)
-                        .accessibilityIdentifier("page-roaming")
-                        .accessibilityElement(children: .contain)
 
                     APRadarView(
                         viewModel: apRadarViewModel,

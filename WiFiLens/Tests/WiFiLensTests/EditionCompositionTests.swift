@@ -17,7 +17,7 @@ struct EditionCompositionTests {
     @MainActor
     @Test("edition composition creates the roaming presentation model")
     func editionCompositionCreatesRoamingViewModel() {
-        let viewModel = EditionComposition.makeRoamingViewModel()
+        let viewModel = EditionComposition.makeRoamingViewModel(scannerViewModel: ScannerViewModel())
 
         #expect(viewModel.state == .idle)
     }
