@@ -97,6 +97,7 @@ final class ScannerViewModel {
     let store: WiFiObservationStore
     let observationRuntime: WiFiObservationRuntime
     private let authorizationRefresh: @MainActor (LocationPermissionManager) -> Void
+    private let requiresLiveWiFiAuthorization: Bool
     private let userDefaults: UserDefaults
     private let vendorResolver: any MACVendorResolving
     private var userDefaultsRegionOverride: RegulatoryDomain?
@@ -105,11 +106,13 @@ final class ScannerViewModel {
         store: WiFiObservationStore = .shared,
         userDefaults: UserDefaults = .standard,
         vendorResolver: any MACVendorResolving = MACVendorResolver(),
+        requiresLiveWiFiAuthorization: Bool = true,
         authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() }
     ) {
         self.store = store
         self.observationRuntime = WiFiObservationRuntime(store: store)
         self.authorizationRefresh = authorizationRefresh
+        self.requiresLiveWiFiAuthorization = requiresLiveWiFiAuthorization
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
         self.userDefaultsRegionOverride = Self.regionOverride(
@@ -123,11 +126,13 @@ final class ScannerViewModel {
         observationRuntime: WiFiObservationRuntime,
         userDefaults: UserDefaults = .standard,
         vendorResolver: any MACVendorResolving = MACVendorResolver(),
+        requiresLiveWiFiAuthorization: Bool = true,
         authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() }
     ) {
         self.store = observationRuntime.store
         self.observationRuntime = observationRuntime
         self.authorizationRefresh = authorizationRefresh
+        self.requiresLiveWiFiAuthorization = requiresLiveWiFiAuthorization
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
         self.userDefaultsRegionOverride = Self.regionOverride(
@@ -390,6 +395,13 @@ final class ScannerViewModel {
             guard !isTerminating else { return }
             AppLogger.scanner.info("start() — begin")
 
+            guard requiresLiveWiFiAuthorization else {
+                wifiPowerState = .poweredOn
+                await startScanLoop()
+                hasStarted = true
+                return
+            }
+
             locationManager.onAuthorizationGranted = { [weak self] in
                 guard let self else { return }
                 Task { @MainActor in
@@ -444,6 +456,11 @@ final class ScannerViewModel {
     }
 
     private func reconcileWiFiState(_ state: WiFiPowerState) {
+        guard requiresLiveWiFiAuthorization else {
+            wifiPowerState = .poweredOn
+            updateMCPDataProvider()
+            return
+        }
         wifiPowerState = state
         updateMCPDataProvider()
         guard !isTerminating else { return }
@@ -990,6 +1007,8 @@ final class ScannerViewModel {
 
     private func isRuntimePublicationEligible(for generation: UUID) -> Bool {
         guard activeProjectionGeneration == generation, isScanning else { return false }
+
+        guard requiresLiveWiFiAuthorization else { return true }
 
         wifiPowerMonitor.refreshState()
         let currentPowerState = wifiPowerMonitor.currentState

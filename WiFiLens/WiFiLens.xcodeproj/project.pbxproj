@@ -231,6 +231,8 @@
 		A55100000000000000000013 /* RoamingHandoffScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000003 /* RoamingHandoffScenario.swift */; };
 		A55100000000000000000014 /* DemoRoamingProbeProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000004 /* DemoRoamingProbeProvider.swift */; };
 		A55100000000000000000015 /* DemoGatewayLatencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000005 /* DemoGatewayLatencyProvider.swift */; };
+		A55300000000000000000001 /* HeatmapDemoScanSequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55300000000000000000002 /* HeatmapDemoScanSequence.swift */; };
+		A55300000000000000000004 /* HeatmapDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55300000000000000000005 /* HeatmapDemoTests.swift */; };
 		A55200000000000000000002 /* ProDemoRuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55200000000000000000001 /* ProDemoRuntimeTests.swift */; };
 		ECCBBEBFAF59A2E2035CE1FF /* BLEViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7BA76DD3B1E6198BDAEEA7 /* BLEViewModel.swift */; };
 		ED1000000000000000000002 /* AnalysisSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1000000000000000000001 /* AnalysisSnapshotTests.swift */; };
@@ -809,6 +811,8 @@
 		A55100000000000000000003 /* RoamingHandoffScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingHandoffScenario.swift; sourceTree = "<group>"; };
 		A55100000000000000000004 /* DemoRoamingProbeProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRoamingProbeProvider.swift; sourceTree = "<group>"; };
 		A55100000000000000000005 /* DemoGatewayLatencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoGatewayLatencyProvider.swift; sourceTree = "<group>"; };
+		A55300000000000000000002 /* HeatmapDemoScanSequence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapDemoScanSequence.swift; sourceTree = "<group>"; };
+		A55300000000000000000005 /* HeatmapDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapDemoTests.swift; sourceTree = "<group>"; };
 		A55200000000000000000001 /* ProDemoRuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoRuntimeTests.swift; sourceTree = "<group>"; };
 		ED1000000000000000000001 /* AnalysisSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSnapshotTests.swift; sourceTree = "<group>"; };
 		ED1000000000000000000003 /* AnalysisSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSnapshot.swift; sourceTree = "<group>"; };
@@ -1505,6 +1509,7 @@
 			isa = PBXGroup;
 			children = (
 				A55200000000000000000001 /* ProDemoRuntimeTests.swift */,
+				A55300000000000000000005 /* HeatmapDemoTests.swift */,
 				EA1000000000000000000001 /* AnalysisScopeTests.swift */,
 				EB2000000000000000000001 /* AnalysisSchemaV3MigrationTests.swift */,
 				EB3000000000000000000001 /* AnalysisObservationCoverageTests.swift */,
@@ -1623,8 +1628,17 @@
 				A55100000000000000000001 /* ProDemoLaunch.swift */,
 				A55100000000000000000002 /* ProDemoCoordinator.swift */,
 				A55100000000000000000007 /* Roaming */,
+				A55300000000000000000003 /* Heatmap */,
 			);
 			path = Demo;
+			sourceTree = "<group>";
+		};
+		A55300000000000000000003 /* Heatmap */ = {
+			isa = PBXGroup;
+			children = (
+				A55300000000000000000002 /* HeatmapDemoScanSequence.swift */,
+			);
+			path = Heatmap;
 			sourceTree = "<group>";
 		};
 		A55100000000000000000007 /* Roaming */ = {
@@ -2536,6 +2550,7 @@
 				A55100000000000000000013 /* RoamingHandoffScenario.swift in Sources */,
 				A55100000000000000000014 /* DemoRoamingProbeProvider.swift in Sources */,
 				A55100000000000000000015 /* DemoGatewayLatencyProvider.swift in Sources */,
+				A55300000000000000000001 /* HeatmapDemoScanSequence.swift in Sources */,
 				EC20000000000000000000006 /* ProTimelineCompositionView.swift in Sources */,
 				EC20000000000000000000008 /* ProSettingsComposition.swift in Sources */,
 				EC2000000000000000000000A /* ProMenuBarComposition.swift in Sources */,
@@ -2734,6 +2749,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A55200000000000000000002 /* ProDemoRuntimeTests.swift in Sources */,
+				A55300000000000000000004 /* HeatmapDemoTests.swift in Sources */,
 				EA1000000000000000000002 /* AnalysisScopeTests.swift in Sources */,
 				EB2000000000000000000002 /* AnalysisSchemaV3MigrationTests.swift in Sources */,
 				EB3000000000000000000002 /* AnalysisObservationCoverageTests.swift in Sources */,

@@ -35,7 +35,7 @@ struct ContentView: View {
     let isVendorColumnAvailable: Bool
 
     @State private var sortOrder: [NSSortDescriptor] = [NSSortDescriptor(key: "ssid", ascending: true)]
-    @State private var dashboardState = SpectrumDashboardState()
+    @State private var dashboardState: SpectrumDashboardState
     @AppStorage("hiddenTableColumns") private var hiddenColumnsData: String = ""
 
     private var hiddenColumns: Binding<Set<String>> {
@@ -45,15 +45,25 @@ struct ContentView: View {
         )
     }
 
-    init(viewModel: ScannerViewModel, isVendorColumnAvailable: Bool) {
+    init(
+        viewModel: ScannerViewModel,
+        isVendorColumnAvailable: Bool,
+        dashboardState: SpectrumDashboardState? = nil
+    ) {
         self.viewModel = viewModel
         self.isVendorColumnAvailable = isVendorColumnAvailable
+        _dashboardState = State(initialValue: dashboardState ?? SpectrumDashboardState())
     }
 
-    init(viewModel: ScannerViewModel, macVendorDatabaseManager: MACVendorDatabaseManager) {
+    init(
+        viewModel: ScannerViewModel,
+        macVendorDatabaseManager: MACVendorDatabaseManager,
+        dashboardState: SpectrumDashboardState? = nil
+    ) {
         self.init(
             viewModel: viewModel,
-            isVendorColumnAvailable: macVendorDatabaseManager.availability.isVendorColumnAvailable
+            isVendorColumnAvailable: macVendorDatabaseManager.availability.isVendorColumnAvailable,
+            dashboardState: dashboardState
         )
     }
 

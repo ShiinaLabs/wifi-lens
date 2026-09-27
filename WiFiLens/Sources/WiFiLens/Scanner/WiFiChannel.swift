@@ -13,12 +13,10 @@ struct WiFiChannel: Sendable {
         spanDirection = cwChannel.spanDirection
     }
 
-    #if DEBUG
     init(band: ChannelBand, channelNumber: Int, channelWidthMHz: Int = 20, spanDirection: SpanDirection? = nil) {
         self.band = band
         self.channelNumber = channelNumber
         self.channelWidthMHz = channelWidthMHz
         self.spanDirection = spanDirection
     }
-    #endif
 }

@@ -346,11 +346,13 @@ private struct AppRootView: View {
                    EditionComposition.onboardingConfiguration.welcomeEnabled {
                     welcomedOnThisLaunch = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
                 }
-                if !welcomedOnThisLaunch {
+                if !welcomedOnThisLaunch && !EditionComposition.isControlledDemoSession {
                     whatsNewCoordinator.checkForUpdate()
                 }
                 EditionComposition.startLifecycle(observationRuntime: viewModel.observationRuntime)
-                GuidanceCoordinator.shared.recordAppActive()
+                if !EditionComposition.isControlledDemoSession {
+                    GuidanceCoordinator.shared.recordAppActive()
+                }
                 await viewModel.start()
                 roamingViewModel.handleWiFiPowerStateChange(viewModel.wifiPowerState)
                 EditionComposition.mainWindowDidFinishStartup(sceneState.id)
@@ -403,7 +405,9 @@ private struct AppRootView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, !ProcessInfo.processInfo.isRunningUnderTestHost {
-                GuidanceCoordinator.shared.recordAppActive()
+                if !EditionComposition.isControlledDemoSession {
+                    GuidanceCoordinator.shared.recordAppActive()
+                }
                 apRadarViewModel.handleAppActive()
                 Task { await viewModel.handleSceneDidBecomeActive() }
             } else if newPhase == .background {
@@ -1046,12 +1050,14 @@ struct WiFiLensApp: App {
         let vendorResolver = MACVendorResolver(database: database)
         let databaseSummary = database?.summary
         macVendorDatabaseSummary = databaseSummary
-        let observationRuntime = WiFiObservationRuntime(store: WiFiObservationStore.shared)
-        _viewModel = State(initialValue: ScannerViewModel(
+        let observationRuntime = EditionComposition.makeObservationRuntime(store: WiFiObservationStore.shared)
+        let scannerViewModel = ScannerViewModel(
             observationRuntime: observationRuntime,
-            vendorResolver: vendorResolver
-        ))
-        _roamingViewModel = State(initialValue: EditionComposition.makeRoamingViewModel())
+            vendorResolver: vendorResolver,
+            requiresLiveWiFiAuthorization: EditionComposition.requiresLiveWiFiAuthorization
+        )
+        _viewModel = State(initialValue: scannerViewModel)
+        _roamingViewModel = State(initialValue: EditionComposition.makeRoamingViewModel(scannerViewModel: scannerViewModel))
         _apRadarViewModel = State(initialValue: APRadarViewModel(
             observationRuntime: observationRuntime
         ))

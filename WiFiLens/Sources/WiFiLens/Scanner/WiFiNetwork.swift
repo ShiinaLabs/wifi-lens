@@ -20,7 +20,6 @@ struct WiFiNetwork: Sendable, Identifiable {
         ieData = cwNetwork.informationElementData
     }
 
-    #if DEBUG
     init(ssid: String?, bssid: String, rssi: Int, channel: WiFiChannel, ieData: Data? = nil) {
         self.ssid = ssid
         self.bssid = bssid
@@ -29,5 +28,4 @@ struct WiFiNetwork: Sendable, Identifiable {
         self.isIBSS = false
         self.ieData = ieData
     }
-    #endif
 }

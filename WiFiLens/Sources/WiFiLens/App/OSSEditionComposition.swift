@@ -2,6 +2,9 @@ import AppKit
 import SwiftUI
 
 enum EditionComposition {
+    static var isControlledDemoSession: Bool { false }
+    static var requiresLiveWiFiAuthorization: Bool { true }
+
     static var guidanceConfiguration: GuidanceConfiguration {
         var config = GuidanceConfiguration()
         config.invitationEnabled = true
@@ -39,7 +42,14 @@ enum EditionComposition {
     static func makeMainWindowState() -> AnyObject { NSObject() }
 
     @MainActor
-    static func makeRoamingViewModel() -> RoamingTestViewModel { RoamingTestViewModel() }
+    static func makeRoamingViewModel(scannerViewModel: ScannerViewModel) -> RoamingTestViewModel {
+        RoamingTestViewModel()
+    }
+
+    @MainActor
+    static func makeObservationRuntime(store: WiFiObservationStore) -> WiFiObservationRuntime {
+        WiFiObservationRuntime(store: store)
+    }
 
     static var initialMainWindowRoute: SidebarPage { .overview }
 
