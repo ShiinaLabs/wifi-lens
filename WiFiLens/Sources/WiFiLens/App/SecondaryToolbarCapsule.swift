@@ -133,7 +133,10 @@ final class SecondaryToolbarSegmentedControl: NSSegmentedControl {
             let windowFrame = convert(localFrame, to: nil)
             let screenFrame = window?.convertToScreen(windowFrame) ?? localFrame
             let label = self.label(forSegment: index) ?? ""
-            let element = NSAccessibilityElement()
+            let element = SecondaryToolbarSegmentAccessibilityElement(
+                control: self,
+                segmentIndex: index
+            )
             element.setAccessibilityRole(.radioButton)
             element.setAccessibilityFrame(screenFrame)
             element.setAccessibilityLabel(label)
@@ -148,5 +151,30 @@ final class SecondaryToolbarSegmentedControl: NSSegmentedControl {
         }
 
         setAccessibilityChildren(childElements as [Any]?)
+    }
+}
+
+private final class SecondaryToolbarSegmentAccessibilityElement: NSAccessibilityElement {
+    weak var control: SecondaryToolbarSegmentedControl?
+    let segmentIndex: Int
+
+    init(control: SecondaryToolbarSegmentedControl, segmentIndex: Int) {
+        self.control = control
+        self.segmentIndex = segmentIndex
+        super.init()
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        let control = self.control
+        let segmentIndex = self.segmentIndex
+        return MainActor.assumeIsolated { [control, segmentIndex] in
+            guard let control,
+                  control.isEnabled,
+                  segmentIndex < control.segmentCount
+            else { return false }
+
+            control.selectedSegment = segmentIndex
+            return control.sendAction(control.action, to: control.target)
+        }
     }
 }

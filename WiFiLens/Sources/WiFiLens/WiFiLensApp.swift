@@ -186,10 +186,12 @@ private struct AppRootView: View {
                         openMainWindow: { _ in }
                     ))
 
-                    ChannelQualityView(
-                        channels: viewModel.channelRecommendations,
-                        mode: channelViewMode
-                    )
+                    EditionComposition.channelsPageContent {
+                        ChannelQualityView(
+                            channels: viewModel.channelRecommendations,
+                            mode: channelViewMode
+                        )
+                    }
                         .opacity(selectedPage == .channels ? 1 : 0)
                         .allowsHitTesting(selectedPage == .channels)
                         .accessibilityIdentifier("page-channels")
