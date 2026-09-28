@@ -43,6 +43,7 @@ struct APSelectionView: View {
             }
         }
         .frame(width: Self.sheetSize.width, height: Self.sheetSize.height)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("ap-radar-selection")
     }
 

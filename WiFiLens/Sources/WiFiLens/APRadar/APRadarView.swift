@@ -98,6 +98,7 @@ struct APRadarView: View {
             }
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: geigerUnlockedToast)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("page-apRadar")
     }
 
