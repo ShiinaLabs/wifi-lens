@@ -84,7 +84,7 @@ struct OverviewView: View {
                                     .accessibilityHidden(true)
                             }
 
-                            if !viewModel.locationManager.isAuthorizedForSSID {
+                            if !viewModel.hasWiFiDataAuthorization {
                                 authorizationCard
                             }
 
@@ -104,7 +104,7 @@ struct OverviewView: View {
                             } else {
                                 noConnectionCard
                             }
-                            if viewModel.locationManager.isAuthorizedForSSID && viewModel.isWiFiAvailable {
+                            if viewModel.hasWiFiDataAuthorization && viewModel.isWiFiAvailable {
                                 environmentCard
                             }
                             Spacer(minLength: 0)

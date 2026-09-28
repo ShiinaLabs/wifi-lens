@@ -67,7 +67,7 @@ private struct AppRootView: View {
     private var selectedPage: SidebarPage { sceneState.selectedPage }
 
     private var hasLocationAuthorization: Bool {
-        viewModel.locationManager.isAuthorizedForSSID
+        viewModel.hasWiFiDataAuthorization
     }
 
     private var showsLocationPermissionRequiredView: Bool {
@@ -217,11 +217,13 @@ private struct AppRootView: View {
                         .opacity(selectedPage == .roaming ? 1 : 0)
                         .allowsHitTesting(selectedPage == .roaming)
 
-                    APRadarView(
-                        viewModel: apRadarViewModel,
-                        isActive: selectedPage == .apRadar,
-                        onRescan: { viewModel.requestImmediateRescan() }
-                    )
+                    EditionComposition.apRadarPageContent {
+                        APRadarView(
+                            viewModel: apRadarViewModel,
+                            isActive: selectedPage == .apRadar,
+                            onRescan: { viewModel.requestImmediateRescan() }
+                        )
+                    }
                         .opacity(selectedPage == .apRadar ? 1 : 0)
                         .allowsHitTesting(selectedPage == .apRadar)
                         .accessibilityElement(children: .contain)
@@ -307,7 +309,9 @@ private struct AppRootView: View {
             }
             .onChange(of: viewModel.wifiPowerState) { _, newState in
                 roamingViewModel.handleWiFiPowerStateChange(newState)
-                apRadarViewModel.handleWiFiPowerStateChange(newState)
+                if !EditionComposition.isControlledDemoSession {
+                    apRadarViewModel.handleWiFiPowerStateChange(newState)
+                }
             }
             .alert(String(localized: "permission.crash_detected_title", comment: "Alert title when previous crash is detected on launch"), isPresented: $showCrashLog) {
                 Button(String(localized: "common.action.dismiss", comment: "Dismiss/close alert button"), role: .cancel) {}
@@ -1100,6 +1104,7 @@ struct WiFiLensApp: App {
         }
         let bleOn = UserDefaults.standard.bool(forKey: "bleEnabled")
             && EditionComposition.shouldStartObservationRuntime
+            && !EditionComposition.isControlledDemoSession
             && !UITestMode.isActive
         _bleViewModel = State(initialValue: bleOn ? BLEViewModel() : nil)
         AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
@@ -1165,7 +1170,8 @@ struct WiFiLensApp: App {
             }
         }
         .onChange(of: bleEnabled) { _, enabled in
-            guard EditionComposition.shouldStartObservationRuntime else { return }
+            guard EditionComposition.shouldStartObservationRuntime,
+                  !EditionComposition.isControlledDemoSession else { return }
             if enabled {
                 bleViewModel = BLEViewModel()
             } else {

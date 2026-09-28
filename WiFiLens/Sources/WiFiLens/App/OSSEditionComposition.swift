@@ -8,6 +8,12 @@ enum EditionComposition {
         content()
     }
 
+    @ViewBuilder
+    @MainActor
+    static func apRadarPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+    }
+
     static var isControlledDemoSession: Bool { false }
     static var shouldStartObservationRuntime: Bool { true }
     static var requiresLiveWiFiAuthorization: Bool { true }

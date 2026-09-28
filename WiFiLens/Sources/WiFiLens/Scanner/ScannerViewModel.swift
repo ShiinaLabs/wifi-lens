@@ -47,7 +47,7 @@ struct NetworkTableRow: Identifiable, Hashable {
 @MainActor
 @Observable
 final class ScannerViewModel {
-    var locationManager = LocationPermissionManager()
+    var locationManager: LocationPermissionManager
     let colorHasher = SSIDColorHasher()
     let signalHistory = SignalHistoryStore()
     let mcpServer = MCPServer()
@@ -84,6 +84,9 @@ final class ScannerViewModel {
     var interfaceName: String = ""
     var accessState: ScanAccessState = .waitingForAuthorization
     var isWiFiAvailable: Bool { wifiPowerState == .poweredOn }
+    var hasWiFiDataAuthorization: Bool {
+        !requiresLiveWiFiAuthorization || locationManager.isAuthorizedForSSID
+    }
 
     private var hasStarted = false
     private var isStartingScan = false
@@ -113,6 +116,7 @@ final class ScannerViewModel {
         self.observationRuntime = WiFiObservationRuntime(store: store)
         self.authorizationRefresh = authorizationRefresh
         self.requiresLiveWiFiAuthorization = requiresLiveWiFiAuthorization
+        self.locationManager = LocationPermissionManager(liveAuthorizationEnabled: requiresLiveWiFiAuthorization)
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
         self.userDefaultsRegionOverride = Self.regionOverride(
@@ -133,6 +137,7 @@ final class ScannerViewModel {
         self.observationRuntime = observationRuntime
         self.authorizationRefresh = authorizationRefresh
         self.requiresLiveWiFiAuthorization = requiresLiveWiFiAuthorization
+        self.locationManager = LocationPermissionManager(liveAuthorizationEnabled: requiresLiveWiFiAuthorization)
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
         self.userDefaultsRegionOverride = Self.regionOverride(
@@ -146,6 +151,7 @@ final class ScannerViewModel {
     /// - `.notDetermined` → system dialog
     /// - `.denied` → alert offering to open System Settings
     func requestAuthorization() {
+        guard requiresLiveWiFiAuthorization else { return }
         locationManager.refreshStatus()
         if locationManager.authorizationStatus == .notDetermined {
             locationManager.requestPermissionIfNeeded()
@@ -383,7 +389,6 @@ final class ScannerViewModel {
 
     func start() async {
         guard !isTerminating else { return }
-        wifiPowerMonitor.startMonitoring()
         if let startupTask {
             await startupTask.value
             return
@@ -402,6 +407,7 @@ final class ScannerViewModel {
                 return
             }
 
+            wifiPowerMonitor.startMonitoring()
             locationManager.onAuthorizationGranted = { [weak self] in
                 guard let self else { return }
                 Task { @MainActor in
@@ -437,6 +443,7 @@ final class ScannerViewModel {
 
     func handleSceneDidBecomeActive() async {
         guard !isTerminating else { return }
+        guard requiresLiveWiFiAuthorization else { return }
         locationManager.refreshStatus()
         wifiPowerMonitor.refreshState()
         reconcileWiFiState(wifiPowerMonitor.currentState)

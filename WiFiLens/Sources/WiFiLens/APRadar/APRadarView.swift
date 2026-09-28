@@ -238,6 +238,7 @@ struct APRadarView: View {
                         systemImage: "plus"
                     )
                 }
+                .accessibilityIdentifier("ap-radar-select-target")
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
 
@@ -503,6 +504,7 @@ struct APRadarView: View {
             )
         }
         .buttonStyle(.bordered)
+        .accessibilityIdentifier("ap-radar-change-target")
     }
 
     private var stopTrackingButton: some View {
@@ -515,6 +517,7 @@ struct APRadarView: View {
             )
         }
         .buttonStyle(.bordered)
+        .accessibilityIdentifier("ap-radar-stop-tracking")
     }
 
     private func targetSubtitle(_ target: TrackedAccessPoint) -> String {
