@@ -64,7 +64,7 @@ private struct AppRootView: View {
     @State private var sidebarVisibility = NavigationSplitViewVisibility.automatic
     @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
     @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel {
-        GuidanceCoordinator.shared.record(.diagnosticsCompleted)
+        EditionComposition.guidanceCoordinator.record(.diagnosticsCompleted)
     }
 
     private var selectedPage: SidebarPage { sceneState.selectedPage }
@@ -92,15 +92,20 @@ private struct AppRootView: View {
     }
 
     private var channelViewMode: ChannelViewMode {
-        ChannelViewMode.fromToolbarSelection(
-            secondaryToolbarSelections.channels
-        )
+        switch secondaryToolbarSelections.channels {
+        case .channelsSimple: .simple
+        case .channelsTable: .table
+        default: .simple
+        }
     }
 
     private var interfaceViewMode: InterfaceViewMode {
-        InterfaceViewMode.fromToolbarSelection(
-            secondaryToolbarSelections.interfaces
-        )
+        switch secondaryToolbarSelections.interfaces {
+        case .interfacesSimple: .simple
+        case .interfacesDetails: .details
+        case .interfacesMonitor: .monitor
+        default: .simple
+        }
     }
 
 
@@ -209,7 +214,10 @@ private struct AppRootView: View {
                             .accessibilityIdentifier("page-interfaces")
                     }
 
-                    NetworkDiagnosticsView(viewModel: networkDiagnosticsViewModel)
+                    NetworkDiagnosticsView(
+                        viewModel: networkDiagnosticsViewModel,
+                        guidance: EditionComposition.guidanceCoordinator
+                    )
                         .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
                         .allowsHitTesting(selectedPage == .networkDiagnostics)
                         .accessibilityIdentifier("page-networkDiagnostics")
@@ -279,7 +287,7 @@ private struct AppRootView: View {
                     // coordinator publishes export feedback; no-op in Pro
                     // (`.preserveExisting` never publishes feedback).
                     if EditionComposition.shouldStartObservationRuntime {
-                        ExportSuccessBanner(guidance: GuidanceCoordinator.shared)
+                        ExportSuccessBanner(guidance: EditionComposition.guidanceCoordinator)
                     }
                 }
             }
@@ -367,7 +375,7 @@ private struct AppRootView: View {
                     }
                     EditionComposition.startLifecycle(observationRuntime: viewModel.observationRuntime)
                     if !EditionComposition.isControlledDemoSession {
-                        GuidanceCoordinator.shared.recordAppActive()
+                        EditionComposition.guidanceCoordinator.recordAppActive()
                     }
                     await viewModel.start()
                     roamingViewModel.handleWiFiPowerStateChange(viewModel.wifiPowerState)
@@ -431,7 +439,7 @@ private struct AppRootView: View {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, !ProcessInfo.processInfo.isRunningUnderTestHost {
                 if !EditionComposition.isControlledDemoSession {
-                    GuidanceCoordinator.shared.recordAppActive()
+                    EditionComposition.guidanceCoordinator.recordAppActive()
                 }
                 if EditionComposition.shouldStartObservationRuntime {
                     apRadarViewModel.handleAppActive()

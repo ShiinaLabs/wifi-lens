@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 /// What's New sheet displayed after a version update.
 ///

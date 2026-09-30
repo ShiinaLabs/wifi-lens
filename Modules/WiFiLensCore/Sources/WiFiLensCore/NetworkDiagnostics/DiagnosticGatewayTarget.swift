@@ -1,14 +1,14 @@
 import Foundation
 
-public struct DiagnosticGatewayTarget: Equatable, Sendable {
-    public init(interfaceName: String, interfaceIndex: UInt32, address: String) {
+struct DiagnosticGatewayTarget: Equatable, Sendable {
+    init(interfaceName: String, interfaceIndex: UInt32, address: String) {
         self.interfaceName = interfaceName
         self.interfaceIndex = interfaceIndex
         self.address = address
     }
-    public let interfaceName: String
-    public let interfaceIndex: UInt32
-    public let address: String
+    let interfaceName: String
+    let interfaceIndex: UInt32
+    let address: String
 }
 
 struct DiagnosticTunnelRouteTarget: Equatable, Sendable {

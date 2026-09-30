@@ -4,10 +4,10 @@ import Foundation
 /// Completed heatmap work returned to the main-actor presentation boundary.
 /// CGImage is immutable after construction, so it is safe to hand off once
 /// the worker has finished creating it.
-public struct SpectrumHeatmapRenderResult: @unchecked Sendable {
+struct SpectrumHeatmapRenderResult: @unchecked Sendable {
     let key: SpectrumHeatmapRenderKey
     let raster: SpectrumHeatmapRaster
-    public let image: CGImage
+    let image: CGImage
 }
 
 /// Owns backend selection, computation, caching, and bitmap conversion away

@@ -1,44 +1,44 @@
 import Foundation
 import Observation
 
-public enum NetworkDiagnosticsPagePhase: Equatable, Sendable {
+enum NetworkDiagnosticsPagePhase: Equatable, Sendable {
     case idle
     case running
     case completed
 }
 
-public enum NetworkDiagnosticExecutionPhase: Equatable, Sendable {
+enum NetworkDiagnosticExecutionPhase: Equatable, Sendable {
     case waiting
     case checking
     case completed
 }
 
-public enum NetworkDiagnosticsWorkbenchLayoutMode: Equatable, Sendable {
+enum NetworkDiagnosticsWorkbenchLayoutMode: Equatable, Sendable {
     case compact
     case condensed
     case regular
 }
 
-public enum NetworkDiagnosticsWorkbenchLayout {
-    public static func mode(for availableWidth: Double) -> NetworkDiagnosticsWorkbenchLayoutMode {
+enum NetworkDiagnosticsWorkbenchLayout {
+    static func mode(for availableWidth: Double) -> NetworkDiagnosticsWorkbenchLayoutMode {
         if availableWidth >= 720 { return .regular }
         if availableWidth >= 520 { return .condensed }
         return .compact
     }
 }
 
-public enum NetworkDiagnosticsTablePresentation {
-    public static let minimumRowHeight = 54.0
-    public static let usesAlternatingRowBackgrounds = false
+enum NetworkDiagnosticsTablePresentation {
+    static let minimumRowHeight = 54.0
+    static let usesAlternatingRowBackgrounds = false
 }
 
-public struct NetworkDiagnosticsWorkbenchRow: Equatable, Identifiable, Sendable {
-    public let id: NetworkDiagnosticCheckID
-    public let executionPhase: NetworkDiagnosticExecutionPhase
-    public let result: NetworkDiagnosticResult?
-    public let pendingReason: DiagnosticRunEndReason?
+struct NetworkDiagnosticsWorkbenchRow: Equatable, Identifiable, Sendable {
+    let id: NetworkDiagnosticCheckID
+    let executionPhase: NetworkDiagnosticExecutionPhase
+    let result: NetworkDiagnosticResult?
+    let pendingReason: DiagnosticRunEndReason?
 
-    public init(
+    init(
         id: NetworkDiagnosticCheckID,
         executionPhase: NetworkDiagnosticExecutionPhase,
         result: NetworkDiagnosticResult?,
@@ -51,12 +51,12 @@ public struct NetworkDiagnosticsWorkbenchRow: Equatable, Identifiable, Sendable 
     }
 }
 
-public enum NetworkDiagnosticsWorkbenchItem: Equatable, Identifiable {
+enum NetworkDiagnosticsWorkbenchItem: Equatable, Identifiable {
     case stageHeader(NetworkDiagnosticStage)
     case additionalHeader
     case check(NetworkDiagnosticsWorkbenchRow)
 
-    public var id: String {
+    var id: String {
         switch self {
         case .stageHeader(let stage): "header.\(String(describing: stage))"
         case .additionalHeader: "header.additional"
@@ -65,8 +65,8 @@ public enum NetworkDiagnosticsWorkbenchItem: Equatable, Identifiable {
     }
 }
 
-public enum NetworkDiagnosticsPresentation {
-    public static func workbenchRows(
+enum NetworkDiagnosticsPresentation {
+    static func workbenchRows(
         pagePhase: NetworkDiagnosticsPagePhase,
         executionPhases: [NetworkDiagnosticCheckID: NetworkDiagnosticExecutionPhase],
         results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
@@ -89,7 +89,7 @@ public enum NetworkDiagnosticsPresentation {
         }
     }
 
-    public static func stage(for checkID: NetworkDiagnosticCheckID) -> NetworkDiagnosticStage? {
+    static func stage(for checkID: NetworkDiagnosticCheckID) -> NetworkDiagnosticStage? {
         switch checkID {
         case .path, .dns, .proxy: .thisMac
         case .gatewayReachability: .lan
@@ -98,7 +98,7 @@ public enum NetworkDiagnosticsPresentation {
         }
     }
 
-    public static func workbenchItems(
+    static func workbenchItems(
         pagePhase: NetworkDiagnosticsPagePhase,
         executionPhases: [NetworkDiagnosticCheckID: NetworkDiagnosticExecutionPhase],
         results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
@@ -134,22 +134,22 @@ public enum NetworkDiagnosticsPresentation {
 @MainActor
 @Observable
 public final class NetworkDiagnosticsViewModel {
-    public static let defaultSessionBudget = Duration.seconds(30)
+    static let defaultSessionBudget = Duration.seconds(30)
 
-    public private(set) var phase = NetworkDiagnosticsPagePhase.idle
-    public private(set) var executionPhases: [NetworkDiagnosticCheckID: NetworkDiagnosticExecutionPhase]
-    public private(set) var results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [:]
-    public private(set) var logStore = NetworkDiagnosticsLogStore()
-    public private(set) var conclusion: NetworkDiagnosticConclusion?
-    public private(set) var assessment: NetworkDiagnosticAssessment?
-    public private(set) var endReason: DiagnosticRunEndReason?
-    public private(set) var pendingCheckIDs: [NetworkDiagnosticCheckID] = []
-    public private(set) var automaticRestartCount = 0
-    public private(set) var currentRunID: UUID?
-    public private(set) var fingerprintMonitoringAvailable = true
-    public let checkIDs: [NetworkDiagnosticCheckID]
+    private(set) var phase = NetworkDiagnosticsPagePhase.idle
+    private(set) var executionPhases: [NetworkDiagnosticCheckID: NetworkDiagnosticExecutionPhase]
+    private(set) var results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [:]
+    private(set) var logStore = NetworkDiagnosticsLogStore()
+    private(set) var conclusion: NetworkDiagnosticConclusion?
+    private(set) var assessment: NetworkDiagnosticAssessment?
+    private(set) var endReason: DiagnosticRunEndReason?
+    private(set) var pendingCheckIDs: [NetworkDiagnosticCheckID] = []
+    private(set) var automaticRestartCount = 0
+    private(set) var currentRunID: UUID?
+    private(set) var fingerprintMonitoringAvailable = true
+    let checkIDs: [NetworkDiagnosticCheckID]
 
-    public var logText: String { logStore.text }
+    var logText: String { logStore.text }
 
     @ObservationIgnored private let checks: [any DiagnosticCheck]
     @ObservationIgnored private let fingerprintMonitor: any NetworkFingerprintMonitoring
@@ -221,7 +221,7 @@ public final class NetworkDiagnosticsViewModel {
     }
 
     @discardableResult
-    public func start() -> Bool {
+    func start() -> Bool {
         guard activeTask == nil else { return false }
 
         results = [:]
@@ -254,7 +254,7 @@ public final class NetworkDiagnosticsViewModel {
         await task?.value
     }
 
-    public func cancel() {
+    func cancel() {
         guard phase == .running else {
             activeTask?.cancel()
             activeTask = nil
@@ -278,7 +278,7 @@ public final class NetworkDiagnosticsViewModel {
         checkStartedAt.removeAll()
     }
 
-    public func clearLogs() {
+    func clearLogs() {
         logStore.reset()
     }
 
@@ -828,7 +828,7 @@ extension NetworkDiagnosticsViewModel {
     /// writes Timeline, diagnostic history, or user data; the production
     /// `record(.diagnosticsCompleted)` path is not invoked (Debug triggers
     /// schedule invitations explicitly).
-    public func debugStageCompletedResult() {
+    func debugStageCompletedResult() {
         activeTask?.cancel()
         activeTask = nil
         let staged = checkIDs.map { id in

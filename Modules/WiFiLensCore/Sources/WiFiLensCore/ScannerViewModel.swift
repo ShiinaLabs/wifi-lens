@@ -274,7 +274,7 @@ public final class ScannerViewModel {
 
     /// Current-scan heatmap for a single band. It deliberately reads the full
     /// deduplicated scan result and ignores presentation state.
-    public func heatmapModel(for band: ChannelBand) -> SpectrumHeatmapModel {
+    func heatmapModel(for band: ChannelBand) -> SpectrumHeatmapModel {
         let channels = heatmapChannels(for: band)
         let envelopes = deduplicatedNetworks.compactMap {
             SpectrumHeatmapActivity.envelope(for: $0, band: band)

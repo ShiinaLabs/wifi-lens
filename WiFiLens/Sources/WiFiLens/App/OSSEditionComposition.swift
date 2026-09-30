@@ -25,6 +25,30 @@ enum EditionComposition {
     static var shouldStartObservationRuntime: Bool { true }
     static var requiresLiveWiFiAuthorization: Bool { true }
 
+    @MainActor
+    static let guidanceCoordinator = GuidanceCoordinator(
+        configuration: guidanceConfiguration,
+        stateStore: UserDefaultsGuidanceStateStore(),
+        isProAppInstalled: {
+#if DEBUG
+            switch GuidanceDebugOverrides.proInstallationOverride {
+            case .useRealDetection: break
+            case .treatAsNotInstalled: return false
+            case .treatAsInstalled: return true
+            }
+#endif
+            return NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.kaoru.wifi-lens-pro") != nil
+        },
+        campaignURL: { moment in
+            switch moment {
+            case .diagnosticsCompleted, .analysisLoaded, .roamingCompleted:
+                ExternalLinks.url(for: .appStoreCampaignDiagnosis)
+            case .exportSucceeded:
+                ExternalLinks.url(for: .appStoreCampaignExport)
+            }
+        }
+    )
+
     static var guidanceConfiguration: GuidanceConfiguration {
         var config = GuidanceConfiguration()
         config.invitationEnabled = true
@@ -64,7 +88,7 @@ enum EditionComposition {
     @MainActor
     static func makeRoamingViewModel(scannerViewModel: ScannerViewModel) -> RoamingTestViewModel {
         RoamingTestViewModel {
-            GuidanceCoordinator.shared.record(.roamingCompleted)
+            EditionComposition.guidanceCoordinator.record(.roamingCompleted)
         }
     }
 
@@ -196,19 +220,19 @@ enum EditionComposition {
             Divider()
             Menu("Lifecycle Guidance") {
                 Button("Reset Lifecycle Guidance State") {
-                    GuidanceCoordinator.shared.debugResetState()
+                    EditionComposition.guidanceCoordinator.debugResetState()
                 }
                 Button("Prepare OSS Invitation Eligibility") {
-                    GuidanceCoordinator.shared.debugPrepareInvitationEligibility()
+                    EditionComposition.guidanceCoordinator.debugPrepareInvitationEligibility()
                 }
                 Button("Trigger Diagnostics Invitation") {
-                    GuidanceCoordinator.shared.debugScheduleInvitation(for: .diagnosticsCompleted)
+                    EditionComposition.guidanceCoordinator.debugScheduleInvitation(for: .diagnosticsCompleted)
                     GuidanceDebugOverrides.requestDiagnosticsStaging()
                     showMainWindow(.networkDiagnostics)
                 }
                 Button("Trigger Export Invitation Banner") {
-                    GuidanceCoordinator.shared.debugScheduleInvitation(for: .exportSucceeded)
-                    GuidanceCoordinator.shared.debugPublishExportFeedback()
+                    EditionComposition.guidanceCoordinator.debugScheduleInvitation(for: .exportSucceeded)
+                    EditionComposition.guidanceCoordinator.debugPublishExportFeedback()
                     NSApp.activate(ignoringOtherApps: true)
                     if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
                         mainWindow.makeKeyAndOrderFront(nil)
@@ -225,7 +249,7 @@ enum EditionComposition {
                     Text("Treat Pro as Installed").tag(ProInstallationOverride.treatAsInstalled)
                 }
                 Button("Log Lifecycle Guidance State") {
-                    GuidanceCoordinator.shared.debugLogState(edition: "OSS")
+                    EditionComposition.guidanceCoordinator.debugLogState(edition: "OSS")
                 }
             }
         }

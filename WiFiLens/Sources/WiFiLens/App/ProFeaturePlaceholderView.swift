@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 struct ProBadge: View {
     var body: some View {

@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 import Logging
 import Observation
 

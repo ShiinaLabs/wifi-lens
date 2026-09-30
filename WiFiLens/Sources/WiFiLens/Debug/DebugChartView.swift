@@ -136,7 +136,7 @@ struct DebugChartView: View {
     }
 
     private var chartView: some View {
-        BandChartView(
+        WiFiBandChart(
             model: bandVM.renderModel,
             selectedNetworkID: $selectedNetworkID,
             onResetZoom: { bandVM.resetZoom() },

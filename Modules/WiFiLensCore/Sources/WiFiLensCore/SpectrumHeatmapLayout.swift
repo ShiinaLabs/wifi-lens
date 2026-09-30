@@ -3,22 +3,22 @@ import CoreGraphics
 /// The same channel-coordinate domain used by `WiFiBandChart` and ChartLens.
 /// Regulatory channel lists are used for labels and scanner input, but never
 /// to compress or clip the numeric chart coordinate space.
-public struct SpectrumHeatmapChannelDomain: Hashable, Sendable {
-    public let minChannelCoordinate: Double
-    public let maxChannelCoordinate: Double
+struct SpectrumHeatmapChannelDomain: Hashable, Sendable {
+    let minChannelCoordinate: Double
+    let maxChannelCoordinate: Double
 
-    public var span: Double { maxChannelCoordinate - minChannelCoordinate }
+    var span: Double { maxChannelCoordinate - minChannelCoordinate }
 
-    public init(minChannelCoordinate: Double, maxChannelCoordinate: Double) {
+    init(minChannelCoordinate: Double, maxChannelCoordinate: Double) {
         self.minChannelCoordinate = minChannelCoordinate
         self.maxChannelCoordinate = maxChannelCoordinate
     }
 }
 
-public enum SpectrumHeatmapLayout {
-    public static let fixedRSSIRange = (-100.0)...(-30.0)
+enum SpectrumHeatmapLayout {
+    static let fixedRSSIRange = (-100.0)...(-30.0)
 
-    public static func channelDomain(channels: [Int], band: ChannelBand) -> SpectrumHeatmapChannelDomain? {
+    static func channelDomain(channels: [Int], band: ChannelBand) -> SpectrumHeatmapChannelDomain? {
         guard !channels.isEmpty else { return nil }
         let minChannel = band == .band24GHz ? -1.0 : 1.0
         return SpectrumHeatmapChannelDomain(
@@ -27,7 +27,7 @@ public enum SpectrumHeatmapLayout {
         )
     }
 
-    public static func xPosition(
+    static func xPosition(
         forChannelCoordinate channel: Double,
         domain: SpectrumHeatmapChannelDomain,
         in rect: CGRect
@@ -38,7 +38,7 @@ public enum SpectrumHeatmapLayout {
         return rect.minX + CGFloat((channel - domain.minChannelCoordinate) / domain.span) * rect.width
     }
 
-    public static func channelCoordinate(
+    static func channelCoordinate(
         forX x: CGFloat,
         domain: SpectrumHeatmapChannelDomain,
         in rect: CGRect
@@ -48,14 +48,14 @@ public enum SpectrumHeatmapLayout {
         return domain.minChannelCoordinate + Double((x - rect.minX) / rect.width) * domain.span
     }
 
-    public static func yPosition(forRSSI rssi: Double, in rect: CGRect, rssiRange: ClosedRange<Double>) -> CGFloat? {
+    static func yPosition(forRSSI rssi: Double, in rect: CGRect, rssiRange: ClosedRange<Double>) -> CGFloat? {
         guard rect.height > 0, rssi.isFinite, rssiRange.lowerBound < rssiRange.upperBound else { return nil }
         let clamped = min(rssiRange.upperBound, max(rssiRange.lowerBound, rssi))
         let normalized = (clamped - rssiRange.lowerBound) / (rssiRange.upperBound - rssiRange.lowerBound)
         return rect.maxY - CGFloat(normalized) * rect.height
     }
 
-    public static func rssi(forY y: CGFloat, in rect: CGRect, rssiRange: ClosedRange<Double>) -> Double? {
+    static func rssi(forY y: CGFloat, in rect: CGRect, rssiRange: ClosedRange<Double>) -> Double? {
         guard rect.height > 0, y >= rect.minY, y <= rect.maxY,
               rssiRange.lowerBound < rssiRange.upperBound else { return nil }
         let normalized = Double((rect.maxY - y) / rect.height)
@@ -64,14 +64,14 @@ public enum SpectrumHeatmapLayout {
 
     /// Matches `BandChartViewModel`'s rounded upper Y bound for the strongest
     /// currently displayed spectrum series.
-    public static func rssiRange(for peakRSSIs: [Double]) -> ClosedRange<Double> {
+    static func rssiRange(for peakRSSIs: [Double]) -> ClosedRange<Double> {
         let lower = fixedRSSIRange.lowerBound
         let strongest = peakRSSIs.max() ?? fixedRSSIRange.upperBound
         let roundedUpper = min(0, ceil(strongest / 10.0) * 10.0)
         return lower...max(lower + 10, roundedUpper)
     }
 
-    public static func channelTicks(
+    static func channelTicks(
         channels: [Int],
         band: ChannelBand,
         in rect: CGRect,

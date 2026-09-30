@@ -18,7 +18,7 @@ public actor GatewayPinger {
         await ping(arguments: ["-c", "1", "-W", "1000", host])
     }
 
-    public func ping(target: DiagnosticGatewayTarget) async -> Double? {
+    func ping(target: DiagnosticGatewayTarget) async -> Double? {
         await ping(arguments: DiagnosticPingArguments.make(target: target))
     }
 

@@ -17,7 +17,7 @@ extension GatewayPinging {
 
 extension GatewayPinger: GatewayPinging {}
 
-public protocol DiagnosticGatewayMeasuring: Sendable {
+protocol DiagnosticGatewayMeasuring: Sendable {
     func measure(target: DiagnosticGatewayTarget) async -> GatewayLatencyResult
 }
 
@@ -52,7 +52,7 @@ public struct GatewayLatencyProvider: GatewayLatencyProviding {
         )
     }
 
-    public func measure(target: DiagnosticGatewayTarget) async -> GatewayLatencyResult {
+    func measure(target: DiagnosticGatewayTarget) async -> GatewayLatencyResult {
         let latency = await pinger.ping(target: target)
         guard let latency else {
             return GatewayLatencyResult(

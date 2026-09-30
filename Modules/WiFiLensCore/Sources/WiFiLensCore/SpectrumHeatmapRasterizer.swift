@@ -1,25 +1,25 @@
 import CoreGraphics
 import Foundation
 
-public struct SpectrumHeatmapRGB: Equatable, Sendable {
-    public let red: Double
-    public let green: Double
-    public let blue: Double
+struct SpectrumHeatmapRGB: Equatable, Sendable {
+    let red: Double
+    let green: Double
+    let blue: Double
 
-    public init(red: Double, green: Double, blue: Double) {
+    init(red: Double, green: Double, blue: Double) {
         self.red = red
         self.green = green
         self.blue = blue
     }
 }
 
-public struct SpectrumHeatmapResolution: Hashable, Sendable {
-    public static let standard = SpectrumHeatmapResolution(width: 640, height: 256)
+struct SpectrumHeatmapResolution: Hashable, Sendable {
+    static let standard = SpectrumHeatmapResolution(width: 640, height: 256)
 
-    public let width: Int
-    public let height: Int
+    let width: Int
+    let height: Int
 
-    public init(width: Int, height: Int) {
+    init(width: Int, height: Int) {
         let sanitizedWidth = max(0, width)
         let sanitizedHeight = max(0, height)
 
@@ -76,13 +76,13 @@ struct SpectrumHeatmapRaster: Equatable, Sendable {
     }
 }
 
-public struct SpectrumHeatmapRenderKey: Hashable, Sendable {
+struct SpectrumHeatmapRenderKey: Hashable, Sendable {
     let model: SpectrumHeatmapModel
     let domain: SpectrumHeatmapChannelDomain
     let rssiRange: ClosedRange<Double>
     let resolution: SpectrumHeatmapResolution
 
-    public init(model: SpectrumHeatmapModel, domain: SpectrumHeatmapChannelDomain, rssiRange: ClosedRange<Double>, resolution: SpectrumHeatmapResolution) {
+    init(model: SpectrumHeatmapModel, domain: SpectrumHeatmapChannelDomain, rssiRange: ClosedRange<Double>, resolution: SpectrumHeatmapResolution) {
         self.model = model
         self.domain = domain
         self.rssiRange = rssiRange

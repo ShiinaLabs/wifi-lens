@@ -19,7 +19,7 @@ actor MetalHeatmapComputeBackend: SpectrumHeatmapComputeBackend {
     init?() {
         guard let device = MTLCreateSystemDefaultDevice(),
               let commandQueue = device.makeCommandQueue(),
-              let library = device.makeDefaultLibrary(),
+              let library = try? device.makeDefaultLibrary(bundle: .module),
               let fieldFunction = library.makeFunction(name: "heatmapFieldKernel"),
               let smoothFunction = library.makeFunction(name: "heatmapSmoothKernel"),
               let fieldPipeline = try? device.makeComputePipelineState(function: fieldFunction),

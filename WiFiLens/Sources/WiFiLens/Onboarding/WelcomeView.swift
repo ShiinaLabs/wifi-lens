@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import WiFiLensCore
 
 /// First-run welcome sheet. A dumb presentation component: it receives the
 /// edition configuration and the claiming host id, and every action routes

@@ -4,15 +4,15 @@ import Observation
 /// task lifecycle and publication of completed worker results; all compute,
 /// fallback, caching, and bitmap conversion belong to the worker actor.
 @MainActor @Observable
-public final class SpectrumHeatmapRenderCoordinator {
+final class SpectrumHeatmapRenderCoordinator {
     private let worker: SpectrumHeatmapRenderWorker
     private var renderTask: Task<Void, Never>?
     private var currentKey: SpectrumHeatmapRenderKey?
 
-    public private(set) var result: SpectrumHeatmapRenderResult?
-    public private(set) var isRendering = false
+    private(set) var result: SpectrumHeatmapRenderResult?
+    private(set) var isRendering = false
 
-    public init() {
+    init() {
         self.worker = SpectrumHeatmapRenderWorker()
     }
 
@@ -20,7 +20,7 @@ public final class SpectrumHeatmapRenderCoordinator {
         self.worker = worker
     }
 
-    public func request(_ key: SpectrumHeatmapRenderKey) {
+    func request(_ key: SpectrumHeatmapRenderKey) {
         guard !key.model.envelopes.isEmpty else {
             renderTask?.cancel()
             renderTask = nil
@@ -55,7 +55,7 @@ public final class SpectrumHeatmapRenderCoordinator {
         }
     }
 
-    public func cancel() {
+    func cancel() {
         renderTask?.cancel()
         renderTask = nil
         isRendering = false

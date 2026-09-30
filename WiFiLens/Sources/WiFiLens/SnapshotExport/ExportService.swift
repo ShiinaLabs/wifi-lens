@@ -89,9 +89,9 @@ enum ExportService {
                         // eligibility only.
                         switch EditionComposition.exportSuccessPresentation {
                         case .banner:
-                            GuidanceCoordinator.shared.handleExportSucceeded()
+                            EditionComposition.guidanceCoordinator.handleExportSucceeded()
                         case .preserveExisting:
-                            GuidanceCoordinator.shared.record(.exportSucceeded)
+                            EditionComposition.guidanceCoordinator.record(.exportSucceeded)
                             showSuccess(String(localized: "export.image_saved_message", comment: "Chart image exported successfully"))
                         }
                     }

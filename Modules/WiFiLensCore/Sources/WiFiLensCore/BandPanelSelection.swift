@@ -140,7 +140,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
         persist()
     }
 
-    public func fractionHolder(
+    func fractionHolder(
         topID: SpectrumPanelID,
         bottomID: SpectrumPanelID,
         defaultFraction: CGFloat

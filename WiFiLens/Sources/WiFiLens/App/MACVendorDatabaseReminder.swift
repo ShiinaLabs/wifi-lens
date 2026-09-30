@@ -1,3 +1,5 @@
+import WiFiLensCore
+
 final class MACVendorDatabaseReminderPolicy {
     private(set) var hasPresentedThisSession = false
 
