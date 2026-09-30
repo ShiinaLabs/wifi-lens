@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 protocol MACVendorDatabaseServicing: Sendable {
     func load() async throws -> MACVendorDatabase?

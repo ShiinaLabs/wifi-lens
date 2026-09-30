@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 struct LocationPermissionRequiredView: View {
     let accessState: ScanAccessState

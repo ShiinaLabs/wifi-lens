@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 struct BLEScannerView: View {
     let viewModel: BLEViewModel?

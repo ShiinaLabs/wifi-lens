@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import ChartLens
+import WiFiLensCore
 
 // MARK: - Chart Layout
 

@@ -1,6 +1,7 @@
 import Testing
 import SwiftUI
 import AppKit
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor

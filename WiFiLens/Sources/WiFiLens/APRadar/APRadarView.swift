@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 /// AP Radar page: select an access point, track its BSSID, and get audio
 /// pulse feedback whose interval follows the smoothed RSSI.

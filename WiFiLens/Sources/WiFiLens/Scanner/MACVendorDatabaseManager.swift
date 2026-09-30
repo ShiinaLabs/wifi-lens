@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 import Observation
 
 enum MACVendorDatabaseAvailability: Equatable, Sendable {

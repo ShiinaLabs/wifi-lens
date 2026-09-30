@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 import AppKit
 
 struct NativeTableView: NSViewRepresentable {

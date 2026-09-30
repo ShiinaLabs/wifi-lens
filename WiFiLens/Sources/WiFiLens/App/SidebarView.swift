@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 enum SidebarPage: String, CaseIterable {
     case overview

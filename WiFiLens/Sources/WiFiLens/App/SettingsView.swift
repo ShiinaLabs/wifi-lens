@@ -3,6 +3,7 @@ import SwiftUI
 import Sparkle
 #endif
 import AppKit
+import WiFiLensCore
 
 struct SettingsView: View {
     let macVendorDatabaseSummary: MACVendorBundledDatabaseSummary?

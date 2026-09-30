@@ -63,7 +63,9 @@ private struct AppRootView: View {
     @State private var sceneState = MainWindowSceneState()
     @State private var sidebarVisibility = NavigationSplitViewVisibility.automatic
     @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
-    @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel()
+    @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel {
+        GuidanceCoordinator.shared.record(.diagnosticsCompleted)
+    }
 
     private var selectedPage: SidebarPage { sceneState.selectedPage }
 

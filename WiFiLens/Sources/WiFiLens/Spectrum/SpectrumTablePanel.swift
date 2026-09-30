@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 struct SpectrumTablePanel: View {
     @Bindable var viewModel: ScannerViewModel

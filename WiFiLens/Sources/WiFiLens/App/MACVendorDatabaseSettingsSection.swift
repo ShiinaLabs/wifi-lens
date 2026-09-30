@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 struct MACVendorDatabaseSettingsSection: View {
     let summary: MACVendorBundledDatabaseSummary?

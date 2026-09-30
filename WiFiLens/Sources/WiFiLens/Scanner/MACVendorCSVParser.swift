@@ -1,4 +1,5 @@
 import CryptoKit
+import WiFiLensCore
 import Foundation
 
 enum MACVendorCSVParserCancellationPoint: Equatable, Sendable {

@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import WiFiLensCore
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite("Diagnostic Migration")

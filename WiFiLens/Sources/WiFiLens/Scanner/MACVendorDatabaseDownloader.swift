@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct MACVendorHTTPResponse: Sendable {
     let data: Data

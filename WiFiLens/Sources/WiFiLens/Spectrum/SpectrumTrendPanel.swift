@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 struct SpectrumTrendPanel: View {
     let viewModel: ScannerViewModel

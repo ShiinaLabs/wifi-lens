@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 enum MarkdownExportCommandContribution {
     case available(@MainActor (ScannerViewModel) -> Void)

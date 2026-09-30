@@ -63,7 +63,9 @@ enum EditionComposition {
 
     @MainActor
     static func makeRoamingViewModel(scannerViewModel: ScannerViewModel) -> RoamingTestViewModel {
-        RoamingTestViewModel()
+        RoamingTestViewModel {
+            GuidanceCoordinator.shared.record(.roamingCompleted)
+        }
     }
 
     @MainActor

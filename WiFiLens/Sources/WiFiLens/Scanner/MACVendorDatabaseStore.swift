@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 actor MACVendorDatabaseStore {
     typealias CommitPendingFile = @Sendable (_ pendingURL: URL, _ databaseURL: URL) throws -> Void

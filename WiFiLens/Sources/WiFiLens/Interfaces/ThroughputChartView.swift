@@ -1,5 +1,6 @@
 import SwiftUI
 import ChartLens
+import WiFiLensCore
 
 struct ThroughputChartView: View {
     let samples: [ThroughputSample]

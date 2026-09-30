@@ -93,7 +93,9 @@ import WiFiLensCore
 
     @Test func idleStopNeverRecordsRoamingMoment() {
         let guidance = RoamingGuidanceHarness()
-        let vm = RoamingTestViewModel(guidance: guidance.coordinator)
+        let vm = RoamingTestViewModel(onRoamingCompleted: {
+            guidance.coordinator.record(.roamingCompleted)
+        })
 
         vm.stopTest()
 
@@ -143,7 +145,9 @@ import WiFiLensCore
         return RoamingTestViewModel(
             roamingProvider: MockRoamingProbeProvider(result: status),
             latencyProvider: MockGatewayLatencyProvider(result: .init(timestamp: Date(), latencyMs: 3)),
-            guidance: guidance
+            onRoamingCompleted: {
+                guidance.record(.roamingCompleted)
+            }
         )
     }
 

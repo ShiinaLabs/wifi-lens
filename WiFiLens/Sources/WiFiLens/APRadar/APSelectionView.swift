@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 /// Sheet that lets the user pick one access point from the shared scan
 /// results. Reads live from the view model so the list refreshes when a new

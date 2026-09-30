@@ -1,5 +1,6 @@
 import SwiftUI
 import ChartLens
+import WiFiLensCore
 
 /// Canvas-based time-series chart showing RSSI over time for a selected BLE device.
 /// Draws two lines: raw RSSI (thin, semi-transparent) and EMA-smoothed RSSI (thick, solid).

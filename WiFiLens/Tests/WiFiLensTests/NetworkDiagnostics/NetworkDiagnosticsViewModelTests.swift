@@ -2,7 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
-import WiFiLensCore
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 extension NetworkDiagnosticsTests {
@@ -14,7 +14,7 @@ extension NetworkDiagnosticsTests {
         let viewModel = NetworkDiagnosticsViewModel(
             checks: makeStubChecks(recorder: recorder),
             fingerprintMonitor: DisabledNetworkFingerprintMonitor(),
-            guidance: guidance.coordinator
+            onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
         #expect(viewModel.phase == .idle)
@@ -239,7 +239,7 @@ extension NetworkDiagnosticsTests {
         let viewModel = NetworkDiagnosticsViewModel(
             checks: makeStubChecks(recorder: recorder),
             fingerprintMonitor: DisabledNetworkFingerprintMonitor(),
-            guidance: guidance.coordinator
+            onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
         #expect(viewModel.start())
@@ -277,7 +277,7 @@ extension NetworkDiagnosticsTests {
         let viewModel = NetworkDiagnosticsViewModel(
             checks: checks,
             fingerprintMonitor: fingerprintMonitor,
-            guidance: guidance.coordinator
+            onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
         #expect(viewModel.start())
@@ -315,7 +315,7 @@ extension NetworkDiagnosticsTests {
                 ),
             ],
             fingerprintMonitor: fingerprintMonitor,
-            guidance: guidance.coordinator
+            onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
         #expect(viewModel.start())
@@ -338,7 +338,7 @@ extension NetworkDiagnosticsTests {
         let viewModel = NetworkDiagnosticsViewModel(
             checks: [BlockingProbeDiagnosticCheck(id: .path, probe: probe)],
             fingerprintMonitor: fingerprintMonitor,
-            guidance: guidance.coordinator
+            onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
         #expect(viewModel.start())
@@ -553,7 +553,7 @@ extension NetworkDiagnosticsTests {
         let viewModel = NetworkDiagnosticsViewModel(
             checks: makeStubChecks(recorder: recorder),
             fingerprintMonitor: DisabledNetworkFingerprintMonitor(),
-            guidance: guidance.coordinator
+            onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
         #expect(viewModel.start())
@@ -575,7 +575,7 @@ extension NetworkDiagnosticsTests {
         let viewModel = NetworkDiagnosticsViewModel(
             checks: [BlockingProbeDiagnosticCheck(id: .path, probe: probe)],
             fingerprintMonitor: DisabledNetworkFingerprintMonitor(),
-            guidance: guidance.coordinator
+            onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
         #expect(viewModel.start())
@@ -807,4 +807,3 @@ extension NetworkDiagnosticsTests {
         #expect(first.restartReason(comparedWith: reordered) == .path)
     }
 }
-

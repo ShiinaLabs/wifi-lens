@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import Testing
 import WiFiLensCore
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 /// At the main window's minimum size (820x620) the NavigationSplitView detail column is

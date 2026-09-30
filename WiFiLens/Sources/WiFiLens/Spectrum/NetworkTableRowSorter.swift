@@ -1,4 +1,5 @@
 import AppKit
+import WiFiLensCore
 
 enum NetworkTableRowSorter {
     static func sort(

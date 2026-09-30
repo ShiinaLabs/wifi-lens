@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 #if DEBUG
 

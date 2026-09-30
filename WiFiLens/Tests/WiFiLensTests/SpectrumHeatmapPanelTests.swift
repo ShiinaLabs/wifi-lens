@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import SwiftUI
 import WiFiLensCore
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite @MainActor struct SpectrumHeatmapPanelTests {
