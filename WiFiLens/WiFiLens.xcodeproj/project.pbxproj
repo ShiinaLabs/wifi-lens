@@ -218,6 +218,7 @@
 		A55100000000000000000012 /* ProDemoCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000002 /* ProDemoCoordinator.swift */; };
 		A55100000000000000000013 /* RoamingHandoffScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55100000000000000000003 /* RoamingHandoffScenario.swift */; };
 		A55700000000000000000002 /* DemoRoamingProbeProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55700000000000000000001 /* DemoRoamingProbeProvider.swift */; };
+		A55800000000000000000002 /* DemoGatewayLatencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55800000000000000000001 /* DemoGatewayLatencyProvider.swift */; };
 		A55300000000000000000001 /* HeatmapDemoScanSequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55300000000000000000002 /* HeatmapDemoScanSequence.swift */; };
 		A55300000000000000000004 /* HeatmapDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55300000000000000000005 /* HeatmapDemoTests.swift */; };
 		A55400000000000000000001 /* APRadarDemoWiFiScanStreaming.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55400000000000000000002 /* APRadarDemoWiFiScanStreaming.swift */; };
@@ -704,6 +705,7 @@
 		A55100000000000000000002 /* ProDemoCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoCoordinator.swift; sourceTree = "<group>"; };
 		A55100000000000000000003 /* RoamingHandoffScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingHandoffScenario.swift; sourceTree = "<group>"; };
 		A55700000000000000000001 /* DemoRoamingProbeProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRoamingProbeProvider.swift; sourceTree = "<group>"; };
+		A55800000000000000000001 /* DemoGatewayLatencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoGatewayLatencyProvider.swift; sourceTree = "<group>"; };
 		A55300000000000000000002 /* HeatmapDemoScanSequence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapDemoScanSequence.swift; sourceTree = "<group>"; };
 		A55300000000000000000005 /* HeatmapDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapDemoTests.swift; sourceTree = "<group>"; };
 		A55400000000000000000002 /* APRadarDemoWiFiScanStreaming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APRadarDemoWiFiScanStreaming.swift; sourceTree = "<group>"; };
@@ -1500,6 +1502,7 @@
 		A55100000000000000000007 /* Roaming */ = {
 			isa = PBXGroup;
 			children = (
+				A55800000000000000000001 /* DemoGatewayLatencyProvider.swift */,
 				A55700000000000000000001 /* DemoRoamingProbeProvider.swift */,
 				A55100000000000000000003 /* RoamingHandoffScenario.swift */,
 			);
@@ -2322,6 +2325,7 @@
 				A55100000000000000000012 /* ProDemoCoordinator.swift in Sources */,
 				A55100000000000000000013 /* RoamingHandoffScenario.swift in Sources */,
 				A55700000000000000000002 /* DemoRoamingProbeProvider.swift in Sources */,
+				A55800000000000000000002 /* DemoGatewayLatencyProvider.swift in Sources */,
 				A55400000000000000000001 /* APRadarDemoWiFiScanStreaming.swift in Sources */,
 				A55400000000000000000004 /* APRadarTrackingScenario.swift in Sources */,
 				A55500000000000000000001 /* ControlledDemoWiFiScanStreaming.swift in Sources */,
