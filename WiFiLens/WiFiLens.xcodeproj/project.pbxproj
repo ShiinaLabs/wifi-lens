@@ -60,15 +60,10 @@
 		A55100000000000000000010 /* AppStage in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000009 /* AppStage */; };
 		A55100000000000000000017 /* AppStageMac in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000016 /* AppStageMac */; };
 		A55200000000000000000004 /* AppStageControl in Frameworks */ = {isa = PBXBuildFile; productRef = A55200000000000000000003 /* AppStageControl */; };
-		A55300000000000000000004 /* HeatmapDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55300000000000000000005 /* HeatmapDemoTests.swift */; };
-		A55400000000000000000006 /* APRadarDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55400000000000000000007 /* APRadarDemoTests.swift */; };
-		A55600000000000000000005 /* ChannelRecommendationDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55600000000000000000006 /* ChannelRecommendationDemoTests.swift */; };
-		A55200000000000000000002 /* ProDemoRuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55200000000000000000001 /* ProDemoRuntimeTests.swift */; };
 		ED1000000000000000000002 /* AnalysisSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1000000000000000000001 /* AnalysisSnapshotTests.swift */; };
 		ED2000000000000000000002 /* AnalysisNetworkScopeIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED2000000000000000000001 /* AnalysisNetworkScopeIntegrationTests.swift */; };
 		ED3000000000000000000002 /* AnalysisWorkspaceScenarioValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3000000000000000000001 /* AnalysisWorkspaceScenarioValidationTests.swift */; };
 		ED4000000000000000000002 /* AnalysisReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED4000000000000000000001 /* AnalysisReadinessTests.swift */; };
-		ED5000000000000000000002 /* DemoAnalysisDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED5000000000000000000001 /* DemoAnalysisDataTests.swift */; };
 		EEF6495F8D90DE97D0C86ADF /* ChartViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7A45AB88716DC3AC18610B /* ChartViewTests.swift */; };
 		EF1000000000000000000002 /* InsightModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1000000000000000000001 /* InsightModelTests.swift */; };
 		EF2000000000000000000002 /* InsightRuleValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2000000000000000000001 /* InsightRuleValidationTests.swift */; };
@@ -178,6 +173,10 @@
 		B0B00000000000000000000F /* AppStageControl in Frameworks */ = {isa = PBXBuildFile; productRef = B0B00000000000000000000B /* AppStageControl */; };
 		C70000000000000000000004 /* WiFiLensCaptureSupport in Frameworks */ = {isa = PBXBuildFile; productRef = C70000000000000000000002 /* WiFiLensCaptureSupport */; };
 		C70000000000000000000005 /* WiFiLensCaptureSupport in Frameworks */ = {isa = PBXBuildFile; productRef = C70000000000000000000003 /* WiFiLensCaptureSupport */; };
+
+		C90000000000000000000004 /* ProCaptureEditionComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90000000000000000000001 /* ProCaptureEditionComposition.swift */; };
+		C90000000000000000000005 /* ProCaptureSettingsComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90000000000000000000002 /* ProCaptureSettingsComposition.swift */; };
+		C90000000000000000000006 /* ProCaptureSpectrumCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90000000000000000000003 /* ProCaptureSpectrumCompositionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -260,15 +259,10 @@
 		EC2000000000000000000000D /* ProSpectrumCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSpectrumCompositionView.swift; sourceTree = "<group>"; };
 		EC20000000000000000000023 /* ProReviewRequestBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProReviewRequestBridge.swift; sourceTree = "<group>"; };
 		EC20000000000000000000025 /* FeedbackContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackContact.swift; sourceTree = "<group>"; };
-		A55300000000000000000005 /* HeatmapDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapDemoTests.swift; sourceTree = "<group>"; };
-		A55400000000000000000007 /* APRadarDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APRadarDemoTests.swift; sourceTree = "<group>"; };
-		A55600000000000000000006 /* ChannelRecommendationDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelRecommendationDemoTests.swift; sourceTree = "<group>"; };
-		A55200000000000000000001 /* ProDemoRuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoRuntimeTests.swift; sourceTree = "<group>"; };
 		ED1000000000000000000001 /* AnalysisSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSnapshotTests.swift; sourceTree = "<group>"; };
 		ED2000000000000000000001 /* AnalysisNetworkScopeIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisNetworkScopeIntegrationTests.swift; sourceTree = "<group>"; };
 		ED3000000000000000000001 /* AnalysisWorkspaceScenarioValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisWorkspaceScenarioValidationTests.swift; sourceTree = "<group>"; };
 		ED4000000000000000000001 /* AnalysisReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisReadinessTests.swift; sourceTree = "<group>"; };
-		ED5000000000000000000001 /* DemoAnalysisDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAnalysisDataTests.swift; sourceTree = "<group>"; };
 		EF1000000000000000000001 /* InsightModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightModelTests.swift; sourceTree = "<group>"; };
 		EF2000000000000000000001 /* InsightRuleValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightRuleValidationTests.swift; sourceTree = "<group>"; };
 		FAB8408E6A12E8F18E4C2CF7 /* SeverityValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeverityValidationTests.swift; sourceTree = "<group>"; };
@@ -350,6 +344,12 @@
 		OB00000000000000000000B2 /* RoamingMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000D1 /* RuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeTests.swift; sourceTree = "<group>"; };
+
+		C80000000000000000000008 /* WiFi Lens Pro Capture.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "WiFi Lens Pro Capture.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+
+		C90000000000000000000001 /* ProCaptureEditionComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProCaptureEditionComposition.swift; sourceTree = "<group>"; };
+		C90000000000000000000002 /* ProCaptureSettingsComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProCaptureSettingsComposition.swift; sourceTree = "<group>"; };
+		C90000000000000000000003 /* ProCaptureSpectrumCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProCaptureSpectrumCompositionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -380,15 +380,15 @@
 				FB1E32972FC7316C009D1BDC /* CoreWLAN.framework in Frameworks */,
 				FB1E32982FC7316C009D1BDC /* CoreLocation.framework in Frameworks */,
 				FB1E329A2FC7316C009D1BDC /* CoreBluetooth.framework in Frameworks */,
-				A55100000000000000000010 /* AppStage in Frameworks */,
-				A55100000000000000000017 /* AppStageMac in Frameworks */,
-				A55200000000000000000004 /* AppStageControl in Frameworks */,
+				
+				
+				
 				F9A000000000000000000002 /* WiFiLensCore in Frameworks */,
 				B0B000000000000000000001 /* WiFiLensProCore in Frameworks */,
 				FB1E329B2FC7316C009D1BDC /* Logging in Frameworks */,
 				FBBD0F912FE78D5A0027958D /* ChartLens in Frameworks */,
 			
-				C70000000000000000000004 /* WiFiLensCaptureSupport in Frameworks */,
+				
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -396,13 +396,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B0B00000000000000000000F /* AppStageControl in Frameworks */,
-				B0B00000000000000000000E /* AppStage in Frameworks */,
-				B0B00000000000000000000D /* SplitView in Frameworks */,
+
+
+
 				B0B00000000000000000000C /* ChartLens in Frameworks */,
 				B0B000000000000000000007 /* WiFiLensCore in Frameworks */, 
 			
-				C70000000000000000000005 /* WiFiLensCaptureSupport in Frameworks */,
+
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,6 +421,26 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+		C80000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB1E32972FC7316C009D1BDC /* CoreWLAN.framework in Frameworks */,
+				FB1E32982FC7316C009D1BDC /* CoreLocation.framework in Frameworks */,
+				FB1E329A2FC7316C009D1BDC /* CoreBluetooth.framework in Frameworks */,
+
+
+
+				F9A000000000000000000002 /* WiFiLensCore in Frameworks */,
+				B0B000000000000000000001 /* WiFiLensProCore in Frameworks */,
+				FB1E329B2FC7316C009D1BDC /* Logging in Frameworks */,
+				FBBD0F912FE78D5A0027958D /* ChartLens in Frameworks */,
+			
+				C70000000000000000000004 /* WiFiLensCaptureSupport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -554,6 +574,7 @@
 				BD784856886985BCC6FC4F02 /* WiFi Lens.app */,
 				8F405489976429A068F15F86 /* WiFiLensTests.xctest */,
 				FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */,
+				C80000000000000000000008 /* WiFi Lens Pro Capture.app */,
 				FBA000030000000000000003 /* WiFiLensUITests.xctest */,
 				FBBD167A2FCF39F50093F940 /* WiFiLensProUITests.xctest */,
 				FB8FCAE72FF6BCA700BB2929 /* WiFiLensProTests.xctest */,
@@ -627,6 +648,9 @@
 				EC2000000000000000000000D /* ProSpectrumCompositionView.swift */,
 				EC20000000000000000000023 /* ProReviewRequestBridge.swift */,
 				EC20000000000000000000025 /* FeedbackContact.swift */,
+				C90000000000000000000001 /* ProCaptureEditionComposition.swift */,
+				C90000000000000000000002 /* ProCaptureSettingsComposition.swift */,
+				C90000000000000000000003 /* ProCaptureSpectrumCompositionView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -678,10 +702,6 @@
 		FB8FCB1B2FF6C4E300BB2929 /* WiFiLensProTests */ = {
 			isa = PBXGroup;
 			children = (
-				A55200000000000000000001 /* ProDemoRuntimeTests.swift */,
-				A55400000000000000000007 /* APRadarDemoTests.swift */,
-				A55600000000000000000006 /* ChannelRecommendationDemoTests.swift */,
-				A55300000000000000000005 /* HeatmapDemoTests.swift */,
 				EA1000000000000000000001 /* AnalysisScopeTests.swift */,
 				EB2000000000000000000001 /* AnalysisSchemaV3MigrationTests.swift */,
 				EB3000000000000000000001 /* AnalysisObservationCoverageTests.swift */,
@@ -689,7 +709,6 @@
 				ED2000000000000000000001 /* AnalysisNetworkScopeIntegrationTests.swift */,
 				ED3000000000000000000001 /* AnalysisWorkspaceScenarioValidationTests.swift */,
 				ED4000000000000000000001 /* AnalysisReadinessTests.swift */,
-				ED5000000000000000000001 /* DemoAnalysisDataTests.swift */,
 				1D2B21285BDCF1A6FD3E42C8 /* TimelineReportExporterTests.swift */,
 				5C187307EE359A3BC6E25D44 /* InsightFeedbackTests.swift */,
 				FAB8408E6A12E8F18E4C2CF7 /* SeverityValidationTests.swift */,
@@ -1115,15 +1134,11 @@
 			);
 			name = WiFiLensPro;
 			packageProductDependencies = (
-				A55100000000000000000009 /* AppStage */,
-				A55100000000000000000016 /* AppStageMac */,
-				A55200000000000000000003 /* AppStageControl */,
 				F9A000000000000000000005 /* WiFiLensCore */,
 				B0B000000000000000000004 /* WiFiLensProCore */,
 				FB1E32452FC7316C009D1BDC /* Logging */,
 				FBBD0F902FE78D5A0027958D /* ChartLens */,
 			
-				C70000000000000000000002 /* WiFiLensCaptureSupport */,
 			);
 			productName = WiFiLens;
 			productReference = FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */;
@@ -1146,12 +1161,8 @@
 			packageProductDependencies = (
 				F9A000000000000000000006 /* WiFiLensCore */,
 				B0B000000000000000000005 /* WiFiLensProCore */,
-				B0B00000000000000000000B /* AppStageControl */,
-				B0B00000000000000000000A /* AppStage */,
-				B0B000000000000000000009 /* SplitView */,
 				B0B000000000000000000008 /* ChartLens */,
 			
-				C70000000000000000000003 /* WiFiLensCaptureSupport */,
 			);
 			productName = WiFiLensProTests;
 			productReference = FB8FCAE72FF6BCA700BB2929 /* WiFiLensProTests.xctest */;
@@ -1194,6 +1205,30 @@
 			productName = WiFiLensProUITests;
 			productReference = FBBD167A2FCF39F50093F940 /* WiFiLensProUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+
+		C80000000000000000000001 /* WiFiLensProCapture */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C80000000000000000000005 /* Build configuration list for PBXNativeTarget "WiFiLensProCapture" */;
+			buildPhases = (
+				C80000000000000000000002 /* Sources */,
+				C80000000000000000000003 /* Frameworks */,
+				C80000000000000000000004 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = WiFiLensProCapture;
+			packageProductDependencies = (
+				F9A000000000000000000005 /* WiFiLensCore */,
+				B0B000000000000000000004 /* WiFiLensProCore */,
+				FB1E32452FC7316C009D1BDC /* Logging */,
+				FBBD0F902FE78D5A0027958D /* ChartLens */,
+			
+				C70000000000000000000002 /* WiFiLensCaptureSupport */,
+			);
+			productName = "WiFi Lens Pro Capture";
+			productReference = C80000000000000000000008 /* WiFi Lens Pro Capture.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
@@ -1252,6 +1287,7 @@
 			targets = (
 				4815C3B026D255EF85C56198 /* WiFiLens */,
 				FB1E32402FC7316C009D1BDC /* WiFiLensPro */,
+				C80000000000000000000001 /* WiFiLensProCapture */,
 				32B8DFED1C1CBAD8FD8C797C /* WiFiLensTests */,
 				FBA000070000000000000007 /* WiFiLensUITests */,
 				FB8FCAE62FF6BCA700BB2929 /* WiFiLensProTests */,
@@ -1299,6 +1335,20 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+		C80000000000000000000004 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FBBD169A2FD062F60093F940 /* PrivacyInfo.xcprivacy in Resources */,
+				FBBD169D2FD063630093F940 /* Assets.xcassets in Resources */,
+				FB1E329D2FC7316C009D1BDC /* Localizable.xcstrings in Resources */,
+				FB23154B304D9B6400619D14 /* InfoPlist.xcstrings in Resources */,
+				MV0000000000000000000051 /* mac-vendor-database.json in Resources */,
+				A1C0DE0000000000000000F3 /* WiFi Lens.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1418,10 +1468,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A55200000000000000000002 /* ProDemoRuntimeTests.swift in Sources */,
-				A55400000000000000000006 /* APRadarDemoTests.swift in Sources */,
-				A55600000000000000000005 /* ChannelRecommendationDemoTests.swift in Sources */,
-				A55300000000000000000004 /* HeatmapDemoTests.swift in Sources */,
 				EA1000000000000000000002 /* AnalysisScopeTests.swift in Sources */,
 				EB2000000000000000000002 /* AnalysisSchemaV3MigrationTests.swift in Sources */,
 				EB3000000000000000000002 /* AnalysisObservationCoverageTests.swift in Sources */,
@@ -1429,7 +1475,6 @@
 				ED2000000000000000000002 /* AnalysisNetworkScopeIntegrationTests.swift in Sources */,
 				ED3000000000000000000002 /* AnalysisWorkspaceScenarioValidationTests.swift in Sources */,
 				ED4000000000000000000002 /* AnalysisReadinessTests.swift in Sources */,
-				ED5000000000000000000002 /* DemoAnalysisDataTests.swift in Sources */,
 				78D748E699F0BD72E8076BBA /* TimelineReportExporterTests.swift in Sources */,
 				721C59AB6DD7BE47D87FAE98 /* InsightFeedbackTests.swift in Sources */,
 				DBDF66D03BD11B7D5986B87F /* SeverityValidationTests.swift in Sources */,
@@ -1471,6 +1516,36 @@
 			buildActionMask = 2147483647;
 			files = (
 				FBD0A4522FE5C05C003658AD /* RecordingModeTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+		C80000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */,
+				C90000000000000000000004 /* ProCaptureEditionComposition.swift in Sources */,
+				C90000000000000000000005 /* ProCaptureSettingsComposition.swift in Sources */,
+				EC2000000000000000000000A /* ProMenuBarComposition.swift in Sources */,
+				C90000000000000000000006 /* ProCaptureSpectrumCompositionView.swift in Sources */,
+				EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */,
+				EC20000000000000000000026 /* FeedbackContact.swift in Sources */,
+				FBD0A44B2FE5BEAC003658AD /* MarkdownExportService.swift in Sources */,
+				FB1E32612FC7316C009D1BDC /* SparkleUpdater.swift in Sources */,
+				FB1E32672FC7316C009D1BDC /* CrashReporter.swift in Sources */,
+				FB1E32682FC7316C009D1BDC /* MetricKitManager.swift in Sources */,
+				FB1E32692FC7316C009D1BDC /* DebugChartView.swift in Sources */,
+				ADB001000000000000000005 /* DebugMultiAPScenario.swift in Sources */,
+				FB1E326A2FC7316C009D1BDC /* DebugContainerView.swift in Sources */,
+				FB1E326B2FC7316C009D1BDC /* DebugThroughputView.swift in Sources */,
+				FB1E326C2FC7316C009D1BDC /* DebugRoamingChartView.swift in Sources */,
+				CC0000000000000000000002 /* DebugTimelineView.swift in Sources */,
+				FB1E32772FC7316C009D1BDC /* WiFiLensApp.swift in Sources */,
+				FB1E327B2FC7316C009D1BDC /* BuildConfig.swift in Sources */,
+				FB1E327E2FC7316C009D1BDC /* Logging.swift in Sources */,
+				FBD0A45A2FE5C06000000007 /* MenuBarScene.swift in Sources */,
+				FBD0A47F2FE5C0600000002C /* ProObservationEventBootstrap.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2021,6 +2096,101 @@
 			};
 			name = Release;
 		};
+
+		C80000000000000000000006 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = ZMK8PL8T8J;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				INFOPLIST_FILE = "../Pro/WiFiLensPro-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WiFi Lens uses local networking when you enable its MCP server and when Network Self-Check tests reachability of your configured network proxy. These checks do not collect or transmit your Wi-Fi scan data.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "macOS requires this permission for any app that reads Wi‑Fi network names (SSIDs). WiFi Lens never accesses your GPS coordinates and never logs your location.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kaoru.wifi-lens-pro-capture";
+				PRODUCT_NAME = "WiFi Lens Pro Capture";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+			};
+			name = Debug;
+		};
+		C80000000000000000000007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = ZMK8PL8T8J;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				INFOPLIST_FILE = "../Pro/WiFiLensPro-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WiFi Lens uses local networking when you enable its MCP server and when Network Self-Check tests reachability of your configured network proxy. These checks do not collect or transmit your Wi-Fi scan data.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "macOS requires this permission for any app that reads Wi‑Fi network names (SSIDs). WiFi Lens never accesses your GPS coordinates and never logs your location.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kaoru.wifi-lens-pro-capture";
+				PRODUCT_NAME = "WiFi Lens Pro Capture";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2083,6 +2253,16 @@
 			buildConfigurations = (
 				FBBD16822FCF39F50093F940 /* Debug */,
 				FBBD16832FCF39F50093F940 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+
+		C80000000000000000000005 /* Build configuration list for PBXNativeTarget "WiFiLensProCapture" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C80000000000000000000006 /* Debug */,
+				C80000000000000000000007 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
