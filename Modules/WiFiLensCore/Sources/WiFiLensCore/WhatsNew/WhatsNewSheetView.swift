@@ -1,5 +1,4 @@
 import SwiftUI
-import WiFiLensCore
 
 /// What's New sheet displayed after a version update.
 ///
@@ -7,13 +6,18 @@ import WiFiLensCore
 /// horizontal header carries the app identity and the version, while a wide
 /// reading column scrolls the Markdown body. The Markdown body is produced by
 /// `MarkdownRenderer` and displayed via `MarkdownTextView`.
-struct WhatsNewSheetView: View {
+public struct WhatsNewSheetView: View {
     let coordinator: WhatsNewCoordinator
     var onDismiss: () -> Void
 
+    public init(coordinator: WhatsNewCoordinator, onDismiss: @escaping () -> Void) {
+        self.coordinator = coordinator
+        self.onDismiss = onDismiss
+    }
+
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             header
             Divider()

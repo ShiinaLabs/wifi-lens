@@ -1,5 +1,9 @@
 #if OSS
 import Sparkle
+#endif
+import WiFiLensCore
+
+#if OSS
 
 private let autoCheckKey = "SUEnableAutomaticChecks"
 
@@ -34,7 +38,7 @@ private final class UpdaterDelegate: NSObject, SPUUpdaterDelegate {
 }
 
 @MainActor
-final class SparkleUpdater: ObservableObject {
+final class SparkleUpdater: ObservableObject, WiFiLensUpdateChecking {
     let controller: SPUStandardUpdaterController
     private let updater: SPUUpdater
     private let updaterDelegate = UpdaterDelegate()
@@ -72,7 +76,7 @@ final class SparkleUpdater: ObservableObject {
 }
 #else
 @MainActor
-final class SparkleUpdater {
+final class SparkleUpdater: WiFiLensUpdateChecking {
     init() {}
     var automaticallyChecksForUpdates: Bool {
         get { false }

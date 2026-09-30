@@ -1,5 +1,4 @@
 import SwiftUI
-import WiFiLensCore
 import UniformTypeIdentifiers
 
 enum MACVendorUpdateSource: String, CaseIterable, Identifiable {

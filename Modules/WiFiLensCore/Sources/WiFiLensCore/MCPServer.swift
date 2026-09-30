@@ -3,14 +3,14 @@ import Logging
 import Network
 import MCP
 
-public struct MCPSnapshot: Sendable {
-    public enum PowerState: String, Sendable, Equatable {
+struct MCPSnapshot: Sendable {
+    enum PowerState: String, Sendable, Equatable {
         case poweredOn
         case poweredOff
         case interfaceUnavailable
     }
 
-    public enum AccessState: String, Sendable, Equatable {
+    enum AccessState: String, Sendable, Equatable {
         case waitingForAuthorization
         case denied
         case scanning
@@ -18,16 +18,16 @@ public struct MCPSnapshot: Sendable {
         case scanFailed
     }
 
-    public var networks: [WiFiNetwork] = []
-    public var capturedAt: Date?
-    public var interfaceName: String?
-    public var isScanning = false
-    public var powerState: PowerState = .poweredOn
-    public var accessState: AccessState = .waitingForAuthorization
-    public var supportedBands: [String] = []
-    public var scanIntervalSeconds: Int?
+    var networks: [WiFiNetwork] = []
+    var capturedAt: Date?
+    var interfaceName: String?
+    var isScanning = false
+    var powerState: PowerState = .poweredOn
+    var accessState: AccessState = .waitingForAuthorization
+    var supportedBands: [String] = []
+    var scanIntervalSeconds: Int?
 
-    public init(
+    init(
         networks: [WiFiNetwork] = [],
         capturedAt: Date? = nil,
         interfaceName: String? = nil,
@@ -46,19 +46,19 @@ public struct MCPSnapshot: Sendable {
         self.supportedBands = supportedBands
         self.scanIntervalSeconds = scanIntervalSeconds
     }
-    public static let empty = MCPSnapshot()
+    static let empty = MCPSnapshot()
 }
 
 /// MCP Streamable HTTP server on localhost.
 /// Only accessible from this machine — no external network exposure.
-public final class MCPServer: @unchecked Sendable {
+final class MCPServer: @unchecked Sendable {
     private static let logger = Logger(label: "mcp")
     private let lock = NSLock()
     private var listener: NWListener?
-    public private(set) var isRunning = false
-    public var port: UInt16 = 19840
+    private(set) var isRunning = false
+    var port: UInt16 = 19840
 
-    public var snapshotProvider: (@MainActor @Sendable () -> MCPSnapshot)? {
+    var snapshotProvider: (@MainActor @Sendable () -> MCPSnapshot)? {
         get { lock.withLock { _snapshotProvider } }
         set { lock.withLock { _snapshotProvider = newValue } }
     }
@@ -68,9 +68,9 @@ public final class MCPServer: @unchecked Sendable {
     private var mcpServer: Server?
     private var serverTask: Task<Void, Never>?
 
-    public init() {}
+    init() {}
 
-    public func start() async throws {
+    func start() async throws {
         guard !isRunning else { return }
 
         let transport = StatelessHTTPServerTransport()
@@ -134,7 +134,7 @@ public final class MCPServer: @unchecked Sendable {
         Self.logger.info("MCP server started on port \(port)")
     }
 
-    public func stop() {
+    func stop() {
         listener?.cancel()
         listener = nil
         serverTask?.cancel()
@@ -210,7 +210,7 @@ public final class MCPServer: @unchecked Sendable {
 
     // MARK: - Client setup
 
-    public static func setupPrompt(port: UInt16) -> String {
+    static func setupPrompt(port: UInt16) -> String {
         let url = "http://127.0.0.1:\(port)/"
 
         return """

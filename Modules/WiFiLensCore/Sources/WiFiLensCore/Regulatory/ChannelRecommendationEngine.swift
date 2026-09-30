@@ -1,7 +1,7 @@
 import Foundation
 
-public enum ChannelRecommendationEngine {
-    public static func recommend(
+enum ChannelRecommendationEngine {
+    static func recommend(
         channelAnalysis: [ChannelQuality],
         inferredRegion: RegionInferenceResult,
         deviceSupportedChannels: Set<String>,

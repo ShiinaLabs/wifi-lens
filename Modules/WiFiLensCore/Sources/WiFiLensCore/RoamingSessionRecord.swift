@@ -1,17 +1,17 @@
 import Foundation
 
-public struct RoamingSessionRecord: Codable {
-    public let version: Int
-    public let savedAt: Date
-    public let ssid: String
-    public let bssid: String?
-    public let phyMode: String?
-    public let channel: Int
-    public let duration: TimeInterval
-    public let segments: [RoamingSegment]
-    public let transitions: [APTransitionEvent]
+struct RoamingSessionRecord: Codable {
+    let version: Int
+    let savedAt: Date
+    let ssid: String
+    let bssid: String?
+    let phyMode: String?
+    let channel: Int
+    let duration: TimeInterval
+    let segments: [RoamingSegment]
+    let transitions: [APTransitionEvent]
 
-    public init(
+    init(
         version: Int,
         savedAt: Date,
         ssid: String,
@@ -33,5 +33,5 @@ public struct RoamingSessionRecord: Codable {
         self.transitions = transitions
     }
 
-    public static let currentVersion = 1
+    static let currentVersion = 1
 }

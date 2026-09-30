@@ -1,30 +1,30 @@
 import Foundation
 import ChartLens
 
-public struct BandChartLayout {
-    public struct LabelPlacement {
-        public enum Kind {
+struct BandChartLayout {
+    struct LabelPlacement {
+        enum Kind {
             case regular
             case compact
             case marker
         }
 
-        public let series: ChartSeriesData
-        public let x: CGFloat
-        public let y: CGFloat
-        public let size: CGSize
-        public let opacity: Double
-        public let kind: Kind
+        let series: ChartSeriesData
+        let x: CGFloat
+        let y: CGFloat
+        let size: CGSize
+        let opacity: Double
+        let kind: Kind
     }
 
-    public static func axisTickValues(xMin: Double, xMax: Double, maxChannel: Int, axisTickStartChannel: Int) -> [Int] {
+    static func axisTickValues(xMin: Double, xMax: Double, maxChannel: Int, axisTickStartChannel: Int) -> [Int] {
         let desiredTicks = max(1, min(maxChannel - Int(xMin), 15))
         let rawStep = max(1, Int((xMax - xMin) / Double(desiredTicks)))
         let step = max(1, rawStep)
         return stride(from: Int(xMin), through: Int(xMax), by: step).filter { $0 >= axisTickStartChannel }
     }
 
-    public static func placeLabels(
+    static func placeLabels(
         seriesData: [ChartSeriesData],
         plotRect: CGRect,
         annotationRect: CGRect,
@@ -104,7 +104,7 @@ public struct BandChartLayout {
         return placed
     }
 
-    public static func estimatedLabelRect(for label: LabelPlacement) -> CGRect {
+    static func estimatedLabelRect(for label: LabelPlacement) -> CGRect {
         CGRect(
             x: label.x - label.size.width / 2,
             y: label.y - label.size.height / 2,
@@ -182,7 +182,7 @@ public struct BandChartLayout {
         return Swift.min(Swift.max(value, minValue), maxValue)
     }
 
-    public static func nearestSeries(at location: CGPoint, in series: [ChartSeriesData], geometry: ChartGeometry, radius: CGFloat) -> (ChartSeriesData, CGPoint)? {
+    static func nearestSeries(at location: CGPoint, in series: [ChartSeriesData], geometry: ChartGeometry, radius: CGFloat) -> (ChartSeriesData, CGPoint)? {
         guard geometry.chartRect.contains(location) else { return nil }
         var best: (ChartSeriesData, CGPoint)?
         var bestDist: CGFloat = radius

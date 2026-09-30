@@ -11,17 +11,17 @@ public enum WiFiPowerState: Sendable {
 }
 
 @MainActor
-public final class WiFiPowerMonitor: NSObject, CWEventDelegate {
+final class WiFiPowerMonitor: NSObject, CWEventDelegate {
     private var continuation: AsyncStream<WiFiPowerState>.Continuation?
     private var pollingTask: Task<Void, Never>?
     private var isMonitoring = false
-    public private(set) var currentState: WiFiPowerState = .poweredOn
+    private(set) var currentState: WiFiPowerState = .poweredOn
 
-    public override init() {
+    override init() {
         super.init()
     }
 
-    public var events: AsyncStream<WiFiPowerState> {
+    var events: AsyncStream<WiFiPowerState> {
         AsyncStream { continuation in
             self.continuation = continuation
             continuation.yield(currentState)
@@ -35,7 +35,7 @@ public final class WiFiPowerMonitor: NSObject, CWEventDelegate {
         try? CWWiFiClient.shared().stopMonitoringEvent(with: .powerDidChange)
     }
 
-    public func startMonitoring() {
+    func startMonitoring() {
         guard !isMonitoring else { return }
         isMonitoring = true
         CWWiFiClient.shared().delegate = self
@@ -44,7 +44,7 @@ public final class WiFiPowerMonitor: NSObject, CWEventDelegate {
         startPolling()
     }
 
-    public func stopMonitoring() {
+    func stopMonitoring() {
         pollingTask?.cancel()
         pollingTask = nil
         continuation?.finish()
@@ -55,7 +55,7 @@ public final class WiFiPowerMonitor: NSObject, CWEventDelegate {
         try? CWWiFiClient.shared().stopMonitoringEvent(with: .powerDidChange)
     }
 
-    public func refreshState() {
+    func refreshState() {
         guard isMonitoring else { return }
         let previous = currentState
         if let iface = CWWiFiClient.shared().interface() {
@@ -92,7 +92,7 @@ public final class WiFiPowerMonitor: NSObject, CWEventDelegate {
     /// for instant power‑state change notification. The delegate callback is still delivered
     /// reliably on macOS 14+ and is safe to keep.
 
-    public nonisolated func powerStateDidChangeForWiFiInterface(withName interfaceName: String) {
+    nonisolated func powerStateDidChangeForWiFiInterface(withName interfaceName: String) {
         Task { @MainActor in
             refreshState()
         }
@@ -101,7 +101,7 @@ public final class WiFiPowerMonitor: NSObject, CWEventDelegate {
 
 #if DEBUG
 extension WiFiPowerMonitor {
-    public var debugIsMonitoringForTesting: Bool { isMonitoring }
+    var debugIsMonitoringForTesting: Bool { isMonitoring }
 }
 #endif
 

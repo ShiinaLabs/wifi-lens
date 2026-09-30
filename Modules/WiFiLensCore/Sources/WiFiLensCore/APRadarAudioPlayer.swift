@@ -23,7 +23,7 @@ enum APRadarAudioError: LocalizedError {
 ///
 /// `geiger` is a hidden easter-egg preset: it is only listed in Settings
 /// after the user unlocks it with a secret gesture on the radar page.
-public enum APRadarSoundPreset: String, CaseIterable, Sendable {
+enum APRadarSoundPreset: String, CaseIterable, Sendable {
     /// Soft, rounded sine pulse — the default tone.
     case softPulse
     /// Short mechanical tick.
@@ -34,7 +34,7 @@ public enum APRadarSoundPreset: String, CaseIterable, Sendable {
     case geiger
 
     /// Resolves a stored raw value, falling back to the default preset.
-    public static func fromStoredValue(_ value: String?) -> APRadarSoundPreset {
+    static func fromStoredValue(_ value: String?) -> APRadarSoundPreset {
         guard let value, let preset = APRadarSoundPreset(rawValue: value) else {
             return .softPulse
         }
@@ -337,13 +337,13 @@ protocol APRadarAudioPlaying: AnyObject {
 /// preview ends naturally instead of staying on "stop" forever.
 @MainActor
 @Observable
-public final class APRadarSoundPreviewer {
+final class APRadarSoundPreviewer {
     private let player: any APRadarAudioPlaying
     private var task: Task<Void, Never>?
     /// Incremented on every stop/start so a cancelled preview that wakes after
     /// a replacement cannot stop the new preview's player or state.
     private var generation = 0
-    public private(set) var isPlaying = false
+    private(set) var isPlaying = false
     /// Test seam: replaces wall-clock sleeps with a deterministic sleeper.
     private let sleep: @MainActor (Duration) async throws -> Void
 
@@ -357,7 +357,7 @@ public final class APRadarSoundPreviewer {
     /// the irregular cadence without being mistaken for a steady rhythm).
     private static let geigerPreviewMeanInterval: Double = 0.25
 
-    public convenience init() {
+    convenience init() {
         self.init(player: APRadarAudioPlayer())
     }
 
@@ -379,7 +379,7 @@ public final class APRadarSoundPreviewer {
     /// Returns false when the preset cannot be prepared (audio failure is
     /// non-fatal; the settings row simply stays silent).
     @discardableResult
-    public func start(preset: APRadarSoundPreset) -> Bool {
+    func start(preset: APRadarSoundPreset) -> Bool {
         stop()
         do {
             try player.prepare(preset: preset)
@@ -396,7 +396,7 @@ public final class APRadarSoundPreviewer {
     }
 
     /// Starts a preview, or stops the running one when already playing.
-    public func toggle(preset: APRadarSoundPreset) {
+    func toggle(preset: APRadarSoundPreset) {
         if isPlaying {
             stop()
         } else {
@@ -405,7 +405,7 @@ public final class APRadarSoundPreviewer {
     }
 
     /// Cancels the preview task and stops all audio immediately.
-    public func stop() {
+    func stop() {
         generation &+= 1
         task?.cancel()
         task = nil

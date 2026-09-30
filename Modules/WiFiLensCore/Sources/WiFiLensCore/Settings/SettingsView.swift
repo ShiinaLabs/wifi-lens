@@ -1,15 +1,18 @@
 import SwiftUI
-#if OSS
-import Sparkle
-#endif
 import AppKit
-import WiFiLensCore
 
-struct SettingsView: View {
+@MainActor
+public struct SettingsView: View {
     let macVendorDatabaseSummary: MACVendorBundledDatabaseSummary?
-    let updater: SparkleUpdater
+    let updater: any WiFiLensUpdateChecking
+    let configuration: WiFiLensEditionConfiguration
     let locationPermission: LocationPermissionManager
     let bluetoothPermission: BluetoothPermissionManager?
+    let onWhatsNew: () -> Void
+    let onLog: (String) -> Void
+    let onRevealLogs: () -> Void
+    let onClearLogs: () -> Void
+    let onOpenExternalDestination: (ExternalDestination) -> Void
     let onScanIntervalChange: (Int) -> Void
     let onRegulatoryRegionChange: (String) -> Void
     /// True while this is the selected sidebar page. Pages stay mounted in the
@@ -43,20 +46,32 @@ struct SettingsView: View {
         )
     }
 
-    init(
+    public init(
         macVendorDatabaseSummary: MACVendorBundledDatabaseSummary?,
-        updater: SparkleUpdater,
+        updater: any WiFiLensUpdateChecking,
+        configuration: WiFiLensEditionConfiguration,
         locationPermission: LocationPermissionManager,
         bluetoothPermission: BluetoothPermissionManager?,
         bleEnabled: Binding<Bool>,
+        onWhatsNew: @escaping () -> Void,
+        onLog: @escaping (String) -> Void,
+        onRevealLogs: @escaping () -> Void,
+        onClearLogs: @escaping () -> Void,
+        onOpenExternalDestination: @escaping (ExternalDestination) -> Void,
         onScanIntervalChange: @escaping (Int) -> Void = { _ in },
         onRegulatoryRegionChange: @escaping (String) -> Void = { _ in },
         isActive: Bool = true
     ) {
         self.macVendorDatabaseSummary = macVendorDatabaseSummary
         self.updater = updater
+        self.configuration = configuration
         self.locationPermission = locationPermission
         self.bluetoothPermission = bluetoothPermission
+        self.onWhatsNew = onWhatsNew
+        self.onLog = onLog
+        self.onRevealLogs = onRevealLogs
+        self.onClearLogs = onClearLogs
+        self.onOpenExternalDestination = onOpenExternalDestination
         self.onScanIntervalChange = onScanIntervalChange
         self.onRegulatoryRegionChange = onRegulatoryRegionChange
         self.isActive = isActive
@@ -64,7 +79,7 @@ struct SettingsView: View {
         _autoCheck = State(initialValue: updater.automaticallyChecksForUpdates)
     }
 
-    var body: some View {
+    public var body: some View {
         ScrollView {
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
@@ -84,7 +99,7 @@ struct SettingsView: View {
                 // MARK: - What's New
                 Section {
                     Button {
-                        WhatsNewCoordinator.shared.showSheetFromBadge = true
+                        onWhatsNew()
                     } label: {
                         HStack {
                             Image(systemName: "sparkles")
@@ -123,7 +138,7 @@ struct SettingsView: View {
                     Text(String(localized: "settings.appearance.overview_style_description", comment: "Description of overview hero visual style and Reduce Motion behavior"))
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    if BuildConfig.current == .pro {
+                    if configuration.identity == .pro {
                         Toggle(String(localized: "settings.appearance.hide_badge", comment: "Toggle to hide the title badge"), isOn: $hideTitleBadge)
                     }
                 } header: {
@@ -213,7 +228,7 @@ struct SettingsView: View {
 
                 MACVendorDatabaseSettingsSection(summary: macVendorDatabaseSummary)
 
-                EditionAssemblyProvider.configuration.settingsContribution()
+                configuration.settingsContribution()
 
                 // MARK: - Permissions
 
@@ -299,18 +314,18 @@ struct SettingsView: View {
                 }
 
                 // MARK: - Updates
-                if BuildConfig.current == .oss {
+                if configuration.identity == .openSource {
                 Section {
                     Toggle(String(localized: "settings.updates.auto_check", comment: "Toggle for automatic update checking"), isOn: $autoCheck)
                         .accessibilityIdentifier("settings-auto-check-toggle")
                         .onChange(of: autoCheck) { _, newValue in
                             updater.automaticallyChecksForUpdates = newValue
-                            AppLogger.app.info("Sparkle auto-check \(newValue ? "enabled" : "disabled")")
+                            onLog("Sparkle auto-check \(newValue ? "enabled" : "disabled")")
                         }
                     HStack {
                         Button(String(localized: "common.action.check_now", comment: "Check now button for updates")) {
                             updater.checkForUpdates()
-                            AppLogger.app.info("Sparkle manual update check triggered")
+                            onLog("Sparkle manual update check triggered")
                         }
                         .accessibilityIdentifier("settings-check-now-button")
                         Spacer()
@@ -328,12 +343,12 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                         HStack(spacing: 12) {
                             Button(String(localized: "common.action.reveal_logs", comment: "Button to reveal log files in Finder")) {
-                                AppLogger.revealInFinder()
+                                onRevealLogs()
                             }
                             .accessibilityIdentifier("settings-reveal-logs-button")
 
                             Button(role: .destructive) {
-                                AppLogger.clearLogs()
+                                onClearLogs()
                             } label: {
                                 Text(String(localized: "settings.diagnostics.clear_logs", comment: "Button to delete all local log files"))
                             }
@@ -392,9 +407,9 @@ struct SettingsView: View {
 
                         aboutLinkRow(icon: "chart.xyaxis.line", title: "ChartLens", destination: .chartLensRepository)
                         aboutLinkRow(icon: "server.rack", title: "MCP Swift SDK", destination: .mcpSwiftSDKRepository)
-#if OSS
+                if configuration.identity == .openSource {
                         aboutLinkRow(icon: "sparkles", title: "Sparkle", destination: .sparkleRepository)
-#endif
+                }
                     }
                     .padding(.vertical, 4)
                 } header: {
@@ -451,7 +466,7 @@ struct SettingsView: View {
     }
 
     private func refreshPermissionStatuses() {
-        guard EditionAssemblyProvider.configuration.requiresLiveWiFiAuthorization else { return }
+        guard configuration.requiresLiveWiFiAuthorization else { return }
         locationPermission.refreshStatus()
         bluetoothPermission?.refreshStatus()
     }
@@ -484,8 +499,7 @@ struct SettingsView: View {
     }
 
     private func open(_ destination: ExternalDestination) {
-        guard let url = ExternalLinks.url(for: destination) else { return }
-        NSWorkspace.shared.open(url)
+        onOpenExternalDestination(destination)
     }
 }
 
@@ -537,11 +551,13 @@ private struct PermissionDescriptionText: View {
 }
 
 
-struct BLEFeatureSettingsRow: View {
+public struct BLEFeatureSettingsRow: View {
     @AppStorage("bleEnabled") private var bleEnabled = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Image(systemName: "antenna.radiowaves.left.and.right").foregroundColor(.blue).frame(width: 20)

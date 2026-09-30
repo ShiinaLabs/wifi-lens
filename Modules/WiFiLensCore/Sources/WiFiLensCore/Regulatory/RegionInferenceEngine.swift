@@ -3,12 +3,12 @@ import Foundation
 /// Multi-source region inference with confidence scoring.
 /// Resolves conflicts between system locale, hardware supported channels,
 /// AP beacon country IEs, and user override.
-public enum RegionInferenceEngine {
+enum RegionInferenceEngine {
 
     /// Fingerprint a set of supported channels against each known regulatory
     /// domain. Returns the domain whose allowed channel set most closely
     /// matches what the hardware reports.
-    public static func infer(
+    static func infer(
         systemLocale: Locale,
         supportedChannels: [(Int, Int)],  // (band raw value, channel number) — Sendable
         apCountryCodes: [String],

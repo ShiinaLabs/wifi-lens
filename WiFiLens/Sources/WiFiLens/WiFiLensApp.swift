@@ -254,9 +254,18 @@ private struct AppRootView: View {
                     SettingsView(
                         macVendorDatabaseSummary: macVendorDatabaseSummary,
                         updater: sparkleUpdater,
+                        configuration: EditionAssemblyProvider.configuration,
                         locationPermission: viewModel.locationManager,
                         bluetoothPermission: bleViewModel?.bluetoothPermission,
                         bleEnabled: $bleEnabled,
+                        onWhatsNew: { whatsNewCoordinator.showSheetFromBadge = true },
+                        onLog: { AppLogger.app.info("\($0)") },
+                        onRevealLogs: AppLogger.revealInFinder,
+                        onClearLogs: AppLogger.clearLogs,
+                        onOpenExternalDestination: { destination in
+                            guard let url = ExternalLinks.url(for: destination) else { return }
+                            NSWorkspace.shared.open(url)
+                        },
                         onScanIntervalChange: { viewModel.scanIntervalSeconds = $0 },
                         onRegulatoryRegionChange: viewModel.handleRegulatoryRegionOverrideChange,
                         isActive: selectedPage == .settings
@@ -1471,12 +1480,11 @@ struct WiFiLensApp: App {
                 _ = await previous.result
             }
             guard !Task.isCancelled else { return }
-            viewModel.mcpServer.stop()
+            viewModel.stopMCPServer()
             guard mcpEnabled else { return }
             guard !Task.isCancelled else { return }
-            viewModel.mcpServer.port = UInt16(mcpPort)
             do {
-                try await viewModel.mcpServer.start()
+                try await viewModel.startMCPServer(port: UInt16(mcpPort))
             } catch is CancellationError {
                 // Superseded by a newer lifecycle request while starting.
             } catch {

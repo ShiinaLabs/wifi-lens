@@ -5,19 +5,19 @@ import Foundation
 /// An absent value on `IEData` means that the HT Operation element was not
 /// present or could not be parsed. This is intentionally separate from
 /// `.twentyMHz`, which is an explicit secondary-channel offset of zero.
-public enum HTChannelOperation: Equatable, Sendable {
+enum HTChannelOperation: Equatable, Sendable {
     case twentyMHz
     case fortyMHzAbove
     case fortyMHzBelow
 
-    public var widthMHz: Int {
+    var widthMHz: Int {
         switch self {
         case .twentyMHz: 20
         case .fortyMHzAbove, .fortyMHzBelow: 40
         }
     }
 
-    public var spanDirection: SpanDirection? {
+    var spanDirection: SpanDirection? {
         switch self {
         case .twentyMHz: nil
         case .fortyMHzAbove: .upper
@@ -31,7 +31,7 @@ public enum HTChannelOperation: Equatable, Sendable {
 /// `useHT` delegates the effective 20/40 MHz width to HT Operation. The
 /// remaining cases describe VHT operation directly, including the
 /// non-contiguous 80+80 MHz layout.
-public enum VHTChannelOperation: Equatable, Sendable {
+enum VHTChannelOperation: Equatable, Sendable {
     case useHT
     case eightyMHz
     case oneSixtyMHz
@@ -42,14 +42,14 @@ public enum VHTChannelOperation: Equatable, Sendable {
 ///
 /// The scalar MHz value is intentionally unavailable for 80+80 MHz because
 /// two non-contiguous 80 MHz segments cannot be represented by one span.
-public enum IEOperatingChannelWidth: Equatable, Sendable {
+enum IEOperatingChannelWidth: Equatable, Sendable {
     case twentyMHz
     case fortyMHz
     case eightyMHz
     case oneSixtyMHz
     case eightyPlusEightyMHz
 
-    public var label: String {
+    var label: String {
         switch self {
         case .twentyMHz: "20"
         case .fortyMHz: "40"
@@ -72,38 +72,38 @@ public enum IEOperatingChannelWidth: Equatable, Sendable {
 }
 
 /// Parsed 802.11 information elements and derived capabilities from beacon/probe response data.
-public struct IEData {
+struct IEData {
     /// Whether 802.11k (Radio Measurement) is supported
-    public var supports80211k: Bool = false
+    var supports80211k: Bool = false
     /// Whether 802.11r (Fast BSS Transition) is supported
-    public var supports80211r: Bool = false
+    var supports80211r: Bool = false
     /// Whether 802.11v (BSS Transition Management) is supported
-    public var supports80211v: Bool = false
+    var supports80211v: Bool = false
     /// Whether 802.11w (Protected Management Frames) is supported
-    public var supports80211w: Bool = false
+    var supports80211w: Bool = false
     /// Whether WPA3 is supported (via RSN AKM suite)
-    public var supportsWPA3: Bool = false
+    var supportsWPA3: Bool = false
 
     // High-throughput capabilities
-    public var htSupported: Bool = false
-    public var vhtSupported: Bool = false
-    public var heSupported: Bool = false  // 802.11ax / Wi-Fi 6
-    public var ehtSupported: Bool = false // 802.11be / Wi-Fi 7
+    var htSupported: Bool = false
+    var vhtSupported: Bool = false
+    var heSupported: Bool = false  // 802.11ax / Wi-Fi 6
+    var ehtSupported: Bool = false // 802.11be / Wi-Fi 7
 
     // Channel width capability and current operation
     /// Whether HT Capabilities advertise 20/40 MHz support.
-    public var supports40MHz: Bool = false
+    var supports40MHz: Bool = false
     /// The current BSS channel operation from HT Operation, when available.
     /// A missing value means the operation is unknown, not that it is 20 MHz.
-    public var htChannelOperation: HTChannelOperation?
+    var htChannelOperation: HTChannelOperation?
     /// The current BSS channel operation from VHT Operation, when available.
     /// A missing value means the element was absent or malformed.
-    public var vhtChannelOperation: VHTChannelOperation?
+    var vhtChannelOperation: VHTChannelOperation?
 
     /// Effective operating width, with VHT Operation taking precedence when
     /// it advertises a VHT width and falling back to HT Operation for
     /// `useHT` or when VHT Operation is absent.
-    public var operatingChannelWidth: IEOperatingChannelWidth? {
+    var operatingChannelWidth: IEOperatingChannelWidth? {
         switch vhtChannelOperation {
         case .eightyMHz:
             return .eightyMHz
@@ -126,22 +126,22 @@ public struct IEData {
     }
 
     // Raw info
-    public var maxMCSIndex: Int?
-    public var spatialStreams: Int?
+    var maxMCSIndex: Int?
+    var spatialStreams: Int?
 
     // Security
-    public var akmSuites: [String] = []
-    public var pairwiseCiphers: [String] = []
-    public var groupCipher: String?
+    var akmSuites: [String] = []
+    var pairwiseCiphers: [String] = []
+    var groupCipher: String?
 
     // Country
-    public var countryCode: String?
+    var countryCode: String?
 
     // Hidden SSID
-    public var isHiddenSSID: Bool = false
+    var isHiddenSSID: Bool = false
 
     /// Security summary for table display
-    public var securitySummary: String {
+    var securitySummary: String {
         if akmSuites.isEmpty { return "" }
 
         // Collect distinct security levels present
@@ -192,20 +192,20 @@ public struct IEData {
     }
 
     /// MCS summary derived from the trusted HT MCS bitmask.
-    public var mcsSummary: String {
+    var mcsSummary: String {
         if let ht = maxMCSIndex { return "\(ht)" }
         return ""
     }
 
     /// Spatial streams: e.g. "2" or ""
-    public var nssSummary: String {
+    var nssSummary: String {
         spatialStreams.map { "\($0)" } ?? ""
     }
 
-    public init() {}
+    init() {}
 }
 
-public enum IEParser {
+enum IEParser {
     // IE Tag constants
     private static let tagSSID: UInt8 = 0
     private static let tagCountry: UInt8 = 7
@@ -231,7 +231,7 @@ public enum IEParser {
     // elements and must not be accepted inside an RSN element.
     private static let rsnOUI: [UInt8] = [0x00, 0x0F, 0xAC]
 
-    public static func parse(data: Data) -> IEData {
+    static func parse(data: Data) -> IEData {
         var result = IEData()
         var offset = 0
         let bytes = [UInt8](data)

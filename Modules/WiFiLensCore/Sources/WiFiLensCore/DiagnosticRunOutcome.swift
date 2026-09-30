@@ -1,6 +1,6 @@
 import Foundation
 
-public enum DiagnosticRunEndReason: Equatable, Sendable {
+enum DiagnosticRunEndReason: Equatable, Sendable {
     case completed
     case timedOut
     case cancelled

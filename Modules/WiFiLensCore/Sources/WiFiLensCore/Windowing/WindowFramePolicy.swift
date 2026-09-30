@@ -1,6 +1,6 @@
 import CoreGraphics
 
-enum WindowFramePolicy {
+public enum WindowFramePolicy {
     // P0 incident note:
     // The buggy scene-level code was:
     //   .windowResizability(.contentSize)
@@ -8,7 +8,7 @@ enum WindowFramePolicy {
     // That let SwiftUI content ideal sizes and stale restored frames produce windows
     // larger than the current screen's visible area. This policy keeps restored
     // frames screen-safe before they are shown.
-    static func shouldNormalizeLiveWindowFrame(
+    public static func shouldNormalizeLiveWindowFrame(
         currentFrame: CGRect,
         screenFrame: CGRect?,
         visibleFrame: CGRect,
@@ -28,7 +28,7 @@ enum WindowFramePolicy {
         return !likelyFullScreenRestore
     }
 
-    static func normalizedFrame(
+    public static func normalizedFrame(
         restoredFrame: CGRect?,
         visibleFrame: CGRect,
         defaultSize: CGSize

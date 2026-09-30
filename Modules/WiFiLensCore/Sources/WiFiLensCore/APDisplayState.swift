@@ -1,8 +1,8 @@
-public struct APDisplayState: Hashable, Sendable {
-    public var visibility: Bool
-    public var visibilityLocked: Bool
+struct APDisplayState: Hashable, Sendable {
+    var visibility: Bool
+    var visibilityLocked: Bool
 
-    public init(visibility: Bool, visibilityLocked: Bool) {
+    init(visibility: Bool, visibilityLocked: Bool) {
         self.visibility = visibility
         self.visibilityLocked = visibilityLocked
     }

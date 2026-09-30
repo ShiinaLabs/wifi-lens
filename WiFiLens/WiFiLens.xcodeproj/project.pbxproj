@@ -107,7 +107,6 @@
 		FB0573C12FBBFC31005F8215 /* ProFeaturePlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573C02FBBFC31005F8215 /* ProFeaturePlaceholderView.swift */; };
 		FB0573C22FBC47F1005F8214 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573C12FBC47F1005F8214 /* CrashReporter.swift */; };
 		FB0573C422FBBEAE4005F8214 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = FB0573C412FBBEAE4005F8214 /* Logging */; };
-		FB05A7A12FD1A0F100B5C801 /* WindowFramePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB05A7A02FD1A0F100B5C801 /* WindowFramePolicy.swift */; };
 		FB1E32612FC7316C009D1BDC /* SparkleUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */; };
 		FB1E32672FC7316C009D1BDC /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573C12FBC47F1005F8214 /* CrashReporter.swift */; };
 		FB1E32682FC7316C009D1BDC /* MetricKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD329512FC500000057B038 /* MetricKitManager.swift */; };
@@ -118,8 +117,6 @@
 		FB1E32772FC7316C009D1BDC /* WiFiLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831E90D5B9D07C478A35DD14 /* WiFiLensApp.swift */; };
 		FB1E327B2FC7316C009D1BDC /* BuildConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBB2CA8B2FC0E14000FC2D2C /* BuildConfig.swift */; };
 		FB1E327E2FC7316C009D1BDC /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573BF2FBC47CC005F8214 /* Logging.swift */; };
-		FB1E328A2FC7316C009D1BDC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */; };
-		FB1E328A2FD1A11100B5C801 /* WindowFramePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB05A7A02FD1A0F100B5C801 /* WindowFramePolicy.swift */; };
 		F9A000000000000000000001 /* WiFiLensCore in Frameworks */ = {isa = PBXBuildFile; productRef = F9A000000000000000000004 /* WiFiLensCore */; };
 		F9A000000000000000000002 /* WiFiLensCore in Frameworks */ = {isa = PBXBuildFile; productRef = F9A000000000000000000005 /* WiFiLensCore */; };
 		F9A000000000000000000007 /* WiFiLensCore in Frameworks */ = {isa = PBXBuildFile; productRef = F9A000000000000000000008 /* WiFiLensCore */; };
@@ -133,12 +130,6 @@
 		FB23154B304D9B6400619D14 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */; };
 		FB23154C304D9B6400619D14 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */; };
 		FB2E3B2E2FC5ACDA00D2610E /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB2E3B2D2FC5ACDA00D2610E /* CoreBluetooth.framework */; };
-		FB69776630414AD400F9B20E /* WhatsNewStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB69776430414AD400F9B20E /* WhatsNewStateStore.swift */; };
-		FB69776730414AD400F9B20E /* WhatsNewSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB69776330414AD400F9B20E /* WhatsNewSheetView.swift */; };
-		FB69776830414AD400F9B20E /* WhatsNewCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB69776230414AD400F9B20E /* WhatsNewCoordinator.swift */; };
-		FB69776930414AD400F9B20E /* WhatsNewStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB69776430414AD400F9B20E /* WhatsNewStateStore.swift */; };
-		FB69776A30414AD400F9B20E /* WhatsNewSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB69776330414AD400F9B20E /* WhatsNewSheetView.swift */; };
-		FB69776B30414AD400F9B20E /* WhatsNewCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB69776230414AD400F9B20E /* WhatsNewCoordinator.swift */; };
 		FB85B8A92FE6526D00D2D391 /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FB85B8A82FE6526D00D2D391 /* ChartLens */; };
 		C0A7A1B2C3D4E5F678900010 /* SplitView in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900003 /* SplitView */; };
 		FB8FCB212FF6C5DF00BB2929 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FB8FCB202FF6C5DF00BB2929 /* Sparkle */; };
@@ -182,7 +173,6 @@
 		FBD0A4802FE5C0600000002D /* TimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4822FE5C0600000002F /* TimelineView.swift */; };
 		FBD329502FC500000057B038 /* MetricKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD329512FC500000057B038 /* MetricKitManager.swift */; };
 		FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */; };
-		FBD7B34B2FBAED65002C8F5A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */; };
 		G900000000000000000000A7 /* ExistingInstallationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A6 /* ExistingInstallationDetector.swift */; };
 		G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A6 /* ExistingInstallationDetector.swift */; };
 		G900000000000000000000B9 /* OnboardingStateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B8 /* OnboardingStateStoreTests.swift */; };
@@ -201,13 +191,7 @@
 		MV0000000000000000000017 /* MACVendorDatabaseStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000020 /* MACVendorDatabaseStoreTests.swift */; };
 		MV0000000000000000000022 /* MACVendorDatabaseDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000023 /* MACVendorDatabaseDownloaderTests.swift */; };
 		MV0000000000000000000027 /* MACVendorDatabaseManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000028 /* MACVendorDatabaseManagerTests.swift */; };
-		MV0000000000000000000035 /* MACVendorDatabaseSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000039 /* MACVendorDatabaseSettingsSection.swift */; };
-		MV0000000000000000000036 /* MACVendorDatabaseSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000039 /* MACVendorDatabaseSettingsSection.swift */; };
-		MV0000000000000000000037 /* MACVendorDatabaseUpdateSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000040 /* MACVendorDatabaseUpdateSheet.swift */; };
-		MV0000000000000000000038 /* MACVendorDatabaseUpdateSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000040 /* MACVendorDatabaseUpdateSheet.swift */; };
 		MV0000000000000000000041 /* MACVendorDatabaseReminderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000042 /* MACVendorDatabaseReminderTests.swift */; };
-		MV0000000000000000000043 /* MACVendorDatabaseReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000045 /* MACVendorDatabaseReminder.swift */; };
-		MV0000000000000000000044 /* MACVendorDatabaseReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000045 /* MACVendorDatabaseReminder.swift */; };
 		MV0000000000000000000049 /* mac-vendor-database.json in Resources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000050 /* mac-vendor-database.json */; };
 		MV0000000000000000000051 /* mac-vendor-database.json in Resources */ = {isa = PBXBuildFile; fileRef = MV0000000000000000000050 /* mac-vendor-database.json */; };
 		ND0000000000000000000001 /* NetworkDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ND0000000000000000000002 /* NetworkDiagnosticsTests.swift */; };
@@ -357,14 +341,10 @@
 		FB0573BF2FBC47CC005F8214 /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
 		FB0573C02FBBFC31005F8215 /* ProFeaturePlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProFeaturePlaceholderView.swift; sourceTree = "<group>"; };
 		FB0573C12FBC47F1005F8214 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
-		FB05A7A02FD1A0F100B5C801 /* WindowFramePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicy.swift; sourceTree = "<group>"; };
 		FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "WiFi Lens Pro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		FB2E3B2D2FC5ACDA00D2610E /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		FB5A212C2FC31C6100828D9F /* WiFiLens-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "WiFiLens-Info.plist"; sourceTree = "<group>"; };
-		FB69776230414AD400F9B20E /* WhatsNewCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewCoordinator.swift; sourceTree = "<group>"; };
-		FB69776330414AD400F9B20E /* WhatsNewSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewSheetView.swift; sourceTree = "<group>"; };
-		FB69776430414AD400F9B20E /* WhatsNewStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewStateStore.swift; sourceTree = "<group>"; };
 		FB80FA2C2FC0AC1900547708 /* OSS.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = OSS.xcconfig; sourceTree = "<group>"; };
 		FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = PRO.xcconfig; sourceTree = "<group>"; };
 		FB80FA312FC0AC3800547708 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
@@ -410,7 +390,6 @@
 		FBD0A4822FE5C0600000002F /* TimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineView.swift; sourceTree = "<group>"; };
 		FBD329512FC500000057B038 /* MetricKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKitManager.swift; sourceTree = "<group>"; };
 		FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparkleUpdater.swift; sourceTree = "<group>"; };
-		FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		G900000000000000000000A6 /* ExistingInstallationDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExistingInstallationDetector.swift; sourceTree = "<group>"; };
 		G900000000000000000000AC /* GuidanceStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidanceStateStoreTests.swift; sourceTree = "<group>"; };
 		G900000000000000000000AD /* GuidancePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidancePolicyTests.swift; sourceTree = "<group>"; };
@@ -428,10 +407,7 @@
 		MV0000000000000000000020 /* MACVendorDatabaseStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseStoreTests.swift; sourceTree = "<group>"; };
 		MV0000000000000000000023 /* MACVendorDatabaseDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseDownloaderTests.swift; sourceTree = "<group>"; };
 		MV0000000000000000000028 /* MACVendorDatabaseManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseManagerTests.swift; sourceTree = "<group>"; };
-		MV0000000000000000000039 /* MACVendorDatabaseSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseSettingsSection.swift; sourceTree = "<group>"; };
-		MV0000000000000000000040 /* MACVendorDatabaseUpdateSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseUpdateSheet.swift; sourceTree = "<group>"; };
 		MV0000000000000000000042 /* MACVendorDatabaseReminderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseReminderTests.swift; sourceTree = "<group>"; };
-		MV0000000000000000000045 /* MACVendorDatabaseReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseReminder.swift; sourceTree = "<group>"; };
 		MV0000000000000000000050 /* mac-vendor-database.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "mac-vendor-database.json"; sourceTree = "<group>"; };
 		ND0000000000000000000002 /* NetworkDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsTests.swift; sourceTree = "<group>"; };
 		ND0000000000000000000102 /* NetworkDiagnosticsConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsConfigurationTests.swift; sourceTree = "<group>"; };
@@ -450,11 +426,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		FB69774D30414A6F00F9B20E /* WhatsNew */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = WhatsNew;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -630,12 +601,8 @@
 				EC10000000000000000000006 /* OSSEditionComposition.swift */,
 				FB0573C12FBC47F1005F8214 /* CrashReporter.swift */,
 				FB0573BF2FBC47CC005F8214 /* Logging.swift */,
-				MV0000000000000000000045 /* MACVendorDatabaseReminder.swift */,
-				MV0000000000000000000039 /* MACVendorDatabaseSettingsSection.swift */,
-				MV0000000000000000000040 /* MACVendorDatabaseUpdateSheet.swift */,
 				FBD329512FC500000057B038 /* MetricKitManager.swift */,
 				FB0573C02FBBFC31005F8215 /* ProFeaturePlaceholderView.swift */,
-				FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */,
 				FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */,
 			);
 			path = App;
@@ -713,18 +680,8 @@
 				76E1D8231AF6132E0568C813 /* Spectrum */,
 				B1279BAD6D501300C4F2A85F /* Table */,
 				FB0573E82FBD0002005F9009 /* SnapshotExport */,
-				DD6657406F0FB50F2D9B7FB4 /* Utilities */,
-				FB69776530414AD400F9B20E /* WhatsNew */,
 			);
 			path = WiFiLens;
-			sourceTree = "<group>";
-		};
-		DD6657406F0FB50F2D9B7FB4 /* Utilities */ = {
-			isa = PBXGroup;
-			children = (
-				FB05A7A02FD1A0F100B5C801 /* WindowFramePolicy.swift */,
-			);
-			path = Utilities;
 			sourceTree = "<group>";
 		};
 		EB2000000000000000000005 /* Fixtures */ = {
@@ -767,16 +724,6 @@
 			path = SnapshotExport;
 			sourceTree = "<group>";
 		};
-		FB69776530414AD400F9B20E /* WhatsNew */ = {
-			isa = PBXGroup;
-			children = (
-				FB69776230414AD400F9B20E /* WhatsNewCoordinator.swift */,
-				FB69776330414AD400F9B20E /* WhatsNewSheetView.swift */,
-				FB69776430414AD400F9B20E /* WhatsNewStateStore.swift */,
-			);
-			path = WhatsNew;
-			sourceTree = "<group>";
-		};
 		FB6F41CB2FC4889B0009F29B /* Regulatory */ = {
 			isa = PBXGroup;
 			children = (
@@ -797,7 +744,6 @@
 		FB8BB5FE2FBB039A00FD072E /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				FB69774D30414A6F00F9B20E /* WhatsNew */,
 				FBBD169B2FD063630093F940 /* Assets.xcassets */,
 				FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */,
 				A1C0DE0000000000000000F1 /* WiFi Lens.icon */,
@@ -1235,7 +1181,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				FB69774D30414A6F00F9B20E /* WhatsNew */,
 			);
 			name = WiFiLens;
 			packageProductDependencies = (
@@ -1264,7 +1209,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				FB69774D30414A6F00F9B20E /* WhatsNew */,
 			);
 			name = WiFiLensPro;
 			packageProductDependencies = (
@@ -1460,9 +1404,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				MV0000000000000000000043 /* MACVendorDatabaseReminder.swift in Sources */,
-				MV0000000000000000000035 /* MACVendorDatabaseSettingsSection.swift in Sources */,
-				MV0000000000000000000037 /* MACVendorDatabaseUpdateSheet.swift in Sources */,
 				G900000000000000000000A7 /* ExistingInstallationDetector.swift in Sources */,
 				FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */,
 				FB0573C22FBC47F1005F8214 /* CrashReporter.swift in Sources */,
@@ -1474,14 +1415,9 @@
 				FB92F9282FBE208500BCEC67 /* DebugRoamingChartView.swift in Sources */,
 				EC10000000000000000000004 /* OSSEditionComposition.swift in Sources */,
 				9E2F89530D1114DBFAB705F3 /* WiFiLensApp.swift in Sources */,
-				FB05A7A12FD1A0F100B5C801 /* WindowFramePolicy.swift in Sources */,
 				FBB2CA8E2FC0E14000FC2D2C /* BuildConfig.swift in Sources */,
 				FB0573C12FBBFC31005F8215 /* ProFeaturePlaceholderView.swift in Sources */,
 				FB0573C02FBC47CC005F8214 /* Logging.swift in Sources */,
-				FBD7B34B2FBAED65002C8F5A /* SettingsView.swift in Sources */,
-				FB69776630414AD400F9B20E /* WhatsNewStateStore.swift in Sources */,
-				FB69776730414AD400F9B20E /* WhatsNewSheetView.swift in Sources */,
-				FB69776830414AD400F9B20E /* WhatsNewCoordinator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1548,9 +1484,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				MV0000000000000000000044 /* MACVendorDatabaseReminder.swift in Sources */,
-				MV0000000000000000000036 /* MACVendorDatabaseSettingsSection.swift in Sources */,
-				MV0000000000000000000038 /* MACVendorDatabaseUpdateSheet.swift in Sources */,
 				G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */,
 				EC20000000000000000000004 /* ProEditionComposition.swift in Sources */,
 				A55100000000000000000011 /* ProDemoLaunch.swift in Sources */,
@@ -1597,13 +1530,8 @@
 				E1B00000000000000000004 /* WiFiCallingDiscovery.swift in Sources */,
 				CC0000000000000000000011 /* TimelineFilterPanel.swift in Sources */,
 				FB1E32772FC7316C009D1BDC /* WiFiLensApp.swift in Sources */,
-				FB1E328A2FD1A11100B5C801 /* WindowFramePolicy.swift in Sources */,
 				FB1E327B2FC7316C009D1BDC /* BuildConfig.swift in Sources */,
-				FB69776930414AD400F9B20E /* WhatsNewStateStore.swift in Sources */,
-				FB69776A30414AD400F9B20E /* WhatsNewSheetView.swift in Sources */,
-				FB69776B30414AD400F9B20E /* WhatsNewCoordinator.swift in Sources */,
 				FB1E327E2FC7316C009D1BDC /* Logging.swift in Sources */,
-				FB1E328A2FC7316C009D1BDC /* SettingsView.swift in Sources */,
 				FBD0A45A2FE5C06000000007 /* MenuBarScene.swift in Sources */,
 				FBD0A45D2FE5C0600000000A /* MenuBarStatusViewModel.swift in Sources */,
 				FBD0A4602FE5C0600000000D /* MenuBarStatusView.swift in Sources */,

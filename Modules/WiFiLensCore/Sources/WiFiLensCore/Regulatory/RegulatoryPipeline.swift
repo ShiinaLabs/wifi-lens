@@ -5,15 +5,15 @@ import Observation
 /// recommendation computation, taking pressure off ScannerViewModel.
 @MainActor
 @Observable
-public final class RegulatoryPipeline {
-    public init() {}
-    public var inferredRegion: RegionInferenceResult?
-    public var userRegionOverride: RegulatoryDomain?
-    public var deviceSupportedChannels = Set<String>()
-    public var deviceCachedCapabilities: DevicePHYCapabilities = .default
-    public var cachedSupportedChannelsRaw: [(Int, Int)] = []
+final class RegulatoryPipeline {
+    init() {}
+    var inferredRegion: RegionInferenceResult?
+    var userRegionOverride: RegulatoryDomain?
+    var deviceSupportedChannels = Set<String>()
+    var deviceCachedCapabilities: DevicePHYCapabilities = .default
+    var cachedSupportedChannelsRaw: [(Int, Int)] = []
 
-    public func computeRecommendations(
+    func computeRecommendations(
         from channelQualities: [ChannelQuality],
         apCountryCodes: [String],
         userDefaultsOverride: RegulatoryDomain?

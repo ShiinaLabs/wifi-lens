@@ -71,7 +71,7 @@ public struct ChannelRecommendation: Identifiable, Sendable {
 
     // MARK: - Recommendation Reasons (user-facing)
 
-    public var recommendationReasons: [RecommendationReason] = []
+    var recommendationReasons: [RecommendationReason] = []
 
     // MARK: - Device Compatibility
 

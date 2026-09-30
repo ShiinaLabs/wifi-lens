@@ -5,28 +5,28 @@ import Foundation
 ///
 /// Deliberately free of UI, audio, and scanning concerns so it can be unit
 /// tested in isolation.
-public struct APRadarSignalProcessor {
+struct APRadarSignalProcessor {
     /// Smoothing factor for the exponential moving average.
-    public static let alpha: Double = 0.30
+    static let alpha: Double = 0.30
 
     /// Accepted raw RSSI range. Out-of-range samples are ignored.
-    public static let validRSSIRange: ClosedRange<Int> = -100...0
+    static let validRSSIRange: ClosedRange<Int> = -100...0
 
     /// Samples older than this are pruned from the trend cache.
-    public static let cacheWindow: TimeInterval = 10
+    static let cacheWindow: TimeInterval = 10
 
     /// Hard cap on cached samples.
-    public static let maxCachedSamples = 20
+    static let maxCachedSamples = 20
 
     /// Trend compares the current sample against the sample closest to this
     /// age in the past.
-    public static let trendLookback: TimeInterval = 3
+    static let trendLookback: TimeInterval = 3
 
     /// History younger than this cannot produce a trend yet.
-    public static let minimumTrendHistory: TimeInterval = 2
+    static let minimumTrendHistory: TimeInterval = 2
 
     /// Delta (in dB) at or above which the trend is "getting closer".
-    public static let trendThreshold: Double = 3
+    static let trendThreshold: Double = 3
 
     private struct Sample: Equatable {
         let date: Date
@@ -35,20 +35,20 @@ public struct APRadarSignalProcessor {
 
     private var samples: [Sample] = []
 
-    public init() {}
+    init() {}
 
     /// Latest accepted raw RSSI.
-    public private(set) var rawRSSI: Int?
+    private(set) var rawRSSI: Int?
 
     /// Current exponential moving average of RSSI.
-    public private(set) var smoothedRSSI: Double?
+    private(set) var smoothedRSSI: Double?
 
     /// Number of valid samples ingested since the last reset.
-    public private(set) var sampleCount: Int = 0
+    private(set) var sampleCount: Int = 0
 
     /// Clears every sample and the current estimate. The next accepted sample
     /// becomes the new baseline (no inheritance from previous state).
-    public mutating func reset() {
+    mutating func reset() {
         samples.removeAll()
         rawRSSI = nil
         smoothedRSSI = nil
@@ -59,7 +59,7 @@ public struct APRadarSignalProcessor {
     /// untouched. Returns the new smoothed value, or nil when the sample was
     /// rejected.
     @discardableResult
-    public mutating func ingest(rawRSSI raw: Int, at date: Date) -> Double? {
+    mutating func ingest(rawRSSI raw: Int, at date: Date) -> Double? {
         guard Self.validRSSIRange.contains(raw) else { return nil }
 
         let nextSmoothed: Double
@@ -78,7 +78,7 @@ public struct APRadarSignalProcessor {
     }
 
     /// Current signal trend based on smoothed samples only.
-    public func trend(at date: Date) -> SignalTrend {
+    func trend(at date: Date) -> SignalTrend {
         guard let current = smoothedRSSI else { return .measuring }
         guard let reference = closestSample(toAge: Self.trendLookback, at: date) else {
             return .measuring
@@ -98,7 +98,7 @@ public struct APRadarSignalProcessor {
 
     /// Oldest cached sample date, used to decide whether a lost target should
     /// reset the smoother after a long absence.
-    public func oldestSampleDate() -> Date? {
+    func oldestSampleDate() -> Date? {
         samples.first?.date
     }
 
@@ -119,7 +119,7 @@ public struct APRadarSignalProcessor {
     }
 }
 
-public enum SignalTrend: Equatable, Sendable {
+enum SignalTrend: Equatable, Sendable {
     case measuring
     case gettingCloser
     case stable
@@ -131,18 +131,18 @@ public enum SignalTrend: Equatable, Sendable {
 /// Piecewise-linear interpolation across the anchors below, clamped to
 /// 0.35...2.60 seconds. Anchors are deliberately calmer than the original
 /// design so pulses never feel frantic at typical indoor signal levels.
-public enum APRadarPulseInterval {
-    public struct Anchor: Equatable, Sendable {
-        public let rssi: Double
-        public let interval: Double
+enum APRadarPulseInterval {
+    struct Anchor: Equatable, Sendable {
+        let rssi: Double
+        let interval: Double
 
-        public init(rssi: Double, interval: Double) {
+        init(rssi: Double, interval: Double) {
             self.rssi = rssi
             self.interval = interval
         }
     }
 
-    public static let anchors: [Anchor] = [
+    static let anchors: [Anchor] = [
         Anchor(rssi: -42, interval: 0.35),
         Anchor(rssi: -50, interval: 0.55),
         Anchor(rssi: -60, interval: 0.90),
@@ -151,11 +151,11 @@ public enum APRadarPulseInterval {
         Anchor(rssi: -90, interval: 2.60),
     ]
 
-    public static let minimumInterval: Double = 0.35
-    public static let maximumInterval: Double = 2.60
+    static let minimumInterval: Double = 0.35
+    static let maximumInterval: Double = 2.60
 
     /// Pure mapping used by the pulse scheduler and by unit tests.
-    public static func intervalSeconds(forRSSI rssi: Double) -> Double {
+    static func intervalSeconds(forRSSI rssi: Double) -> Double {
         guard !rssi.isNaN else { return maximumInterval }
         if rssi >= anchors[0].rssi { return anchors[0].interval }
         if rssi <= anchors[anchors.count - 1].rssi { return anchors[anchors.count - 1].interval }
@@ -173,12 +173,12 @@ public enum APRadarPulseInterval {
     }
 
     /// Duration form of `intervalSeconds(forRSSI:)`.
-    public static func pulseInterval(forRSSI rssi: Double) -> Duration {
+    static func pulseInterval(forRSSI rssi: Double) -> Duration {
         .seconds(intervalSeconds(forRSSI: rssi))
     }
 
     /// Converts a `Duration` to seconds as a `Double`.
-    public static func seconds(from duration: Duration) -> Double {
+    static func seconds(from duration: Duration) -> Double {
         Double(duration.components.seconds)
             + Double(duration.components.attoseconds) / 1_000_000_000_000_000_000
     }
@@ -193,13 +193,13 @@ public enum APRadarPulseInterval {
     /// zero (unbounded click burst) or an infinite (dead) pause: minimum
     /// 50 ms, maximum 4x the mean (keeps the observed average close to the
     /// requested mean for every signal level).
-    public static func nextExponentialInterval(mean: Double) -> Double {
+    static func nextExponentialInterval(mean: Double) -> Double {
         var generator = SystemRandomNumberGenerator()
         return nextExponentialInterval(mean: mean, using: &generator)
     }
 
     /// `nextExponentialInterval(mean:)` with an injectable RNG for tests.
-    public static func nextExponentialInterval(
+    static func nextExponentialInterval(
         mean: Double,
         using rng: inout some RandomNumberGenerator
     ) -> Double {
@@ -215,5 +215,5 @@ public enum APRadarPulseInterval {
 
     /// Lower bound for a stochastic Geiger interval (50 ms). Keeps clicks from
     /// stacking into an uncontrolled burst even when the RNG draws ~0.
-    public static let minimumStochasticInterval: Double = 0.05
+    static let minimumStochasticInterval: Double = 0.05
 }

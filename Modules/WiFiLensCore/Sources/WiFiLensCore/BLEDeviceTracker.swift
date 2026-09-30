@@ -3,7 +3,7 @@ import Foundation
 /// Per-device ring buffers and EMA smoothing for BLE RSSI tracking.
 /// Analogous to SignalHistoryStore but tuned for BLE advertisement patterns.
 @MainActor
-public final class BLEDeviceTracker {
+final class BLEDeviceTracker {
     private var deviceHistories: [UUID: [BLERSSISample]] = [:]
     private var emaFilters: [UUID: ExponentialMovingAverage] = [:]
     private var firstSeenTimestamps: [UUID: Date] = [:]
@@ -16,12 +16,12 @@ public final class BLEDeviceTracker {
         var manufacturerData: Data?
     }
 
-    public let maxHistoryCount: Int
-    public let emaAlpha: Double
-    public let staleTimeout: TimeInterval
-    public let maxTrackedDevices: Int
+    let maxHistoryCount: Int
+    let emaAlpha: Double
+    let staleTimeout: TimeInterval
+    let maxTrackedDevices: Int
 
-    public init(maxHistoryCount: Int = 30, emaAlpha: Double = 0.25, staleTimeout: TimeInterval = 30, maxTrackedDevices: Int = 100) {
+    init(maxHistoryCount: Int = 30, emaAlpha: Double = 0.25, staleTimeout: TimeInterval = 30, maxTrackedDevices: Int = 100) {
         self.maxHistoryCount = maxHistoryCount
         self.emaAlpha = emaAlpha
         self.staleTimeout = staleTimeout
@@ -30,7 +30,7 @@ public final class BLEDeviceTracker {
 
     /// Process a batch of raw advertisement events, returning updated snapshots
     /// for ALL known devices (including those not in the current batch).
-    public func processBatch(
+    func processBatch(
         _ eventsByDevice: [UUID: [BLEAdvertisementEvent]]
     ) -> [BLEDeviceSnapshot] {
         // Update history and metadata for devices in the current batch
@@ -104,7 +104,7 @@ public final class BLEDeviceTracker {
     }
 
     /// RSSI history for a specific device (for chart rendering).
-    public func rssiHistory(for identifier: UUID) -> [BLERSSISample]? {
+    func rssiHistory(for identifier: UUID) -> [BLERSSISample]? {
         guard let history = deviceHistories[identifier], history.count >= 2 else {
             return nil
         }
@@ -112,7 +112,7 @@ public final class BLEDeviceTracker {
     }
 
     /// Remove devices not seen within the stale timeout.
-    public func purgeStale() {
+    func purgeStale() {
         let cutoff = Date().addingTimeInterval(-staleTimeout)
         let stale = deviceHistories.filter { _, samples in
             guard let last = samples.last else { return true }

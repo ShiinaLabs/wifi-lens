@@ -6,17 +6,17 @@ import Logging
 /// version has been shown, and coordinates with Onboarding to avoid double-presentation
 /// on first install.
 @MainActor @Observable
-final class WhatsNewCoordinator {
-    static let shared = WhatsNewCoordinator(
+public final class WhatsNewCoordinator {
+    public static let shared = WhatsNewCoordinator(
         store: UserDefaultsWhatsNewStateStore(),
         bundle: .main
     )
 
     /// Whether the What's New sheet should be presented on launch.
-    private(set) var shouldShowSheet = false
+    public private(set) var shouldShowSheet = false
 
     /// Manual re-view trigger from the Overview badge.
-    var showSheetFromBadge = false
+    public var showSheetFromBadge = false
 
     private let store: any WhatsNewStateStoring
     private let currentVersion: String
@@ -37,7 +37,7 @@ final class WhatsNewCoordinator {
 
     /// Call on app launch, after Onboarding has had a chance to run.
     /// If the version differs from what was last seen, sets `shouldShowSheet`.
-    func checkForUpdate() {
+    public func checkForUpdate() {
         let stored = store.load().lastSeenVersion
         if stored != currentVersion {
             shouldShowSheet = true
@@ -46,7 +46,7 @@ final class WhatsNewCoordinator {
 
     /// Called when the Onboarding Welcome flow completes on first install.
     /// Marks the current version as seen so What's New does not also appear.
-    func markVersionSeenForOnboarding() {
+    public func markVersionSeenForOnboarding() {
         var state = store.load()
         state.lastSeenVersion = currentVersion
         store.save(state)
@@ -54,7 +54,7 @@ final class WhatsNewCoordinator {
     }
 
     /// Called when the user dismisses the What's New sheet (either auto or manual).
-    func markSeen() {
+    public func markSeen() {
         var state = store.load()
         state.lastSeenVersion = currentVersion
         store.save(state)
@@ -63,24 +63,24 @@ final class WhatsNewCoordinator {
     }
 
     /// Dismiss without marking seen (e.g., sheet dismissed by system).
-    func dismiss() {
+    public func dismiss() {
         shouldShowSheet = false
         showSheetFromBadge = false
     }
 
     /// The app version string displayed in the sheet.
-    var versionString: String {
+    public var versionString: String {
         "WiFi Lens \(currentVersion)"
     }
 
     #if DEBUG
     private var debugForceShow = false
 
-    func debugRequestShow() {
+    public func debugRequestShow() {
         shouldShowSheet = true
     }
 
-    func debugReset() {
+    public func debugReset() {
         store.save(WhatsNewState())
         shouldShowSheet = false
         showSheetFromBadge = false

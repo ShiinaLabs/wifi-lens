@@ -81,9 +81,9 @@ public struct NetworkTableRow: Identifiable, Hashable {
 public final class ScannerViewModel {
     private static let logger = Logger(label: "scanner")
     public var locationManager: LocationPermissionManager
-    public let colorHasher = SSIDColorHasher()
+    let colorHasher = SSIDColorHasher()
     public let signalHistory = SignalHistoryStore()
-    public let mcpServer = MCPServer()
+    let mcpServer = MCPServer()
     public let throughputMonitor = ThroughputMonitor()
     public var hiddenBSSIDs: Set<String> = []
     public var hiddenBands: Set<String> = []       // band IDs ("24"/"5"/"6") to hide
@@ -92,7 +92,7 @@ public final class ScannerViewModel {
     public private(set) var lastObservationTimestamp = Date.distantPast
     public private(set) var vendorDatabaseRevision = 0
     public private(set) var deduplicatedNetworks: [WiFiNetwork] = []
-    public private(set) var displayStatesByID: [String: APDisplayState] = [:]
+    private(set) var displayStatesByID: [String: APDisplayState] = [:]
     public private(set) var panelFilterQueries: [SpectrumPanelID: String] = [:]
     // Cached derived values for stable reads (Overview hero + network table).
     // Rebuilt only at stable-change boundaries — scan arrival, vendor database
@@ -101,7 +101,7 @@ public final class ScannerViewModel {
     public private(set) var cachedTotalNetworks: Int = 0
     public private(set) var cachedBandSummary: String = ""
     public private(set) var cachedCombinedTableRows: [NetworkTableRow] = []
-    public let wifiPowerMonitor = WiFiPowerMonitor()
+    let wifiPowerMonitor = WiFiPowerMonitor()
     public internal(set) var wifiPowerState: WiFiPowerState = .poweredOn
 
     public var band24 = BandChartViewModel(band: .band24GHz)
@@ -201,7 +201,7 @@ public final class ScannerViewModel {
     public private(set) var channelQualities: [ChannelQuality] = []
 
     // Regulatory-aware recommendations (Phase 2: computed alongside channelQualities)
-    public let regulatoryPipeline = RegulatoryPipeline()
+    let regulatoryPipeline = RegulatoryPipeline()
     public internal(set) var channelRecommendations: [ChannelRecommendation] = []
     public var inferredRegion: RegionInferenceResult? { regulatoryPipeline.inferredRegion }
     public var userRegionOverride: RegulatoryDomain? {
@@ -527,6 +527,15 @@ public final class ScannerViewModel {
         mcpServer.snapshotProvider = { [weak self] in
             self?.makeMCPSnapshot() ?? .empty
         }
+    }
+
+    public func stopMCPServer() {
+        mcpServer.stop()
+    }
+
+    public func startMCPServer(port: UInt16) async throws {
+        mcpServer.port = port
+        try await mcpServer.start()
     }
 
     func makeMCPSnapshot() -> MCPSnapshot {

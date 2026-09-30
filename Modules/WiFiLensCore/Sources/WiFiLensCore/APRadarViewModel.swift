@@ -22,21 +22,21 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     // MARK: - Public state
 
-    public var state: APRadarState = .idle
-    public var soundEnabled: Bool
+    var state: APRadarState = .idle
+    var soundEnabled: Bool
     /// Selected pulse tone preset, persisted in UserDefaults.
-    public var soundPreset: APRadarSoundPreset
+    var soundPreset: APRadarSoundPreset
     /// Whether the hidden Geiger-counter preset has been unlocked.
-    public var geigerUnlocked: Bool
-    public var latestNetworks: [WiFiNetworkObservation] = []
-    public var scanFailed = false
+    var geigerUnlocked: Bool
+    var latestNetworks: [WiFiNetworkObservation] = []
+    var scanFailed = false
     /// Incremented on every audible pulse; the view uses it to drive the
     /// synchronized radar ring visual.
-    public var pulseTick = 0
+    var pulseTick = 0
     /// One-shot, non-blocking message when audio initialization fails.
-    public var audioErrorMessage: String?
+    var audioErrorMessage: String?
 
-    public private(set) var audioAvailable = false
+    private(set) var audioAvailable = false
 
     // MARK: - Dependencies
 
@@ -50,7 +50,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     private var isActive = false
     /// True while the app is backgrounded/asleep or Wi-Fi is off; the view's
     /// visual loop idles on this flag so it stops waking at full cadence.
-    public private(set) var isSuspended = false
+    private(set) var isSuspended = false
     private var hasRegisteredConsumer = false
     private var target: TrackedAccessPoint?
     private var lastSeenAt: Date?
@@ -91,7 +91,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     // MARK: - Lifecycle (called by the view)
 
     /// Called when the AP Radar page becomes active or inactive.
-    public func setActive(_ active: Bool) {
+    func setActive(_ active: Bool) {
         guard active != isActive else { return }
         isActive = active
         if active {
@@ -103,7 +103,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     /// App lost focus / entered sleep / Wi-Fi turned off: stop sound and
     /// scheduling, keep the optional target, wait for a fresh sample.
-    public func suspend() {
+    func suspend() {
         guard isActive else { return }
         isSuspended = true
         scheduler.cancel()
@@ -174,7 +174,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     // MARK: - Target selection
 
-    public func selectTarget(_ option: APRadarAPOption) {
+    func selectTarget(_ option: APRadarAPOption) {
         guard isActive else { return }
         stopPulseAndAudio()
         signalProcessor.reset()
@@ -198,7 +198,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         // Pulse sound starts after the first valid RSSI sample arrives.
     }
 
-    public func stopTracking() {
+    func stopTracking() {
         guard target != nil || state.isTracking || state.isSignalLost else { return }
         stopTrackingInternal()
         apRadarLogger.info("AP Radar tracking stopped")
@@ -216,7 +216,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     // MARK: - Sound
 
-    public func setSoundEnabled(_ enabled: Bool) {
+    func setSoundEnabled(_ enabled: Bool) {
         soundEnabled = enabled
         userDefaults.set(enabled, forKey: Self.soundEnabledKey)
         if enabled {
@@ -228,7 +228,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     /// Changes the pulse tone and persists the choice. If audio is already
     /// loaded, the next pulse uses the new tone immediately.
-    public func setSoundPreset(_ preset: APRadarSoundPreset) {
+    func setSoundPreset(_ preset: APRadarSoundPreset) {
         guard preset != soundPreset else { return }
         soundPreset = preset
         userDefaults.set(preset.rawValue, forKey: Self.soundPresetKey)
@@ -248,7 +248,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     /// Unlocks the hidden Geiger-counter preset. Returns true when this is the
     /// first unlock (used by the view to show the reveal toast once).
     @discardableResult
-    public func unlockGeigerPreset() -> Bool {
+    func unlockGeigerPreset() -> Bool {
         let firstTime = !geigerUnlocked
         geigerUnlocked = true
         userDefaults.set(true, forKey: Self.geigerUnlockedKey)
@@ -464,7 +464,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     /// AP options for the selection sheet, sorted by RSSI (strongest first),
     /// then SSID, then BSSID.
-    public var selectionOptions: [APRadarAPOption] {
+    var selectionOptions: [APRadarAPOption] {
         latestNetworks
             .map(APRadarAPOption.init)
             .sorted { lhs, rhs in
