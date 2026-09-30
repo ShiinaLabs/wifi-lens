@@ -1,118 +1,13 @@
 import SwiftUI
 import WiFiLensCore
 
-enum SidebarPage: String, CaseIterable {
-    case overview
-    case spectrum
-    case channels
-    case interfaces
-    case networkDiagnostics
-    case wifiCallingTest
-    case roaming
-    case bleScanner
-    case apRadar
-    case timeline
-    case statistics
-    case insights
-    case settings
-#if DEBUG
-    case spectrumDebugChart
-    case debugChart
-#endif
-#if DEBUG && PRO
-    case debugTimeline
-#endif
-
-    var requiresLocationAuthorization: Bool {
-        switch self {
-        case .overview, .settings, .bleScanner, .timeline, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
-            false
-        case .spectrum, .channels, .interfaces, .roaming, .apRadar:
-            true
-#if DEBUG
-        case .spectrumDebugChart, .debugChart:
-            true
-#endif
-#if DEBUG && PRO
-        case .debugTimeline:
-            true
-#endif
-        }
-    }
-
-    var requiresWiFi: Bool {
-        switch self {
-        case .overview, .settings, .bleScanner, .timeline, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
-            false
-        case .spectrum, .channels, .interfaces, .roaming, .apRadar:
-            true
-#if DEBUG
-        case .spectrumDebugChart, .debugChart:
-            true
-#endif
-#if DEBUG && PRO
-        case .debugTimeline:
-            false
-#endif
-        }
-    }
-
-    var label: String {
-        switch self {
-        case .overview:   String(localized: "nav.overview", comment: "Overview sidebar navigation item")
-        case .spectrum:   String(localized: "nav.spectrum", comment: "Spectrum sidebar navigation item")
-        case .channels:   String(localized: "nav.channels", comment: "Channels sidebar navigation item")
-        case .interfaces: String(localized: "nav.interfaces", comment: "Interfaces sidebar navigation item")
-        case .networkDiagnostics: String(localized: "nav.network_diagnostics", comment: "Network Self-Check sidebar navigation item")
-        case .wifiCallingTest: String(localized: "nav.wifi_calling_test", comment: "Wi-Fi Calling Test sidebar navigation item")
-        case .roaming:   String(localized: "nav.roaming_test", comment: "Roaming Test sidebar navigation item")
-        case .bleScanner: String(localized: "nav.ble_scanner", comment: "BLE Scanner sidebar navigation item")
-        case .apRadar: String(localized: "nav.apRadar", comment: "AP Radar sidebar navigation item")
-        case .timeline: String(localized: "nav.timeline", comment: "Timeline sidebar navigation item")
-        case .statistics: String(localized: "nav.statistics", comment: "Statistics sidebar navigation item")
-        case .insights: String(localized: "nav.insights", comment: "Insights sidebar navigation item")
-        case .settings:   String(localized: "common.action.settings", comment: "Settings button or menu item")
-#if DEBUG
-        case .spectrumDebugChart: String(localized: "nav.spectrum_debug_chart", comment: "Spectrum Debug Chart sidebar navigation item (dev only)")
-        case .debugChart: String(localized: "nav.debug_chart", comment: "Debug Chart sidebar navigation item (dev only)")
-#endif
-#if DEBUG && PRO
-        case .debugTimeline: "Debug Timeline"
-#endif
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .overview:   "house"
-        case .spectrum:   "antenna.radiowaves.left.and.right"
-        case .channels:   "chart.bar.fill"
-        case .interfaces: "cable.connector"
-        case .networkDiagnostics: "stethoscope"
-        case .wifiCallingTest: "wifi"
-        case .roaming:   "arrow.triangle.swap"
-        case .bleScanner: "personalhotspot"
-        case .apRadar: "dot.radiowaves.left.and.right"
-        case .timeline: "clock.arrow.circlepath"
-        case .statistics: "chart.bar.xaxis"
-        case .insights: "lightbulb"
-        case .settings:   "gearshape"
-#if DEBUG
-        case .spectrumDebugChart: "antenna.radiowaves.left.and.right"
-        case .debugChart: "ladybug"
-#endif
-#if DEBUG && PRO
-        case .debugTimeline: "clock.arrow.circlepath"
-#endif
-        }
-    }
-
+extension SidebarPage {
     var badgeStyle: SidebarBadge.Style? {
         switch self {
         case .apRadar:
             .preview
         case .wifiCallingTest:
-            SidebarPage.wifiCallingBadgeStyle(for: .current)
+            Self.wifiCallingBadgeStyle(for: .current)
         default:
             nil
         }
@@ -120,8 +15,8 @@ enum SidebarPage: String, CaseIterable {
 
     static func wifiCallingBadgeStyle(for config: BuildConfig) -> SidebarBadge.Style? {
         switch config {
-        case .oss: return .pro
-        case .pro: return .preview
+        case .oss: .pro
+        case .pro: .preview
         }
     }
 
@@ -131,14 +26,10 @@ enum SidebarPage: String, CaseIterable {
 
     static func analysisBadgeStyle(for config: BuildConfig) -> SidebarBadge.Style {
         switch config {
-        case .oss:
-            .pro
-        case .pro:
-            .preview
+        case .oss: .pro
+        case .pro: .preview
         }
     }
-
-    static let analysisPages: [SidebarPage] = [.timeline, .statistics, .insights]
 }
 
 enum SidebarSection {

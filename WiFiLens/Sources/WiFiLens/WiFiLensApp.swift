@@ -64,7 +64,7 @@ private struct AppRootView: View {
     @State private var sidebarVisibility = NavigationSplitViewVisibility.automatic
     @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
     @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel {
-        EditionComposition.guidanceCoordinator.record(.diagnosticsCompleted)
+        EditionAssemblyProvider.configuration.guidanceCoordinator.record(.diagnosticsCompleted)
     }
 
     private var selectedPage: SidebarPage { sceneState.selectedPage }
@@ -74,12 +74,20 @@ private struct AppRootView: View {
     }
 
     private var showsLocationPermissionRequiredView: Bool {
-        !UITestMode.isActive && !EditionComposition.isControlledDemoSession
+        !UITestMode.isActive && !EditionAppShell.isControlledDemoSession
             && selectedPage.requiresLocationAuthorization && !hasLocationAuthorization
     }
 
     private var activeSecondaryToolbarDescriptor: SecondaryToolbarDescriptor? {
-        SecondaryToolbarDescriptor.forPage(selectedPage)
+        secondaryToolbarDescriptor(for: selectedPage)
+    }
+
+    private func secondaryToolbarDescriptor(for page: SidebarPage) -> SecondaryToolbarDescriptor? {
+        SecondaryToolbarDescriptor.forPage(
+            page,
+            spectrum: EditionAssemblyProvider.configuration.spectrumToolbarDescriptor,
+            timeline: EditionAssemblyProvider.configuration.timelineToolbarDescriptor
+        )
     }
 
     private var activeSecondaryToolbarSelection: Binding<SecondaryToolbarItemID>? {
@@ -132,21 +140,21 @@ private struct AppRootView: View {
             switch selectedPage {
             case .channels:
                 SecondaryToolbarCapsule(
-                    descriptor: SecondaryToolbarDescriptor.forPage(.channels)!,
+                    descriptor: secondaryToolbarDescriptor(for: .channels)!,
                     selection: $secondaryToolbarSelections.channels
                 )
             case .interfaces:
                 SecondaryToolbarCapsule(
-                    descriptor: SecondaryToolbarDescriptor.forPage(.interfaces)!,
+                    descriptor: secondaryToolbarDescriptor(for: .interfaces)!,
                     selection: $secondaryToolbarSelections.interfaces
                 )
             case .spectrum:
                 SecondaryToolbarCapsule(
-                    descriptor: SecondaryToolbarDescriptor.forPage(.spectrum)!,
+                    descriptor: secondaryToolbarDescriptor(for: .spectrum)!,
                     selection: $secondaryToolbarSelections.spectrum
                 )
             case .timeline:
-                if let descriptor = SecondaryToolbarDescriptor.forPage(.timeline) {
+                if let descriptor = secondaryToolbarDescriptor(for: .timeline) {
                     SecondaryToolbarCapsule(
                         descriptor: descriptor,
                         selection: $secondaryToolbarSelections.timeline
@@ -165,7 +173,7 @@ private struct AppRootView: View {
                 accessState: viewModel.accessState,
                 openLocationPreferences: viewModel.locationManager.openLocationPreferences
             )
-        } else if !UITestMode.isActive && !EditionComposition.isControlledDemoSession
+        } else if !UITestMode.isActive && !EditionAppShell.isControlledDemoSession
                     && selectedPage.requiresWiFi && !viewModel.isWiFiAvailable {
             WiFiOffView()
         } else {
@@ -179,7 +187,7 @@ private struct AppRootView: View {
                         .allowsHitTesting(selectedPage == .overview)
                         .accessibilityIdentifier("page-overview")
 
-                    EditionComposition.detailContribution(context: EditionCompositionContext(
+                    EditionAssemblyProvider.configuration.detailContribution(EditionCompositionContext(
                         mainWindowID: sceneState.id,
                         mainWindowState: sceneState.editionWindowState,
                         scannerViewModel: viewModel,
@@ -194,7 +202,7 @@ private struct AppRootView: View {
                         openMainWindow: { _ in }
                     ))
 
-                    EditionComposition.channelsPageContent {
+                    EditionAppShell.channelsPageContent {
                         ChannelQualityView(
                             channels: viewModel.channelRecommendations,
                             mode: channelViewMode
@@ -216,13 +224,13 @@ private struct AppRootView: View {
 
                     NetworkDiagnosticsView(
                         viewModel: networkDiagnosticsViewModel,
-                        guidance: EditionComposition.guidanceCoordinator
+                        guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
                     )
                         .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
                         .allowsHitTesting(selectedPage == .networkDiagnostics)
                         .accessibilityIdentifier("page-networkDiagnostics")
 
-                    EditionComposition.roamingPageContent {
+                    EditionAppShell.roamingPageContent {
                         RoamingTestView(viewModel: roamingViewModel)
                     }
                         .accessibilityElement(children: .contain)
@@ -230,7 +238,7 @@ private struct AppRootView: View {
                         .opacity(selectedPage == .roaming ? 1 : 0)
                         .allowsHitTesting(selectedPage == .roaming)
 
-                    EditionComposition.apRadarPageContent {
+                    EditionAppShell.apRadarPageContent {
                         APRadarView(
                             viewModel: apRadarViewModel,
                             isActive: selectedPage == .apRadar,
@@ -286,8 +294,8 @@ private struct AppRootView: View {
                     // OSS `.banner` export strategy only: renders while the
                     // coordinator publishes export feedback; no-op in Pro
                     // (`.preserveExisting` never publishes feedback).
-                    if EditionComposition.shouldStartObservationRuntime {
-                        ExportSuccessBanner(guidance: EditionComposition.guidanceCoordinator)
+                    if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
+                        ExportSuccessBanner(guidance: EditionAssemblyProvider.configuration.guidanceCoordinator)
                     }
                 }
             }
@@ -322,7 +330,7 @@ private struct AppRootView: View {
             }
             .onChange(of: viewModel.wifiPowerState) { _, newState in
                 roamingViewModel.handleWiFiPowerStateChange(newState)
-                if !EditionComposition.isControlledDemoSession {
+                if !EditionAppShell.isControlledDemoSession {
                     apRadarViewModel.handleWiFiPowerStateChange(newState)
                 }
             }
@@ -364,31 +372,31 @@ private struct AppRootView: View {
             // NetworkInfoService are synchronous XPC calls that can stall the
             // test process. Unit tests inject their own stores and fakes.
             if !ProcessInfo.processInfo.isRunningUnderTestHost {
-                if EditionComposition.shouldStartObservationRuntime {
+                if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
                     var welcomedOnThisLaunch = false
                     if !UITestMode.isActive,
-                       EditionComposition.onboardingConfiguration.welcomeEnabled {
+                       EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled {
                         welcomedOnThisLaunch = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
                     }
-                    if !welcomedOnThisLaunch && !EditionComposition.isControlledDemoSession {
+                    if !welcomedOnThisLaunch && !EditionAppShell.isControlledDemoSession {
                         whatsNewCoordinator.checkForUpdate()
                     }
-                    EditionComposition.startLifecycle(observationRuntime: viewModel.observationRuntime)
-                    if !EditionComposition.isControlledDemoSession {
-                        EditionComposition.guidanceCoordinator.recordAppActive()
+                    EditionAssemblyProvider.configuration.shellHooks.startLifecycle(viewModel.observationRuntime)
+                    if !EditionAppShell.isControlledDemoSession {
+                        EditionAssemblyProvider.configuration.guidanceCoordinator.recordAppActive()
                     }
                     await viewModel.start()
                     roamingViewModel.handleWiFiPowerStateChange(viewModel.wifiPowerState)
                 }
-                EditionComposition.mainWindowDidFinishStartup(sceneState.id)
+                EditionAssemblyProvider.configuration.shellHooks.mainWindowDidFinishStartup(sceneState.id)
             }
-            if EditionComposition.shouldStartObservationRuntime {
+            if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
                 updateMCPServer()
             }
         }
         .sheet(isPresented: Binding(
             get: {
-                EditionComposition.shouldStartObservationRuntime
+                EditionAssemblyProvider.configuration.shouldStartObservationRuntime
                     && onboardingCoordinator.welcomeHostID == sceneState.id
             },
             set: { isPresented in
@@ -398,7 +406,7 @@ private struct AppRootView: View {
             }
         )) {
             WelcomeView(
-                configuration: EditionComposition.onboardingConfiguration,
+                configuration: EditionAssemblyProvider.configuration.onboardingConfiguration,
                 coordinator: onboardingCoordinator,
                 hostID: sceneState.id,
                 onStart: { route, selection in
@@ -413,7 +421,7 @@ private struct AppRootView: View {
         .onChange(of: onboardingCoordinator.debugShowRequested) { _, requested in
             guard requested,
                   onboardingCoordinator.consumeDebugShowRequest(),
-                  EditionComposition.onboardingConfiguration.welcomeEnabled,
+                  EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled,
                   !UITestMode.isActive,
                   !ProcessInfo.processInfo.isRunningUnderTestHost else {
                 return
@@ -426,7 +434,7 @@ private struct AppRootView: View {
         }
         .sheet(isPresented: Binding(
             get: {
-                EditionComposition.shouldStartObservationRuntime
+                EditionAssemblyProvider.configuration.shouldStartObservationRuntime
                     && (whatsNewCoordinator.shouldShowSheet || whatsNewCoordinator.showSheetFromBadge)
             },
             set: { if !$0 { whatsNewCoordinator.dismiss() } }
@@ -438,10 +446,10 @@ private struct AppRootView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active, !ProcessInfo.processInfo.isRunningUnderTestHost {
-                if !EditionComposition.isControlledDemoSession {
-                    EditionComposition.guidanceCoordinator.recordAppActive()
+                if !EditionAppShell.isControlledDemoSession {
+                    EditionAssemblyProvider.configuration.guidanceCoordinator.recordAppActive()
                 }
-                if EditionComposition.shouldStartObservationRuntime {
+                if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
                     apRadarViewModel.handleAppActive()
                     Task { await viewModel.handleSceneDidBecomeActive() }
                 }
@@ -492,7 +500,7 @@ private struct WindowAccessor: NSViewRepresentable {
         window.titleVisibility = .visible
         MainWindowSizing.applyMinimumSize(to: window)
 
-        EditionComposition.configureMainWindow(window)
+        EditionAssemblyProvider.configuration.shellHooks.configureMainWindow(window)
 
         guard let visibleFrame = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame else {
             return
@@ -536,8 +544,8 @@ final class MainWindowSceneState {
         selectedPage: SidebarPage? = nil
     ) {
         self.id = id
-        self.editionWindowState = editionWindowState ?? EditionComposition.makeMainWindowState()
-        self.selectedPage = selectedPage ?? EditionComposition.initialMainWindowRoute
+        self.editionWindowState = editionWindowState ?? EditionAssemblyProvider.configuration.shellHooks.makeMainWindowState()
+        self.selectedPage = selectedPage ?? EditionAssemblyProvider.configuration.initialMainWindowRoute
     }
 
     func route(to page: SidebarPage) {
@@ -1061,7 +1069,7 @@ struct WiFiLensApp: App {
     private let onboardingCoordinator: OnboardingCoordinator = {
         let coordinator = OnboardingCoordinator.shared
         if !UITestMode.isActive,
-           !EditionComposition.isControlledDemoSession,
+           !EditionAppShell.isControlledDemoSession,
            ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
             coordinator.migrateExistingInstallationIfNeeded()
         }
@@ -1087,14 +1095,14 @@ struct WiFiLensApp: App {
         let vendorResolver = MACVendorResolver(database: database)
         let databaseSummary = database?.summary
         macVendorDatabaseSummary = databaseSummary
-        let observationRuntime = EditionComposition.makeObservationRuntime(store: WiFiObservationStore.shared)
+        let observationRuntime = EditionAssemblyProvider.configuration.shellHooks.makeObservationRuntime(WiFiObservationStore.shared)
         let scannerViewModel = ScannerViewModel(
             observationRuntime: observationRuntime,
             vendorResolver: vendorResolver,
-            requiresLiveWiFiAuthorization: EditionComposition.requiresLiveWiFiAuthorization
+            requiresLiveWiFiAuthorization: EditionAssemblyProvider.configuration.requiresLiveWiFiAuthorization
         )
         _viewModel = State(initialValue: scannerViewModel)
-        _roamingViewModel = State(initialValue: EditionComposition.makeRoamingViewModel(scannerViewModel: scannerViewModel))
+        _roamingViewModel = State(initialValue: EditionAssemblyProvider.configuration.shellHooks.makeRoamingViewModel(scannerViewModel))
         _apRadarViewModel = State(initialValue: APRadarViewModel(
             observationRuntime: observationRuntime
         ))
@@ -1116,8 +1124,8 @@ struct WiFiLensApp: App {
             _showCrashLog = State(initialValue: true)
         }
         let bleOn = UserDefaults.standard.bool(forKey: "bleEnabled")
-            && EditionComposition.shouldStartObservationRuntime
-            && !EditionComposition.isControlledDemoSession
+            && EditionAssemblyProvider.configuration.shouldStartObservationRuntime
+            && !EditionAppShell.isControlledDemoSession
             && !UITestMode.isActive
         _bleViewModel = State(initialValue: bleOn ? BLEViewModel() : nil)
         AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
@@ -1152,7 +1160,7 @@ struct WiFiLensApp: App {
             .task {
                 terminationCoordinator.configure(
                     stopRuntime: { await viewModel.stopForTermination() },
-                    terminateEdition: { await EditionComposition.prepareForTermination() }
+                    terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
                 )
             }
         }
@@ -1183,8 +1191,8 @@ struct WiFiLensApp: App {
             }
         }
         .onChange(of: bleEnabled) { _, enabled in
-            guard EditionComposition.shouldStartObservationRuntime,
-                  !EditionComposition.isControlledDemoSession else { return }
+            guard EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
+                  !EditionAppShell.isControlledDemoSession else { return }
             if enabled {
                 bleViewModel = BLEViewModel()
             } else {
@@ -1197,10 +1205,10 @@ struct WiFiLensApp: App {
             )
         }
         .onChange(of: mcpEnabled) { _, enabled in
-            if EditionComposition.shouldStartObservationRuntime { updateMCPServer() }
+            if EditionAssemblyProvider.configuration.shouldStartObservationRuntime { updateMCPServer() }
         }
         .onChange(of: mcpPort) { _, _ in
-            if EditionComposition.shouldStartObservationRuntime, mcpEnabled { updateMCPServer() }
+            if EditionAssemblyProvider.configuration.shouldStartObservationRuntime, mcpEnabled { updateMCPServer() }
         }
         .commands {
             CommandGroup(before: .toolbar) {
@@ -1247,7 +1255,7 @@ struct WiFiLensApp: App {
                     }
                     .keyboardShortcut("e", modifiers: [.command, .shift])
 
-                    switch EditionComposition.markdownExportCommandContribution {
+                    switch EditionAssemblyProvider.configuration.markdownExportCommandContribution {
                     case .available(let export):
                         Button(String(localized: "export.snapshot_markdown", comment: "Export as self-contained Markdown report")) {
                             export(viewModel)
@@ -1296,14 +1304,14 @@ struct WiFiLensApp: App {
 #endif
 
 #if DEBUG
-            EditionComposition.debugCommands(
+            EditionAppShell.debugCommands(
                 showMainWindow: { showMainWindow(route: $0) }
             )
 #endif
 
         }
 
-        EditionComposition.menuBarScene(
+        EditionAppShell.menuBarScene(
             openMainWindow: { route in showMainWindow(route: route, source: .menuBar) },
             terminate: { NSApp.terminate(nil) }
         )
@@ -1326,7 +1334,7 @@ struct WiFiLensApp: App {
     }
 
     private var menuBarWindowManagementEnabled: Bool {
-        EditionComposition.menuBarWindowManagementEnabled && menuBarEnabled
+        EditionAssemblyProvider.configuration.menuBarWindowManagementEnabled && menuBarEnabled
     }
 
     @MainActor
@@ -1381,7 +1389,7 @@ struct WiFiLensApp: App {
     private func registerMainWindow(_ window: NSWindow?, sceneState: MainWindowSceneState) {
         guard let window else { return }
 
-        if EditionComposition.shouldStartObservationRuntime {
+        if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
             routeResources.bind(
                 spectrumViewModels: viewModel.allBandViewModels,
                 bleViewModel: bleViewModel
@@ -1393,9 +1401,9 @@ struct WiFiLensApp: App {
             sceneState: sceneState,
             registerEdition: {
                 routeResources.register(windowID: sceneState.id, route: sceneState.selectedPage)
-                guard EditionComposition.registerMainWindowState(
+                guard EditionAssemblyProvider.configuration.shellHooks.registerMainWindowState(
                     sceneState.editionWindowState,
-                    for: sceneState.id
+                    sceneState.id
                 ) else {
                     routeResources.release(windowID: sceneState.id)
                     return false
@@ -1404,17 +1412,17 @@ struct WiFiLensApp: App {
             },
             rollbackEdition: {
                 routeResources.release(windowID: sceneState.id)
-                EditionComposition.unregisterMainWindowState(
+                EditionAssemblyProvider.configuration.shellHooks.unregisterMainWindowState(
                     sceneState.editionWindowState,
-                    for: sceneState.id
+                    sceneState.id
                 )
             },
             onActivate: { windowID in
-                EditionComposition.mainWindowDidBecomeActive(windowID)
+                EditionAssemblyProvider.configuration.shellHooks.mainWindowDidBecomeActive(windowID)
             },
             onClose: { windowID in
                 routeResources.release(windowID: windowID)
-                EditionComposition.mainWindowWillClose(windowID)
+                EditionAssemblyProvider.configuration.shellHooks.mainWindowWillClose(windowID)
                 handleMainWindowWillClose()
             }
         )

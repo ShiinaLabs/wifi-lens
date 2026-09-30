@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import WiFiLensCore
 
 struct SecondaryToolbarCapsule: NSViewRepresentable {
     let descriptor: SecondaryToolbarDescriptor

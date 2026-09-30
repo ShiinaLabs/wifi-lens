@@ -2,7 +2,41 @@ import AppKit
 import SwiftUI
 import WiFiLensCore
 
-enum EditionComposition {
+enum OSSEditionAssembly {
+    @MainActor
+    static let configuration = WiFiLensEditionConfiguration(
+        identity: .openSource,
+        capabilities: [.ble],
+        shouldStartObservationRuntime: true,
+        requiresLiveWiFiAuthorization: true,
+        isTimelineLockedPreview: true,
+        initialMainWindowRoute: .overview,
+        timelineToolbarDescriptor: nil,
+        spectrumToolbarDescriptor: .spectrum(recordingLocked: true),
+        exportSuccessPresentation: .banner,
+        onboardingConfiguration: onboardingConfiguration,
+        guidanceConfiguration: guidanceConfiguration,
+        guidanceCoordinator: guidanceCoordinator,
+        shellHooks: WiFiLensEditionShellHooks(
+            markdownExportCommandContribution: .lockedPreview,
+            makeMainWindowState: makeMainWindowState,
+            makeObservationRuntime: makeObservationRuntime,
+            makeRoamingViewModel: makeRoamingViewModel,
+            makeOnboardingExistingInstallationDetector: makeOnboardingExistingInstallationDetector,
+            configureMainWindow: configureMainWindow,
+            mainWindowDidFinishStartup: mainWindowDidFinishStartup,
+            registerMainWindowState: registerMainWindowState,
+            unregisterMainWindowState: unregisterMainWindowState,
+            startLifecycle: startLifecycle,
+            prepareForTermination: prepareForTermination,
+            mainWindowDidBecomeActive: mainWindowDidBecomeActive,
+            mainWindowWillClose: mainWindowWillClose,
+            detailContribution: { AnyView(detailContribution(context: $0)) },
+            settingsContribution: { AnyView(settingsContribution()) }
+        ),
+        menuBarWindowManagementEnabled: false
+    )
+
     @ViewBuilder
     @MainActor
     static func roamingPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -88,7 +122,7 @@ enum EditionComposition {
     @MainActor
     static func makeRoamingViewModel(scannerViewModel: ScannerViewModel) -> RoamingTestViewModel {
         RoamingTestViewModel {
-            EditionComposition.guidanceCoordinator.record(.roamingCompleted)
+            OSSEditionAssembly.guidanceCoordinator.record(.roamingCompleted)
         }
     }
 
@@ -196,7 +230,7 @@ enum EditionComposition {
                     OnboardingCoordinator.shared.debugReset()
                 }
                 Button("Show Welcome Now") {
-                    guard EditionComposition.onboardingConfiguration.welcomeEnabled else { return }
+                    guard OSSEditionAssembly.onboardingConfiguration.welcomeEnabled else { return }
                     OnboardingCoordinator.shared.debugRequestShowWelcome()
                     NSApp.activate(ignoringOtherApps: true)
                     if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
@@ -220,19 +254,19 @@ enum EditionComposition {
             Divider()
             Menu("Lifecycle Guidance") {
                 Button("Reset Lifecycle Guidance State") {
-                    EditionComposition.guidanceCoordinator.debugResetState()
+                    OSSEditionAssembly.guidanceCoordinator.debugResetState()
                 }
                 Button("Prepare OSS Invitation Eligibility") {
-                    EditionComposition.guidanceCoordinator.debugPrepareInvitationEligibility()
+                    OSSEditionAssembly.guidanceCoordinator.debugPrepareInvitationEligibility()
                 }
                 Button("Trigger Diagnostics Invitation") {
-                    EditionComposition.guidanceCoordinator.debugScheduleInvitation(for: .diagnosticsCompleted)
+                    OSSEditionAssembly.guidanceCoordinator.debugScheduleInvitation(for: .diagnosticsCompleted)
                     GuidanceDebugOverrides.requestDiagnosticsStaging()
                     showMainWindow(.networkDiagnostics)
                 }
                 Button("Trigger Export Invitation Banner") {
-                    EditionComposition.guidanceCoordinator.debugScheduleInvitation(for: .exportSucceeded)
-                    EditionComposition.guidanceCoordinator.debugPublishExportFeedback()
+                    OSSEditionAssembly.guidanceCoordinator.debugScheduleInvitation(for: .exportSucceeded)
+                    OSSEditionAssembly.guidanceCoordinator.debugPublishExportFeedback()
                     NSApp.activate(ignoringOtherApps: true)
                     if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
                         mainWindow.makeKeyAndOrderFront(nil)
@@ -249,7 +283,7 @@ enum EditionComposition {
                     Text("Treat Pro as Installed").tag(ProInstallationOverride.treatAsInstalled)
                 }
                 Button("Log Lifecycle Guidance State") {
-                    EditionComposition.guidanceCoordinator.debugLogState(edition: "OSS")
+                    OSSEditionAssembly.guidanceCoordinator.debugLogState(edition: "OSS")
                 }
             }
         }
@@ -297,4 +331,32 @@ private struct OSSSpectrumCompositionView: View {
             )
         }
     }
+}
+
+
+enum EditionAssemblyProvider {
+    @MainActor static let configuration = OSSEditionAssembly.configuration
+}
+
+enum EditionAppShell {
+    static var isControlledDemoSession: Bool { false }
+
+    @ViewBuilder @MainActor
+    static func roamingPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View { content() }
+
+    @ViewBuilder @MainActor
+    static func apRadarPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View { content() }
+
+    @ViewBuilder @MainActor
+    static func channelsPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View { content() }
+
+#if DEBUG
+    @MainActor
+    static func debugCommands(showMainWindow: @escaping (SidebarPage) -> Void) -> some Commands {
+        OSSEditionAssembly.debugCommands(showMainWindow: showMainWindow)
+    }
+#endif
+
+    @SceneBuilder @MainActor
+    static func menuBarScene(openMainWindow: @escaping (SidebarPage?) -> Void, terminate: @escaping () -> Void) -> some Scene {}
 }

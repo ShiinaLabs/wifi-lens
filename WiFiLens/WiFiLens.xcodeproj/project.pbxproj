@@ -23,9 +23,7 @@
 		A10000000000000000000014 /* ChannelQualityViewModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* ChannelQualityViewModeTests.swift */; };
 		A10000000000000000000015 /* SecondaryToolbarDescriptorExpansionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000009 /* SecondaryToolbarDescriptorExpansionTests.swift */; };
 		A10000000000000000000016 /* App/MenuBarWindowBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */; };
-		A10000000000000000000021 /* SecondaryToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000007 /* SecondaryToolbar.swift */; };
 		A10000000000000000000022 /* SecondaryToolbarCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000008 /* SecondaryToolbarCapsule.swift */; };
-		A10000000000000000000023 /* SecondaryToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000007 /* SecondaryToolbar.swift */; };
 		A10000000000000000000024 /* SecondaryToolbarCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000008 /* SecondaryToolbarCapsule.swift */; };
 		A1C0DE0000000000000000F2 /* WiFi Lens.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1C0DE0000000000000000F1 /* WiFi Lens.icon */; };
 		A1C0DE0000000000000000F3 /* WiFi Lens.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1C0DE0000000000000000F1 /* WiFi Lens.icon */; };
@@ -63,9 +61,7 @@
 		EB2000000000000000000004 /* released-v1.5.0-schema-v2.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = EB2000000000000000000003 /* released-v1.5.0-schema-v2.sqlite */; };
 		EB3000000000000000000002 /* AnalysisObservationCoverageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB3000000000000000000001 /* AnalysisObservationCoverageTests.swift */; };
 		EC10000000000000000000001 /* EditionCompositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC10000000000000000000002 /* EditionCompositionTests.swift */; };
-		EC10000000000000000000003 /* EditionCompositionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC10000000000000000000005 /* EditionCompositionContext.swift */; };
 		EC10000000000000000000004 /* OSSEditionComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC10000000000000000000006 /* OSSEditionComposition.swift */; };
-		EC10000000000000000000007 /* EditionCompositionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC10000000000000000000005 /* EditionCompositionContext.swift */; };
 		EC20000000000000000000002 /* EditionCompositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000001 /* EditionCompositionTests.swift */; };
 		EC20000000000000000000004 /* ProEditionComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000003 /* ProEditionComposition.swift */; };
 		EC20000000000000000000006 /* ProTimelineCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000005 /* ProTimelineCompositionView.swift */; };
@@ -197,8 +193,6 @@
 		G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A6 /* ExistingInstallationDetector.swift */; };
 		G900000000000000000000B0 /* OnboardingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A9 /* OnboardingCoordinator.swift */; };
 		G900000000000000000000B1 /* OnboardingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A9 /* OnboardingCoordinator.swift */; };
-		G900000000000000000000B3 /* OnboardingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B2 /* OnboardingConfiguration.swift */; };
-		G900000000000000000000B4 /* OnboardingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B2 /* OnboardingConfiguration.swift */; };
 		G900000000000000000000B6 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B5 /* WelcomeView.swift */; };
 		G900000000000000000000B7 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B5 /* WelcomeView.swift */; };
 		G900000000000000000000B9 /* OnboardingStateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B8 /* OnboardingStateStoreTests.swift */; };
@@ -295,7 +289,6 @@
 		A10000000000000000000004 /* SecondaryToolbarCapsuleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryToolbarCapsuleTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000005 /* SecondaryToolbarAttachmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryToolbarAttachmentTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000006 /* ChannelQualityViewModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelQualityViewModeTests.swift; sourceTree = "<group>"; };
-		A10000000000000000000007 /* SecondaryToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryToolbar.swift; sourceTree = "<group>"; };
 		A10000000000000000000008 /* SecondaryToolbarCapsule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryToolbarCapsule.swift; sourceTree = "<group>"; };
 		A10000000000000000000009 /* SecondaryToolbarDescriptorExpansionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryToolbarDescriptorExpansionTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/MenuBarWindowBehaviorTests.swift; sourceTree = "<group>"; };
@@ -332,7 +325,6 @@
 		EB2000000000000000000003 /* released-v1.5.0-schema-v2.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "released-v1.5.0-schema-v2.sqlite"; sourceTree = "<group>"; };
 		EB3000000000000000000001 /* AnalysisObservationCoverageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisObservationCoverageTests.swift; sourceTree = "<group>"; };
 		EC10000000000000000000002 /* EditionCompositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionCompositionTests.swift; sourceTree = "<group>"; };
-		EC10000000000000000000005 /* EditionCompositionContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionCompositionContext.swift; sourceTree = "<group>"; };
 		EC10000000000000000000006 /* OSSEditionComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSSEditionComposition.swift; sourceTree = "<group>"; };
 		EC20000000000000000000001 /* EditionCompositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionCompositionTests.swift; sourceTree = "<group>"; };
 		EC20000000000000000000003 /* ProEditionComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProEditionComposition.swift; sourceTree = "<group>"; };
@@ -437,7 +429,6 @@
 		G900000000000000000000A9 /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
 		G900000000000000000000AC /* GuidanceStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidanceStateStoreTests.swift; sourceTree = "<group>"; };
 		G900000000000000000000AD /* GuidancePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidancePolicyTests.swift; sourceTree = "<group>"; };
-		G900000000000000000000B2 /* OnboardingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingConfiguration.swift; sourceTree = "<group>"; };
 		G900000000000000000000B5 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		G900000000000000000000B8 /* OnboardingStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStateStoreTests.swift; sourceTree = "<group>"; };
 		G900000000000000000000C0 /* OnboardingCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinatorTests.swift; sourceTree = "<group>"; };
@@ -650,7 +641,6 @@
 			isa = PBXGroup;
 			children = (
 				FBB2CA8B2FC0E14000FC2D2C /* BuildConfig.swift */,
-				EC10000000000000000000005 /* EditionCompositionContext.swift */,
 				EC10000000000000000000006 /* OSSEditionComposition.swift */,
 				FB0573C12FBC47F1005F8214 /* CrashReporter.swift */,
 				FB0573BF2FBC47CC005F8214 /* Logging.swift */,
@@ -659,7 +649,6 @@
 				MV0000000000000000000040 /* MACVendorDatabaseUpdateSheet.swift */,
 				FBD329512FC500000057B038 /* MetricKitManager.swift */,
 				FB0573C02FBBFC31005F8215 /* ProFeaturePlaceholderView.swift */,
-				A10000000000000000000007 /* SecondaryToolbar.swift */,
 				A10000000000000000000008 /* SecondaryToolbarCapsule.swift */,
 				FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */,
 				FB0573B92FBBFC31005F8214 /* SidebarView.swift */,
@@ -1107,7 +1096,6 @@
 			children = (
 				G900000000000000000000A6 /* ExistingInstallationDetector.swift */,
 				G900000000000000000000A9 /* OnboardingCoordinator.swift */,
-				G900000000000000000000B2 /* OnboardingConfiguration.swift */,
 				G900000000000000000000B5 /* WelcomeView.swift */,
 			);
 			path = Onboarding;
@@ -1495,7 +1483,6 @@
 				MV0000000000000000000037 /* MACVendorDatabaseUpdateSheet.swift in Sources */,
 				G900000000000000000000A7 /* ExistingInstallationDetector.swift in Sources */,
 				G900000000000000000000B0 /* OnboardingCoordinator.swift in Sources */,
-				G900000000000000000000B3 /* OnboardingConfiguration.swift in Sources */,
 				G900000000000000000000B6 /* WelcomeView.swift in Sources */,
 				FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */,
 				FB0573C22FBC47F1005F8214 /* CrashReporter.swift in Sources */,
@@ -1505,9 +1492,7 @@
 				FB92F9232FBE208500BCEC67 /* DebugContainerView.swift in Sources */,
 				FB92F9252FBE208500BCEC67 /* DebugThroughputView.swift in Sources */,
 				FB92F9282FBE208500BCEC67 /* DebugRoamingChartView.swift in Sources */,
-				A10000000000000000000021 /* SecondaryToolbar.swift in Sources */,
 				A10000000000000000000022 /* SecondaryToolbarCapsule.swift in Sources */,
-				EC10000000000000000000003 /* EditionCompositionContext.swift in Sources */,
 				EC10000000000000000000004 /* OSSEditionComposition.swift in Sources */,
 				9E2F89530D1114DBFAB705F3 /* WiFiLensApp.swift in Sources */,
 				FB05A7A12FD1A0F100B5C801 /* WindowFramePolicy.swift in Sources */,
@@ -1592,7 +1577,6 @@
 				MV0000000000000000000038 /* MACVendorDatabaseUpdateSheet.swift in Sources */,
 				G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */,
 				G900000000000000000000B1 /* OnboardingCoordinator.swift in Sources */,
-				G900000000000000000000B4 /* OnboardingConfiguration.swift in Sources */,
 				G900000000000000000000B7 /* WelcomeView.swift in Sources */,
 				EC20000000000000000000004 /* ProEditionComposition.swift in Sources */,
 				A55100000000000000000011 /* ProDemoLaunch.swift in Sources */,
@@ -1638,9 +1622,7 @@
 				E1B00000000000000000003 /* WiFiCallingRunner.swift in Sources */,
 				E1B00000000000000000004 /* WiFiCallingDiscovery.swift in Sources */,
 				CC0000000000000000000011 /* TimelineFilterPanel.swift in Sources */,
-				A10000000000000000000023 /* SecondaryToolbar.swift in Sources */,
 				A10000000000000000000024 /* SecondaryToolbarCapsule.swift in Sources */,
-				EC10000000000000000000007 /* EditionCompositionContext.swift in Sources */,
 				FB1E32772FC7316C009D1BDC /* WiFiLensApp.swift in Sources */,
 				FB1E328A2FD1A11100B5C801 /* WindowFramePolicy.swift in Sources */,
 				FB1E327A2FC7316C009D1BDC /* TitleBadge.swift in Sources */,

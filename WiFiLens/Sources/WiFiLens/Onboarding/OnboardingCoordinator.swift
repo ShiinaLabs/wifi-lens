@@ -12,8 +12,8 @@ import Observation
 final class OnboardingCoordinator {
     static let shared = OnboardingCoordinator(
         store: UserDefaultsOnboardingStateStore(),
-        existingInstallationDetector: EditionComposition.makeOnboardingExistingInstallationDetector(),
-        welcomeEnabled: EditionComposition.onboardingConfiguration.welcomeEnabled
+        existingInstallationDetector: EditionAssemblyProvider.configuration.shellHooks.makeOnboardingExistingInstallationDetector(),
+        welcomeEnabled: EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled
     )
 
     /// The main window currently hosting the welcome, if any. Process-memory

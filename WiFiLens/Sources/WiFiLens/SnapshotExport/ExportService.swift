@@ -3,13 +3,6 @@ import AppKit
 import UniformTypeIdentifiers
 import WiFiLensCore
 
-/// How export success feedback is presented. A presentation concern only —
-/// the guidance policy never reads it.
-enum ExportSuccessPresentation: Equatable, Sendable {
-    case banner            // OSS: non-modal success banner + invitation
-    case preserveExisting  // Pro: keep the existing success alert
-}
-
 /// Shared PNG snapshot export service used by both editions.
 /// Composites all visible band charts into a single high-resolution PNG image.
 @MainActor
@@ -87,11 +80,11 @@ enum ExportService {
                         // non-modal banner (which records the moment), Pro keeps its
                         // existing success alert and records the moment for rating
                         // eligibility only.
-                        switch EditionComposition.exportSuccessPresentation {
+                        switch EditionAssemblyProvider.configuration.exportSuccessPresentation {
                         case .banner:
-                            EditionComposition.guidanceCoordinator.handleExportSucceeded()
+                            EditionAssemblyProvider.configuration.guidanceCoordinator.handleExportSucceeded()
                         case .preserveExisting:
-                            EditionComposition.guidanceCoordinator.record(.exportSucceeded)
+                            EditionAssemblyProvider.configuration.guidanceCoordinator.record(.exportSucceeded)
                             showSuccess(String(localized: "export.image_saved_message", comment: "Chart image exported successfully"))
                         }
                     }

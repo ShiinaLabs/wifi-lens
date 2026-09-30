@@ -213,7 +213,7 @@ struct SettingsView: View {
 
                 MACVendorDatabaseSettingsSection(summary: macVendorDatabaseSummary)
 
-                EditionComposition.settingsContribution()
+                EditionAssemblyProvider.configuration.settingsContribution()
 
                 // MARK: - Permissions
 
@@ -451,7 +451,7 @@ struct SettingsView: View {
     }
 
     private func refreshPermissionStatuses() {
-        guard EditionComposition.requiresLiveWiFiAuthorization else { return }
+        guard EditionAssemblyProvider.configuration.requiresLiveWiFiAuthorization else { return }
         locationPermission.refreshStatus()
         bluetoothPermission?.refreshStatus()
     }
