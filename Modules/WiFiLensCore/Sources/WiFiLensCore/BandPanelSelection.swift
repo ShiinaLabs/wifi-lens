@@ -46,7 +46,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
         self.band = band
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(SpectrumPanelID.self, forKey: .id)
         viewType = try container.decode(SpectrumPanelViewType.self, forKey: .viewType)
@@ -62,7 +62,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
         self.band = band
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(viewType, forKey: .viewType)
