@@ -61,8 +61,6 @@
 		EC2000000000000000000000C /* ProSpectrumCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000D /* ProSpectrumCompositionView.swift */; };
 		EC20000000000000000000010 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000F /* StatisticsView.swift */; };
 		EC20000000000000000000012 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000011 /* InsightsView.swift */; };
-		EC20000000000000000000018 /* StatisticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000019 /* StatisticsViewModel.swift */; };
-		EC20000000000000000000020 /* InsightsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000021 /* InsightsViewModel.swift */; };
 		EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000023 /* ProReviewRequestBridge.swift */; };
 		EC20000000000000000000026 /* FeedbackContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000025 /* FeedbackContact.swift */; };
 		A55100000000000000000010 /* AppStage in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000009 /* AppStage */; };
@@ -289,8 +287,6 @@
 		EC2000000000000000000000D /* ProSpectrumCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSpectrumCompositionView.swift; sourceTree = "<group>"; };
 		EC2000000000000000000000F /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
 		EC20000000000000000000011 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
-		EC20000000000000000000019 /* StatisticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModel.swift; sourceTree = "<group>"; };
-		EC20000000000000000000021 /* InsightsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsViewModel.swift; sourceTree = "<group>"; };
 		EC20000000000000000000023 /* ProReviewRequestBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProReviewRequestBridge.swift; sourceTree = "<group>"; };
 		EC20000000000000000000025 /* FeedbackContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackContact.swift; sourceTree = "<group>"; };
 		A55100000000000000000001 /* ProDemoLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoLaunch.swift; sourceTree = "<group>"; };
@@ -679,9 +675,7 @@
 				EC20000000000000000000009 /* ProMenuBarComposition.swift */,
 				EC2000000000000000000000D /* ProSpectrumCompositionView.swift */,
 				EC2000000000000000000000F /* StatisticsView.swift */,
-				EC20000000000000000000019 /* StatisticsViewModel.swift */,
 				EC20000000000000000000011 /* InsightsView.swift */,
-				EC20000000000000000000021 /* InsightsViewModel.swift */,
 				EC20000000000000000000023 /* ProReviewRequestBridge.swift */,
 				EC20000000000000000000025 /* FeedbackContact.swift */,
 			);
@@ -1481,8 +1475,6 @@
 				EC2000000000000000000000C /* ProSpectrumCompositionView.swift in Sources */,
 				EC20000000000000000000010 /* StatisticsView.swift in Sources */,
 				EC20000000000000000000012 /* InsightsView.swift in Sources */,
-				EC20000000000000000000018 /* StatisticsViewModel.swift in Sources */,
-				EC20000000000000000000020 /* InsightsViewModel.swift in Sources */,
 				EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */,
 				EC20000000000000000000026 /* FeedbackContact.swift in Sources */,
 				FBD0A4472FE5BEAC003658AD /* SessionStore.swift in Sources */,
