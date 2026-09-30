@@ -41,8 +41,6 @@
 		B89BCDE0766C4998B46372B /* LoggingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D4F1A65F0142A18B9C161 /* LoggingTests.swift */; };
 		B9AB60F3D002A7B9123D2520 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EAF444453E304ABB57AF3AA /* CoreLocation.framework */; };
 		C1D2E3F4A5B6123456789ABF /* APFilterServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6123456789ABE /* APFilterServiceTests.swift */; };
-		CC0000000000000000000002 /* DebugTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* DebugTimelineView.swift */; };
-		CC0000000000000000000011 /* TimelineFilterPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000010 /* TimelineFilterPanel.swift */; };
 		DBDF66D03BD11B7D5986B87F /* SeverityValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB8408E6A12E8F18E4C2CF7 /* SeverityValidationTests.swift */; };
 		E10000000000000000000002 /* EventJournalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000001 /* EventJournalTests.swift */; };
 		E30000000000000000000002 /* WiFiObservationEventSQLiteStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000000000000000000001 /* WiFiObservationEventSQLiteStoreTests.swift */; };
@@ -59,8 +57,6 @@
 		EC20000000000000000000008 /* ProSettingsComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000007 /* ProSettingsComposition.swift */; };
 		EC2000000000000000000000A /* ProMenuBarComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000009 /* ProMenuBarComposition.swift */; };
 		EC2000000000000000000000C /* ProSpectrumCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000D /* ProSpectrumCompositionView.swift */; };
-		EC20000000000000000000010 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000F /* StatisticsView.swift */; };
-		EC20000000000000000000012 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000011 /* InsightsView.swift */; };
 		EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000023 /* ProReviewRequestBridge.swift */; };
 		EC20000000000000000000026 /* FeedbackContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000025 /* FeedbackContact.swift */; };
 		A55100000000000000000010 /* AppStage in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000009 /* AppStage */; };
@@ -101,6 +97,7 @@
 		FB1E326A2FC7316C009D1BDC /* DebugContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */; };
 		FB1E326B2FC7316C009D1BDC /* DebugThroughputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */; };
 		FB1E326C2FC7316C009D1BDC /* DebugRoamingChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */; };
+		CC0000000000000000000002 /* DebugTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* DebugTimelineView.swift */; };
 		FB1E32772FC7316C009D1BDC /* WiFiLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831E90D5B9D07C478A35DD14 /* WiFiLensApp.swift */; };
 		FB1E327B2FC7316C009D1BDC /* BuildConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBB2CA8B2FC0E14000FC2D2C /* BuildConfig.swift */; };
 		FB1E327E2FC7316C009D1BDC /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573BF2FBC47CC005F8214 /* Logging.swift */; };
@@ -157,7 +154,6 @@
 		FBD0A4602FE5C0600000000D /* MenuBarStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A45F2FE5C0600000000C /* MenuBarStatusView.swift */; };
 		FBD0A46C2FE5C06000000019 /* SparklineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A46B2FE5C06000000018 /* SparklineView.swift */; };
 		FBD0A47F2FE5C0600000002C /* ProObservationEventBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A47C2FE5C06000000029 /* ProObservationEventBootstrap.swift */; };
-		FBD0A4802FE5C0600000002D /* TimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4822FE5C0600000002F /* TimelineView.swift */; };
 		FBD329502FC500000057B038 /* MetricKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD329512FC500000057B038 /* MetricKitManager.swift */; };
 		FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */; };
 		G900000000000000000000A7 /* ExistingInstallationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A6 /* ExistingInstallationDetector.swift */; };
@@ -266,8 +262,6 @@
 		BD784856886985BCC6FC4F02 /* WiFi Lens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "WiFi Lens.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1D2E3F4A5B6123456789ABE /* APFilterServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFilterServiceTests.swift; sourceTree = "<group>"; };
 		C70E4041B5972D72DD79BF56 /* RoamingTestViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingTestViewModelTests.swift; sourceTree = "<group>"; };
-		CC0000000000000000000001 /* DebugTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugTimelineView.swift; path = ../Pro/Timeline/DebugTimelineView.swift; sourceTree = SOURCE_ROOT; };
-		CC0000000000000000000010 /* TimelineFilterPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimelineFilterPanel.swift; path = ../Pro/Timeline/TimelineFilterPanel.swift; sourceTree = SOURCE_ROOT; };
 		D92298452F334CDAAA9695D3 /* WindowFramePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicyTests.swift; sourceTree = "<group>"; };
 		E10000000000000000000001 /* EventJournalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventJournalTests.swift; sourceTree = "<group>"; };
 		E30000000000000000000001 /* WiFiObservationEventSQLiteStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiObservationEventSQLiteStoreTests.swift; sourceTree = "<group>"; };
@@ -285,8 +279,6 @@
 		EC20000000000000000000007 /* ProSettingsComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSettingsComposition.swift; sourceTree = "<group>"; };
 		EC20000000000000000000009 /* ProMenuBarComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProMenuBarComposition.swift; sourceTree = "<group>"; };
 		EC2000000000000000000000D /* ProSpectrumCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSpectrumCompositionView.swift; sourceTree = "<group>"; };
-		EC2000000000000000000000F /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
-		EC20000000000000000000011 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		EC20000000000000000000023 /* ProReviewRequestBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProReviewRequestBridge.swift; sourceTree = "<group>"; };
 		EC20000000000000000000025 /* FeedbackContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackContact.swift; sourceTree = "<group>"; };
 		A55100000000000000000001 /* ProDemoLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoLaunch.swift; sourceTree = "<group>"; };
@@ -332,6 +324,7 @@
 		FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugContainerView.swift; sourceTree = "<group>"; };
 		FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugThroughputView.swift; sourceTree = "<group>"; };
 		FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugRoamingChartView.swift; sourceTree = "<group>"; };
+		CC0000000000000000000001 /* DebugTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugTimelineView.swift; path = ../Pro/Timeline/DebugTimelineView.swift; sourceTree = SOURCE_ROOT; };
 		FBA000030000000000000003 /* WiFiLensUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WiFiLensUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBA000050000000000000005 /* WiFiLensUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLensUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		FBA000210000000000000021 /* UITestHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestHelpers.swift; sourceTree = "<group>"; };
@@ -361,7 +354,6 @@
 		FBD0A45F2FE5C0600000000C /* MenuBarStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusView.swift; sourceTree = "<group>"; };
 		FBD0A46B2FE5C06000000018 /* SparklineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineView.swift; sourceTree = "<group>"; };
 		FBD0A47C2FE5C06000000029 /* ProObservationEventBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProObservationEventBootstrap.swift; sourceTree = "<group>"; };
-		FBD0A4822FE5C0600000002F /* TimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineView.swift; sourceTree = "<group>"; };
 		FBD329512FC500000057B038 /* MetricKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKitManager.swift; sourceTree = "<group>"; };
 		FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparkleUpdater.swift; sourceTree = "<group>"; };
 		G900000000000000000000A6 /* ExistingInstallationDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExistingInstallationDetector.swift; sourceTree = "<group>"; };
@@ -510,8 +502,6 @@
 				FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */,
 				FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */,
 				FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */,
-				CC0000000000000000000001 /* DebugTimelineView.swift */,
-				CC0000000000000000000010 /* TimelineFilterPanel.swift */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -674,8 +664,6 @@
 				EC20000000000000000000007 /* ProSettingsComposition.swift */,
 				EC20000000000000000000009 /* ProMenuBarComposition.swift */,
 				EC2000000000000000000000D /* ProSpectrumCompositionView.swift */,
-				EC2000000000000000000000F /* StatisticsView.swift */,
-				EC20000000000000000000011 /* InsightsView.swift */,
 				EC20000000000000000000023 /* ProReviewRequestBridge.swift */,
 				EC20000000000000000000025 /* FeedbackContact.swift */,
 			);
@@ -914,7 +902,7 @@
 		FBD0A4842FE5C06000000031 /* Timeline */ = {
 			isa = PBXGroup;
 			children = (
-				FBD0A4822FE5C0600000002F /* TimelineView.swift */,
+				CC0000000000000000000001 /* DebugTimelineView.swift */,
 			);
 			path = Timeline;
 			sourceTree = "<group>";
@@ -1473,8 +1461,6 @@
 				EC20000000000000000000008 /* ProSettingsComposition.swift in Sources */,
 				EC2000000000000000000000A /* ProMenuBarComposition.swift in Sources */,
 				EC2000000000000000000000C /* ProSpectrumCompositionView.swift in Sources */,
-				EC20000000000000000000010 /* StatisticsView.swift in Sources */,
-				EC20000000000000000000012 /* InsightsView.swift in Sources */,
 				EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */,
 				EC20000000000000000000026 /* FeedbackContact.swift in Sources */,
 				FBD0A4472FE5BEAC003658AD /* SessionStore.swift in Sources */,
@@ -1491,7 +1477,6 @@
 				FB1E326B2FC7316C009D1BDC /* DebugThroughputView.swift in Sources */,
 				FB1E326C2FC7316C009D1BDC /* DebugRoamingChartView.swift in Sources */,
 				CC0000000000000000000002 /* DebugTimelineView.swift in Sources */,
-				CC0000000000000000000011 /* TimelineFilterPanel.swift in Sources */,
 				FB1E32772FC7316C009D1BDC /* WiFiLensApp.swift in Sources */,
 				FB1E327B2FC7316C009D1BDC /* BuildConfig.swift in Sources */,
 				FB1E327E2FC7316C009D1BDC /* Logging.swift in Sources */,
@@ -1500,7 +1485,6 @@
 				FBD0A4602FE5C0600000000D /* MenuBarStatusView.swift in Sources */,
 				FBD0A46C2FE5C06000000019 /* SparklineView.swift in Sources */,
 				FBD0A47F2FE5C0600000002C /* ProObservationEventBootstrap.swift in Sources */,
-				FBD0A4802FE5C0600000002D /* TimelineView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
