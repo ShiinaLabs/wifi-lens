@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 /// Per-device ring buffers and EMA smoothing for BLE RSSI tracking.
 /// Analogous to SignalHistoryStore but tuned for BLE advertisement patterns.

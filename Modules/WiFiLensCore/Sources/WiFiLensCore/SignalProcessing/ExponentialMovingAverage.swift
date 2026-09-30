@@ -1,15 +1,15 @@
 import Foundation
 
-struct ExponentialMovingAverage: SignalSmoothing {
+public struct ExponentialMovingAverage: SignalSmoothing {
     let alpha: Double
     private var current: Double
 
-    init(alpha: Double = 0.25, initial: Double = 0) {
+    public init(alpha: Double = 0.25, initial: Double = 0) {
         self.alpha = max(0, min(1, alpha))
         self.current = initial
     }
 
-    mutating func smooth(_ value: Double) -> Double {
+    public mutating func smooth(_ value: Double) -> Double {
         current = alpha * value + (1 - alpha) * current
         return current
     }
