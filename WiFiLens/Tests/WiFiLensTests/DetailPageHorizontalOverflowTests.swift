@@ -1,8 +1,8 @@
+@testable import WiFiLensCore
+
 import AppKit
 import SwiftUI
 import Testing
-import WiFiLensCore
-@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 /// At the main window's minimum size (820x620) the NavigationSplitView detail column is
@@ -261,7 +261,10 @@ struct DetailPageHorizontalOverflowTests {
 
     @Test("Network self-check fits the minimum detail width")
     func networkDiagnosticsFitsMinimumDetailWidth() {
-        assertFitsWidth(NetworkDiagnosticsView(viewModel: NetworkDiagnosticsViewModel()))
+        assertFitsWidth(NetworkDiagnosticsView(
+            viewModel: NetworkDiagnosticsViewModel(),
+            guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
+        ))
     }
 
     @Test("Roaming active state fits the minimum detail width")

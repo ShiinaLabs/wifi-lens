@@ -1,7 +1,8 @@
+@testable import WiFiLensCore
+
 import AppKit
 import SwiftUI
 import Testing
-import WiFiLensCore
 @testable import WiFi_Lens
 
 /// Detail pages stay mounted while hidden so their page-local state survives navigation.
@@ -60,7 +61,10 @@ struct DetailPageMinimumHeightTests {
 
     @Test("Network self-check page minimum height stays within the default window height")
     func networkDiagnosticsMinimumHeightIsBounded() {
-        let height = minimumHeight(of: NetworkDiagnosticsView(viewModel: NetworkDiagnosticsViewModel()))
+        let height = minimumHeight(of: NetworkDiagnosticsView(
+            viewModel: NetworkDiagnosticsViewModel(),
+            guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
+        ))
         #expect(height <= Self.maximumMinimumHeight)
     }
 

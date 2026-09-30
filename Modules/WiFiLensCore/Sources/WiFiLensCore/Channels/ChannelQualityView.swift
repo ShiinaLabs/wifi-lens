@@ -4,6 +4,14 @@ public enum ChannelViewMode: String, CaseIterable {
     case simple
     case table
 
+    public static func fromToolbarSelection(_ selection: SecondaryToolbarItemID) -> Self {
+        switch selection {
+        case .channelsSimple: .simple
+        case .channelsTable: .table
+        default: .simple
+        }
+    }
+
     public var displayName: String {
         switch self {
         case .simple: String(localized: "channels.mode.simple", comment: "Simple view mode for channel quality")

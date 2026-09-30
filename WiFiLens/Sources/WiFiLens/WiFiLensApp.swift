@@ -100,11 +100,7 @@ private struct AppRootView: View {
     }
 
     private var channelViewMode: ChannelViewMode {
-        switch secondaryToolbarSelections.channels {
-        case .channelsSimple: .simple
-        case .channelsTable: .table
-        default: .simple
-        }
+        .fromToolbarSelection(secondaryToolbarSelections.channels)
     }
 
     private var interfaceViewMode: InterfaceViewMode {
@@ -132,7 +128,7 @@ private struct AppRootView: View {
     private var secondaryToolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
             if selectedPage == .overview, (BuildConfig.current == .oss || !hideTitleBadge) {
-                TitleBadge(config: .current)
+                TitleBadge(identity: EditionAssemblyProvider.configuration.identity)
                     .fixedSize()
             }
         }
@@ -309,9 +305,9 @@ private struct AppRootView: View {
                     get: { sceneState.selectedPage },
                     set: { sceneState.selectedPage = $0 }
                 ),
-                locationManager: viewModel.locationManager,
                 isWiFiAvailable: viewModel.isWiFiAvailable,
-                bleEnabled: bleEnabled
+                configuration: EditionAssemblyProvider.configuration,
+                isUITestMode: UITestMode.isActive
             )
                 .navigationSplitViewColumnWidth(min: 160, ideal: 180)
                 .background(

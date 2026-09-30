@@ -1,16 +1,20 @@
 import SwiftUI
 
-/// Title bar badge that reflects the current build configuration.
-struct TitleBadge: View {
-    let config: BuildConfig
+/// Title bar badge that reflects the active edition.
+public struct TitleBadge: View {
+    private let identity: WiFiLensEditionIdentity
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var shimmerOffset: CGFloat = 0
 
-    var body: some View {
-        switch config {
-        case .oss:
+    public init(identity: WiFiLensEditionIdentity) {
+        self.identity = identity
+    }
+
+    public var body: some View {
+        switch identity {
+        case .openSource:
             ossBadge
         case .pro:
             proBadge

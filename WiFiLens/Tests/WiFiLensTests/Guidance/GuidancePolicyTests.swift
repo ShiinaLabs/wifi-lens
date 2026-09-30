@@ -1,3 +1,5 @@
+@testable import WiFiLensCore
+
 import Foundation
 import Testing
 @testable import WiFi_Lens

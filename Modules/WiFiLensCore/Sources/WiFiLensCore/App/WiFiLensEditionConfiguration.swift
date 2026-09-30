@@ -141,6 +141,21 @@ public struct WiFiLensEditionConfiguration {
     }
     public let menuBarWindowManagementEnabled: Bool
 
+    func sidebarBadgeStyle(for page: SidebarPage) -> SidebarBadge.Style? {
+        switch page {
+        case .apRadar:
+            .preview
+        case .wifiCallingTest:
+            capabilities.contains(.wifiCalling) ? .preview : .pro
+        default:
+            nil
+        }
+    }
+
+    var analysisSidebarBadgeStyle: SidebarBadge.Style {
+        capabilities.contains(.analysis) ? .preview : .pro
+    }
+
     public init(
         identity: WiFiLensEditionIdentity,
         capabilities: Set<WiFiLensEditionCapability>,

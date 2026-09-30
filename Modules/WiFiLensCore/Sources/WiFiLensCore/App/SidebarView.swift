@@ -1,36 +1,4 @@
 import SwiftUI
-import WiFiLensCore
-
-extension SidebarPage {
-    var badgeStyle: SidebarBadge.Style? {
-        switch self {
-        case .apRadar:
-            .preview
-        case .wifiCallingTest:
-            Self.wifiCallingBadgeStyle(for: .current)
-        default:
-            nil
-        }
-    }
-
-    static func wifiCallingBadgeStyle(for config: BuildConfig) -> SidebarBadge.Style? {
-        switch config {
-        case .oss: .pro
-        case .pro: .preview
-        }
-    }
-
-    static func timelineBadgeStyle(for config: BuildConfig) -> SidebarBadge.Style {
-        analysisBadgeStyle(for: config)
-    }
-
-    static func analysisBadgeStyle(for config: BuildConfig) -> SidebarBadge.Style {
-        switch config {
-        case .oss: .pro
-        case .pro: .preview
-        }
-    }
-}
 
 enum SidebarSection {
     case overview
@@ -60,10 +28,11 @@ enum SidebarSection {
 
     /// Edition badge shown on the group title. The Analysis group carries one
     /// badge for all of its routes instead of repeating it on every row.
-    var badgeStyle: SidebarBadge.Style? {
+    @MainActor
+    func badgeStyle(configuration: WiFiLensEditionConfiguration) -> SidebarBadge.Style? {
         switch self {
         case .analysis:
-            SidebarPage.analysisBadgeStyle(for: .current)
+            configuration.analysisSidebarBadgeStyle
         default:
             nil
         }
@@ -99,13 +68,25 @@ private struct BluetoothIconShape: Shape {
     }
 }
 
-struct SidebarView: View {
+public struct SidebarView: View {
     @Binding var selectedPage: SidebarPage
-    var locationManager: LocationPermissionManager
     var isWiFiAvailable: Bool
-    var bleEnabled: Bool
+    var configuration: WiFiLensEditionConfiguration
+    var isUITestMode: Bool
 
-    var body: some View {
+    public init(
+        selectedPage: Binding<SidebarPage>,
+        isWiFiAvailable: Bool,
+        configuration: WiFiLensEditionConfiguration,
+        isUITestMode: Bool
+    ) {
+        _selectedPage = selectedPage
+        self.isWiFiAvailable = isWiFiAvailable
+        self.configuration = configuration
+        self.isUITestMode = isUITestMode
+    }
+
+    public var body: some View {
         List(selection: $selectedPage) {
             Section {
                 Label(SidebarPage.overview.label, systemImage: SidebarPage.overview.icon)
@@ -123,18 +104,18 @@ struct SidebarView: View {
                                 .accessibilityHidden(true)
                         })
                             .tag(page)
-                            .disabled(!UITestMode.isActive && page.requiresWiFi && !isWiFiAvailable)
-                            .opacity(!UITestMode.isActive && page.requiresWiFi && !isWiFiAvailable ? 0.4 : 1.0)
-                            .accessibilityHint(!UITestMode.isActive && page.requiresWiFi && !isWiFiAvailable
+                            .disabled(!isUITestMode && page.requiresWiFi && !isWiFiAvailable)
+                            .opacity(!isUITestMode && page.requiresWiFi && !isWiFiAvailable ? 0.4 : 1.0)
+                            .accessibilityHint(!isUITestMode && page.requiresWiFi && !isWiFiAvailable
                                 ? String(localized: "sidebar.hint.requires_wifi", comment: "Accessibility hint when sidebar item is disabled due to no Wi‑Fi")
                                 : "")
                             .accessibilityIdentifier("sidebar-bleScanner")
                     } else {
                         sidebarRow(for: page)
                             .tag(page)
-                            .disabled(!UITestMode.isActive && page.requiresWiFi && !isWiFiAvailable)
-                            .opacity(!UITestMode.isActive && page.requiresWiFi && !isWiFiAvailable ? 0.4 : 1.0)
-                            .accessibilityHint(!UITestMode.isActive && page.requiresWiFi && !isWiFiAvailable
+                            .disabled(!isUITestMode && page.requiresWiFi && !isWiFiAvailable)
+                            .opacity(!isUITestMode && page.requiresWiFi && !isWiFiAvailable ? 0.4 : 1.0)
+                            .accessibilityHint(!isUITestMode && page.requiresWiFi && !isWiFiAvailable
                                 ? String(localized: "sidebar.hint.requires_wifi", comment: "Accessibility hint when sidebar item is disabled due to no Wi‑Fi")
                                 : "")
                             .accessibilityIdentifier("sidebar-\(page.rawValue)")
@@ -160,11 +141,11 @@ struct SidebarView: View {
                     .tag(SidebarPage.debugChart)
                     .accessibilityIdentifier("sidebar-debugChart")
 
-#if DEBUG && PRO
-                Label(SidebarPage.debugTimeline.label, systemImage: SidebarPage.debugTimeline.icon)
-                    .tag(SidebarPage.debugTimeline)
-                    .accessibilityIdentifier("sidebar-debugTimeline")
-#endif
+                if configuration.capabilities.contains(.timeline) {
+                    Label(SidebarPage.debugTimeline.label, systemImage: SidebarPage.debugTimeline.icon)
+                        .tag(SidebarPage.debugTimeline)
+                        .accessibilityIdentifier("sidebar-debugTimeline")
+                }
             }
 #endif
             Section {
@@ -188,7 +169,7 @@ struct SidebarView: View {
 
     @ViewBuilder
     private func sidebarLabel(for page: SidebarPage) -> some View {
-        if let badgeStyle = page.badgeStyle {
+        if let badgeStyle = configuration.sidebarBadgeStyle(for: page) {
             ViewThatFits(in: .horizontal) {
                 SidebarBadgeRowContent(
                     title: page.label,
@@ -217,7 +198,7 @@ struct SidebarView: View {
 
             Spacer(minLength: 4)
 
-            if let badgeStyle = section.badgeStyle {
+            if let badgeStyle = section.badgeStyle(configuration: configuration) {
                 SidebarBadge(style: badgeStyle)
             }
         }
@@ -226,15 +207,22 @@ struct SidebarView: View {
     }
 }
 
-struct SidebarBadgeRowContent: View {
-    static let minimumGap: CGFloat = 8
+public struct SidebarBadgeRowContent: View {
+    public static let minimumGap: CGFloat = 8
 
     let title: String
     let icon: String
     let style: SidebarBadge.Style
     let presentation: SidebarBadge.Presentation
 
-    var body: some View {
+    public init(title: String, icon: String, style: SidebarBadge.Style, presentation: SidebarBadge.Presentation) {
+        self.title = title
+        self.icon = icon
+        self.style = style
+        self.presentation = presentation
+    }
+
+    public var body: some View {
         HStack(spacing: 0) {
             Label(title, systemImage: icon)
                 .lineLimit(1)

@@ -1,3 +1,5 @@
+@testable import WiFiLensCore
+
 import AppKit
 import Foundation
 import SwiftUI

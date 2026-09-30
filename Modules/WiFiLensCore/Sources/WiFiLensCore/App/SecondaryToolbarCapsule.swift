@@ -1,10 +1,14 @@
 import AppKit
 import SwiftUI
-import WiFiLensCore
 
-struct SecondaryToolbarCapsule: NSViewRepresentable {
-    let descriptor: SecondaryToolbarDescriptor
-    @Binding var selection: SecondaryToolbarItemID
+public struct SecondaryToolbarCapsule: NSViewRepresentable {
+    private let descriptor: SecondaryToolbarDescriptor
+    @Binding private var selection: SecondaryToolbarItemID
+
+    public init(descriptor: SecondaryToolbarDescriptor, selection: Binding<SecondaryToolbarItemID>) {
+        self.descriptor = descriptor
+        _selection = selection
+    }
 
     static func makeControl(
         descriptor: SecondaryToolbarDescriptor,
@@ -40,11 +44,11 @@ struct SecondaryToolbarCapsule: NSViewRepresentable {
         return control
     }
 
-    func makeCoordinator() -> Coordinator {
+    public func makeCoordinator() -> Coordinator {
         Coordinator(selection: $selection, itemIDs: descriptor.items.map(\.id))
     }
 
-    func makeNSView(context: Context) -> SecondaryToolbarSegmentedControl {
+    public func makeNSView(context: Context) -> SecondaryToolbarSegmentedControl {
         return Self.makeControl(
             descriptor: descriptor,
             selection: selection,
@@ -53,7 +57,7 @@ struct SecondaryToolbarCapsule: NSViewRepresentable {
         )
     }
 
-    func updateNSView(_ nsView: SecondaryToolbarSegmentedControl, context: Context) {
+    public func updateNSView(_ nsView: SecondaryToolbarSegmentedControl, context: Context) {
         nsView.target = context.coordinator
         nsView.action = #selector(Coordinator.selectionDidChange(_:))
         context.coordinator.itemIDs = descriptor.items.map(\.id)
@@ -95,7 +99,7 @@ struct SecondaryToolbarCapsule: NSViewRepresentable {
     }
 
     @MainActor
-    final class Coordinator: NSObject {
+    public final class Coordinator: NSObject {
         @Binding private var selection: SecondaryToolbarItemID
         var itemIDs: [SecondaryToolbarItemID]
 
@@ -116,15 +120,15 @@ struct SecondaryToolbarCapsule: NSViewRepresentable {
     }
 }
 
-final class SecondaryToolbarSegmentedControl: NSSegmentedControl {
+public final class SecondaryToolbarSegmentedControl: NSSegmentedControl {
     var segmentItemIDs: [SecondaryToolbarItemID] = []
 
-    override func layout() {
+    public override func layout() {
         super.layout()
         refreshAccessibilityChildren()
     }
 
-    func refreshAccessibilityChildren() {
+    public func refreshAccessibilityChildren() {
         var childElements: [Any] = []
         var xOffset: CGFloat = 0
 

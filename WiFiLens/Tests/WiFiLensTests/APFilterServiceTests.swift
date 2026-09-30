@@ -1,5 +1,6 @@
+@testable import WiFiLensCore
+
 import Testing
-import WiFiLensCore
 @testable import WiFi_Lens
 
 struct FilterConditionTests {

@@ -142,8 +142,8 @@ public struct SecondaryToolbarDescriptor: Equatable, Sendable {
 
     public static func forPage(
         _ page: SidebarPage,
-        spectrum: SecondaryToolbarDescriptor,
-        timeline: SecondaryToolbarDescriptor?
+        spectrum: SecondaryToolbarDescriptor = .spectrum(recordingLocked: true),
+        timeline: SecondaryToolbarDescriptor? = nil
     ) -> Self? {
         switch page {
         case .channels:
