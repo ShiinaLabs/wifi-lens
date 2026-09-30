@@ -36,8 +36,6 @@
 		A3C7A1B2C3D4E5F678900015 /* SpectrumTablePanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C7A1B2C3D4E5F678900003 /* SpectrumTablePanelTests.swift */; };
 		A3C7A1B2C3D4E5F678900016 /* NetworkTableRowSorterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C7A1B2C3D4E5F678900004 /* NetworkTableRowSorterTests.swift */; };
 		A3C7A1B2C3D4E5F678900021 /* SpectrumHeatmapPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C7A1B2C3D4E5F67890000A /* SpectrumHeatmapPanelTests.swift */; };
-		A71200010000000000000003 /* WiFiNetworkIdentityPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A71200010000000000000002 /* WiFiNetworkIdentityPresentation.swift */; };
-		A720C0010000000000000002 /* WiFiConnectionTransitionClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A720C0010000000000000001 /* WiFiConnectionTransitionClassifier.swift */; };
 		C0A7A1B2C3D4E5F678900012 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900006 /* MarkdownKit */; };
 		C0A7A1B2C3D4E5F678900013 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900007 /* MarkdownKit */; };
 		C0A7A1B2C3D4E5F678900014 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900008 /* MarkdownKit */; };
@@ -58,16 +56,12 @@
 		CC0000000000000000000011 /* TimelineFilterPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000010 /* TimelineFilterPanel.swift */; };
 		DBDF66D03BD11B7D5986B87F /* SeverityValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB8408E6A12E8F18E4C2CF7 /* SeverityValidationTests.swift */; };
 		E10000000000000000000002 /* EventJournalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000001 /* EventJournalTests.swift */; };
-		E20000000000000000000002 /* WiFiObservationEventJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000001 /* WiFiObservationEventJournal.swift */; };
 		E30000000000000000000002 /* WiFiObservationEventSQLiteStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000000000000000000001 /* WiFiObservationEventSQLiteStoreTests.swift */; };
 		E4A2B3C4D5E6F708112233B1 /* SpectrumPanelViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A2B3C4D5E6F708112233B0 /* SpectrumPanelViewTests.swift */; };
-		E8A1B534D16CB1175560A807 /* TimelineReportExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0724F9D8C687C53E378D13E2 /* TimelineReportExporter.swift */; };
 		EA1000000000000000000002 /* AnalysisScopeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1000000000000000000001 /* AnalysisScopeTests.swift */; };
-		EA1000000000000000000004 /* AnalysisScope.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1000000000000000000003 /* AnalysisScope.swift */; };
 		EB2000000000000000000002 /* AnalysisSchemaV3MigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2000000000000000000001 /* AnalysisSchemaV3MigrationTests.swift */; };
 		EB2000000000000000000004 /* released-v1.5.0-schema-v2.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = EB2000000000000000000003 /* released-v1.5.0-schema-v2.sqlite */; };
 		EB3000000000000000000002 /* AnalysisObservationCoverageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB3000000000000000000001 /* AnalysisObservationCoverageTests.swift */; };
-		EB4000000000000000000002 /* AnalysisObservationCoverage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4000000000000000000001 /* AnalysisObservationCoverage.swift */; };
 		EC10000000000000000000001 /* EditionCompositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC10000000000000000000002 /* EditionCompositionTests.swift */; };
 		EC10000000000000000000003 /* EditionCompositionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC10000000000000000000005 /* EditionCompositionContext.swift */; };
 		EC10000000000000000000004 /* OSSEditionComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC10000000000000000000006 /* OSSEditionComposition.swift */; };
@@ -80,16 +74,10 @@
 		EC2000000000000000000000C /* ProSpectrumCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000D /* ProSpectrumCompositionView.swift */; };
 		EC20000000000000000000010 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000F /* StatisticsView.swift */; };
 		EC20000000000000000000012 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000011 /* InsightsView.swift */; };
-		EC20000000000000000000014 /* AnalysisDataReadiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000013 /* AnalysisDataReadiness.swift */; };
-		EC20000000000000000000016 /* TimelineStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000017 /* TimelineStatistics.swift */; };
 		EC20000000000000000000018 /* StatisticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000019 /* StatisticsViewModel.swift */; };
-		EC2000000000000000000001A /* Insight.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000001B /* Insight.swift */; };
-		EC2000000000000000000001C /* InsightRuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000001D /* InsightRuleEngine.swift */; };
-		EC2000000000000000000001E /* InitialInsightRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000001F /* InitialInsightRules.swift */; };
 		EC20000000000000000000020 /* InsightsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000021 /* InsightsViewModel.swift */; };
 		EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000023 /* ProReviewRequestBridge.swift */; };
 		EC20000000000000000000026 /* FeedbackContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000025 /* FeedbackContact.swift */; };
-		EC20000000000000000000028 /* DemoAnalysisData.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000027 /* DemoAnalysisData.swift */; };
 		A55100000000000000000010 /* AppStage in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000009 /* AppStage */; };
 		A55100000000000000000017 /* AppStageMac in Frameworks */ = {isa = PBXBuildFile; productRef = A55100000000000000000016 /* AppStageMac */; };
 		A55200000000000000000004 /* AppStageControl in Frameworks */ = {isa = PBXBuildFile; productRef = A55200000000000000000003 /* AppStageControl */; };
@@ -109,7 +97,6 @@
 		A55600000000000000000005 /* ChannelRecommendationDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55600000000000000000006 /* ChannelRecommendationDemoTests.swift */; };
 		A55200000000000000000002 /* ProDemoRuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55200000000000000000001 /* ProDemoRuntimeTests.swift */; };
 		ED1000000000000000000002 /* AnalysisSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1000000000000000000001 /* AnalysisSnapshotTests.swift */; };
-		ED1000000000000000000004 /* AnalysisSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1000000000000000000003 /* AnalysisSnapshot.swift */; };
 		ED2000000000000000000002 /* AnalysisNetworkScopeIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED2000000000000000000001 /* AnalysisNetworkScopeIntegrationTests.swift */; };
 		ED3000000000000000000002 /* AnalysisWorkspaceScenarioValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3000000000000000000001 /* AnalysisWorkspaceScenarioValidationTests.swift */; };
 		ED4000000000000000000002 /* AnalysisReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED4000000000000000000001 /* AnalysisReadinessTests.swift */; };
@@ -191,10 +178,8 @@
 		FBBD169C2FD063630093F940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBBD169B2FD063630093F940 /* Assets.xcassets */; };
 		FBBD169D2FD063630093F940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBBD169B2FD063630093F940 /* Assets.xcassets */; };
 		FBC557F82FDBC43A0013FD7D /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573E02FBD0002005F9001 /* ExportService.swift */; };
-		FBD0A4462FE5BEAC003658AD /* MarkdownReportExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A43C2FE5BEAC003658AD /* MarkdownReportExporter.swift */; };
 		FBD0A4472FE5BEAC003658AD /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4392FE5BEAC003658AD /* SessionStore.swift */; };
 		FBD0A4482FE5BEAC003658AD /* RecordingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4352FE5BEAC003658AD /* RecordingView.swift */; };
-		FBD0A4492FE5BEAC003658AD /* ScanSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4382FE5BEAC003658AD /* ScanSession.swift */; };
 		FBD0A44A2FE5BEAC003658AD /* RecordingTimelineChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4342FE5BEAC003658AD /* RecordingTimelineChart.swift */; };
 		FBD0A44B2FE5BEAC003658AD /* MarkdownExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A43B2FE5BEAC003658AD /* MarkdownExportService.swift */; };
 		FBD0A44C2FE5BEAC003658AD /* RecordingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4362FE5BEAC003658AD /* RecordingViewModel.swift */; };
@@ -205,7 +190,6 @@
 		FBD0A46C2FE5C06000000019 /* SparklineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A46B2FE5C06000000018 /* SparklineView.swift */; };
 		FBD0A47F2FE5C0600000002C /* ProObservationEventBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A47C2FE5C06000000029 /* ProObservationEventBootstrap.swift */; };
 		FBD0A4802FE5C0600000002D /* TimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4822FE5C0600000002F /* TimelineView.swift */; };
-		FBD0A4812FE5C0600000002E /* TimelineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4832FE5C06000000030 /* TimelineViewModel.swift */; };
 		FBD329502FC500000057B038 /* MetricKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD329512FC500000057B038 /* MetricKitManager.swift */; };
 		FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */; };
 		FBD7B34B2FBAED65002C8F5A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */; };
@@ -252,13 +236,17 @@
 		ND000000000000000000010D /* NetworkDiagnosticsDNSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ND000000000000000000010E /* NetworkDiagnosticsDNSTests.swift */; };
 		ND000000000000000000010F /* NetworkDiagnosticsProxyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ND0000000000000000000110 /* NetworkDiagnosticsProxyTests.swift */; };
 		ND0000000000000000000111 /* NetworkDiagnosticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ND0000000000000000000112 /* NetworkDiagnosticsViewModelTests.swift */; };
-		OB0000000000000000000029 /* WiFiObservationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB0000000000000000000009 /* WiFiObservationEvent.swift */; };
-		OB0000000000000000000076 /* RoamingEventDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB0000000000000000000056 /* RoamingEventDetector.swift */; };
 		OB00000000000000000000A9 /* MockProviders.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000A8 /* MockProviders.swift */; };
 		OB00000000000000000000B3 /* RoamingMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B2 /* RoamingMigrationTests.swift */; };
 		OB00000000000000000000B5 /* DiagnosticMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */; };
-		OB00000000000000000000C2 /* WiFiObservationEventSQLiteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000C0 /* WiFiObservationEventSQLiteStore.swift */; };
 		OB00000000000000000000D4 /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000D1 /* RuntimeTests.swift */; };
+		B0B000000000000000000001 /* WiFiLensProCore in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000004 /* WiFiLensProCore */; };
+		B0B000000000000000000002 /* WiFiLensProCore in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000005 /* WiFiLensProCore */; };
+		B0B000000000000000000007 /* WiFiLensCore in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000006 /* WiFiLensCore */; };
+		B0B00000000000000000000C /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000008 /* ChartLens */; };
+		B0B00000000000000000000D /* SplitView in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000009 /* SplitView */; };
+		B0B00000000000000000000E /* AppStage in Frameworks */ = {isa = PBXBuildFile; productRef = B0B00000000000000000000A /* AppStage */; };
+		B0B00000000000000000000F /* AppStageControl in Frameworks */ = {isa = PBXBuildFile; productRef = B0B00000000000000000000B /* AppStageControl */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -293,7 +281,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0724F9D8C687C53E378D13E2 /* TimelineReportExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineReportExporter.swift; sourceTree = "<group>"; };
 		08D4F1A65F0142A18B9C161 /* LoggingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggingTests.swift; sourceTree = "<group>"; };
 		1067F6AA96EC6320C6472F59 /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
 		1D2B21285BDCF1A6FD3E42C8 /* TimelineReportExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineReportExporterTests.swift; sourceTree = "<group>"; };
@@ -320,8 +307,6 @@
 		A3C7A1B2C3D4E5F678900003 /* SpectrumTablePanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumTablePanelTests.swift; sourceTree = "<group>"; };
 		A3C7A1B2C3D4E5F678900004 /* NetworkTableRowSorterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTableRowSorterTests.swift; sourceTree = "<group>"; };
 		A3C7A1B2C3D4E5F67890000A /* SpectrumHeatmapPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapPanelTests.swift; sourceTree = "<group>"; };
-		A71200010000000000000002 /* WiFiNetworkIdentityPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiNetworkIdentityPresentation.swift; sourceTree = "<group>"; };
-		A720C0010000000000000001 /* WiFiConnectionTransitionClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiConnectionTransitionClassifier.swift; sourceTree = "<group>"; };
 		ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugMultiAPScenarioTests.swift; sourceTree = "<group>"; };
 		ADB001000000000000000003 /* DebugMultiAPScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugMultiAPScenario.swift; sourceTree = "<group>"; };
 		B05D236E635B93825959AC92 /* TimelineLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineLocalizationTests.swift; sourceTree = "<group>"; };
@@ -339,16 +324,13 @@
 		CC0000000000000000000010 /* TimelineFilterPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimelineFilterPanel.swift; path = ../Pro/Timeline/TimelineFilterPanel.swift; sourceTree = SOURCE_ROOT; };
 		D92298452F334CDAAA9695D3 /* WindowFramePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicyTests.swift; sourceTree = "<group>"; };
 		E10000000000000000000001 /* EventJournalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventJournalTests.swift; sourceTree = "<group>"; };
-		E20000000000000000000001 /* WiFiObservationEventJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiObservationEventJournal.swift; sourceTree = "<group>"; };
 		E30000000000000000000001 /* WiFiObservationEventSQLiteStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiObservationEventSQLiteStoreTests.swift; sourceTree = "<group>"; };
 		E4A2B3C4D5E6F708112233B0 /* SpectrumPanelViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumPanelViewTests.swift; sourceTree = "<group>"; };
 		E83547C1A36ADDD9E827B26A /* ChartUtilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartUtilityTests.swift; sourceTree = "<group>"; };
 		EA1000000000000000000001 /* AnalysisScopeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisScopeTests.swift; sourceTree = "<group>"; };
-		EA1000000000000000000003 /* AnalysisScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisScope.swift; sourceTree = "<group>"; };
 		EB2000000000000000000001 /* AnalysisSchemaV3MigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSchemaV3MigrationTests.swift; sourceTree = "<group>"; };
 		EB2000000000000000000003 /* released-v1.5.0-schema-v2.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "released-v1.5.0-schema-v2.sqlite"; sourceTree = "<group>"; };
 		EB3000000000000000000001 /* AnalysisObservationCoverageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisObservationCoverageTests.swift; sourceTree = "<group>"; };
-		EB4000000000000000000001 /* AnalysisObservationCoverage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisObservationCoverage.swift; sourceTree = "<group>"; };
 		EC10000000000000000000002 /* EditionCompositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionCompositionTests.swift; sourceTree = "<group>"; };
 		EC10000000000000000000005 /* EditionCompositionContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionCompositionContext.swift; sourceTree = "<group>"; };
 		EC10000000000000000000006 /* OSSEditionComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSSEditionComposition.swift; sourceTree = "<group>"; };
@@ -360,16 +342,10 @@
 		EC2000000000000000000000D /* ProSpectrumCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSpectrumCompositionView.swift; sourceTree = "<group>"; };
 		EC2000000000000000000000F /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
 		EC20000000000000000000011 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
-		EC20000000000000000000013 /* AnalysisDataReadiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisDataReadiness.swift; sourceTree = "<group>"; };
-		EC20000000000000000000017 /* TimelineStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineStatistics.swift; sourceTree = "<group>"; };
 		EC20000000000000000000019 /* StatisticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModel.swift; sourceTree = "<group>"; };
-		EC2000000000000000000001B /* Insight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Insight.swift; sourceTree = "<group>"; };
-		EC2000000000000000000001D /* InsightRuleEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightRuleEngine.swift; sourceTree = "<group>"; };
-		EC2000000000000000000001F /* InitialInsightRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialInsightRules.swift; sourceTree = "<group>"; };
 		EC20000000000000000000021 /* InsightsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsViewModel.swift; sourceTree = "<group>"; };
 		EC20000000000000000000023 /* ProReviewRequestBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProReviewRequestBridge.swift; sourceTree = "<group>"; };
 		EC20000000000000000000025 /* FeedbackContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackContact.swift; sourceTree = "<group>"; };
-		EC20000000000000000000027 /* DemoAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAnalysisData.swift; sourceTree = "<group>"; };
 		A55100000000000000000001 /* ProDemoLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoLaunch.swift; sourceTree = "<group>"; };
 		A55100000000000000000002 /* ProDemoCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoCoordinator.swift; sourceTree = "<group>"; };
 		A55100000000000000000003 /* RoamingHandoffScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingHandoffScenario.swift; sourceTree = "<group>"; };
@@ -386,7 +362,6 @@
 		A55600000000000000000006 /* ChannelRecommendationDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelRecommendationDemoTests.swift; sourceTree = "<group>"; };
 		A55200000000000000000001 /* ProDemoRuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProDemoRuntimeTests.swift; sourceTree = "<group>"; };
 		ED1000000000000000000001 /* AnalysisSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSnapshotTests.swift; sourceTree = "<group>"; };
-		ED1000000000000000000003 /* AnalysisSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisSnapshot.swift; sourceTree = "<group>"; };
 		ED2000000000000000000001 /* AnalysisNetworkScopeIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisNetworkScopeIntegrationTests.swift; sourceTree = "<group>"; };
 		ED3000000000000000000001 /* AnalysisWorkspaceScenarioValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisWorkspaceScenarioValidationTests.swift; sourceTree = "<group>"; };
 		ED4000000000000000000001 /* AnalysisReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisReadinessTests.swift; sourceTree = "<group>"; };
@@ -444,10 +419,8 @@
 		FBD0A4342FE5BEAC003658AD /* RecordingTimelineChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingTimelineChart.swift; sourceTree = "<group>"; };
 		FBD0A4352FE5BEAC003658AD /* RecordingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingView.swift; sourceTree = "<group>"; };
 		FBD0A4362FE5BEAC003658AD /* RecordingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingViewModel.swift; sourceTree = "<group>"; };
-		FBD0A4382FE5BEAC003658AD /* ScanSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanSession.swift; sourceTree = "<group>"; };
 		FBD0A4392FE5BEAC003658AD /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		FBD0A43B2FE5BEAC003658AD /* MarkdownExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExportService.swift; sourceTree = "<group>"; };
-		FBD0A43C2FE5BEAC003658AD /* MarkdownReportExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownReportExporter.swift; sourceTree = "<group>"; };
 		FBD0A43E2FE5BEAC003658AD /* PRO.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = PRO.xctestplan; path = ../../../Pro/Tests/TestPlans/PRO.xctestplan; sourceTree = "<group>"; };
 		FBD0A4402FE5BEAC003658AD /* RecordingModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingModeTests.swift; sourceTree = "<group>"; };
 		FBD0A4502FE5BF24003658AD /* WiFiLensPro-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WiFiLensPro-Info.plist"; path = "../Pro/WiFiLensPro-Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -457,7 +430,6 @@
 		FBD0A46B2FE5C06000000018 /* SparklineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineView.swift; sourceTree = "<group>"; };
 		FBD0A47C2FE5C06000000029 /* ProObservationEventBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProObservationEventBootstrap.swift; sourceTree = "<group>"; };
 		FBD0A4822FE5C0600000002F /* TimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineView.swift; sourceTree = "<group>"; };
-		FBD0A4832FE5C06000000030 /* TimelineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineViewModel.swift; sourceTree = "<group>"; };
 		FBD329512FC500000057B038 /* MetricKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKitManager.swift; sourceTree = "<group>"; };
 		FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparkleUpdater.swift; sourceTree = "<group>"; };
 		FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -496,12 +468,9 @@
 		ND000000000000000000010E /* NetworkDiagnosticsDNSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsDNSTests.swift; sourceTree = "<group>"; };
 		ND0000000000000000000110 /* NetworkDiagnosticsProxyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsProxyTests.swift; sourceTree = "<group>"; };
 		ND0000000000000000000112 /* NetworkDiagnosticsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsViewModelTests.swift; sourceTree = "<group>"; };
-		OB0000000000000000000009 /* WiFiObservationEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiObservationEvent.swift; sourceTree = "<group>"; };
-		OB0000000000000000000056 /* RoamingEventDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingEventDetector.swift; sourceTree = "<group>"; };
 		OB00000000000000000000A8 /* MockProviders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockProviders.swift; sourceTree = "<group>"; };
 		OB00000000000000000000B2 /* RoamingMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticMigrationTests.swift; sourceTree = "<group>"; };
-		OB00000000000000000000C0 /* WiFiObservationEventSQLiteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiObservationEventSQLiteStore.swift; sourceTree = "<group>"; };
 		OB00000000000000000000D1 /* RuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -547,6 +516,7 @@
 				A55100000000000000000017 /* AppStageMac in Frameworks */,
 				A55200000000000000000004 /* AppStageControl in Frameworks */,
 				F9A000000000000000000002 /* WiFiLensCore in Frameworks */,
+				B0B000000000000000000001 /* WiFiLensProCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -554,6 +524,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B0B00000000000000000000F /* AppStageControl in Frameworks */,
+				B0B00000000000000000000E /* AppStage in Frameworks */,
+				B0B00000000000000000000D /* SplitView in Frameworks */,
+				B0B00000000000000000000C /* ChartLens in Frameworks */,
+				B0B000000000000000000007 /* WiFiLensCore in Frameworks */, 
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -562,6 +537,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A7A1B2C3D4E5F678900014 /* MarkdownKit in Frameworks */,
+				B0B000000000000000000002 /* WiFiLensProCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -666,7 +642,6 @@
 		A71200010000000000000001 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
-				A71200010000000000000002 /* WiFiNetworkIdentityPresentation.swift */,
 			);
 			path = Presentation;
 			sourceTree = "<group>";
@@ -809,15 +784,6 @@
 		EC20000000000000000000015 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
-				EA1000000000000000000003 /* AnalysisScope.swift */,
-				EB4000000000000000000001 /* AnalysisObservationCoverage.swift */,
-				EC20000000000000000000013 /* AnalysisDataReadiness.swift */,
-				EC20000000000000000000017 /* TimelineStatistics.swift */,
-				EC20000000000000000000027 /* DemoAnalysisData.swift */,
-				ED1000000000000000000003 /* AnalysisSnapshot.swift */,
-				EC2000000000000000000001B /* Insight.swift */,
-				EC2000000000000000000001D /* InsightRuleEngine.swift */,
-				EC2000000000000000000001F /* InitialInsightRules.swift */,
 			);
 			path = Analysis;
 			sourceTree = "<group>";
@@ -947,7 +913,6 @@
 		FBD0A43A2FE5BEAC003658AD /* Session */ = {
 			isa = PBXGroup;
 			children = (
-				FBD0A4382FE5BEAC003658AD /* ScanSession.swift */,
 				FBD0A4392FE5BEAC003658AD /* SessionStore.swift */,
 			);
 			path = Session;
@@ -957,8 +922,6 @@
 			isa = PBXGroup;
 			children = (
 				FBD0A43B2FE5BEAC003658AD /* MarkdownExportService.swift */,
-				FBD0A43C2FE5BEAC003658AD /* MarkdownReportExporter.swift */,
-				0724F9D8C687C53E378D13E2 /* TimelineReportExporter.swift */,
 			);
 			path = SnapshotExport;
 			sourceTree = "<group>";
@@ -1054,11 +1017,6 @@
 		FBD0A4762FE5C06000000023 /* Events */ = {
 			isa = PBXGroup;
 			children = (
-				E20000000000000000000001 /* WiFiObservationEventJournal.swift */,
-				OB0000000000000000000009 /* WiFiObservationEvent.swift */,
-				A720C0010000000000000001 /* WiFiConnectionTransitionClassifier.swift */,
-				OB0000000000000000000056 /* RoamingEventDetector.swift */,
-				OB00000000000000000000C0 /* WiFiObservationEventSQLiteStore.swift */,
 				FBD0A47C2FE5C06000000029 /* ProObservationEventBootstrap.swift */,
 			);
 			path = Events;
@@ -1068,7 +1026,6 @@
 			isa = PBXGroup;
 			children = (
 				FBD0A4822FE5C0600000002F /* TimelineView.swift */,
-				FBD0A4832FE5C06000000030 /* TimelineViewModel.swift */,
 			);
 			path = Timeline;
 			sourceTree = "<group>";
@@ -1350,6 +1307,7 @@
 				A55100000000000000000016 /* AppStageMac */,
 				A55200000000000000000003 /* AppStageControl */,
 				F9A000000000000000000005 /* WiFiLensCore */,
+				B0B000000000000000000004 /* WiFiLensProCore */,
 			);
 			productName = WiFiLens;
 			productReference = FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */;
@@ -1370,6 +1328,12 @@
 			);
 			name = WiFiLensProTests;
 			packageProductDependencies = (
+				F9A000000000000000000006 /* WiFiLensCore */,
+				B0B000000000000000000005 /* WiFiLensProCore */,
+				B0B00000000000000000000B /* AppStageControl */,
+				B0B00000000000000000000A /* AppStage */,
+				B0B000000000000000000009 /* SplitView */,
+				B0B000000000000000000008 /* ChartLens */,
 			);
 			productName = WiFiLensProTests;
 			productReference = FB8FCAE72FF6BCA700BB2929 /* WiFiLensProTests.xctest */;
@@ -1460,6 +1424,7 @@
 				C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
 				A55100000000000000000008 /* XCRemoteSwiftPackageReference "AppStage" */,
 				F9A000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensCore" */,
+				B0B000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensProCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BD4D8FFAAD7E961D9EE4F5FE /* Products */;
@@ -1647,26 +1612,14 @@
 				EC2000000000000000000000C /* ProSpectrumCompositionView.swift in Sources */,
 				EC20000000000000000000010 /* StatisticsView.swift in Sources */,
 				EC20000000000000000000012 /* InsightsView.swift in Sources */,
-				EA1000000000000000000004 /* AnalysisScope.swift in Sources */,
-				EB4000000000000000000002 /* AnalysisObservationCoverage.swift in Sources */,
-				EC20000000000000000000014 /* AnalysisDataReadiness.swift in Sources */,
-				EC20000000000000000000016 /* TimelineStatistics.swift in Sources */,
-				ED1000000000000000000004 /* AnalysisSnapshot.swift in Sources */,
-				EC20000000000000000000028 /* DemoAnalysisData.swift in Sources */,
 				EC20000000000000000000018 /* StatisticsViewModel.swift in Sources */,
-				EC2000000000000000000001A /* Insight.swift in Sources */,
-				EC2000000000000000000001C /* InsightRuleEngine.swift in Sources */,
-				EC2000000000000000000001E /* InitialInsightRules.swift in Sources */,
 				EC20000000000000000000020 /* InsightsViewModel.swift in Sources */,
 				EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */,
 				EC20000000000000000000026 /* FeedbackContact.swift in Sources */,
-				FBD0A4462FE5BEAC003658AD /* MarkdownReportExporter.swift in Sources */,
 				FBD0A4472FE5BEAC003658AD /* SessionStore.swift in Sources */,
 				FBD0A4482FE5BEAC003658AD /* RecordingView.swift in Sources */,
-				FBD0A4492FE5BEAC003658AD /* ScanSession.swift in Sources */,
 				FBD0A44A2FE5BEAC003658AD /* RecordingTimelineChart.swift in Sources */,
 				FBD0A44B2FE5BEAC003658AD /* MarkdownExportService.swift in Sources */,
-				E8A1B534D16CB1175560A807 /* TimelineReportExporter.swift in Sources */,
 				FBD0A44C2FE5BEAC003658AD /* RecordingViewModel.swift in Sources */,
 				FB1E32612FC7316C009D1BDC /* SparkleUpdater.swift in Sources */,
 				FB1E32672FC7316C009D1BDC /* CrashReporter.swift in Sources */,
@@ -1703,15 +1656,8 @@
 				FBD0A45D2FE5C0600000000A /* MenuBarStatusViewModel.swift in Sources */,
 				FBD0A4602FE5C0600000000D /* MenuBarStatusView.swift in Sources */,
 				FBD0A46C2FE5C06000000019 /* SparklineView.swift in Sources */,
-				E20000000000000000000002 /* WiFiObservationEventJournal.swift in Sources */,
-				A71200010000000000000003 /* WiFiNetworkIdentityPresentation.swift in Sources */,
 				FBD0A47F2FE5C0600000002C /* ProObservationEventBootstrap.swift in Sources */,
 				FBD0A4802FE5C0600000002D /* TimelineView.swift in Sources */,
-				FBD0A4812FE5C0600000002E /* TimelineViewModel.swift in Sources */,
-				OB0000000000000000000029 /* WiFiObservationEvent.swift in Sources */,
-				A720C0010000000000000002 /* WiFiConnectionTransitionClassifier.swift in Sources */,
-				OB0000000000000000000076 /* RoamingEventDetector.swift in Sources */,
-				OB00000000000000000000C2 /* WiFiObservationEventSQLiteStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2474,6 +2420,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Modules/WiFiLensCore;
 		};
+		B0B000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensProCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Pro/Modules/WiFiLensProCore;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -2562,6 +2512,25 @@
 			package = F9A000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensCore" */;
 			productName = WiFiLensCore;
 		};
+		B0B000000000000000000004 /* WiFiLensProCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0B000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensProCore" */;
+			productName = WiFiLensProCore;
+		};
+		B0B000000000000000000005 /* WiFiLensProCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0B000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensProCore" */;
+			productName = WiFiLensProCore;
+		};
+		F9A000000000000000000006 /* WiFiLensCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F9A000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensCore" */;
+			productName = WiFiLensCore;
+		};
+		B0B000000000000000000008 /* ChartLens */ = {isa = XCSwiftPackageProductDependency; package = C0A7A1B2C3D4E5F678900001 /* package */; productName = ChartLens; };
+		B0B000000000000000000009 /* SplitView */ = {isa = XCSwiftPackageProductDependency; package = C0A7A1B2C3D4E5F678900002 /* package */; productName = SplitView; };
+		B0B00000000000000000000A /* AppStage */ = {isa = XCSwiftPackageProductDependency; package = A55100000000000000000008 /* package */; productName = AppStage; };
+		B0B00000000000000000000B /* AppStageControl */ = {isa = XCSwiftPackageProductDependency; package = A55100000000000000000008 /* package */; productName = AppStageControl; };
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 70C77BA3C6064FF4D1D77E59 /* Project object */;
