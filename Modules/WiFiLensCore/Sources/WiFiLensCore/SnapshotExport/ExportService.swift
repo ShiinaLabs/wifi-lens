@@ -1,16 +1,15 @@
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
-import WiFiLensCore
 
 /// Shared PNG snapshot export service used by both editions.
 /// Composites all visible band charts into a single high-resolution PNG image.
 @MainActor
-enum ExportService {
+public enum ExportService {
 
     // MARK: - Image Export
 
-    static func exportImage(viewModel: ScannerViewModel) {
+    public static func exportImage(viewModel: ScannerViewModel, configuration: WiFiLensEditionConfiguration) {
         let bands = viewModel.bandViewModels.filter { !viewModel.hiddenBands.contains($0.band.id) }
         guard !bands.isEmpty else {
             showError(String(localized: "export.error.no_visible_bands", comment: "No visible bands to export"))
@@ -80,11 +79,11 @@ enum ExportService {
                         // non-modal banner (which records the moment), Pro keeps its
                         // existing success alert and records the moment for rating
                         // eligibility only.
-                        switch EditionAssemblyProvider.configuration.exportSuccessPresentation {
+                        switch configuration.exportSuccessPresentation {
                         case .banner:
-                            EditionAssemblyProvider.configuration.guidanceCoordinator.handleExportSucceeded()
+                            configuration.guidanceCoordinator.handleExportSucceeded()
                         case .preserveExisting:
-                            EditionAssemblyProvider.configuration.guidanceCoordinator.record(.exportSucceeded)
+                            configuration.guidanceCoordinator.record(.exportSucceeded)
                             showSuccess(String(localized: "export.image_saved_message", comment: "Chart image exported successfully"))
                         }
                     }

@@ -1063,7 +1063,7 @@ struct WiFiLensApp: App {
     /// brand-new install (Swift storage properties initialize in declaration
     /// order).
     private let onboardingCoordinator: OnboardingCoordinator = {
-        let coordinator = OnboardingCoordinator.shared
+        let coordinator = EditionAssemblyProvider.onboardingCoordinator
         if !UITestMode.isActive,
            !EditionAppShell.isControlledDemoSession,
            ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
@@ -1487,7 +1487,7 @@ struct WiFiLensApp: App {
 
     @MainActor
     private func exportSnapshotImage() {
-        ExportService.exportImage(viewModel: viewModel)
+        ExportService.exportImage(viewModel: viewModel, configuration: EditionAssemblyProvider.configuration)
     }
 
     @MainActor

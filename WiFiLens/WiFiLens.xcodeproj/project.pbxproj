@@ -107,7 +107,6 @@
 		FB0573C12FBBFC31005F8215 /* ProFeaturePlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573C02FBBFC31005F8215 /* ProFeaturePlaceholderView.swift */; };
 		FB0573C22FBC47F1005F8214 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573C12FBC47F1005F8214 /* CrashReporter.swift */; };
 		FB0573C422FBBEAE4005F8214 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = FB0573C412FBBEAE4005F8214 /* Logging */; };
-		FB0573E32FBD0002005F9004 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573E02FBD0002005F9001 /* ExportService.swift */; };
 		FB05A7A12FD1A0F100B5C801 /* WindowFramePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB05A7A02FD1A0F100B5C801 /* WindowFramePolicy.swift */; };
 		FB1E32612FC7316C009D1BDC /* SparkleUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */; };
 		FB1E32672FC7316C009D1BDC /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573C12FBC47F1005F8214 /* CrashReporter.swift */; };
@@ -169,7 +168,6 @@
 		FBBD169A2FD062F60093F940 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FBBD16982FD062F60093F940 /* PrivacyInfo.xcprivacy */; };
 		FBBD169C2FD063630093F940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBBD169B2FD063630093F940 /* Assets.xcassets */; };
 		FBBD169D2FD063630093F940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBBD169B2FD063630093F940 /* Assets.xcassets */; };
-		FBC557F82FDBC43A0013FD7D /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573E02FBD0002005F9001 /* ExportService.swift */; };
 		FBD0A4472FE5BEAC003658AD /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4392FE5BEAC003658AD /* SessionStore.swift */; };
 		FBD0A4482FE5BEAC003658AD /* RecordingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4352FE5BEAC003658AD /* RecordingView.swift */; };
 		FBD0A44A2FE5BEAC003658AD /* RecordingTimelineChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4342FE5BEAC003658AD /* RecordingTimelineChart.swift */; };
@@ -187,10 +185,6 @@
 		FBD7B34B2FBAED65002C8F5A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */; };
 		G900000000000000000000A7 /* ExistingInstallationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A6 /* ExistingInstallationDetector.swift */; };
 		G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A6 /* ExistingInstallationDetector.swift */; };
-		G900000000000000000000B0 /* OnboardingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A9 /* OnboardingCoordinator.swift */; };
-		G900000000000000000000B1 /* OnboardingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000A9 /* OnboardingCoordinator.swift */; };
-		G900000000000000000000B6 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B5 /* WelcomeView.swift */; };
-		G900000000000000000000B7 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B5 /* WelcomeView.swift */; };
 		G900000000000000000000B9 /* OnboardingStateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000B8 /* OnboardingStateStoreTests.swift */; };
 		G900000000000000000000BC /* GuidanceStateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000AC /* GuidanceStateStoreTests.swift */; };
 		G900000000000000000000BF /* GuidancePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = G900000000000000000000AD /* GuidancePolicyTests.swift */; };
@@ -363,7 +357,6 @@
 		FB0573BF2FBC47CC005F8214 /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
 		FB0573C02FBBFC31005F8215 /* ProFeaturePlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProFeaturePlaceholderView.swift; sourceTree = "<group>"; };
 		FB0573C12FBC47F1005F8214 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
-		FB0573E02FBD0002005F9001 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		FB05A7A02FD1A0F100B5C801 /* WindowFramePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicy.swift; sourceTree = "<group>"; };
 		FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "WiFi Lens Pro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
@@ -419,10 +412,8 @@
 		FBD7B3482FBAED57002C8F5A /* SparkleUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparkleUpdater.swift; sourceTree = "<group>"; };
 		FBD7B34A2FBAED65002C8F5A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		G900000000000000000000A6 /* ExistingInstallationDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExistingInstallationDetector.swift; sourceTree = "<group>"; };
-		G900000000000000000000A9 /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
 		G900000000000000000000AC /* GuidanceStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidanceStateStoreTests.swift; sourceTree = "<group>"; };
 		G900000000000000000000AD /* GuidancePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidancePolicyTests.swift; sourceTree = "<group>"; };
-		G900000000000000000000B5 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		G900000000000000000000B8 /* OnboardingStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStateStoreTests.swift; sourceTree = "<group>"; };
 		G900000000000000000000C0 /* OnboardingCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinatorTests.swift; sourceTree = "<group>"; };
 		G900000000000000000000C6 /* OnboardingEditionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingEditionTests.swift; sourceTree = "<group>"; };
@@ -772,7 +763,6 @@
 		FB0573E82FBD0002005F9009 /* SnapshotExport */ = {
 			isa = PBXGroup;
 			children = (
-				FB0573E02FBD0002005F9001 /* ExportService.swift */,
 			);
 			path = SnapshotExport;
 			sourceTree = "<group>";
@@ -1087,8 +1077,6 @@
 			isa = PBXGroup;
 			children = (
 				G900000000000000000000A6 /* ExistingInstallationDetector.swift */,
-				G900000000000000000000A9 /* OnboardingCoordinator.swift */,
-				G900000000000000000000B5 /* WelcomeView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -1476,8 +1464,6 @@
 				MV0000000000000000000035 /* MACVendorDatabaseSettingsSection.swift in Sources */,
 				MV0000000000000000000037 /* MACVendorDatabaseUpdateSheet.swift in Sources */,
 				G900000000000000000000A7 /* ExistingInstallationDetector.swift in Sources */,
-				G900000000000000000000B0 /* OnboardingCoordinator.swift in Sources */,
-				G900000000000000000000B6 /* WelcomeView.swift in Sources */,
 				FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */,
 				FB0573C22FBC47F1005F8214 /* CrashReporter.swift in Sources */,
 				FBD329502FC500000057B038 /* MetricKitManager.swift in Sources */,
@@ -1496,7 +1482,6 @@
 				FB69776630414AD400F9B20E /* WhatsNewStateStore.swift in Sources */,
 				FB69776730414AD400F9B20E /* WhatsNewSheetView.swift in Sources */,
 				FB69776830414AD400F9B20E /* WhatsNewCoordinator.swift in Sources */,
-				FB0573E32FBD0002005F9004 /* ExportService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1567,8 +1552,6 @@
 				MV0000000000000000000036 /* MACVendorDatabaseSettingsSection.swift in Sources */,
 				MV0000000000000000000038 /* MACVendorDatabaseUpdateSheet.swift in Sources */,
 				G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */,
-				G900000000000000000000B1 /* OnboardingCoordinator.swift in Sources */,
-				G900000000000000000000B7 /* WelcomeView.swift in Sources */,
 				EC20000000000000000000004 /* ProEditionComposition.swift in Sources */,
 				A55100000000000000000011 /* ProDemoLaunch.swift in Sources */,
 				A55100000000000000000012 /* ProDemoCoordinator.swift in Sources */,
@@ -1621,7 +1604,6 @@
 				FB69776B30414AD400F9B20E /* WhatsNewCoordinator.swift in Sources */,
 				FB1E327E2FC7316C009D1BDC /* Logging.swift in Sources */,
 				FB1E328A2FC7316C009D1BDC /* SettingsView.swift in Sources */,
-				FBC557F82FDBC43A0013FD7D /* ExportService.swift in Sources */,
 				FBD0A45A2FE5C06000000007 /* MenuBarScene.swift in Sources */,
 				FBD0A45D2FE5C0600000000A /* MenuBarStatusViewModel.swift in Sources */,
 				FBD0A4602FE5C0600000000D /* MenuBarStatusView.swift in Sources */,

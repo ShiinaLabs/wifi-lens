@@ -1,5 +1,4 @@
 import Foundation
-import WiFiLensCore
 import Logging
 import Observation
 
@@ -9,27 +8,21 @@ import Observation
 /// welcome at a time. Never touches `GuidanceState`, `GuidanceCoordinator`,
 /// Timeline, or any permission API.
 @MainActor @Observable
-final class OnboardingCoordinator {
-    static let shared = OnboardingCoordinator(
-        store: UserDefaultsOnboardingStateStore(),
-        existingInstallationDetector: EditionAssemblyProvider.configuration.shellHooks.makeOnboardingExistingInstallationDetector(),
-        welcomeEnabled: EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled
-    )
-
+public final class OnboardingCoordinator {
     /// The main window currently hosting the welcome, if any. Process-memory
     /// only; never persisted.
-    private(set) var welcomeHostID: UUID?
+    public private(set) var welcomeHostID: UUID?
 
     /// Debug-only force-show request. Process-memory only.
     #if DEBUG
-    private(set) var debugShowRequested = false
+    public private(set) var debugShowRequested = false
     #endif
 
     private let store: any OnboardingStateStoring
     private let existingInstallationDetector: any ExistingInstallationDetecting
     private let welcomeEnabled: Bool
 
-    init(
+    public init(
         store: any OnboardingStateStoring,
         existingInstallationDetector: any ExistingInstallationDetecting,
         welcomeEnabled: Bool = true
@@ -39,7 +32,7 @@ final class OnboardingCoordinator {
         self.welcomeEnabled = welcomeEnabled
     }
 
-    var hasCompletedWelcome: Bool {
+    public var hasCompletedWelcome: Bool {
         store.load().hasCompletedWelcome
     }
 
@@ -51,7 +44,7 @@ final class OnboardingCoordinator {
     /// permanently locks the classification, so a marker that appears later
     /// (e.g. Sparkle writing `SUEnableAutomaticChecks` after first launch)
     /// can never re-migrate an incomplete clean install into "completed".
-    func migrateExistingInstallationIfNeeded() {
+    public func migrateExistingInstallationIfNeeded() {
         guard !store.hasStoredState() else { return }
         store.save(OnboardingState(
             hasCompletedWelcome: existingInstallationDetector.hasExistingInstallationEvidence()
@@ -63,7 +56,7 @@ final class OnboardingCoordinator {
     /// A host window claims the welcome. Only one host succeeds at a time;
     /// a later host is refused until the current host releases or completes.
     @discardableResult
-    func claimWelcome(hostID: UUID) -> Bool {
+    public func claimWelcome(hostID: UUID) -> Bool {
         guard welcomeEnabled else { return false }
         guard !hasCompletedWelcome else { return false }
         guard welcomeHostID == nil || welcomeHostID == hostID else { return false }
@@ -73,7 +66,7 @@ final class OnboardingCoordinator {
 
     /// Host disappeared without any explicit user action. Does not mark
     /// completion; a later host may claim again.
-    func releaseWelcome(hostID: UUID) {
+    public func releaseWelcome(hostID: UUID) {
         guard welcomeHostID == hostID else { return }
         welcomeHostID = nil
     }
@@ -82,14 +75,14 @@ final class OnboardingCoordinator {
 
     /// `Start Analyzing`: marks complete and returns the route to navigate
     /// to exactly once.
-    func completeWelcomeStart(hostID: UUID, startRoute: SidebarPage?) -> SidebarPage? {
+    public func completeWelcomeStart(hostID: UUID, startRoute: SidebarPage?) -> SidebarPage? {
         guard welcomeHostID == hostID else { return nil }
         markCompleted()
         return startRoute
     }
 
     /// `Skip` or the explicit close button: marks complete without routing.
-    func completeWelcomeWithoutRouting(hostID: UUID) {
+    public func completeWelcomeWithoutRouting(hostID: UUID) {
         guard welcomeHostID == hostID else { return }
         markCompleted()
     }
@@ -97,7 +90,7 @@ final class OnboardingCoordinator {
     /// OSS `Learn about WiFi Lens Pro`: completes only when the system
     /// accepted opening the campaign URL. On failure the welcome stays up
     /// and nothing is persisted.
-    func completeWelcomeAfterOpeningProURL(hostID: UUID, openedSuccessfully: Bool) {
+    public func completeWelcomeAfterOpeningProURL(hostID: UUID, openedSuccessfully: Bool) {
         guard welcomeHostID == hostID else { return }
         guard openedSuccessfully else { return }
         markCompleted()
@@ -116,7 +109,7 @@ final class OnboardingCoordinator {
     /// Clears only onboarding state: the completion flag, any in-memory host
     /// claim, and any force-show request. Never touches guidance, Timeline,
     /// or user settings.
-    func debugReset() {
+    public func debugReset() {
         store.save(OnboardingState())
         welcomeHostID = nil
         debugShowRequested = false
@@ -125,14 +118,14 @@ final class OnboardingCoordinator {
     /// Requests the welcome regardless of completion or clean-install state.
     /// The actual sheet still goes through the real host claim and the real
     /// `WelcomeView`; the first visible main window consumes the request.
-    func debugRequestShowWelcome() {
+    public func debugRequestShowWelcome() {
         guard welcomeEnabled else { return }
         store.save(OnboardingState())
         welcomeHostID = nil
         debugShowRequested = true
     }
 
-    func consumeDebugShowRequest() -> Bool {
+    public func consumeDebugShowRequest() -> Bool {
         guard debugShowRequested else { return false }
         debugShowRequested = false
         return true
@@ -140,7 +133,7 @@ final class OnboardingCoordinator {
 
     /// Emits a sanitized state summary. No UUIDs, tokens, SSIDs, URLs, or
     /// user identity.
-    func debugLogState(edition: String) {
+    public func debugLogState(edition: String) {
         let state = store.load()
         let hasHost = welcomeHostID != nil
         let hasExistingInstallation = existingInstallationDetector.hasExistingInstallationEvidence()
@@ -150,7 +143,7 @@ final class OnboardingCoordinator {
         metadata["pending"] = .string(String(hasHost))
         metadata["hasHost"] = .string(String(hasHost))
         metadata["existingInstallation"] = .string(String(hasExistingInstallation))
-        AppLogger.guidance.info("onboarding.debug.state_summary", metadata: metadata)
+        Logging.Logger(label: "guidance").info("onboarding.debug.state_summary", metadata: metadata)
     }
     #endif
 }

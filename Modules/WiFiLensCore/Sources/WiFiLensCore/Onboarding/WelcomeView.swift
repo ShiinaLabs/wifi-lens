@@ -1,20 +1,32 @@
 import AppKit
 import SwiftUI
-import WiFiLensCore
+import Logging
 
 /// First-run welcome sheet. A dumb presentation component: it receives the
 /// edition configuration and the claiming host id, and every action routes
 /// through `OnboardingCoordinator`. It never checks bundle identifiers,
 /// StoreKit, or receipts, and it never calls any permission API.
-struct WelcomeView: View {
+public struct WelcomeView: View {
     let configuration: OnboardingConfiguration
-    let coordinator: OnboardingCoordinator
-    let hostID: UUID
-    var onStart: (SidebarPage, SecondaryToolbarItemID?) -> Void = { _, _ in }
+    private let coordinator: OnboardingCoordinator
+    private let hostID: UUID
+    private let onStart: (SidebarPage, SecondaryToolbarItemID?) -> Void
+
+    public init(
+        configuration: OnboardingConfiguration,
+        coordinator: OnboardingCoordinator,
+        hostID: UUID,
+        onStart: @escaping (SidebarPage, SecondaryToolbarItemID?) -> Void = { _, _ in }
+    ) {
+        self.configuration = configuration
+        self.coordinator = coordinator
+        self.hostID = hostID
+        self.onStart = onStart
+    }
 
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
@@ -178,7 +190,7 @@ struct WelcomeView: View {
     private func learnAboutPro(_ url: URL) {
         guard NSWorkspace.shared.open(url) else {
             // Keep the welcome visible and do not mark completion.
-            AppLogger.guidance.error("onboarding pro link open failed")
+            Logging.Logger(label: "guidance").error("onboarding pro link open failed")
             return
         }
         coordinator.completeWelcomeAfterOpeningProURL(hostID: hostID, openedSuccessfully: true)

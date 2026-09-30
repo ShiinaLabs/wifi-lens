@@ -227,11 +227,11 @@ enum OSSEditionAssembly {
         CommandMenu("Debug") {
             Menu("Onboarding") {
                 Button("Reset Welcome State") {
-                    OnboardingCoordinator.shared.debugReset()
+                    EditionAssemblyProvider.onboardingCoordinator.debugReset()
                 }
                 Button("Show Welcome Now") {
                     guard OSSEditionAssembly.onboardingConfiguration.welcomeEnabled else { return }
-                    OnboardingCoordinator.shared.debugRequestShowWelcome()
+                    EditionAssemblyProvider.onboardingCoordinator.debugRequestShowWelcome()
                     NSApp.activate(ignoringOtherApps: true)
                     if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
                         mainWindow.makeKeyAndOrderFront(nil)
@@ -240,7 +240,7 @@ enum OSSEditionAssembly {
                     }
                 }
                 Button("Log Onboarding State") {
-                    OnboardingCoordinator.shared.debugLogState(edition: "OSS")
+                    EditionAssemblyProvider.onboardingCoordinator.debugLogState(edition: "OSS")
                 }
             }
             Menu("What's New") {
@@ -336,6 +336,11 @@ private struct OSSSpectrumCompositionView: View {
 
 enum EditionAssemblyProvider {
     @MainActor static let configuration = OSSEditionAssembly.configuration
+    @MainActor static let onboardingCoordinator = OnboardingCoordinator(
+        store: UserDefaultsOnboardingStateStore(),
+        existingInstallationDetector: configuration.shellHooks.makeOnboardingExistingInstallationDetector(),
+        welcomeEnabled: configuration.onboardingConfiguration.welcomeEnabled
+    )
 }
 
 enum EditionAppShell {
