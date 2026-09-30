@@ -181,6 +181,8 @@
 		OB00000000000000000000D4 /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000D1 /* RuntimeTests.swift */; };
 		B0B000000000000000000001 /* WiFiLensProCore in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000004 /* WiFiLensProCore */; };
 		B0B000000000000000000002 /* WiFiLensProCore in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000005 /* WiFiLensProCore */; };
+		FB1E329B2FC7316C009D1BDC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = FB1E32452FC7316C009D1BDC /* Logging */; };
+		FBBD0F912FE78D5A0027958D /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FBBD0F902FE78D5A0027958D /* ChartLens */; };
 		B0B000000000000000000007 /* WiFiLensCore in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000006 /* WiFiLensCore */; };
 		B0B00000000000000000000C /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000008 /* ChartLens */; };
 		B0B00000000000000000000D /* SplitView in Frameworks */ = {isa = PBXBuildFile; productRef = B0B000000000000000000009 /* SplitView */; };
@@ -405,6 +407,8 @@
 				A55200000000000000000004 /* AppStageControl in Frameworks */,
 				F9A000000000000000000002 /* WiFiLensCore in Frameworks */,
 				B0B000000000000000000001 /* WiFiLensProCore in Frameworks */,
+				FB1E329B2FC7316C009D1BDC /* Logging in Frameworks */,
+				FBBD0F912FE78D5A0027958D /* ChartLens in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1146,6 +1150,8 @@
 				A55200000000000000000003 /* AppStageControl */,
 				F9A000000000000000000005 /* WiFiLensCore */,
 				B0B000000000000000000004 /* WiFiLensProCore */,
+				FB1E32452FC7316C009D1BDC /* Logging */,
+				FBBD0F902FE78D5A0027958D /* ChartLens */,
 			);
 			productName = WiFiLens;
 			productReference = FB1E32A42FC7316C009D1BDC /* WiFi Lens Pro.app */;
