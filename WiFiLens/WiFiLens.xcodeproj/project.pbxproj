@@ -33,7 +33,6 @@
 		A3C7A1B2C3D4E5F678900016 /* NetworkTableRowSorterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C7A1B2C3D4E5F678900004 /* NetworkTableRowSorterTests.swift */; };
 		A3C7A1B2C3D4E5F678900021 /* SpectrumHeatmapPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C7A1B2C3D4E5F67890000A /* SpectrumHeatmapPanelTests.swift */; };
 		C0A7A1B2C3D4E5F678900012 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900006 /* MarkdownKit */; };
-		C0A7A1B2C3D4E5F678900013 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900007 /* MarkdownKit */; };
 		C0A7A1B2C3D4E5F678900014 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900008 /* MarkdownKit */; };
 		ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */; };
 		ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000003 /* DebugMultiAPScenario.swift */; };
@@ -107,9 +106,7 @@
 		F9A000000000000000000009 /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = F9A00000000000000000000A /* ChartLens */; };
 		FB1E32972FC7316C009D1BDC /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1067F6AA96EC6320C6472F59 /* CoreWLAN.framework */; };
 		FB1E32982FC7316C009D1BDC /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EAF444453E304ABB57AF3AA /* CoreLocation.framework */; };
-		FB1E32992FC7316C009D1BDC /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = FB1E32432FC7316C009D1BDC /* MCP */; };
 		FB1E329A2FC7316C009D1BDC /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB2E3B2D2FC5ACDA00D2610E /* CoreBluetooth.framework */; };
-		FB1E329B2FC7316C009D1BDC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = FB1E32452FC7316C009D1BDC /* Logging */; };
 		FB1E329D2FC7316C009D1BDC /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FBB1F0AB2FC61E3D00E9D2C6 /* Localizable.xcstrings */; };
 		FB23154B304D9B6400619D14 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */; };
 		FB23154C304D9B6400619D14 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */; };
@@ -137,8 +134,6 @@
 		FBA0002C00000000000000002C /* SettingsPageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA0002F00000000000000002F /* SettingsPageTests.swift */; };
 		FBB1F0AC2FC61E3D00E9D2C6 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FBB1F0AB2FC61E3D00E9D2C6 /* Localizable.xcstrings */; };
 		FBB2CA8E2FC0E14000FC2D2C /* BuildConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBB2CA8B2FC0E14000FC2D2C /* BuildConfig.swift */; };
-		FBBD0F912FE78D5A0027958D /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FBBD0F902FE78D5A0027958D /* ChartLens */; };
-		C0A7A1B2C3D4E5F678900011 /* SplitView in Frameworks */ = {isa = PBXBuildFile; productRef = C0A7A1B2C3D4E5F678900004 /* SplitView */; };
 		FBBD16992FD062F60093F940 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FBBD16982FD062F60093F940 /* PrivacyInfo.xcprivacy */; };
 		FBBD169A2FD062F60093F940 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FBBD16982FD062F60093F940 /* PrivacyInfo.xcprivacy */; };
 		FBBD169C2FD063630093F940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBBD169B2FD063630093F940 /* Assets.xcassets */; };
@@ -403,13 +398,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB1E32972FC7316C009D1BDC /* CoreWLAN.framework in Frameworks */,
-				C0A7A1B2C3D4E5F678900013 /* MarkdownKit in Frameworks */,
-				FBBD0F912FE78D5A0027958D /* ChartLens in Frameworks */,
-				C0A7A1B2C3D4E5F678900011 /* SplitView in Frameworks */,
 				FB1E32982FC7316C009D1BDC /* CoreLocation.framework in Frameworks */,
-				FB1E32992FC7316C009D1BDC /* MCP in Frameworks */,
 				FB1E329A2FC7316C009D1BDC /* CoreBluetooth.framework in Frameworks */,
-				FB1E329B2FC7316C009D1BDC /* Logging in Frameworks */,
 				A55100000000000000000010 /* AppStage in Frameworks */,
 				A55100000000000000000017 /* AppStageMac in Frameworks */,
 				A55200000000000000000004 /* AppStageControl in Frameworks */,
@@ -1151,11 +1141,6 @@
 			);
 			name = WiFiLensPro;
 			packageProductDependencies = (
-				FB1E32432FC7316C009D1BDC /* MCP */,
-				FB1E32452FC7316C009D1BDC /* Logging */,
-				FBBD0F902FE78D5A0027958D /* ChartLens */,
-				C0A7A1B2C3D4E5F678900004 /* SplitView */,
-				C0A7A1B2C3D4E5F678900007 /* MarkdownKit */,
 				A55100000000000000000009 /* AppStage */,
 				A55100000000000000000016 /* AppStageMac */,
 				A55200000000000000000003 /* AppStageControl */,
