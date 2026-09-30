@@ -1,4 +1,5 @@
 import ChartLens
+import WiFiLensCore
 
 /// An anonymous spectrum envelope contributed by one network in the current
 /// scan. It intentionally contains no access-point identity or time data.

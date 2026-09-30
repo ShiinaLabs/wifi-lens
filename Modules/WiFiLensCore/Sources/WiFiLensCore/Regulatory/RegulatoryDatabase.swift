@@ -34,6 +34,9 @@ struct RegulatoryChannelMeta: Hashable, Sendable {
 /// Static, data-driven regulatory rules. No business logic lives here — this is
 /// pure channel data sourced from public allocation tables.
 enum RegulatoryDatabase {
+    static func allowedChannels(for domain: RegulatoryDomain, band: String) -> Set<Int>? {
+        rules[domain]?[band]?.allowedChannels
+    }
 
     struct BandRules: Sendable {
         let allowedChannels: Set<Int>

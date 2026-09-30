@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Testing
 import ChartLens
+import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite @MainActor struct BandChartViewModelTests {

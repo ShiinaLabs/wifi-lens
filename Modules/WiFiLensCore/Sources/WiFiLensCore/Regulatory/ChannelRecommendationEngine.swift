@@ -1,9 +1,9 @@
 import Foundation
+import WiFiLensCore
 
-enum ChannelRecommendationEngine {
-    static func recommend(
+public enum ChannelRecommendationEngine {
+    public static func recommend(
         channelAnalysis: [ChannelQuality],
-        snapshot: WiFiEnvironmentSnapshot,
         inferredRegion: RegionInferenceResult,
         deviceSupportedChannels: Set<String>,
         deviceCapabilities: DevicePHYCapabilities

@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum ChannelOccupancyAnalyzer {
     static func analyze(

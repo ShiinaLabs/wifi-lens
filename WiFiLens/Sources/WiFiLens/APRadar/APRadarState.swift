@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 /// Access point tracked by AP Radar. Identity is exclusively the BSSID;
 /// SSID, channel, and band are presentation metadata refreshed from the

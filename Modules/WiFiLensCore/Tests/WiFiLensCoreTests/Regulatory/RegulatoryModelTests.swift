@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import WiFi_Lens
+@testable import WiFiLensCore
 
 // MARK: - RegulatoryDomain
 

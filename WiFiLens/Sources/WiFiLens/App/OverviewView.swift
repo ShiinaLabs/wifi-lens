@@ -1,5 +1,6 @@
 import SwiftUI
 import SceneKit
+import WiFiLensCore
 
 struct OverviewView: View {
     @Bindable var viewModel: ScannerViewModel

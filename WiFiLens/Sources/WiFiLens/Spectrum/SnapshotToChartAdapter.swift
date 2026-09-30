@@ -1,9 +1,10 @@
 import Foundation
 import SwiftUI
 import ChartLens
+import WiFiLensCore
 
 /// Converts recorded NetworkSnapshot data into ChartSeriesData for history playback.
-/// Mirrors ChannelSpanCalculator.toSeriesData() but operates on snapshots instead of WiFiNetwork.
+/// Mirrors ChannelSeriesDataBuilder.toSeriesData() but operates on snapshots instead of WiFiNetwork.
 enum SnapshotToChartAdapter {
 
     /// Parse scalar channel widths for geometry. 80+80 remains non-contiguous

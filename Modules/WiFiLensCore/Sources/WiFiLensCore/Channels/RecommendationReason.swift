@@ -3,7 +3,7 @@ import Foundation
 /// Stable, user-facing identifier for a channel recommendation reason.
 /// The algorithm emits these; the UI maps them to localized strings.
 /// Organized into mutual-exclusion families to prevent contradiction on the same channel.
-enum RecommendationReason: String, CaseIterable, Sendable {
+public enum RecommendationReason: String, CaseIterable, Sendable {
     // MARK: - Congestion family (mutually exclusive, strongest wins)
 
     /// No APs detected on this channel
@@ -46,7 +46,7 @@ enum RecommendationReason: String, CaseIterable, Sendable {
 
     // MARK: - Display
 
-    var localizationKey: String {
+    public var localizationKey: String {
         "channels.reason.\(keySuffix)"
     }
 
@@ -70,7 +70,7 @@ enum RecommendationReason: String, CaseIterable, Sendable {
         }
     }
 
-    var displayText: String {
+    public var displayText: String {
         NSLocalizedString(localizationKey, comment: "Recommendation reason")
     }
 }

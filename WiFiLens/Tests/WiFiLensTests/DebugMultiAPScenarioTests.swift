@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite struct DebugMultiAPScenarioTests {

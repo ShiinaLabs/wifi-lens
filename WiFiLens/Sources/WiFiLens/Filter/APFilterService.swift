@@ -1,3 +1,4 @@
+import WiFiLensCore
 /// Service for parsing and evaluating AP filter queries.
 struct APFilterService: Sendable {
     let parser: APFilterQueryParser

@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 enum DiagnosticEvaluator {
     static func evaluate(

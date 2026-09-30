@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import Testing
+import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor

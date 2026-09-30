@@ -1,16 +1,16 @@
 import CoreWLAN
 import Foundation
 
-struct WiFiNetwork: Sendable, Identifiable {
-    var id: String { "\(bssid)-\(channel.channelNumber)-\(channel.band.rawValue)" }
-    let ssid: String?
-    let bssid: String
-    let rssi: Int
-    let channel: WiFiChannel
-    let isIBSS: Bool
-    let ieData: Data?
+public struct WiFiNetwork: Sendable, Identifiable {
+    public var id: String { "\(bssid)-\(channel.channelNumber)-\(channel.band.rawValue)" }
+    public let ssid: String?
+    public let bssid: String
+    public let rssi: Int
+    public let channel: WiFiChannel
+    public let isIBSS: Bool
+    public let ieData: Data?
 
-    init?(from cwNetwork: CWNetwork) {
+    public init?(from cwNetwork: CWNetwork) {
         guard let wlanChannel = cwNetwork.wlanChannel else { return nil }
         ssid = cwNetwork.ssid
         bssid = cwNetwork.bssid ?? "unknown"
@@ -20,7 +20,7 @@ struct WiFiNetwork: Sendable, Identifiable {
         ieData = cwNetwork.informationElementData
     }
 
-    init(ssid: String?, bssid: String, rssi: Int, channel: WiFiChannel, ieData: Data? = nil) {
+    public init(ssid: String?, bssid: String, rssi: Int, channel: WiFiChannel, ieData: Data? = nil) {
         self.ssid = ssid
         self.bssid = bssid
         self.rssi = rssi

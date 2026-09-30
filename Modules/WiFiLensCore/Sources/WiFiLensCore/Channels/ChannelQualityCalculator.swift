@@ -3,36 +3,75 @@ import Foundation
 /// Per-channel congestion analysis result.
 /// This model preserves the observed RF environment and carries a separate
 /// counterfactual recommendation score that excludes the current target AP.
-struct ChannelQuality: Identifiable {
-    let channel: Int
-    let band: String
-    let bandDisplay: String
-    let qualityScore: Int          // 0–100
-    let qualityLevel: QualityLevel
-    let apCount: Int               // APs on or overlapping this channel
-    let coChannelCount: Int         // APs on the same channel only
-    let adjacentCount: Int          // APs on overlapping adjacent channels
-    let interferenceScore: Int      // raw interference penalty (0 = clean)
-    let overlapLevel: OverlapLevel
-    let strongestNeighborRSSI: Int
-    var isRecommended: Bool = false
-    var isCurrentChannel: Bool = false
-    var showInSimpleView: Bool = true
-    var recommendationScore: Int = 0
-    var recommendationLevel: QualityLevel = .excellent
-    var recommendationConfidence: RecommendationConfidence = .unknown
-    var recommendationState: RecommendationState = .targetUnknown
+public struct ChannelQuality: Identifiable, Sendable {
+    public init(
+        channel: Int,
+        band: String,
+        bandDisplay: String,
+        qualityScore: Int,
+        qualityLevel: QualityLevel,
+        apCount: Int,
+        coChannelCount: Int,
+        adjacentCount: Int,
+        interferenceScore: Int,
+        overlapLevel: OverlapLevel,
+        strongestNeighborRSSI: Int,
+        isRecommended: Bool = false,
+        isCurrentChannel: Bool = false,
+        showInSimpleView: Bool = true,
+        recommendationScore: Int = 0,
+        recommendationLevel: QualityLevel = .excellent,
+        recommendationConfidence: RecommendationConfidence = .unknown,
+        recommendationState: RecommendationState = .targetUnknown
+    ) {
+        self.channel = channel
+        self.band = band
+        self.bandDisplay = bandDisplay
+        self.qualityScore = qualityScore
+        self.qualityLevel = qualityLevel
+        self.apCount = apCount
+        self.coChannelCount = coChannelCount
+        self.adjacentCount = adjacentCount
+        self.interferenceScore = interferenceScore
+        self.overlapLevel = overlapLevel
+        self.strongestNeighborRSSI = strongestNeighborRSSI
+        self.isRecommended = isRecommended
+        self.isCurrentChannel = isCurrentChannel
+        self.showInSimpleView = showInSimpleView
+        self.recommendationScore = recommendationScore
+        self.recommendationLevel = recommendationLevel
+        self.recommendationConfidence = recommendationConfidence
+        self.recommendationState = recommendationState
+    }
+    public let channel: Int
+    public let band: String
+    public let bandDisplay: String
+    public let qualityScore: Int          // 0–100
+    public let qualityLevel: QualityLevel
+    public let apCount: Int               // APs on or overlapping this channel
+    public let coChannelCount: Int         // APs on the same channel only
+    public let adjacentCount: Int          // APs on overlapping adjacent channels
+    public let interferenceScore: Int      // raw interference penalty (0 = clean)
+    public let overlapLevel: OverlapLevel
+    public let strongestNeighborRSSI: Int
+    public var isRecommended: Bool = false
+    public var isCurrentChannel: Bool = false
+    public var showInSimpleView: Bool = true
+    public var recommendationScore: Int = 0
+    public var recommendationLevel: QualityLevel = .excellent
+    public var recommendationConfidence: RecommendationConfidence = .unknown
+    public var recommendationState: RecommendationState = .targetUnknown
 
-    var id: String { "\(band)-\(channel)" }
+    public var id: String { "\(band)-\(channel)" }
 
-    enum QualityLevel: String, CaseIterable {
+    public enum QualityLevel: String, CaseIterable, Sendable {
         case excellent
         case good
         case moderate
         case busy
         case congested
 
-        var displayName: String {
+        public var displayName: String {
             switch self {
             case .excellent: String(localized: "channels.quality.excellent", comment: "Excellent channel quality tier")
             case .good:      String(localized: "overview.signal.good", comment: "Good signal level label")
@@ -42,7 +81,7 @@ struct ChannelQuality: Identifiable {
             }
         }
 
-        var scoreRange: ClosedRange<Int> {
+        public var scoreRange: ClosedRange<Int> {
             switch self {
             case .excellent: 90...100
             case .good:      70...89
@@ -52,7 +91,7 @@ struct ChannelQuality: Identifiable {
             }
         }
 
-        var color: String {
+        public var color: String {
             switch self {
             case .excellent: "#34C759"
             case .good:      "#30B0C7"
@@ -62,9 +101,9 @@ struct ChannelQuality: Identifiable {
             }
         }
 
-        var minScore: Int { scoreRange.lowerBound }
+        public var minScore: Int { scoreRange.lowerBound }
 
-        static func from(score: Int) -> Self {
+        public static func from(score: Int) -> Self {
             switch score {
             case 90...100: .excellent
             case 70...89:  .good
@@ -81,12 +120,12 @@ struct ChannelQuality: Identifiable {
         }
     }
 
-    enum OverlapLevel: String {
+    public enum OverlapLevel: String, Sendable {
         case low
         case moderate
         case high
 
-        var displayName: String {
+        public var displayName: String {
             switch self {
             case .low:      String(localized: "channels.overlap.low", comment: "Low overlap level")
             case .moderate: String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier")
@@ -95,13 +134,13 @@ struct ChannelQuality: Identifiable {
         }
     }
 
-    enum RecommendationConfidence: String {
+    public enum RecommendationConfidence: String, Sendable {
         case exact
         case ssidFallback
         case unknown
     }
 
-    enum RecommendationState: String {
+    public enum RecommendationState: String, Sendable {
         case recommended
         case currentGoodEnough
         case insufficientImprovement
@@ -110,23 +149,23 @@ struct ChannelQuality: Identifiable {
     }
 
     /// Base simple-view visibility from the RF snapshot and selected recommendations.
-    var initiallyVisibleInSimpleView: Bool {
+    public var initiallyVisibleInSimpleView: Bool {
         isCurrentChannel || isRecommended || apCount > 0
     }
 }
 
 /// Hysteresis wrapper that smooths score fluctuations across level boundaries.
 /// Used by the overview card to avoid visual flicker while scan results update.
-struct StableScore {
+public struct StableScore {
     private var current: Double
     private var level: ChannelQuality.QualityLevel
 
-    init(initialScore: Int = 100) {
+    public init(initialScore: Int = 100) {
         self.current = Double(initialScore)
         self.level = .from(score: initialScore)
     }
 
-    mutating func update(score: Int, downgradeMargin: Int = 10, upgradeMargin: Int = 6) -> Int {
+    public mutating func update(score: Int, downgradeMargin: Int = 10, upgradeMargin: Int = 6) -> Int {
         let rawLevel = ChannelQuality.QualityLevel.from(score: score)
         let alpha = 0.25
 
@@ -146,40 +185,40 @@ struct StableScore {
         return Int(current.rounded())
     }
 
-    mutating func reset(score: Int = 100) {
+    public mutating func reset(score: Int = 100) {
         current = Double(score)
         level = .from(score: score)
     }
 }
 
 /// Computes channel congestion scores per band.
-enum ChannelQualityCalculator {
+public enum ChannelQualityCalculator {
     private static let currentGoodEnoughScore = 80
     private static let minimumRecommendedScore = 70
     private static let minimumImprovement = 10
     private static let maxRecommendationsPerBand = 2
 
-    struct TargetAP {
-        let bssid: String?
-        let ssid: String?
-        let channel: Int?
+    public struct TargetAP {
+        public let bssid: String?
+        public let ssid: String?
+        public let channel: Int?
 
-        init(bssid: String?, ssid: String?, channel: Int?) {
+        public init(bssid: String?, ssid: String?, channel: Int?) {
             self.bssid = bssid?.nilIfBlank
             self.ssid = ssid?.nilIfBlank
             self.channel = channel
         }
     }
 
-    struct APInfo {
-        let channel: Int
-        let rssi: Int
-        let channelWidth: String  // "20"/"40"/"80"/"160"/"80+80"
-        let band: String          // "24"/"5"/"6"
-        let bssid: String?
-        let ssid: String?
+    public struct APInfo {
+        public let channel: Int
+        public let rssi: Int
+        public let channelWidth: String  // "20"/"40"/"80"/"160"/"80+80"
+        public let band: String          // "24"/"5"/"6"
+        public let bssid: String?
+        public let ssid: String?
 
-        init(channel: Int, rssi: Int, channelWidth: String, band: String, bssid: String? = nil, ssid: String? = nil) {
+        public init(channel: Int, rssi: Int, channelWidth: String, band: String, bssid: String? = nil, ssid: String? = nil) {
             self.channel = channel
             self.rssi = rssi
             self.channelWidth = channelWidth
@@ -190,7 +229,7 @@ enum ChannelQualityCalculator {
     }
 
     /// Produce observed RF quality and counterfactual recommendation scores for every relevant channel.
-    static func compute(
+    public static func compute(
         aps: [APInfo],
         currentChannel: Int? = nil,
         currentBand: String? = nil,

@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
+import WiFiLensCore
 @testable import WiFi_Lens
 
 /// Detail pages stay mounted while hidden so their page-local state survives navigation.

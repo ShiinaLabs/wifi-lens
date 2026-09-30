@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 /// The BSS channel operation advertised by the HT Operation element.
 ///

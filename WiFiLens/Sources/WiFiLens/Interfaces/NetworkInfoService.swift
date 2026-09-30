@@ -1,6 +1,7 @@
 import Foundation
 import CoreWLAN
 import SystemConfiguration
+import WiFiLensCore
 
 struct NetworkInterfaceInfo: Sendable {
     enum InterfaceType: String, Sendable {

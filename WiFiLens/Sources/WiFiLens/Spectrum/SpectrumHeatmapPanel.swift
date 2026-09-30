@@ -1,5 +1,6 @@
 import CoreGraphics
 import SwiftUI
+import WiFiLensCore
 
 /// Fixed thermal-imaging colormap for the heatmap field.
 /// The ramp stays in purple → magenta → red → orange → yellow; it avoids a

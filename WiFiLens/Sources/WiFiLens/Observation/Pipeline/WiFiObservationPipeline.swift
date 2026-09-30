@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct WiFiObservationCycleContext: Sendable {
     let timestamp: Date
@@ -78,7 +79,6 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         let channelRecommendation: [ChannelRecommendation]? = channelAnalysis.map {
             ChannelRecommendationEngine.recommend(
                 channelAnalysis: $0,
-                snapshot: snapshot,
                 inferredRegion: inferredRegion,
                 deviceSupportedChannels: context.deviceSupportedChannels,
                 deviceCapabilities: context.deviceCapabilities

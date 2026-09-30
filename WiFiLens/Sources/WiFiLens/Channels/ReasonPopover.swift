@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 /// Shared popover that displays recommendation reasons in a compact list.
 /// Placed as an overlay button on channel cards.

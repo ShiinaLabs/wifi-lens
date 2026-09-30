@@ -1,19 +1,19 @@
 import CoreWLAN
 
-struct WiFiChannel: Sendable {
-    let band: ChannelBand
-    let channelNumber: Int
-    let channelWidthMHz: Int
-    let spanDirection: SpanDirection?
+public struct WiFiChannel: Sendable {
+    public let band: ChannelBand
+    public let channelNumber: Int
+    public let channelWidthMHz: Int
+    public let spanDirection: SpanDirection?
 
-    init(from cwChannel: CWChannel) {
+    public init(from cwChannel: CWChannel) {
         band = ChannelBand(rawValue: cwChannel.channelBand.rawValue) ?? .band24GHz
         channelNumber = cwChannel.channelNumber
         channelWidthMHz = cwChannel.widthMHz
         spanDirection = cwChannel.spanDirection
     }
 
-    init(band: ChannelBand, channelNumber: Int, channelWidthMHz: Int = 20, spanDirection: SpanDirection? = nil) {
+    public init(band: ChannelBand, channelNumber: Int, channelWidthMHz: Int = 20, spanDirection: SpanDirection? = nil) {
         self.band = band
         self.channelNumber = channelNumber
         self.channelWidthMHz = channelWidthMHz

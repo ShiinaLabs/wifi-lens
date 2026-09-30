@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SplitView
+import WiFiLensCore
 
 struct SpectrumPanelID: RawRepresentable, Hashable, Codable, Identifiable, Sendable {
     let rawValue: String

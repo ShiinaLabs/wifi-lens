@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct WiFiCurrentStatus: Equatable, Sendable {
     var timestamp: Date

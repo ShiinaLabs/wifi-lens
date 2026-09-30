@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import MCP
+import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite struct MCPServerTests {

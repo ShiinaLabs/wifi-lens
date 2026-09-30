@@ -1,5 +1,6 @@
 import CoreGraphics
 import Testing
+import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite struct SpectrumHeatmapLayoutTests {
@@ -63,7 +64,7 @@ import Testing
     }
 
     @Test func legalJapaneseChannel14EnvelopeUsesCanonicalChannelCoordinates() {
-        let legalJapaneseChannels = RegulatoryDatabase.rules[.JP]?["24"]?.allowedChannels ?? []
+        let legalJapaneseChannels = RegulatoryDomain.JP.allowedChannels(forBand: "24") ?? []
         #expect(legalJapaneseChannels.contains(14))
 
         let network = WiFiNetwork(

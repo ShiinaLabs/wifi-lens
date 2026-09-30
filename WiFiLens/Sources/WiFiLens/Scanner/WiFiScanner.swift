@@ -1,5 +1,6 @@
 import CoreWLAN
 import Foundation
+import WiFiLensCore
 
 enum WiFiScanEvent: Sendable {
     case networks([WiFiNetwork])

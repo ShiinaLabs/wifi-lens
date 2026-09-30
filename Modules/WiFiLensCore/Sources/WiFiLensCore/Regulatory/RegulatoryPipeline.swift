@@ -1,26 +1,23 @@
 import Foundation
+import Observation
 
 /// Extracted regulatory pipeline that handles region inference and channel
 /// recommendation computation, taking pressure off ScannerViewModel.
 @MainActor
 @Observable
-final class RegulatoryPipeline {
-    var inferredRegion: RegionInferenceResult?
-    var userRegionOverride: RegulatoryDomain?
-    var deviceSupportedChannels = Set<String>()
-    var deviceCachedCapabilities: DevicePHYCapabilities = .default
-    var cachedSupportedChannelsRaw: [(Int, Int)] = []
+public final class RegulatoryPipeline {
+    public init() {}
+    public var inferredRegion: RegionInferenceResult?
+    public var userRegionOverride: RegulatoryDomain?
+    public var deviceSupportedChannels = Set<String>()
+    public var deviceCachedCapabilities: DevicePHYCapabilities = .default
+    public var cachedSupportedChannelsRaw: [(Int, Int)] = []
 
-    func computeRecommendations(
+    public func computeRecommendations(
         from channelQualities: [ChannelQuality],
-        networks: [WiFiNetwork],
+        apCountryCodes: [String],
         userDefaultsOverride: RegulatoryDomain?
     ) -> [ChannelRecommendation] {
-        let apCountryCodes: [String] = networks.compactMap { nw in
-            guard let ie = nw.ieData else { return nil }
-            return IEParser.parse(data: ie).countryCode
-        }
-
         let region = RegionInferenceEngine.infer(
             systemLocale: .current,
             supportedChannels: cachedSupportedChannelsRaw,

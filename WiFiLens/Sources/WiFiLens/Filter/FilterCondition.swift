@@ -1,3 +1,4 @@
+import WiFiLensCore
 /// A tree representing a parsed filter query.
 indirect enum FilterCondition: Sendable, Equatable {
     case field(FieldFilter)

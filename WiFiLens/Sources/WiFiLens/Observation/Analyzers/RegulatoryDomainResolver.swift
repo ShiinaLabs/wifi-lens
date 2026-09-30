@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum RegulatoryDomainResolver {
     static func resolve(

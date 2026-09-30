@@ -2,14 +2,14 @@ import Foundation
 
 // MARK: - Regulatory Domain
 
-enum RegulatoryDomain: String, CaseIterable, Codable, Sendable {
+public enum RegulatoryDomain: String, CaseIterable, Codable, Sendable {
     case US
     case JP
     case CN
     case EU
     case unknown
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .US: "United States (FCC)"
         case .JP: "Japan (MIC)"
@@ -20,7 +20,7 @@ enum RegulatoryDomain: String, CaseIterable, Codable, Sendable {
     }
 
     /// Map a locale region identifier (ISO 3166-1 alpha-2) onto a regulatory domain.
-    static func from(localeRegionCode: String?) -> Self {
+    public static func from(localeRegionCode: String?) -> Self {
         guard let code = localeRegionCode?.uppercased() else { return .unknown }
         switch code {
         case "US", "CA", "MX": return .US
@@ -37,12 +37,12 @@ enum RegulatoryDomain: String, CaseIterable, Codable, Sendable {
 
 // MARK: - Inference Confidence
 
-enum InferenceConfidence: Comparable, Sendable {
+public enum InferenceConfidence: Comparable, Sendable {
     case high
     case medium
     case low
 
-    var label: String {
+    public var label: String {
         switch self {
         case .high: String(localized: "wifi.inference.high_confidence", comment: "High confidence regulatory domain inference")
         case .medium: String(localized: "wifi.inference.medium_confidence", comment: "Medium confidence regulatory domain inference")
@@ -53,19 +53,19 @@ enum InferenceConfidence: Comparable, Sendable {
 
 // MARK: - Region Source
 
-struct RegionSource: Sendable {
-    enum Kind: String, Sendable {
+public struct RegionSource: Sendable {
+    public enum Kind: String, Sendable {
         case systemLocale
         case supportedChannels
         case apBeaconCountry
         case userOverride
     }
 
-    let kind: Kind
-    let rawValue: String
-    let inferredDomain: RegulatoryDomain?
+    public let kind: Kind
+    public let rawValue: String
+    public let inferredDomain: RegulatoryDomain?
 
-    var description: String {
+    public var description: String {
         let domainStr = inferredDomain?.rawValue ?? "unknown"
         return "[\(kind.rawValue)] raw=\(rawValue) → \(domainStr)"
     }
@@ -73,21 +73,27 @@ struct RegionSource: Sendable {
 
 // MARK: - Region Conflict
 
-struct RegionConflict: Sendable {
-    let sourceA: RegionSource
-    let sourceB: RegionSource
-    let resolution: String
+public struct RegionConflict: Sendable {
+    public let sourceA: RegionSource
+    public let sourceB: RegionSource
+    public let resolution: String
 }
 
 // MARK: - Inference Result
 
-struct RegionInferenceResult: Sendable {
-    let domain: RegulatoryDomain
-    let confidence: InferenceConfidence
-    let contributions: [RegionSource]
-    let conflicts: [RegionConflict]
+public struct RegionInferenceResult: Sendable {
+    public init(domain: RegulatoryDomain, confidence: InferenceConfidence, contributions: [RegionSource], conflicts: [RegionConflict]) {
+        self.domain = domain
+        self.confidence = confidence
+        self.contributions = contributions
+        self.conflicts = conflicts
+    }
+    public let domain: RegulatoryDomain
+    public let confidence: InferenceConfidence
+    public let contributions: [RegionSource]
+    public let conflicts: [RegionConflict]
 
-    var summary: String {
+    public var summary: String {
         var lines = ["Region: \(domain.rawValue) (\(confidence.label))"]
         for c in contributions {
             lines.append("  ← \(c.description)")
@@ -101,16 +107,25 @@ struct RegionInferenceResult: Sendable {
 
 // MARK: - Device PHY Capabilities
 
-struct DevicePHYCapabilities: Sendable {
-    let supportsAX: Bool
-    let supportsAC: Bool
-    let supportsN: Bool
-    let supportsBE: Bool
-    let supports6GHz: Bool
-    let supportsDFS: Bool
-    let supports160MHz: Bool
+public struct DevicePHYCapabilities: Sendable {
+    public init(supportsAX: Bool, supportsAC: Bool, supportsN: Bool, supportsBE: Bool, supports6GHz: Bool, supportsDFS: Bool, supports160MHz: Bool) {
+        self.supportsAX = supportsAX
+        self.supportsAC = supportsAC
+        self.supportsN = supportsN
+        self.supportsBE = supportsBE
+        self.supports6GHz = supports6GHz
+        self.supportsDFS = supportsDFS
+        self.supports160MHz = supports160MHz
+    }
+    public let supportsAX: Bool
+    public let supportsAC: Bool
+    public let supportsN: Bool
+    public let supportsBE: Bool
+    public let supports6GHz: Bool
+    public let supportsDFS: Bool
+    public let supports160MHz: Bool
 
-    static let `default` = DevicePHYCapabilities(
+    public static let `default` = DevicePHYCapabilities(
         supportsAX: false,
         supportsAC: true,
         supportsN: true,
@@ -120,12 +135,18 @@ struct DevicePHYCapabilities: Sendable {
         supports160MHz: false
     )
 
-    var phySummary: String {
+    public var phySummary: String {
         var parts: [String] = []
         if supportsBE { parts.append("be") }
         if supportsAX { parts.append("ax") }
         if supportsAC { parts.append("ac") }
         if supportsN { parts.append("n") }
         return parts.isEmpty ? "unknown" : parts.joined(separator: "/")
+    }
+}
+
+public extension RegulatoryDomain {
+    func allowedChannels(forBand band: String) -> Set<Int>? {
+        RegulatoryDatabase.allowedChannels(for: self, band: band)
     }
 }

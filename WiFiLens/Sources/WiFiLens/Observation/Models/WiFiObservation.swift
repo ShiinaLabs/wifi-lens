@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct WiFiObservation: Equatable, Sendable {
     var timestamp: Date

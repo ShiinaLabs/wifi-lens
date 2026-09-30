@@ -1,6 +1,7 @@
 import SwiftUI
 #if OSS
 import Sparkle
+import WiFiLensCore
 #endif
 
 /// Main-window sizing policy.

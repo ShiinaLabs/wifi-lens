@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import Testing
+import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite("WiFiObservationRuntime")

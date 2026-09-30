@@ -1,6 +1,7 @@
 import SwiftUI
 import Foundation
 import CoreWLAN
+import WiFiLensCore
 
 enum ScanAccessState: Equatable {
     case waitingForAuthorization
@@ -257,8 +258,8 @@ final class ScannerViewModel {
     /// 1...170; 6 GHz is the 1/5/9/… PSC grid).
     private func heatmapChannels(for band: ChannelBand) -> [Int] {
         let region = userRegionOverride ?? inferredRegion?.domain ?? .US
-        let allowed = RegulatoryDatabase.rules[region]?[band.id]?.allowedChannels
-            ?? RegulatoryDatabase.rules[.US]?[band.id]?.allowedChannels
+        let allowed = region.allowedChannels(forBand: band.id)
+            ?? RegulatoryDomain.US.allowedChannels(forBand: band.id)
             ?? Set(band == .band24GHz ? Array(1...14) : Array(1...band.maxChannel))
         return allowed.sorted()
     }

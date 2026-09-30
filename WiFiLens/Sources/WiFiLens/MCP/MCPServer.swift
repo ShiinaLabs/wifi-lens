@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import MCP
+import WiFiLensCore
 
 struct MCPSnapshot: Sendable {
     enum PowerState: String, Sendable, Equatable {

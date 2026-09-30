@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum NetworkObservationAdapter {
     static func adapt(

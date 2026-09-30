@@ -1,5 +1,5 @@
 import Testing
-@testable import WiFi_Lens
+@testable import WiFiLensCore
 
 struct ChannelQualityCalculatorTests {
 

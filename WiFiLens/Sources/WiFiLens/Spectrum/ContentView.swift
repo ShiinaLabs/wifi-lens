@@ -2,6 +2,7 @@ import SwiftUI
 import SplitView
 #if os(macOS)
 import AppKit
+import WiFiLensCore
 #endif
 
 struct SpectrumDashboardLayout {

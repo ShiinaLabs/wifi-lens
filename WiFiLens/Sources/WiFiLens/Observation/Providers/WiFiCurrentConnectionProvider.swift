@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 extension ChannelBand {
     static func from(channelNumber: Int) -> ChannelBand? {

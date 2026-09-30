@@ -1,5 +1,6 @@
 import Foundation
 import CoreWLAN
+import WiFiLensCore
 
 protocol RoamingProbeProviding: Sendable {
     func fetchCurrentProbe() async -> WiFiCurrentStatus

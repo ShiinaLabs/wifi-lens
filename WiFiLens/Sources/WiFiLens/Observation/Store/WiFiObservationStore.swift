@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 @MainActor
 final class WiFiObservationStore: ObservableObject {

@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import WiFiLensCore
 
 /// Coordinates AP Radar: target selection, scan observation consumption,
 /// RSSI processing, pulse scheduling, audio playback, and lifecycle cleanup.

@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct WiFiNetworkCapabilities: Equatable, Sendable {
     var phyMode: String

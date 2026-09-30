@@ -1,5 +1,6 @@
 import ChartLens
 import Foundation
+import WiFiLensCore
 
 /// Converts current-scan networks into anonymous frequency envelopes.
 enum SpectrumHeatmapActivity {

@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
+import WiFiLensCore
 
 /// How export success feedback is presented. A presentation concern only —
 /// the guidance policy never reads it.

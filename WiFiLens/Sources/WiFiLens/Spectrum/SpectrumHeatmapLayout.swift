@@ -1,4 +1,5 @@
 import CoreGraphics
+import WiFiLensCore
 
 /// The same channel-coordinate domain used by `WiFiBandChart` and ChartLens.
 /// Regulatory channel lists are used for labels and scanner input, but never

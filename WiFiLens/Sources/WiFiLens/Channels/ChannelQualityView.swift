@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 enum ChannelViewMode: String, CaseIterable {
     case simple

@@ -1,5 +1,6 @@
 import SwiftUI
 import ChartLens
+import WiFiLensCore
 
 @MainActor
 @Observable
@@ -147,7 +148,7 @@ final class BandChartViewModel {
 extension BandChartViewModel {
 
     func updateNetworks(_ networks: [WiFiNetwork], colorHasher: SSIDColorHasher, displayStatesByID: [String: APDisplayState], trends: [String: (direction: TrendDirection, delta: Int)] = [:], snapshots: [String: [NetworkSnapshot]] = [:]) {
-        var dataArray = ChannelSpanCalculator.toSeriesData(
+        var dataArray = ChannelSeriesDataBuilder.toSeriesData(
             networks,
             colorHasher: colorHasher,
             trends: trends,
@@ -182,7 +183,7 @@ extension BandChartViewModel {
     }
 
     func updateNetworks(_ networks: [WiFiNetwork], colorHasher: SSIDColorHasher, filterQuery: String, trends: [String: (direction: TrendDirection, delta: Int)] = [:], snapshots: [String: [NetworkSnapshot]] = [:], hiddenBSSIDs: Set<String> = [], hiddenBands: Set<String> = [], hideHiddenSSIDs: Bool = false) {
-        var dataArray = ChannelSpanCalculator.toSeriesData(networks, colorHasher: colorHasher, trends: trends, hiddenBSSIDs: hiddenBSSIDs)
+        var dataArray = ChannelSeriesDataBuilder.toSeriesData(networks, colorHasher: colorHasher, trends: trends, hiddenBSSIDs: hiddenBSSIDs)
 
         let prevByID = Dictionary(uniqueKeysWithValues: allSeriesData.map { ($0.id, $0.displayRSSI) })
         for i in dataArray.indices {

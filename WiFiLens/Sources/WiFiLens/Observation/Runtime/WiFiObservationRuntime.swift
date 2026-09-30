@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum WiFiObservationLifecycleEvent: Sendable {
     case started(at: Date, expectedInterval: Duration)

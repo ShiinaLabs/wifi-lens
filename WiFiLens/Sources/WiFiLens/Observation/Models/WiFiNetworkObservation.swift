@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct WiFiNetworkObservation: Identifiable, Equatable, Sendable {
     var id: String
