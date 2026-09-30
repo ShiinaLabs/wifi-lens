@@ -42,13 +42,6 @@
 		B9AB60F3D002A7B9123D2520 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EAF444453E304ABB57AF3AA /* CoreLocation.framework */; };
 		C1D2E3F4A5B6123456789ABF /* APFilterServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6123456789ABE /* APFilterServiceTests.swift */; };
 		CC0000000000000000000002 /* DebugTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* DebugTimelineView.swift */; };
-		E6B000000000000000000001 /* WiFiCallingCarrierCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A000000000000000000001 /* WiFiCallingCarrierCatalog.swift */; };
-		E2B00000000000000000001 /* WiFiCallingFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A000000000000000000001 /* WiFiCallingFeature.swift */; };
-		E2B00000000000000000002 /* WiFiCallingFeatureUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A000000000000000000002 /* WiFiCallingFeatureUI.swift */; };
-		E1B00000000000000000001 /* WiFiCallingCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A000000000000000000001 /* WiFiCallingCore.swift */; };
-		E1B00000000000000000002 /* WiFiCallingCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A000000000000000000002 /* WiFiCallingCodec.swift */; };
-		E1B00000000000000000003 /* WiFiCallingRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A000000000000000000003 /* WiFiCallingRunner.swift */; };
-		E1B00000000000000000004 /* WiFiCallingDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A000000000000000000004 /* WiFiCallingDiscovery.swift */; };
 		CC0000000000000000000011 /* TimelineFilterPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000010 /* TimelineFilterPanel.swift */; };
 		DBDF66D03BD11B7D5986B87F /* SeverityValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB8408E6A12E8F18E4C2CF7 /* SeverityValidationTests.swift */; };
 		E10000000000000000000002 /* EventJournalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000001 /* EventJournalTests.swift */; };
@@ -97,10 +90,6 @@
 		ED5000000000000000000002 /* DemoAnalysisDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED5000000000000000000001 /* DemoAnalysisDataTests.swift */; };
 		EEF6495F8D90DE97D0C86ADF /* ChartViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7A45AB88716DC3AC18610B /* ChartViewTests.swift */; };
 		EF1000000000000000000002 /* InsightModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1000000000000000000001 /* InsightModelTests.swift */; };
-		E7B000000000000000000001 /* WiFiCallingTargetOrchestratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A000000000000000000001 /* WiFiCallingTargetOrchestratorTests.swift */; };
-		E2D00000000000000000001 /* WiFiCallingFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2C000000000000000000001 /* WiFiCallingFeatureTests.swift */; };
-		E1D00000000000000000001 /* WiFiCallingCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C000000000000000000001 /* WiFiCallingCoreTests.swift */; };
-		E1D00000000000000000002 /* WiFiCallingRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C000000000000000000002 /* WiFiCallingRunnerTests.swift */; };
 		EF2000000000000000000002 /* InsightRuleValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2000000000000000000001 /* InsightRuleValidationTests.swift */; };
 		FB0573B42FBBEAE4005F8214 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = FB0573B32FBBEAE4005F8214 /* MCP */; };
 		FB0573C02FBC47CC005F8214 /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0573BF2FBC47CC005F8214 /* Logging.swift */; };
@@ -280,13 +269,6 @@
 		C1D2E3F4A5B6123456789ABE /* APFilterServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFilterServiceTests.swift; sourceTree = "<group>"; };
 		C70E4041B5972D72DD79BF56 /* RoamingTestViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingTestViewModelTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000001 /* DebugTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugTimelineView.swift; path = ../Pro/Timeline/DebugTimelineView.swift; sourceTree = SOURCE_ROOT; };
-		E6A000000000000000000001 /* WiFiCallingCarrierCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingCarrierCatalog.swift; path = ../Pro/WiFiCalling/WiFiCallingCarrierCatalog.swift; sourceTree = SOURCE_ROOT; };
-		E2A000000000000000000001 /* WiFiCallingFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingFeature.swift; path = ../Pro/WiFiCalling/WiFiCallingFeature.swift; sourceTree = SOURCE_ROOT; };
-		E2A000000000000000000002 /* WiFiCallingFeatureUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingFeatureUI.swift; path = ../Pro/WiFiCalling/WiFiCallingFeatureUI.swift; sourceTree = SOURCE_ROOT; };
-		E1A000000000000000000001 /* WiFiCallingCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingCore.swift; path = ../Pro/WiFiCalling/WiFiCallingCore.swift; sourceTree = SOURCE_ROOT; };
-		E1A000000000000000000002 /* WiFiCallingCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingCodec.swift; path = ../Pro/WiFiCalling/WiFiCallingCodec.swift; sourceTree = SOURCE_ROOT; };
-		E1A000000000000000000003 /* WiFiCallingRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingRunner.swift; path = ../Pro/WiFiCalling/WiFiCallingRunner.swift; sourceTree = SOURCE_ROOT; };
-		E1A000000000000000000004 /* WiFiCallingDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingDiscovery.swift; path = ../Pro/WiFiCalling/WiFiCallingDiscovery.swift; sourceTree = SOURCE_ROOT; };
 		CC0000000000000000000010 /* TimelineFilterPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimelineFilterPanel.swift; path = ../Pro/Timeline/TimelineFilterPanel.swift; sourceTree = SOURCE_ROOT; };
 		D92298452F334CDAAA9695D3 /* WindowFramePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicyTests.swift; sourceTree = "<group>"; };
 		E10000000000000000000001 /* EventJournalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventJournalTests.swift; sourceTree = "<group>"; };
@@ -332,10 +314,6 @@
 		ED4000000000000000000001 /* AnalysisReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisReadinessTests.swift; sourceTree = "<group>"; };
 		ED5000000000000000000001 /* DemoAnalysisDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAnalysisDataTests.swift; sourceTree = "<group>"; };
 		EF1000000000000000000001 /* InsightModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightModelTests.swift; sourceTree = "<group>"; };
-		E7A000000000000000000001 /* WiFiCallingTargetOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingTargetOrchestratorTests.swift; path = ../Pro/Tests/WiFiLensProTests/WiFiCallingTargetOrchestratorTests.swift; sourceTree = SOURCE_ROOT; };
-		E2C000000000000000000001 /* WiFiCallingFeatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingFeatureTests.swift; path = ../Pro/Tests/WiFiLensProTests/WiFiCallingFeatureTests.swift; sourceTree = SOURCE_ROOT; };
-		E1C000000000000000000001 /* WiFiCallingCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingCoreTests.swift; path = ../Pro/Tests/WiFiLensProTests/WiFiCallingCoreTests.swift; sourceTree = SOURCE_ROOT; };
-		E1C000000000000000000002 /* WiFiCallingRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WiFiCallingRunnerTests.swift; path = ../Pro/Tests/WiFiLensProTests/WiFiCallingRunnerTests.swift; sourceTree = SOURCE_ROOT; };
 		EF2000000000000000000001 /* InsightRuleValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightRuleValidationTests.swift; sourceTree = "<group>"; };
 		FAB8408E6A12E8F18E4C2CF7 /* SeverityValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeverityValidationTests.swift; sourceTree = "<group>"; };
 		FB0573BF2FBC47CC005F8214 /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
@@ -1521,13 +1499,6 @@
 				FB1E326B2FC7316C009D1BDC /* DebugThroughputView.swift in Sources */,
 				FB1E326C2FC7316C009D1BDC /* DebugRoamingChartView.swift in Sources */,
 				CC0000000000000000000002 /* DebugTimelineView.swift in Sources */,
-				E6B000000000000000000001 /* WiFiCallingCarrierCatalog.swift in Sources */,
-				E2B00000000000000000001 /* WiFiCallingFeature.swift in Sources */,
-				E2B00000000000000000002 /* WiFiCallingFeatureUI.swift in Sources */,
-				E1B00000000000000000001 /* WiFiCallingCore.swift in Sources */,
-				E1B00000000000000000002 /* WiFiCallingCodec.swift in Sources */,
-				E1B00000000000000000003 /* WiFiCallingRunner.swift in Sources */,
-				E1B00000000000000000004 /* WiFiCallingDiscovery.swift in Sources */,
 				CC0000000000000000000011 /* TimelineFilterPanel.swift in Sources */,
 				FB1E32772FC7316C009D1BDC /* WiFiLensApp.swift in Sources */,
 				FB1E327B2FC7316C009D1BDC /* BuildConfig.swift in Sources */,
@@ -1562,10 +1533,6 @@
 				DBDF66D03BD11B7D5986B87F /* SeverityValidationTests.swift in Sources */,
 				63BB596DECFDBA8763C84656 /* TimelineLocalizationTests.swift in Sources */,
 				EF1000000000000000000002 /* InsightModelTests.swift in Sources */,
-				E7B000000000000000000001 /* WiFiCallingTargetOrchestratorTests.swift in Sources */,
-				E2D00000000000000000001 /* WiFiCallingFeatureTests.swift in Sources */,
-				E1D00000000000000000001 /* WiFiCallingCoreTests.swift in Sources */,
-				E1D00000000000000000002 /* WiFiCallingRunnerTests.swift in Sources */,
 				EF2000000000000000000002 /* InsightRuleValidationTests.swift in Sources */,
 				EC20000000000000000000002 /* EditionCompositionTests.swift in Sources */,
 				G900000000000000000000D9 /* GuidanceEditionTests.swift in Sources */,
