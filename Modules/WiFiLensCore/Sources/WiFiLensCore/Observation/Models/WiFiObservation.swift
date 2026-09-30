@@ -3,15 +3,15 @@ import Foundation
 public struct WiFiObservation: Equatable, Sendable {
     public var timestamp: Date
     public var currentStatus: WiFiCurrentStatus?
-    public var environmentSnapshot: WiFiEnvironmentSnapshot?
+    var environmentSnapshot: WiFiEnvironmentSnapshot?
     public var gatewayLatency: GatewayLatencyResult?
-    public var quality: WiFiQualityResult?
-    public var channelAnalysis: [ChannelQuality]?
-    public var channelRecommendation: [ChannelRecommendation]?
-    public var diagnosis: DiagnosticResult?
-    public var errors: [WiFiObservationError]
+    var quality: WiFiQualityResult?
+    var channelAnalysis: [ChannelQuality]?
+    var channelRecommendation: [ChannelRecommendation]?
+    var diagnosis: DiagnosticResult?
+    var errors: [WiFiObservationError]
 
-    public init(
+    init(
         timestamp: Date = Date(),
         currentStatus: WiFiCurrentStatus? = nil,
         environmentSnapshot: WiFiEnvironmentSnapshot? = nil,

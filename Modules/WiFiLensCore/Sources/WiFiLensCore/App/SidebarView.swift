@@ -207,8 +207,8 @@ public struct SidebarView: View {
     }
 }
 
-public struct SidebarBadgeRowContent: View {
-    public static let minimumGap: CGFloat = 8
+struct SidebarBadgeRowContent: View {
+    static let minimumGap: CGFloat = 8
 
     let title: String
     let icon: String

@@ -4,7 +4,7 @@ import Foundation
 /// the coordinator serializes access on the main actor, so the protocol needs
 /// no `Sendable` requirement.
 @MainActor
-public protocol OnboardingStateStoring {
+protocol OnboardingStateStoring {
     func load() -> OnboardingState
 
     /// Whether a value for the onboarding key exists. Distinguishes "never
@@ -28,17 +28,17 @@ public struct UserDefaultsOnboardingStateStore: OnboardingStateStoring {
         self.defaults = defaults
     }
 
-    public func load() -> OnboardingState {
+    func load() -> OnboardingState {
         OnboardingState(
             hasCompletedWelcome: defaults.bool(forKey: Key.welcomeCompleted)
         )
     }
 
-    public func hasStoredState() -> Bool {
+    func hasStoredState() -> Bool {
         defaults.object(forKey: Key.welcomeCompleted) != nil
     }
 
-    public func save(_ state: OnboardingState) {
+    func save(_ state: OnboardingState) {
         defaults.set(state.hasCompletedWelcome, forKey: Key.welcomeCompleted)
     }
 }

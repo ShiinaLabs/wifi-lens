@@ -80,7 +80,7 @@ public struct WiFiScanCadenceDiagnostics: Equatable, Sendable {
     public init(skippedSlotCount: UInt64) { self.skippedSlotCount = skippedSlotCount }
 }
 
-public actor WiFiScanner: WiFiScanStreaming {
+actor WiFiScanner: WiFiScanStreaming {
     private static let logger = Logger(subsystem: "com.kaoru.wifi-lens", category: "scanner")
     private let client = CWWiFiClient.shared()
     private let clock: any WiFiScanClock

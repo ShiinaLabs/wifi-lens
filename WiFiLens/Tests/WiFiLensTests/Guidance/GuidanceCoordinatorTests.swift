@@ -22,7 +22,7 @@ final class GuidanceCoordinatorTests {
     @Test func schedulingInvitationPersistsOnlyCompletionCount() {
         let coordinator = makeCoordinator(state: invitationState())
 
-        let decision = coordinator.record(.diagnosticsCompleted)
+        let decision = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
 
         #expect(decision == .showProInvitation)
         #expect(coordinator.pendingInvitation != nil)
@@ -56,7 +56,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func presentationConsumesCountAndDateIdempotently() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let invitation = coordinator.pendingInvitation!
 
         coordinator.invitationPresented(id: invitation.id)
@@ -72,7 +72,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func staleInvitationTokenCannotAffectNewerInvitation() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let a = coordinator.pendingInvitation!
 
         coordinator.openInvitation(id: a.id)
@@ -80,7 +80,7 @@ final class GuidanceCoordinatorTests {
 
         // The next eligible moment schedules B — the only real path to a new
         // pending invitation while a host may still hold a stale rendered token.
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let b = coordinator.pendingInvitation!
         #expect(b.id != a.id)
 
@@ -116,7 +116,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func unpresentedInvitationCancelsWithoutTrace() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let invitation = coordinator.pendingInvitation!
 
         coordinator.endInvitationPresentation(id: invitation.id)
@@ -131,7 +131,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func presentedInvitationWithoutChoiceConsumesAsLater() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let invitation = coordinator.pendingInvitation!
         coordinator.invitationPresented(id: invitation.id)
 
@@ -147,9 +147,9 @@ final class GuidanceCoordinatorTests {
 
     @Test func pendingInvitationBlocksNewInvitationScheduling() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
 
-        let decision = coordinator.record(.diagnosticsCompleted)
+        let decision = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
 
         #expect(decision == .none(.invitationAlreadyPending))
         #expect(store.load().meaningfulCompletionCount == 4)
@@ -158,9 +158,9 @@ final class GuidanceCoordinatorTests {
 
     @Test func pendingReviewRequestBlocksNewReviewScheduling() {
         let coordinator = makeCoordinator(configuration: reviewConfig(), state: reviewState())
-        _ = coordinator.record(.analysisLoaded)
+        _ = coordinator.recordAndReturnDecision(.analysisLoaded)
 
-        let decision = coordinator.record(.analysisLoaded)
+        let decision = coordinator.recordAndReturnDecision(.analysisLoaded)
 
         #expect(decision == .none(.reviewRequestPending))
         #expect(store.load().meaningfulCompletionCount == 6)
@@ -171,7 +171,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func reviewPersistenceHappensOnlyOnInvocation() {
         let coordinator = makeCoordinator(configuration: reviewConfig(), state: reviewState())
-        _ = coordinator.record(.analysisLoaded)
+        _ = coordinator.recordAndReturnDecision(.analysisLoaded)
         let request = coordinator.pendingReviewRequest!
 
         var loaded = store.load()
@@ -186,14 +186,14 @@ final class GuidanceCoordinatorTests {
         #expect(loaded.lastReviewRequestVersion == "2.1.0")
         #expect(events(named: "guidance.review.request_invoked").count == 1)
 
-        let decision = coordinator.record(.analysisLoaded)
+        let decision = coordinator.recordAndReturnDecision(.analysisLoaded)
         #expect(decision == .none(.reviewAlreadyRequestedForVersion))
         #expect(coordinator.pendingReviewRequest == nil)
     }
 
     @Test func staleReviewTokenIsNoOp() {
         let coordinator = makeCoordinator(configuration: reviewConfig(), state: reviewState())
-        _ = coordinator.record(.analysisLoaded)
+        _ = coordinator.recordAndReturnDecision(.analysisLoaded)
         let request = coordinator.pendingReviewRequest!
 
         coordinator.reviewRequestPresented(id: UUID())
@@ -208,7 +208,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func quitBeforeConsumptionLeavesNoPersistedTrace() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
 
         let fresh = GuidanceCoordinator(
             configuration: invitationConfig(),
@@ -292,7 +292,7 @@ final class GuidanceCoordinatorTests {
     @Test func recordExportSucceededAloneNeverPublishesFeedback() {
         let coordinator = makeCoordinator(configuration: reviewConfig(), state: reviewState())
 
-        _ = coordinator.record(.exportSucceeded)
+        _ = coordinator.recordAndReturnDecision(.exportSucceeded)
 
         #expect(coordinator.exportFeedback == nil)
         #expect(store.load().meaningfulCompletionCount == 5)
@@ -314,7 +314,7 @@ final class GuidanceCoordinatorTests {
         #expect(loaded.lastInvitationDate == now)
 
         // The presented-then-dismissed invitation starts the 30-day cooldown.
-        let decision = coordinator.record(.diagnosticsCompleted)
+        let decision = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         #expect(decision == .none(.invitationCooldown))
     }
 
@@ -351,7 +351,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func openInvitationEmitsViewSelectedAndClearsWithoutCount() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let invitation = coordinator.pendingInvitation!
 
         coordinator.openInvitation(id: invitation.id)
@@ -363,7 +363,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func disableInvitationsPersistsAndClears() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let invitation = coordinator.pendingInvitation!
 
         coordinator.disableInvitations(id: invitation.id)
@@ -388,9 +388,9 @@ final class GuidanceCoordinatorTests {
             meaningfulCompletionCount: 0
         ))
 
-        #expect(coordinator.record(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
-        #expect(coordinator.record(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
-        #expect(coordinator.record(.diagnosticsCompleted) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
 
         let invitation = coordinator.pendingInvitation
         #expect(invitation?.moment == .diagnosticsCompleted)
@@ -408,7 +408,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func eventSinkCapturesValueMomentScheduledPresentedDismissed() {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let invitation = coordinator.pendingInvitation!
         coordinator.invitationPresented(id: invitation.id)
         coordinator.dismissInvitation(id: invitation.id)
@@ -422,7 +422,7 @@ final class GuidanceCoordinatorTests {
     @Test func eventSinkEmitsNoActionWithSuppressionReason() {
         let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
 
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
 
         let noAction = events(named: "guidance.no_action").first
         #expect(noAction?.suppressionReason == .completionThresholdNotMet)
@@ -432,7 +432,7 @@ final class GuidanceCoordinatorTests {
     @Test func roamingRecordsValueMomentWithoutCompletion() {
         let coordinator = makeCoordinator(state: invitationState())
 
-        _ = coordinator.record(.roamingCompleted)
+        _ = coordinator.recordAndReturnDecision(.roamingCompleted)
 
         #expect(store.load().meaningfulCompletionCount == 2)
         #expect(events(named: "guidance.no_action").first?.suppressionReason == .roamingPolicyNotEnabled)
@@ -441,18 +441,18 @@ final class GuidanceCoordinatorTests {
 
     @Test func roamingCompletionsDoNotAdvanceInvitationEligibility() {
         let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
-        _ = coordinator.record(.roamingCompleted)
-        _ = coordinator.record(.roamingCompleted)
+        _ = coordinator.recordAndReturnDecision(.roamingCompleted)
+        _ = coordinator.recordAndReturnDecision(.roamingCompleted)
 
         #expect(store.load().meaningfulCompletionCount == 0)
-        #expect(coordinator.record(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
-        #expect(coordinator.record(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
-        #expect(coordinator.record(.diagnosticsCompleted) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
     }
 
     @Test func reviewEventsOncePerToken() {
         let coordinator = makeCoordinator(configuration: reviewConfig(), state: reviewState())
-        _ = coordinator.record(.analysisLoaded)
+        _ = coordinator.recordAndReturnDecision(.analysisLoaded)
         let request = coordinator.pendingReviewRequest!
         coordinator.reviewRequestPresented(id: request.id)
 
@@ -509,7 +509,7 @@ final class GuidanceCoordinatorTests {
 
     @Test func exportBannerNeverTouchesNonExportInvitation() throws {
         let coordinator = makeCoordinator(state: invitationState())
-        _ = coordinator.record(.diagnosticsCompleted)
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
         let invitation = try #require(coordinator.pendingInvitation)
         coordinator.handleExportSucceeded()
         #expect(coordinator.pendingInvitation?.id == invitation.id)

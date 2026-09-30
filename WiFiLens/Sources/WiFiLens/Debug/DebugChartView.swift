@@ -603,8 +603,7 @@ struct DebugChartView: View {
         let block = ChannelSpanCalculator.channelBlock(
             primaryChannel: channel,
             widthMHz: channelWidthMHz,
-            band: selectedBand,
-            spanDirection: nil
+            band: selectedBand
         )
         let domain = ChartSeriesDomainData(
             id: "debug-signal",

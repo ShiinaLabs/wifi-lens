@@ -3,7 +3,7 @@ import CoreWLAN
 import SystemConfiguration
 
 public struct NetworkInterfaceInfo: Sendable {
-    public enum InterfaceType: String, Sendable {
+    enum InterfaceType: String, Sendable {
         case wifi
         case ethernet
         case virtual
@@ -58,27 +58,27 @@ public struct NetworkInterfaceInfo: Sendable {
         self.security = security
     }
 
-    public var interfaceType: InterfaceType {
+    var interfaceType: InterfaceType {
         if ssid != nil { return .wifi }
         if hardwareMAC != nil { return .ethernet }
         return .virtual
     }
 
-    public var displayMAC: String { hardwareMAC ?? String(localized: "common.label.unknown", comment: "Generic unknown value label") }
+    var displayMAC: String { hardwareMAC ?? String(localized: "common.label.unknown", comment: "Generic unknown value label") }
     public var displaySSID: String { ssid ?? "n/a" }
     public var displayBSSID: String { bssid ?? String(localized: "common.label.unknown", comment: "Generic unknown value label") }
     public var displayChannel: String { channel.map { "\($0)" } ?? "—" }
     public var displayRSSI: String { rssi.map { "\($0) dBm" } ?? "—" }
-    public var displayTxRate: String { txRate.map { "\(Int($0)) Mbps" } ?? "—" }
-    public var displaySecurity: String { security }
-    public var displayPhyMode: String { phyMode ?? "—" }
-    public var displayIP: String { ipv4Addresses.first ?? "—" }
-    public var displaySubnet: String { subnetMasks.first ?? "—" }
-    public var displayRouter: String { router ?? "—" }
-    public var displayDNS: String { dnsServers.isEmpty ? "—" : dnsServers.joined(separator: ", ") }
+    var displayTxRate: String { txRate.map { "\(Int($0)) Mbps" } ?? "—" }
+    var displaySecurity: String { security }
+    var displayPhyMode: String { phyMode ?? "—" }
+    var displayIP: String { ipv4Addresses.first ?? "—" }
+    var displaySubnet: String { subnetMasks.first ?? "—" }
+    var displayRouter: String { router ?? "—" }
+    var displayDNS: String { dnsServers.isEmpty ? "—" : dnsServers.joined(separator: ", ") }
 
 
-    public var hasNetworkInfo: Bool { !ipv4Addresses.isEmpty || router != nil || !dnsServers.isEmpty }
+    var hasNetworkInfo: Bool { !ipv4Addresses.isEmpty || router != nil || !dnsServers.isEmpty }
 }
 
 public struct NetworkInterfaceSnapshot: Sendable {
@@ -96,7 +96,7 @@ public protocol NetworkInterfaceSnapshotSourcing: Sendable {
     func capture(cycleID: UUID) async -> NetworkInterfaceSnapshot
 }
 
-public struct SystemNetworkInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcing {
+struct SystemNetworkInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcing {
     public init() {}
     @concurrent
     public func capture(cycleID: UUID) async -> NetworkInterfaceSnapshot {
@@ -112,7 +112,7 @@ public enum NetworkInfoService {
     /// All available network interfaces, including virtual ones.
     /// Uses `getifaddrs()` for discovery so VPN / VM / bridge adapters
     /// are visible even when they have no SystemConfiguration state.
-    public static func fetchAll() -> [NetworkInterfaceInfo] {
+    static func fetchAll() -> [NetworkInterfaceInfo] {
         let store = SCDynamicStoreCreate(nil, "WiFiLens" as CFString, nil, nil)
         let dns = fetchDNS(store)
         let wifiMAC = fetchWiFiMAC()
@@ -247,7 +247,7 @@ public enum NetworkInfoService {
         }
     }
 
-    public static func fetch() -> NetworkInterfaceInfo? {
+    static func fetch() -> NetworkInterfaceInfo? {
         let client = CWWiFiClient.shared()
         guard let iface = client.interface(),
               let name = iface.interfaceName else { return nil }
@@ -350,7 +350,7 @@ public enum NetworkInfoService {
         CWWiFiClient.shared().interface()?.hardwareAddress()
     }
 
-    public static func channelBand(coreWLANRawValue: Int) -> ChannelBand? {
+    static func channelBand(coreWLANRawValue: Int) -> ChannelBand? {
         ChannelBand(rawValue: coreWLANRawValue)
     }
 

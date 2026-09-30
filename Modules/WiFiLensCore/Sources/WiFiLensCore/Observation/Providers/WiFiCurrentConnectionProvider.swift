@@ -11,13 +11,13 @@ extension ChannelBand {
     }
 }
 
-public protocol WiFiCurrentConnectionProviding: Sendable {
+protocol WiFiCurrentConnectionProviding: Sendable {
     func fetchCurrentStatus(from snapshot: NetworkInterfaceSnapshot) async -> WiFiCurrentStatus
 }
 
-public struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
+struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
     public init() {}
-    public func fetchCurrentStatus(from snapshot: NetworkInterfaceSnapshot) async -> WiFiCurrentStatus {
+    func fetchCurrentStatus(from snapshot: NetworkInterfaceSnapshot) async -> WiFiCurrentStatus {
         guard let wifi = snapshot.interfaces.first(where: { $0.ssid != nil }) else {
             return WiFiCurrentStatus(
                 timestamp: snapshot.capturedAt,
@@ -30,7 +30,7 @@ public struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
         return Self.makeStatus(from: wifi, snapshot: snapshot)
     }
 
-    public static func makeStatus(
+    static func makeStatus(
         from wifi: NetworkInterfaceInfo,
         snapshot: NetworkInterfaceSnapshot
     ) -> WiFiCurrentStatus {

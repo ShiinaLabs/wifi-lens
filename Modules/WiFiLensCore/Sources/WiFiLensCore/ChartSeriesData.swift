@@ -222,11 +222,11 @@ public struct ChartSeriesData: Identifiable {
 
     public var displaySSID: String { ssid.isEmpty ? "n/a" : ssid }
 
-    public var curvePoints: [(x: Double, y: Double)] {
+    var curvePoints: [(x: Double, y: Double)] {
         gaussianEnvelope(peakY: Double(rssi)).sampledPoints(count: 81)
     }
 
-    public var displayCurvePoints: [(x: Double, y: Double)] {
+    var displayCurvePoints: [(x: Double, y: Double)] {
         gaussianEnvelope(peakY: displayRSSI).sampledPoints(count: 81)
     }
 

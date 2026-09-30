@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Compact metadata displayed at the trailing edge of a sidebar destination.
-public struct SidebarBadge: View {
+struct SidebarBadge: View {
     public enum Presentation: Hashable, Sendable {
         case full
         case compact
@@ -67,7 +67,7 @@ public struct SidebarBadge: View {
         static let borderWidth: CGFloat = 1
     }
 
-    public enum Style: Equatable {
+    enum Style: Equatable {
         case pro
         case preview
         case experimental

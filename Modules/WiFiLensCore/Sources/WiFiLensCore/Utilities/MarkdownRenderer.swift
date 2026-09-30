@@ -9,7 +9,7 @@ import AppKit
 import MarkdownKit
 
 /// Keeps the app's existing renderer API while delegating rendering to MarkdownKit.
-public enum MarkdownRenderer {
+enum MarkdownRenderer {
     public static func render(_ markdown: String, pointSize: CGFloat = 13) -> NSAttributedString {
         MarkdownKit.MarkdownRenderer.render(markdown, pointSize: pointSize)
     }

@@ -34,7 +34,7 @@ public enum GuidanceDebugOverrides {
     /// Consumed by the real `NetworkDiagnosticsView` host. Returns true at
     /// most once per request; a fresh window can consume a request that an
     /// older, closed window never did.
-    public static func consumeDiagnosticsStaging() -> Bool {
+    static func consumeDiagnosticsStaging() -> Bool {
         guard pendingDiagnosticsStaging else { return false }
         pendingDiagnosticsStaging = false
         return true
@@ -42,7 +42,7 @@ public enum GuidanceDebugOverrides {
 
     /// Cleared by `debugResetState()` so a stale request cannot stage into a
     /// future diagnostics host after a reset.
-    public static func clearDiagnosticsStaging() {
+    static func clearDiagnosticsStaging() {
         pendingDiagnosticsStaging = false
     }
 }

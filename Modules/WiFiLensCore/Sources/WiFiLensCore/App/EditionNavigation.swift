@@ -97,7 +97,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         }
     }
 
-    public static let analysisPages: [SidebarPage] = [.timeline, .statistics, .insights]
+    static let analysisPages: [SidebarPage] = [.timeline, .statistics, .insights]
 }
 
 public enum SecondaryToolbarItemID: String, Hashable, Sendable {
@@ -115,10 +115,10 @@ public enum SecondaryToolbarItemID: String, Hashable, Sendable {
     case timelineCustom = "timeline-custom"
 }
 
-public struct SecondaryToolbarItem: Identifiable, Equatable, Sendable {
+struct SecondaryToolbarItem: Identifiable, Equatable, Sendable {
     public let id: SecondaryToolbarItemID
     public let title: String
-    public var isLocked: Bool
+    var isLocked: Bool
 
     public init(id: SecondaryToolbarItemID, title: String, isLocked: Bool = false) {
         self.id = id
@@ -128,15 +128,15 @@ public struct SecondaryToolbarItem: Identifiable, Equatable, Sendable {
 }
 
 public struct SecondaryToolbarDescriptor: Equatable, Sendable {
-    public let items: [SecondaryToolbarItem]
+    let items: [SecondaryToolbarItem]
     public let defaultSelection: SecondaryToolbarItemID
 
-    public init(items: [SecondaryToolbarItem], defaultSelection: SecondaryToolbarItemID) {
+    init(items: [SecondaryToolbarItem], defaultSelection: SecondaryToolbarItemID) {
         self.items = items
         self.defaultSelection = defaultSelection
     }
 
-    public func selectionIndex(for id: SecondaryToolbarItemID) -> Int {
+    func selectionIndex(for id: SecondaryToolbarItemID) -> Int {
         items.firstIndex { $0.id == id } ?? items.firstIndex { $0.id == defaultSelection } ?? 0
     }
 

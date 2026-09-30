@@ -106,7 +106,7 @@ public final class ConsolePanelController: NSObject {
         setBottomExtent(statusBarHeight, animate: animate)
     }
 
-    public func setBottomExtent(_ desired: CGFloat, animate: Bool = true) {
+    func setBottomExtent(_ desired: CGFloat, animate: Bool = true) {
         guard let split else { return }
         let total = split.bounds.height
         let bottom = min(max(desired, statusBarHeight),

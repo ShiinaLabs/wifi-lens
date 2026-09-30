@@ -187,8 +187,7 @@ enum DebugScenarioBuilder {
                 let block = ChannelSpanCalculator.channelBlock(
                     primaryChannel: normalizedAP.channel,
                     widthMHz: normalizedAP.widthMHz,
-                    band: band,
-                    spanDirection: nil
+                    band: band
                 )
                 let domain = ChartSeriesDomainData(
                     id: "\(normalizedAP.id.uuidString)-\(band.id)",

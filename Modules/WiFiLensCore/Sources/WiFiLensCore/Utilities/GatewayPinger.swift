@@ -5,7 +5,7 @@ protocol GatewayPingProcessRunning: Sendable {
     func cancel() async
 }
 
-public actor GatewayPinger {
+actor GatewayPinger {
     private let processRunner: any GatewayPingProcessRunning
 
     public init() { self.processRunner = SystemGatewayPingProcessRunner() }
@@ -14,7 +14,7 @@ public actor GatewayPinger {
         self.processRunner = processRunner
     }
 
-    public func ping(host: String) async -> Double? {
+    func ping(host: String) async -> Double? {
         await ping(arguments: ["-c", "1", "-W", "1000", host])
     }
 

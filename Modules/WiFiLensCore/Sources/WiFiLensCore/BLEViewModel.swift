@@ -17,9 +17,9 @@ public final class BLEViewModel {
     let bluetoothPowerMonitor = BLEPowerMonitor()
 
     public private(set) var isScanning = false
-    public private(set) var bluetoothState: BLEBluetoothState = .unknown
-    public private(set) var devices: [BLEDeviceSnapshot] = []
-    public var selectedDeviceID: String?
+    private(set) var bluetoothState: BLEBluetoothState = .unknown
+    private(set) var devices: [BLEDeviceSnapshot] = []
+    var selectedDeviceID: String?
     public private(set) var errorMessage: String?
 
     private var scanTask: Task<Void, Never>?
@@ -30,16 +30,16 @@ public final class BLEViewModel {
     private let authorizationOverride: Bool?
     private let monitorsBluetoothPower: Bool
 
-    public var displayedDevices: [BLEDeviceSnapshot] {
+    var displayedDevices: [BLEDeviceSnapshot] {
         devices.sorted { $0.rssi > $1.rssi }
     }
 
-    public var selectedDevice: BLEDeviceSnapshot? {
+    var selectedDevice: BLEDeviceSnapshot? {
         guard let id = selectedDeviceID else { return nil }
         return devices.first { $0.id == id }
     }
 
-    public var selectedDeviceHistory: [BLERSSISample]? {
+    var selectedDeviceHistory: [BLERSSISample]? {
         guard let id = selectedDeviceID,
               let uuid = UUID(uuidString: id) else { return nil }
         return deviceTracker.rssiHistory(for: uuid)
@@ -62,7 +62,7 @@ public final class BLEViewModel {
         }
     }
 
-    public func requestPermission() {
+    func requestPermission() {
         bluetoothPermission.requestPermissionIfNeeded()
     }
 

@@ -11,28 +11,28 @@ public final class BandChartViewModel {
     public let band: ChannelBand
 
     public var isExpanded: Bool = false
-    public var zoomMin: Double?
-    public var zoomMax: Double?
+    var zoomMin: Double?
+    var zoomMax: Double?
 
-    public private(set) var allSeriesData: [ChartSeriesData] = []
+    private(set) var allSeriesData: [ChartSeriesData] = []
     public private(set) var displayedSeriesData: [ChartSeriesData] = []
     private(set) var interfaceName: String = ""
     private(set) var currentFilterQuery: String = ""
     private(set) var allSnapshots: [String: [NetworkSnapshot]] = [:]
-    public private(set) var channelOccupancy: [Int: Int] = [:]
+    private(set) var channelOccupancy: [Int: Int] = [:]
     private var currentHiddenBands: Set<String> = []
     private var currentHideHiddenSSIDs: Bool = false
     private var animationTimer: Timer?
-    public var chartSize: CGSize = .zero
+    var chartSize: CGSize = .zero
 
-    public var hasFilter: Bool { !currentFilterQuery.trimmingCharacters(in: .whitespaces).isEmpty }
+    var hasFilter: Bool { !currentFilterQuery.trimmingCharacters(in: .whitespaces).isEmpty }
     public var networkCount: Int { allSeriesData.count }
     public var isEmpty: Bool { allSeriesData.isEmpty }
 
-    public var xDataMin: Int { band == .band24GHz ? -1 : 1 }
-    public var xDataMax: Int { band.maxChannel }
+    var xDataMin: Int { band == .band24GHz ? -1 : 1 }
+    var xDataMax: Int { band.maxChannel }
     public var yMin: Double { Double(Constants.rssiNoiseFloor) }
-    public var axisTickStartChannel: Int { 1 }
+    var axisTickStartChannel: Int { 1 }
 
     public var renderModel: BandChartRenderModel {
         BandChartRenderModel(
@@ -98,7 +98,7 @@ public final class BandChartViewModel {
         displayedSeriesData.filter(\.isVisible)
     }
 
-    public func strongestRSSI() -> Int {
+    func strongestRSSI() -> Int {
         Int(visibleSeriesData().map(\.displayRSSI).max() ?? 0)
     }
 

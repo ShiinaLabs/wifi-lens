@@ -16,31 +16,31 @@ extension WiFiObservationConsuming {
     func consumeLifecycle(_ event: WiFiObservationLifecycleEvent) async throws { _ = event }
 }
 
-public struct ObservationConsumerDiagnostics: Equatable, Sendable {
+struct ObservationConsumerDiagnostics: Equatable, Sendable {
     public let pendingCount: Int
-    public let oldestObservationTimestamp: Date?
-    public let failureCount: Int
+    let oldestObservationTimestamp: Date?
+    let failureCount: Int
 }
 
-public struct RawCycleDeliveryDiagnostics: Equatable, Sendable {
-    public let replacementCount: UInt64
-    public let hasInFlight: Bool
-    public let hasPending: Bool
+struct RawCycleDeliveryDiagnostics: Equatable, Sendable {
+    let replacementCount: UInt64
+    let hasInFlight: Bool
+    let hasPending: Bool
 }
 
-public struct WiFiObservationRuntimeConfiguration: Sendable {
+struct WiFiObservationRuntimeConfiguration: Sendable {
     public init(scanInterval: Duration, userRegionOverride: RegulatoryDomain? = nil, userDefaultsRegionOverride: RegulatoryDomain? = nil) {
         self.scanInterval = scanInterval; self.userRegionOverride = userRegionOverride; self.userDefaultsRegionOverride = userDefaultsRegionOverride
     }
-    public var scanInterval: Duration
-    public var userRegionOverride: RegulatoryDomain?
-    public var userDefaultsRegionOverride: RegulatoryDomain?
+    var scanInterval: Duration
+    var userRegionOverride: RegulatoryDomain?
+    var userDefaultsRegionOverride: RegulatoryDomain?
 }
 
-public struct WiFiObservationScanOutput: Sendable {
-    public let rawNetworks: [WiFiNetwork]
+struct WiFiObservationScanOutput: Sendable {
+    let rawNetworks: [WiFiNetwork]
     public let cycle: WiFiObservationCycleResult
-    public let interfaceSnapshot: NetworkInterfaceSnapshot
+    let interfaceSnapshot: NetworkInterfaceSnapshot
     public let interfaceName: String?
     public let supportedBands: Set<ChannelBand>
 }
@@ -110,8 +110,32 @@ public final class WiFiObservationRuntime {
     }
 #endif
 
-    public init(
-        store: WiFiObservationStore = .shared,
+    public convenience init(store: WiFiObservationStore = .shared) {
+        self.init(
+            store: store,
+            pipeline: WiFiObservationPipeline(),
+            scanSource: WiFiScanner(),
+            interfaceSource: SystemNetworkInterfaceSnapshotSource(),
+            now: { Date() }
+        )
+    }
+
+    public convenience init(
+        store: WiFiObservationStore,
+        scanSource: any WiFiScanStreaming,
+        interfaceSource: any NetworkInterfaceSnapshotSourcing
+    ) {
+        self.init(
+            store: store,
+            pipeline: WiFiObservationPipeline(),
+            scanSource: scanSource,
+            interfaceSource: interfaceSource,
+            now: { Date() }
+        )
+    }
+
+    init(
+        store: WiFiObservationStore,
         pipeline: any WiFiObservationPipelining = WiFiObservationPipeline(),
         scanSource: any WiFiScanStreaming = WiFiScanner(),
         interfaceSource: any NetworkInterfaceSnapshotSourcing = SystemNetworkInterfaceSnapshotSource(),
@@ -149,12 +173,12 @@ public final class WiFiObservationRuntime {
 
     /// Stops delivering observations and lifecycle events to a consumer.
     /// Safe to call for consumers that were never added.
-    public func removeConsumer(_ consumer: any WiFiObservationConsuming) {
+    func removeConsumer(_ consumer: any WiFiObservationConsuming) {
         let identifier = ObjectIdentifier(consumer)
         workers.removeValue(forKey: identifier)
     }
 
-    public func accept(_ observation: WiFiObservation) async {
+    func accept(_ observation: WiFiObservation) async {
         store.apply(observation)
         for worker in workers.values {
             await worker.consume(observation)
@@ -186,7 +210,7 @@ public final class WiFiObservationRuntime {
         await scanSource.cadenceDiagnostics()
     }
 
-    public func startScanning(
+    func startScanning(
         configuration: WiFiObservationRuntimeConfiguration,
         isPublicationEligible: @escaping @MainActor () -> Bool = { true },
         onOutput: @escaping @MainActor (WiFiObservationScanOutput) -> Void
@@ -207,7 +231,7 @@ public final class WiFiObservationRuntime {
         await command.value
     }
 
-    public func restartScanning(configuration: WiFiObservationRuntimeConfiguration) async {
+    func restartScanning(configuration: WiFiObservationRuntimeConfiguration) async {
         guard let requestedOutputProjection, let requestedPublicationEligibility else { return }
         let command = enqueueLifecycleCommand { [weak self] requestID in
             guard let self else { return }

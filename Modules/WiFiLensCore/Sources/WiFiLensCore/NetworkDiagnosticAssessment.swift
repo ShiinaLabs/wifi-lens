@@ -1,15 +1,15 @@
 import Foundation
 
-public enum DiagnosticRouteAvailability: Equatable, Sendable {
+enum DiagnosticRouteAvailability: Equatable, Sendable {
     case available
     case unavailable
     case authenticationRequired
     case unverified
 }
 
-public struct DiagnosticProxyFacts: Equatable, Sendable {
-    public let http: DiagnosticRouteAvailability
-    public let https: DiagnosticRouteAvailability
+struct DiagnosticProxyFacts: Equatable, Sendable {
+    let http: DiagnosticRouteAvailability
+    let https: DiagnosticRouteAvailability
 
     public init(http: DiagnosticRouteAvailability, https: DiagnosticRouteAvailability) {
         self.http = http
@@ -32,10 +32,10 @@ enum DiagnosticActionPriority: Int, Comparable, Sendable {
     }
 }
 
-public struct DiagnosticStageAssessment: Equatable, Sendable {
+struct DiagnosticStageAssessment: Equatable, Sendable {
     public let stage: NetworkDiagnosticStage
     public let status: NetworkDiagnosticStatus?
-    public let qualificationCode: String?
+    let qualificationCode: String?
 
     public init(stage: NetworkDiagnosticStage, status: NetworkDiagnosticStatus?, qualificationCode: String?) {
         self.stage = stage
@@ -44,10 +44,10 @@ public struct DiagnosticStageAssessment: Equatable, Sendable {
     }
 }
 
-public struct NetworkDiagnosticAssessment: Equatable, Sendable {
+struct NetworkDiagnosticAssessment: Equatable, Sendable {
     public let conclusion: NetworkDiagnosticConclusion?
-    public let stages: [DiagnosticStageAssessment]
-    public let primaryIssue: NetworkDiagnosticResult?
+    let stages: [DiagnosticStageAssessment]
+    let primaryIssue: NetworkDiagnosticResult?
 }
 
 struct NetworkDiagnosticAssessmentResolver: Sendable {

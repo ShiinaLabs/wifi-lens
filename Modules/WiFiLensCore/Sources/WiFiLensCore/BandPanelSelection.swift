@@ -75,7 +75,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
     nonisolated public static let maximumPanelCount = 6
     nonisolated public static let persistenceKey = "spectrum.dashboard.panels"
 
-    public static let defaultPanels = [
+    static let defaultPanels = [
         SpectrumPanelDescriptor(id: .primary, viewType: .spectrum, band: .band24GHz),
         SpectrumPanelDescriptor(id: .secondary, viewType: .spectrum, band: .band5GHz),
         SpectrumPanelDescriptor(id: .tertiary, viewType: .table, band: .band24GHz)
@@ -111,7 +111,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
     }
 
     @discardableResult
-    public func addPanel(defaultBand: ChannelBand = .band24GHz) -> SpectrumPanelID? {
+    func addPanel(defaultBand: ChannelBand = .band24GHz) -> SpectrumPanelID? {
         guard panels.count < Self.maximumPanelCount else { return nil }
 
         let id = SpectrumPanelID(rawValue: "panel-\(UUID().uuidString)")
@@ -122,7 +122,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
     }
 
     @discardableResult
-    public func removePanel(id: SpectrumPanelID) -> Bool {
+    func removePanel(id: SpectrumPanelID) -> Bool {
         guard panels.count > Self.minimumPanelCount,
               let index = panels.firstIndex(where: { $0.id == id }) else {
             return false
@@ -149,7 +149,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
         return splitFractionHolders[key] ?? FractionHolder(defaultFraction)
     }
 
-    nonisolated public static func boundaryKey(topID: SpectrumPanelID, bottomID: SpectrumPanelID) -> String {
+    nonisolated static func boundaryKey(topID: SpectrumPanelID, bottomID: SpectrumPanelID) -> String {
         "\(topID.rawValue)->\(bottomID.rawValue)"
     }
 

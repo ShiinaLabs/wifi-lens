@@ -1,6 +1,6 @@
 import Foundation
 
-public enum DiagnosticEventKind: Equatable, Sendable {
+enum DiagnosticEventKind: Equatable, Sendable {
     case sessionStarted
     case runStarted
     case checkStarted
@@ -11,20 +11,20 @@ public enum DiagnosticEventKind: Equatable, Sendable {
     case completed
 }
 
-public struct NetworkDiagnosticEvent: Equatable, Sendable {
-    public let runID: UUID
-    public let elapsedMilliseconds: Int64
+struct NetworkDiagnosticEvent: Equatable, Sendable {
+    let runID: UUID
+    let elapsedMilliseconds: Int64
     public let kind: DiagnosticEventKind
-    public let checkID: NetworkDiagnosticCheckID?
-    public let reasonCode: String?
+    let checkID: NetworkDiagnosticCheckID?
+    let reasonCode: String?
 
     public var timestamp = Date()
-    public var runNumber = 0
+    var runNumber = 0
     public var result: DiagnosticLogResult?
     public var durationMilliseconds: Int64?
     public var conclusion: NetworkDiagnosticConclusion?
-    public var pendingIDs: [NetworkDiagnosticCheckID] = []
-    public var retainedIDs: [NetworkDiagnosticCheckID] = []
+    var pendingIDs: [NetworkDiagnosticCheckID] = []
+    var retainedIDs: [NetworkDiagnosticCheckID] = []
 
     public var message: String {
         let run = runNumber > 0 ? "Run \(runNumber) · " : ""
@@ -69,7 +69,7 @@ public struct NetworkDiagnosticEvent: Equatable, Sendable {
         formattedLines.joined(separator: "\n")
     }
 
-    public var formattedLines: [String] {
+    var formattedLines: [String] {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "HH:mm:ss.SSS"
@@ -104,7 +104,7 @@ public struct NetworkDiagnosticEvent: Equatable, Sendable {
 
 /// A safe, English-only projection: localized summaries and arbitrary payloads
 /// never enter the log store. Keep evidence values constrained by their meaning.
-public struct DiagnosticLogResult: Equatable, Sendable {
+struct DiagnosticLogResult: Equatable, Sendable {
     public let status: NetworkDiagnosticStatus
     public let details: [String]
 

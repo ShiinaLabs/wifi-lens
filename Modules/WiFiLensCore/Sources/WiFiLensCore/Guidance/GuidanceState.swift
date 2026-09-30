@@ -3,18 +3,18 @@ import Foundation
 /// Persisted lifecycle-guidance state. The struct owns its invariants both on live
 /// mutation (`recordActiveDay`) and on restore (the normalized initializer),
 /// so corrupted storage can never violate them.
-public struct GuidanceState: Equatable, Sendable {
-    public static let maxActiveDayCount = 120
+struct GuidanceState: Equatable, Sendable {
+    static let maxActiveDayCount = 120
 
-    public var firstLaunchDate: Date?
-    public private(set) var activeDays: [String]
-    public var meaningfulCompletionCount: Int
-    public var lastInvitationDate: Date?
-    public var invitationPresentationCount: Int
-    public var invitationDismissalCount: Int
-    public var invitationsDisabled: Bool
-    public var lastReviewRequestDate: Date?
-    public var lastReviewRequestVersion: String?
+    var firstLaunchDate: Date?
+    private(set) var activeDays: [String]
+    var meaningfulCompletionCount: Int
+    var lastInvitationDate: Date?
+    var invitationPresentationCount: Int
+    var invitationDismissalCount: Int
+    var invitationsDisabled: Bool
+    var lastReviewRequestDate: Date?
+    var lastReviewRequestVersion: String?
 
     /// Restore/creation initializer. Normalizes `activeDays` (filter invalid
     /// keys, dedupe, sort, cap at `maxActiveDayCount`) so persisted or damaged
@@ -43,7 +43,7 @@ public struct GuidanceState: Equatable, Sendable {
 
     /// Records a distinct local calendar day with the injected calendar.
     /// Appends, deduplicates, sorts, and truncates to `maxActiveDayCount`.
-    public mutating func recordActiveDay(at date: Date, calendar: Calendar) {
+    mutating func recordActiveDay(at date: Date, calendar: Calendar) {
         let components = calendar.dateComponents([.year, .month, .day], from: date)
         guard let year = components.year, let month = components.month, let day = components.day else {
             return
@@ -61,7 +61,7 @@ public struct GuidanceState: Equatable, Sendable {
     /// Returns true when `key` matches `YYYY-MM-DD` and forms a real Gregorian
     /// calendar date. The round-trip check rejects impossible dates such as
     /// `2026-02-30` and `2026-13-01`.
-    public static func isValidDayKey(_ key: String) -> Bool {
+    static func isValidDayKey(_ key: String) -> Bool {
         guard key.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil else {
             return false
         }

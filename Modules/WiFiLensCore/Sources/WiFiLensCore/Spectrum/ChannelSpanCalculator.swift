@@ -18,6 +18,14 @@ public enum ChannelSpanCalculator {
     public static func channelBlock(
         primaryChannel: Int,
         widthMHz: Int,
+        band: ChannelBand
+    ) -> (left: Int, right: Int) {
+        channelBlock(primaryChannel: primaryChannel, widthMHz: widthMHz, band: band, spanDirection: nil)
+    }
+
+    static func channelBlock(
+        primaryChannel: Int,
+        widthMHz: Int,
         band: ChannelBand,
         spanDirection: SpanDirection?
     ) -> (left: Int, right: Int) {

@@ -87,7 +87,7 @@ public struct NetworkSnapshot: Codable {
         isHiddenSSID = try container.decodeIfPresent(Bool.self, forKey: .isHiddenSSID) ?? false
     }
 
-    public static func scalarWidth(for label: String) -> Int {
+    static func scalarWidth(for label: String) -> Int {
         switch label {
         case "160": return 160
         case "80", "80+80": return 80

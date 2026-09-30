@@ -48,7 +48,7 @@ public struct SecondaryToolbarCapsule: NSViewRepresentable {
         Coordinator(selection: $selection, itemIDs: descriptor.items.map(\.id))
     }
 
-    public func makeNSView(context: Context) -> SecondaryToolbarSegmentedControl {
+    public func makeNSView(context: Context) -> NSSegmentedControl {
         return Self.makeControl(
             descriptor: descriptor,
             selection: selection,
@@ -57,7 +57,8 @@ public struct SecondaryToolbarCapsule: NSViewRepresentable {
         )
     }
 
-    public func updateNSView(_ nsView: SecondaryToolbarSegmentedControl, context: Context) {
+    public func updateNSView(_ nsView: NSSegmentedControl, context: Context) {
+        guard let nsView = nsView as? SecondaryToolbarSegmentedControl else { return }
         nsView.target = context.coordinator
         nsView.action = #selector(Coordinator.selectionDidChange(_:))
         context.coordinator.itemIDs = descriptor.items.map(\.id)
@@ -120,7 +121,7 @@ public struct SecondaryToolbarCapsule: NSViewRepresentable {
     }
 }
 
-public final class SecondaryToolbarSegmentedControl: NSSegmentedControl {
+final class SecondaryToolbarSegmentedControl: NSSegmentedControl {
     var segmentItemIDs: [SecondaryToolbarItemID] = []
 
     public override func layout() {
@@ -128,7 +129,7 @@ public final class SecondaryToolbarSegmentedControl: NSSegmentedControl {
         refreshAccessibilityChildren()
     }
 
-    public func refreshAccessibilityChildren() {
+    func refreshAccessibilityChildren() {
         var childElements: [Any] = []
         var xOffset: CGFloat = 0
 

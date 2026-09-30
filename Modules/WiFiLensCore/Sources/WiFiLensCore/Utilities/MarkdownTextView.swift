@@ -13,7 +13,7 @@ import SwiftUI
 /// A read-only, selectable Markdown text view backed by AppKit. The attributed
 /// string is produced by `MarkdownRenderer`. Optionally override the base body
 /// font size; it defaults to the standard 13 pt body size.
-public struct MarkdownTextView: NSViewRepresentable {
+struct MarkdownTextView: NSViewRepresentable {
     let markdown: String
     var pointSize: CGFloat = 13
 
@@ -83,13 +83,13 @@ public struct MarkdownTextView: NSViewRepresentable {
         "\(pointSize)|\(markdown)"
     }
 
-    public func makeCoordinator() -> Coordinator {
+    func makeCoordinator() -> Coordinator {
         Coordinator()
     }
 
     /// Returns the laid-out height (in points) the given Markdown needs for the
     /// provided content width, so callers can size a sheet to its content.
-    public static func measureHeight(markdown: String, width: CGFloat, pointSize: CGFloat = 13) -> CGFloat {
+    static func measureHeight(markdown: String, width: CGFloat, pointSize: CGFloat = 13) -> CGFloat {
         let attributed = MarkdownRenderer.render(markdown, pointSize: pointSize)
         let layoutManager = NSLayoutManager()
         let textStorage = NSTextStorage(attributedString: attributed)
@@ -101,10 +101,10 @@ public struct MarkdownTextView: NSViewRepresentable {
         return layoutManager.usedRect(for: textContainer).height
     }
 
-    public final class Coordinator: NSObject, NSTextViewDelegate {
+    final class Coordinator: NSObject, NSTextViewDelegate {
         var currentState: String?
 
-        public func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+        func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
             let url: URL?
             if let linkURL = link as? URL {
                 url = linkURL

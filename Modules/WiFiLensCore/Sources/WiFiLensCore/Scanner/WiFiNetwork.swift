@@ -7,8 +7,8 @@ public struct WiFiNetwork: Sendable, Identifiable {
     public let bssid: String
     public let rssi: Int
     public let channel: WiFiChannel
-    public let isIBSS: Bool
-    public let ieData: Data?
+    let isIBSS: Bool
+    let ieData: Data?
 
     public init?(from cwNetwork: CWNetwork) {
         guard let wlanChannel = cwNetwork.wlanChannel else { return nil }

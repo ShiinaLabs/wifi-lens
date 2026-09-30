@@ -22,17 +22,29 @@ public final class OnboardingCoordinator {
     private let existingInstallationDetector: any ExistingInstallationDetecting
     private let welcomeEnabled: Bool
 
-    public init(
-        store: any OnboardingStateStoring,
+    public convenience init(
+        store: UserDefaultsOnboardingStateStore = .init(),
         existingInstallationDetector: any ExistingInstallationDetecting,
         welcomeEnabled: Bool = true
     ) {
-        self.store = store
+        self.init(
+            stateStore: store,
+            existingInstallationDetector: existingInstallationDetector,
+            welcomeEnabled: welcomeEnabled
+        )
+    }
+
+    init(
+        stateStore: any OnboardingStateStoring,
+        existingInstallationDetector: any ExistingInstallationDetecting,
+        welcomeEnabled: Bool = true
+    ) {
+        self.store = stateStore
         self.existingInstallationDetector = existingInstallationDetector
         self.welcomeEnabled = welcomeEnabled
     }
 
-    public var hasCompletedWelcome: Bool {
+    var hasCompletedWelcome: Bool {
         store.load().hasCompletedWelcome
     }
 
@@ -75,14 +87,14 @@ public final class OnboardingCoordinator {
 
     /// `Start Analyzing`: marks complete and returns the route to navigate
     /// to exactly once.
-    public func completeWelcomeStart(hostID: UUID, startRoute: SidebarPage?) -> SidebarPage? {
+    func completeWelcomeStart(hostID: UUID, startRoute: SidebarPage?) -> SidebarPage? {
         guard welcomeHostID == hostID else { return nil }
         markCompleted()
         return startRoute
     }
 
     /// `Skip` or the explicit close button: marks complete without routing.
-    public func completeWelcomeWithoutRouting(hostID: UUID) {
+    func completeWelcomeWithoutRouting(hostID: UUID) {
         guard welcomeHostID == hostID else { return }
         markCompleted()
     }
@@ -90,7 +102,7 @@ public final class OnboardingCoordinator {
     /// OSS `Learn about WiFi Lens Pro`: completes only when the system
     /// accepted opening the campaign URL. On failure the welcome stays up
     /// and nothing is persisted.
-    public func completeWelcomeAfterOpeningProURL(hostID: UUID, openedSuccessfully: Bool) {
+    func completeWelcomeAfterOpeningProURL(hostID: UUID, openedSuccessfully: Bool) {
         guard welcomeHostID == hostID else { return }
         guard openedSuccessfully else { return }
         markCompleted()

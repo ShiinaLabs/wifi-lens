@@ -203,7 +203,7 @@ public final class ScannerViewModel {
     // Regulatory-aware recommendations (Phase 2: computed alongside channelQualities)
     let regulatoryPipeline = RegulatoryPipeline()
     public internal(set) var channelRecommendations: [ChannelRecommendation] = []
-    public var inferredRegion: RegionInferenceResult? { regulatoryPipeline.inferredRegion }
+    var inferredRegion: RegionInferenceResult? { regulatoryPipeline.inferredRegion }
     public var userRegionOverride: RegulatoryDomain? {
         get { regulatoryPipeline.userRegionOverride }
         set { regulatoryPipeline.userRegionOverride = newValue }

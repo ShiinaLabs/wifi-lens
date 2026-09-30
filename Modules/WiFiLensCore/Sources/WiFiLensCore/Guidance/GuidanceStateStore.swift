@@ -3,7 +3,7 @@ import Foundation
 /// Serialization boundary for `GuidanceState`. The coordinator serializes all
 /// access on the main actor, so no `Sendable` requirements are needed.
 @MainActor
-public protocol GuidanceStateStoring {
+protocol GuidanceStateStoring {
     func load() -> GuidanceState
     func save(_ state: GuidanceState)
 }
@@ -29,7 +29,7 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
         self.defaults = defaults
     }
 
-    public func load() -> GuidanceState {
+    func load() -> GuidanceState {
         GuidanceState(
             firstLaunchDate: defaults.object(forKey: Key.firstLaunchDate) as? Date,
             activeDays: defaults.stringArray(forKey: Key.activeDays) ?? [],
@@ -43,7 +43,7 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
         )
     }
 
-    public func save(_ state: GuidanceState) {
+    func save(_ state: GuidanceState) {
         defaults.set(state.firstLaunchDate, forKey: Key.firstLaunchDate)
         defaults.set(state.activeDays, forKey: Key.activeDays)
         defaults.set(state.meaningfulCompletionCount, forKey: Key.completionCount)

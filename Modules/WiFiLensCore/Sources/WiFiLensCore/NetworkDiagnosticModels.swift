@@ -1,9 +1,9 @@
 import Foundation
 
-public enum NetworkDiagnosticStatus: String, CaseIterable, Equatable, Sendable {
+enum NetworkDiagnosticStatus: String, CaseIterable, Equatable, Sendable {
     case normal, abnormal, indeterminate, blocked, skipped
 
-    public var logTitle: String {
+    var logTitle: String {
         switch self {
         case .normal:
             "Normal"
@@ -19,10 +19,10 @@ public enum NetworkDiagnosticStatus: String, CaseIterable, Equatable, Sendable {
     }
 }
 
-public enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable, Sendable {
+enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable, Sendable {
     case path, gatewayReachability, dns, internet, ipv6, proxy
 
-    public var logTitle: String {
+    var logTitle: String {
         switch self {
         case .path:
             "Network Path"
@@ -39,7 +39,7 @@ public enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable,
         }
     }
 
-    public var localizedTitle: String {
+    var localizedTitle: String {
         switch self {
         case .path:
             String(localized: "network_diagnostics.check.path.title", comment: "Network system path check title")
@@ -57,7 +57,7 @@ public enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable,
     }
 }
 
-public struct NetworkDiagnosticsLogStore: Equatable, Sendable {
+struct NetworkDiagnosticsLogStore: Equatable, Sendable {
     static let capacity = 500
     static let truncationMarker = "… earlier diagnostic events omitted …"
 
@@ -112,7 +112,7 @@ public struct NetworkDiagnosticsLogStore: Equatable, Sendable {
     }
 }
 
-public enum NetworkDiagnosticStatusTone: Equatable, Sendable {
+enum NetworkDiagnosticStatusTone: Equatable, Sendable {
     case success
     case error
     case caution
@@ -120,8 +120,8 @@ public enum NetworkDiagnosticStatusTone: Equatable, Sendable {
     case muted
 }
 
-public struct NetworkDiagnosticStatusPresentation: Equatable, Sendable {
-    public let labelKey: String
+struct NetworkDiagnosticStatusPresentation: Equatable, Sendable {
+    let labelKey: String
     public let icon: String
     public let tone: NetworkDiagnosticStatusTone
 }
@@ -142,7 +142,7 @@ extension NetworkDiagnosticStatus {
         }
     }
 
-    public var localizedTitle: String {
+    var localizedTitle: String {
         String(
             localized: .init(stringLiteral: presentation.labelKey),
             comment: "Network self-check status title"
@@ -150,7 +150,7 @@ extension NetworkDiagnosticStatus {
     }
 }
 
-public struct NetworkDiagnosticEvidence: Equatable, Sendable {
+struct NetworkDiagnosticEvidence: Equatable, Sendable {
     public let code: String
     public let value: String?
 
@@ -160,13 +160,13 @@ public struct NetworkDiagnosticEvidence: Equatable, Sendable {
     }
 }
 
-public struct NetworkDiagnosticRemediation: Equatable, Sendable {
-    public let detectionKey: String
-    public let causeKey: String
-    public let actionKey: String
-    public let rerunKey: String
+struct NetworkDiagnosticRemediation: Equatable, Sendable {
+    let detectionKey: String
+    let causeKey: String
+    let actionKey: String
+    let rerunKey: String
 
-    public static func forResult(_ result: NetworkDiagnosticResult) -> Self {
+    static func forResult(_ result: NetworkDiagnosticResult) -> Self {
         var codes = Set(result.evidence.map(\.code))
         if result.id == .proxy, let facts = result.proxyFacts {
             if facts.http != .authenticationRequired && facts.https != .authenticationRequired {
@@ -254,12 +254,12 @@ extension NetworkDiagnosticConclusion {
     }
 }
 
-public enum NetworkDiagnosticStage: CaseIterable, Equatable, Sendable {
+enum NetworkDiagnosticStage: CaseIterable, Equatable, Sendable {
     case thisMac
     case lan
     case internet
 
-    public var contributingCheckIDs: [NetworkDiagnosticCheckID] {
+    var contributingCheckIDs: [NetworkDiagnosticCheckID] {
         switch self {
         case .thisMac: [.path, .dns, .proxy]
         case .lan: [.gatewayReachability]
@@ -268,7 +268,7 @@ public enum NetworkDiagnosticStage: CaseIterable, Equatable, Sendable {
     }
 }
 
-public struct NetworkDiagnosticStageResolver: Sendable {
+struct NetworkDiagnosticStageResolver: Sendable {
     public init() {}
 
     public func status(
@@ -283,13 +283,13 @@ public struct NetworkDiagnosticStageResolver: Sendable {
     }
 }
 
-public struct NetworkDiagnosticResult: Equatable, Identifiable, Sendable {
+struct NetworkDiagnosticResult: Equatable, Identifiable, Sendable {
     public let id: NetworkDiagnosticCheckID
     public let status: NetworkDiagnosticStatus
     public let summary: String
     public let detail: String?
     public let evidence: [NetworkDiagnosticEvidence]
-    public let proxyFacts: DiagnosticProxyFacts?
+    let proxyFacts: DiagnosticProxyFacts?
 
     public init(
         id: NetworkDiagnosticCheckID,
@@ -312,7 +312,7 @@ public struct NetworkDiagnosticResult: Equatable, Identifiable, Sendable {
     }
 }
 
-public enum NetworkDiagnosticConclusion: String, Equatable, Sendable {
+enum NetworkDiagnosticConclusion: String, Equatable, Sendable {
     case networkNormal
     case needsAttention
     case networkUnavailable

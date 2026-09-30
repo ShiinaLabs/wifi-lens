@@ -1,6 +1,6 @@
 import Foundation
 
-public enum OverviewVisualStyle: String, CaseIterable, Identifiable, Sendable {
+enum OverviewVisualStyle: String, CaseIterable, Identifiable, Sendable {
     case system
     case globe
     case worldMap
@@ -9,7 +9,7 @@ public enum OverviewVisualStyle: String, CaseIterable, Identifiable, Sendable {
 
     public var id: String { rawValue }
 
-    public static func fromPersistedValue(_ value: String) -> Self {
+    static func fromPersistedValue(_ value: String) -> Self {
         Self(rawValue: value) ?? .system
     }
 
@@ -24,7 +24,7 @@ public enum OverviewVisualStyle: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    public enum ResolvedStyle: Equatable, Sendable {
+    enum ResolvedStyle: Equatable, Sendable {
         case globe
         case worldMap
     }

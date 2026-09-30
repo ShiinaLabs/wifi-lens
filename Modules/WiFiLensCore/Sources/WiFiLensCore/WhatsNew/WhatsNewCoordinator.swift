@@ -46,7 +46,7 @@ public final class WhatsNewCoordinator {
 
     /// Called when the Onboarding Welcome flow completes on first install.
     /// Marks the current version as seen so What's New does not also appear.
-    public func markVersionSeenForOnboarding() {
+    func markVersionSeenForOnboarding() {
         var state = store.load()
         state.lastSeenVersion = currentVersion
         store.save(state)
@@ -54,7 +54,7 @@ public final class WhatsNewCoordinator {
     }
 
     /// Called when the user dismisses the What's New sheet (either auto or manual).
-    public func markSeen() {
+    func markSeen() {
         var state = store.load()
         state.lastSeenVersion = currentVersion
         store.save(state)

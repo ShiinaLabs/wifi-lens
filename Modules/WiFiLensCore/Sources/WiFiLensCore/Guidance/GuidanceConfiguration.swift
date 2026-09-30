@@ -6,14 +6,14 @@ import Foundation
 public struct GuidanceConfiguration: Equatable, Sendable {
     public var invitationEnabled = false
     public var reviewEnabled = false
-    public var minimumInvitationCompletions = 3
-    public var minimumInvitationActiveDays = 2
-    public var invitationCooldownDays = 30
-    public var maxAutomaticInvitations = 3
-    public var minimumReviewCompletions = 5
-    public var minimumReviewActiveDays = 3
-    public var minimumReviewAgeDays = 7
-    public var reviewCooldownDays = 120
+    var minimumInvitationCompletions = 3
+    var minimumInvitationActiveDays = 2
+    var invitationCooldownDays = 30
+    var maxAutomaticInvitations = 3
+    var minimumReviewCompletions = 5
+    var minimumReviewActiveDays = 3
+    var minimumReviewAgeDays = 7
+    var reviewCooldownDays = 120
 
     public init() {}
 }
@@ -29,7 +29,7 @@ public enum GuidanceValueMoment: String, Equatable, Sendable {
 /// Why no guidance decision was made. There is deliberately no `.none` case:
 /// `GuidanceDecision.none(reason)` already expresses "no action", so a
 /// meaningless `.none(.none)` must not be expressible.
-public enum GuidanceSuppressionReason: String, Equatable, Sendable {
+enum GuidanceSuppressionReason: String, Equatable, Sendable {
     case editionInvitationDisabled
     case editionReviewDisabled
     case invitationsDisabledByUser
@@ -48,7 +48,7 @@ public enum GuidanceSuppressionReason: String, Equatable, Sendable {
     case reviewRequestPending
 }
 
-public enum GuidanceDecision: Equatable, Sendable {
+enum GuidanceDecision: Equatable, Sendable {
     case none(GuidanceSuppressionReason)
     case showProInvitation
     case requestReview

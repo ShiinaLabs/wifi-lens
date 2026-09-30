@@ -37,7 +37,7 @@ public enum RegulatoryDomain: String, CaseIterable, Codable, Sendable {
 
 // MARK: - Inference Confidence
 
-public enum InferenceConfidence: Comparable, Sendable {
+enum InferenceConfidence: Comparable, Sendable {
     case high
     case medium
     case low
@@ -53,8 +53,8 @@ public enum InferenceConfidence: Comparable, Sendable {
 
 // MARK: - Region Source
 
-public struct RegionSource: Sendable {
-    public enum Kind: String, Sendable {
+struct RegionSource: Sendable {
+    enum Kind: String, Sendable {
         case systemLocale
         case supportedChannels
         case apBeaconCountry
@@ -63,7 +63,7 @@ public struct RegionSource: Sendable {
 
     public let kind: Kind
     public let rawValue: String
-    public let inferredDomain: RegulatoryDomain?
+    let inferredDomain: RegulatoryDomain?
 
     public var description: String {
         let domainStr = inferredDomain?.rawValue ?? "unknown"
@@ -73,15 +73,15 @@ public struct RegionSource: Sendable {
 
 // MARK: - Region Conflict
 
-public struct RegionConflict: Sendable {
-    public let sourceA: RegionSource
-    public let sourceB: RegionSource
+struct RegionConflict: Sendable {
+    let sourceA: RegionSource
+    let sourceB: RegionSource
     public let resolution: String
 }
 
 // MARK: - Inference Result
 
-public struct RegionInferenceResult: Sendable {
+struct RegionInferenceResult: Sendable {
     public init(domain: RegulatoryDomain, confidence: InferenceConfidence, contributions: [RegionSource], conflicts: [RegionConflict]) {
         self.domain = domain
         self.confidence = confidence
@@ -90,8 +90,8 @@ public struct RegionInferenceResult: Sendable {
     }
     public let domain: RegulatoryDomain
     public let confidence: InferenceConfidence
-    public let contributions: [RegionSource]
-    public let conflicts: [RegionConflict]
+    let contributions: [RegionSource]
+    let conflicts: [RegionConflict]
 
     public var summary: String {
         var lines = ["Region: \(domain.rawValue) (\(confidence.label))"]
@@ -117,13 +117,13 @@ public struct DevicePHYCapabilities: Sendable {
         self.supportsDFS = supportsDFS
         self.supports160MHz = supports160MHz
     }
-    public let supportsAX: Bool
-    public let supportsAC: Bool
-    public let supportsN: Bool
-    public let supportsBE: Bool
-    public let supports6GHz: Bool
-    public let supportsDFS: Bool
-    public let supports160MHz: Bool
+    let supportsAX: Bool
+    let supportsAC: Bool
+    let supportsN: Bool
+    let supportsBE: Bool
+    let supports6GHz: Bool
+    let supportsDFS: Bool
+    let supports160MHz: Bool
 
     public static let `default` = DevicePHYCapabilities(
         supportsAX: false,
@@ -135,7 +135,7 @@ public struct DevicePHYCapabilities: Sendable {
         supports160MHz: false
     )
 
-    public var phySummary: String {
+    var phySummary: String {
         var parts: [String] = []
         if supportsBE { parts.append("be") }
         if supportsAX { parts.append("ax") }

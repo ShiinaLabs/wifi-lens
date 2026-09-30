@@ -5,7 +5,7 @@ import SwiftUI
 /// resolves the pending invitation by moment and passes it in; the card never
 /// queries the coordinator's `pendingInvitation` and never filters moments
 /// itself. Every action routes through the invitation's `id`.
-public struct ProInvitationCard: View {
+struct ProInvitationCard: View {
     let invitation: GuidanceCoordinator.InvitationPresentation
     let guidance: GuidanceCoordinator
 

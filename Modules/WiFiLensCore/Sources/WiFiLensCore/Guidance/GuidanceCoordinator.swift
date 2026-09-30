@@ -5,11 +5,11 @@ import Observation
 /// One structured guidance event. `tokenID` is a process-memory UUID used by
 /// tests to assert once-per-token behavior; the production log line never
 /// carries the UUID or any derived prefix.
-public struct GuidanceEvent: Equatable, Sendable {
+struct GuidanceEvent: Equatable, Sendable {
     public let name: String
     public let moment: GuidanceValueMoment?
-    public let tokenID: UUID?
-    public let suppressionReason: GuidanceSuppressionReason?
+    let tokenID: UUID?
+    let suppressionReason: GuidanceSuppressionReason?
     public let metadata: [String: String]
 }
 
@@ -19,7 +19,7 @@ public struct GuidanceEvent: Equatable, Sendable {
 /// sink. It never executes StoreKit and never presents UI.
 @MainActor @Observable
 public final class GuidanceCoordinator {
-    public struct InvitationPresentation: Equatable, Identifiable, Sendable {
+    struct InvitationPresentation: Equatable, Identifiable, Sendable {
         public let id: UUID
         public let moment: GuidanceValueMoment
         public let scheduledAt: Date
@@ -31,15 +31,15 @@ public final class GuidanceCoordinator {
         public let scheduledAt: Date
     }
 
-    public struct ExportFeedback: Equatable {
+    struct ExportFeedback: Equatable {
         public let occurredAt: Date
     }
 
-    public private(set) var pendingInvitation: InvitationPresentation?
+    private(set) var pendingInvitation: InvitationPresentation?
     public private(set) var pendingReviewRequest: ReviewRequestPresentation?
-    public private(set) var exportFeedback: ExportFeedback?
+    private(set) var exportFeedback: ExportFeedback?
 
-    public func appStoreCampaignURL(for moment: GuidanceValueMoment) -> URL? { campaignURL(moment) }
+    func appStoreCampaignURL(for moment: GuidanceValueMoment) -> URL? { campaignURL(moment) }
 
     private let configuration: GuidanceConfiguration
     private let stateStore: any GuidanceStateStoring
@@ -56,7 +56,29 @@ public final class GuidanceCoordinator {
     /// "dismissed as Later".
     private var confirmedPresentedInvitationIDs: Set<UUID> = []
 
-    public init(
+    public convenience init(
+        configuration: GuidanceConfiguration,
+        stateStore: UserDefaultsGuidanceStateStore,
+        now: @escaping () -> Date = Date.init,
+        calendar: Calendar = .current,
+        appVersion: @escaping () -> String = {
+            Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
+        },
+        isProAppInstalled: @escaping () -> Bool = { false },
+        campaignURL: @escaping (GuidanceValueMoment) -> URL? = { _ in nil }
+    ) {
+        self.init(
+            configuration: configuration,
+            stateStore: stateStore as any GuidanceStateStoring,
+            now: now,
+            calendar: calendar,
+            appVersion: appVersion,
+            isProAppInstalled: isProAppInstalled,
+            campaignURL: campaignURL
+        )
+    }
+
+    init(
         configuration: GuidanceConfiguration,
         stateStore: any GuidanceStateStoring,
         now: @escaping () -> Date = Date.init,
@@ -86,8 +108,12 @@ public final class GuidanceCoordinator {
 
     // MARK: - Recording
 
+    public func record(_ moment: GuidanceValueMoment) {
+        _ = recordAndReturnDecision(moment)
+    }
+
     @discardableResult
-    public func record(_ moment: GuidanceValueMoment) -> GuidanceDecision {
+    func recordAndReturnDecision(_ moment: GuidanceValueMoment) -> GuidanceDecision {
         var state = stateStore.load()
 
         switch moment {
@@ -163,12 +189,12 @@ public final class GuidanceCoordinator {
 
     // MARK: - Export feedback
 
-    public func handleExportSucceeded() {
+    func handleExportSucceeded() {
         record(.exportSucceeded)
         exportFeedback = ExportFeedback(occurredAt: now())
     }
 
-    public func dismissExportFeedback() {
+    func dismissExportFeedback() {
         exportFeedback = nil
         if let invitation = pendingInvitation, invitation.moment == .exportSucceeded {
             endInvitationPresentation(id: invitation.id)
@@ -177,7 +203,7 @@ public final class GuidanceCoordinator {
 
     // MARK: - Invitation consumption (token-gated)
 
-    public func invitationPresented(id: UUID) {
+    func invitationPresented(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         guard !confirmedPresentedInvitationIDs.contains(id) else { return }
         confirmedPresentedInvitationIDs.insert(id)
@@ -188,7 +214,7 @@ public final class GuidanceCoordinator {
         emit("guidance.invitation.presented", moment: invitation.moment, tokenID: id)
     }
 
-    public func dismissInvitation(id: UUID) {
+    func dismissInvitation(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
         var state = stateStore.load()
@@ -197,7 +223,7 @@ public final class GuidanceCoordinator {
         emit("guidance.invitation.dismissed", moment: invitation.moment, tokenID: id)
     }
 
-    public func disableInvitations(id: UUID) {
+    func disableInvitations(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
         var state = stateStore.load()
@@ -206,7 +232,7 @@ public final class GuidanceCoordinator {
         emit("guidance.invitation.disabled", moment: invitation.moment, tokenID: id)
     }
 
-    public func openInvitation(id: UUID) {
+    func openInvitation(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
         emit("guidance.invitation.view_selected", moment: invitation.moment, tokenID: id)
@@ -216,7 +242,7 @@ public final class GuidanceCoordinator {
     /// exact token the host rendered. An unpresented invitation is cancelled
     /// without any count or cooldown; a presented one without a user choice is
     /// consumed as Later.
-    public func endInvitationPresentation(id: UUID) {
+    func endInvitationPresentation(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
         if confirmedPresentedInvitationIDs.contains(id) {
