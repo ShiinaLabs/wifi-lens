@@ -450,6 +450,7 @@ struct SettingsView: View {
     }
 
     private func refreshPermissionStatuses() {
+        guard EditionComposition.requiresLiveWiFiAuthorization else { return }
         locationPermission.refreshStatus()
         bluetoothPermission?.refreshStatus()
     }

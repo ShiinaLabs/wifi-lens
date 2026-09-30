@@ -101,6 +101,31 @@ import Testing
         #expect(guidance.store.load().meaningfulCompletionCount == 0)
     }
 
+    @Test("A delayed old start cannot replace a newer roaming run")
+    func delayedStartCannotReplaceRestart() async throws {
+        let provider = DelayedStartRoamingProvider()
+        let vm = RoamingTestViewModel(
+            roamingProvider: provider,
+            latencyProvider: MockGatewayLatencyProvider(result: .init(timestamp: Date(), latencyMs: 3))
+        )
+
+        vm.checkReadiness()
+        await waitUntil { vm.state == .ready }
+        vm.startTest()
+        await provider.waitForDelayedStart()
+
+        vm.stopTest(userInitiated: false)
+        vm.startTest()
+        await waitUntil { vm.state == .running && vm.currentBSSID == "BB:00:00:00:00:02" }
+        await provider.releaseDelayedStart()
+        try await Task.sleep(for: .milliseconds(50))
+
+        #expect(vm.state == .running)
+        #expect(vm.currentBSSID == "BB:00:00:00:00:02")
+        #expect(vm.segments.first?.bssid == "BB:00:00:00:00:02")
+        vm.stopTest(userInitiated: false)
+    }
+
     // MARK: - Helpers
 
     private func makeConnectedViewModel(guidance: GuidanceCoordinator) -> RoamingTestViewModel {
@@ -128,6 +153,46 @@ import Testing
             spins += 1
             await Task.yield()
         }
+    }
+}
+
+private actor DelayedStartRoamingProvider: RoamingProbeProviding {
+    private var calls = 0
+    private var delayedStart: CheckedContinuation<WiFiCurrentStatus, Never>?
+    private var pendingWaiter: CheckedContinuation<Void, Never>?
+
+    func fetchCurrentProbe() async -> WiFiCurrentStatus {
+        calls += 1
+        if calls == 2 {
+            return await withCheckedContinuation { continuation in
+                delayedStart = continuation
+                pendingWaiter?.resume()
+                pendingWaiter = nil
+            }
+        }
+        return status(bssid: calls == 1 ? "AA:00:00:00:00:01" : "BB:00:00:00:00:02")
+    }
+
+    func waitForDelayedStart() async {
+        if delayedStart != nil { return }
+        await withCheckedContinuation { pendingWaiter = $0 }
+    }
+
+    func releaseDelayedStart() {
+        delayedStart?.resume(returning: status(bssid: "AA:00:00:00:00:01"))
+        delayedStart = nil
+    }
+
+    private func status(bssid: String) -> WiFiCurrentStatus {
+        WiFiCurrentStatus(
+            timestamp: Date(),
+            ssid: "TestNet",
+            bssid: bssid,
+            channel: 36,
+            rssi: -50,
+            isConnected: true,
+            isWiFiPowerOn: true
+        )
     }
 }
 

@@ -190,6 +190,7 @@ struct ChannelQualityView: View {
         .buttonStyle(.plain)
         .padding(.vertical, 5)
         .accessibilityLabel(String(format: String(localized: "channels.accessibility.sort_by", comment: "Sort by column accessibility label"), text))
+        .accessibilityIdentifier(key == .channel ? "channels-table-header-channel" : "channels-table-sort-\(key.rawValue)")
     }
 
     private func rowBG(_ id: String, idx: Int) -> Color {
@@ -308,6 +309,7 @@ private struct ChannelCard: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(String(format: String(localized: "channels.accessibility.card_label", comment: "Channel card accessibility label with channel, band, quality, and score"),
             channel.channel, channel.bandDisplay, channel.rfLevel.displayName, channel.rfScore))
+        .accessibilityIdentifier("channel-card-\(channel.id)")
     }
 
     private func badge(_ text: String, color: String) -> some View {

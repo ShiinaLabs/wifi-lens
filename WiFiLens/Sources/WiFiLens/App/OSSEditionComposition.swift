@@ -2,6 +2,28 @@ import AppKit
 import SwiftUI
 
 enum EditionComposition {
+    @ViewBuilder
+    @MainActor
+    static func roamingPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+    }
+
+    @ViewBuilder
+    @MainActor
+    static func apRadarPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+    }
+
+    @ViewBuilder
+    @MainActor
+    static func channelsPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+    }
+
+    static var isControlledDemoSession: Bool { false }
+    static var shouldStartObservationRuntime: Bool { true }
+    static var requiresLiveWiFiAuthorization: Bool { true }
+
     static var guidanceConfiguration: GuidanceConfiguration {
         var config = GuidanceConfiguration()
         config.invitationEnabled = true
@@ -37,6 +59,24 @@ enum EditionComposition {
 
     @MainActor
     static func makeMainWindowState() -> AnyObject { NSObject() }
+
+    @MainActor
+    static func makeRoamingViewModel(scannerViewModel: ScannerViewModel) -> RoamingTestViewModel {
+        RoamingTestViewModel()
+    }
+
+    @MainActor
+    static func makeObservationRuntime(store: WiFiObservationStore) -> WiFiObservationRuntime {
+        WiFiObservationRuntime(store: store)
+    }
+
+    static var initialMainWindowRoute: SidebarPage { .overview }
+
+    @MainActor
+    static func configureMainWindow(_ window: NSWindow) {}
+
+    @MainActor
+    static func mainWindowDidFinishStartup(_ windowID: UUID) {}
 
     @MainActor
     static func registerMainWindowState(_ state: AnyObject, for windowID: UUID) -> Bool { true }

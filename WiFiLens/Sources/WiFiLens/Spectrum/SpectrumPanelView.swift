@@ -57,6 +57,15 @@ struct SpectrumPanelView: View {
             }
             .pickerStyle(.menu)
             .frame(width: 180)
+            .accessibilityIdentifier("spectrum.\(panelID.rawValue).view-picker")
+            .background {
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: SpectrumControlGeometryPreferenceKey.self,
+                        value: ["\(panelID.rawValue)-view-picker": proxy.frame(in: .named("wifi-lens.spectrum"))]
+                    )
+                }
+            }
 
             switch chartType {
             case .spectrum:
@@ -127,6 +136,15 @@ struct SpectrumPanelView: View {
                 }
                 .pickerStyle(.menu)
                 .frame(width: 140)
+                .accessibilityIdentifier("spectrum.\(panelID.rawValue).band-picker")
+                .background {
+                    GeometryReader { proxy in
+                        Color.clear.preference(
+                            key: SpectrumControlGeometryPreferenceKey.self,
+                            value: ["\(panelID.rawValue)-band-picker": proxy.frame(in: .named("wifi-lens.spectrum"))]
+                        )
+                    }
+                }
             }
         }
     }
@@ -173,4 +191,12 @@ struct SpectrumPanelView: View {
         ChannelBand.allCases.filter { supportedBands.contains($0) }
     }
 
+}
+
+struct SpectrumControlGeometryPreferenceKey: PreferenceKey {
+    static let defaultValue: [String: CGRect] = [:]
+
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    }
 }

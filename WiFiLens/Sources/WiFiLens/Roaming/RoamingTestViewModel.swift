@@ -134,9 +134,11 @@ final class RoamingTestViewModel {
         guard canStart else { return }
         // Invalidate any tick still in flight from a previous run.
         generation += 1
+        let startGeneration = generation
 
         Task {
             let status = await roamingProvider.fetchCurrentProbe()
+            guard generation == startGeneration, canStart else { return }
             guard let bssid = status.bssid else { return }
 
             segments = []

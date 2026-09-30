@@ -105,15 +105,21 @@ struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendable {
     private(set) var panels: [SpectrumPanelDescriptor]
 
     @ObservationIgnored private let userDefaults: UserDefaults
+    @ObservationIgnored private let persistenceEnabled: Bool
     @ObservationIgnored private var splitFractionHolders: [String: FractionHolder] = [:]
 
-    init(userDefaults: UserDefaults = .standard) {
-        let loadedPanels = Self.loadPanels(from: userDefaults)
+    init(
+        userDefaults: UserDefaults = .standard,
+        initialPanels: [SpectrumPanelDescriptor]? = nil,
+        persistenceEnabled: Bool = true
+    ) {
+        let loadedPanels = persistenceEnabled ? Self.loadPanels(from: userDefaults) : nil
         self.userDefaults = userDefaults
-        self.panels = loadedPanels ?? Self.defaultPanels
+        self.persistenceEnabled = persistenceEnabled
+        self.panels = loadedPanels ?? initialPanels ?? Self.defaultPanels
         reconcileFractionHolders()
 
-        if loadedPanels == nil {
+        if persistenceEnabled && loadedPanels == nil {
             persist()
         }
     }
@@ -174,22 +180,21 @@ struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendable {
 
             let defaultFraction = 1.0 / CGFloat(max(panels.count, Self.minimumPanelCount))
             let defaults = userDefaults
+            let fractionKey = Self.fractionPersistenceKey(for: key)
+            let shouldPersist = persistenceEnabled
+            let initialFraction = shouldPersist
+                ? Self.storedFraction(from: defaults, key: fractionKey, fallback: defaultFraction)
+                : defaultFraction
             let holder = FractionHolder(
-                Self.storedFraction(
-                    from: defaults,
-                    key: Self.fractionPersistenceKey(for: key),
-                    fallback: defaultFraction
-                ),
+                initialFraction,
                 getter: {
-                    Self.storedFraction(
-                        from: defaults,
-                        key: Self.fractionPersistenceKey(for: key),
-                        fallback: defaultFraction
-                    )
+                    guard shouldPersist else { return defaultFraction }
+                    return Self.storedFraction(from: defaults, key: fractionKey, fallback: defaultFraction)
                 },
                 setter: { fraction in
+                    guard shouldPersist else { return }
                     let clampedFraction = min(max(fraction, 0.05), 0.95)
-                    defaults.set(Double(clampedFraction), forKey: Self.fractionPersistenceKey(for: key))
+                    defaults.set(Double(clampedFraction), forKey: fractionKey)
                 }
             )
             reconciled[key] = holder
@@ -199,6 +204,7 @@ struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendable {
     }
 
     private func persist() {
+        guard persistenceEnabled else { return }
         let payload = PersistedPayload(version: Self.persistenceVersion, panels: panels)
         guard let data = try? JSONEncoder().encode(payload) else { return }
         userDefaults.set(data, forKey: Self.persistenceKey)

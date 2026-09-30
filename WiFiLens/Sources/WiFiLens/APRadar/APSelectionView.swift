@@ -29,20 +29,22 @@ struct APSelectionView: View {
             if isEmpty {
                 emptyState
             } else {
-                List(options) { option in
-                    APSelectionRow(option: option) {
-                        onSelect(option)
+                ScrollView {
+                    LazyVStack(spacing: 4) {
+                        ForEach(options) { option in
+                            APSelectionRow(option: option) {
+                                onSelect(option)
+                            }
+                        }
                     }
-                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 2)
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
                 .scrollBounceBehavior(.basedOnSize)
             }
         }
         .frame(width: Self.sheetSize.width, height: Self.sheetSize.height)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("ap-radar-selection")
     }
 
@@ -185,7 +187,6 @@ private struct APSelectionRow: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
-        .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityHint(String(localized: "apRadar.selection.hint", comment: "VoiceOver hint explaining that tapping an access point starts tracking it"))
         .accessibilityIdentifier("ap-radar-option-\(option.bssid)")

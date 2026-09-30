@@ -35,7 +35,7 @@ struct ContentView: View {
     let isVendorColumnAvailable: Bool
 
     @State private var sortOrder: [NSSortDescriptor] = [NSSortDescriptor(key: "ssid", ascending: true)]
-    @State private var dashboardState = SpectrumDashboardState()
+    @State private var dashboardState: SpectrumDashboardState
     @AppStorage("hiddenTableColumns") private var hiddenColumnsData: String = ""
 
     private var hiddenColumns: Binding<Set<String>> {
@@ -45,15 +45,25 @@ struct ContentView: View {
         )
     }
 
-    init(viewModel: ScannerViewModel, isVendorColumnAvailable: Bool) {
+    init(
+        viewModel: ScannerViewModel,
+        isVendorColumnAvailable: Bool,
+        dashboardState: SpectrumDashboardState? = nil
+    ) {
         self.viewModel = viewModel
         self.isVendorColumnAvailable = isVendorColumnAvailable
+        _dashboardState = State(initialValue: dashboardState ?? SpectrumDashboardState())
     }
 
-    init(viewModel: ScannerViewModel, macVendorDatabaseManager: MACVendorDatabaseManager) {
+    init(
+        viewModel: ScannerViewModel,
+        macVendorDatabaseManager: MACVendorDatabaseManager,
+        dashboardState: SpectrumDashboardState? = nil
+    ) {
         self.init(
             viewModel: viewModel,
-            isVendorColumnAvailable: macVendorDatabaseManager.availability.isVendorColumnAvailable
+            isVendorColumnAvailable: macVendorDatabaseManager.availability.isVendorColumnAvailable,
+            dashboardState: dashboardState
         )
     }
 
@@ -66,6 +76,7 @@ struct ContentView: View {
         // at the minimum window size, clipping the right edge. Keep only the ideals as
         // page layout hints.
         .frame(idealWidth: 1000, idealHeight: 700)
+        .coordinateSpace(name: "wifi-lens.spectrum")
         .onChange(of: viewModel.hiddenBands) { _, _ in viewModel.applyGlobalFilterToBands() }
         .onChange(of: viewModel.hideHiddenSSIDs) { _, _ in viewModel.applyGlobalFilterToBands() }
     }
@@ -97,8 +108,8 @@ struct ContentView: View {
                 }
             }
         }
-        .accessibilityIdentifier("spectrum-dashboard")
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("spectrum-dashboard")
     }
 
     private var dashboardToolbar: some View {
