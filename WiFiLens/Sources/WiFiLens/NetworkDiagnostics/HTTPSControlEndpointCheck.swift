@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct ControlEndpointMetrics: Equatable, Sendable {
     let dnsDuration: Duration?

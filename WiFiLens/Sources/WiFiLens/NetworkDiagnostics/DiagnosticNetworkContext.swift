@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 struct DiagnosticNetworkContext: Sendable {
     let runID: UUID
@@ -69,11 +70,5 @@ struct SystemDiagnosticNetworkContextSource: DiagnosticNetworkContextSourcing {
 private extension ContinuousClock.Instant {
     func remainingDuration() -> Duration {
         max(.zero, ContinuousClock.now.duration(to: self))
-    }
-}
-
-enum DiagnosticPingArguments {
-    static func make(target: DiagnosticGatewayTarget) -> [String] {
-        ["-b", target.interfaceName, "-c", "1", "-W", "1000", target.address]
     }
 }

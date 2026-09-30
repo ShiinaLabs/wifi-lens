@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+import WiFiLensCore
 @testable import WiFi_Lens
 
 extension NetworkDiagnosticsTests {

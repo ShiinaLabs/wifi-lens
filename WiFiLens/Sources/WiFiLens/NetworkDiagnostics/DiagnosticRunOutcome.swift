@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum DiagnosticRunEndReason: Equatable, Sendable {
     case completed

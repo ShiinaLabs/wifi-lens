@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum DiagnosticRouteAvailability: Equatable, Sendable {
     case available

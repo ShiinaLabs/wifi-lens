@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import WiFiLensCore
 
 enum NetworkDiagnosticsPagePhase: Equatable, Sendable {
     case idle

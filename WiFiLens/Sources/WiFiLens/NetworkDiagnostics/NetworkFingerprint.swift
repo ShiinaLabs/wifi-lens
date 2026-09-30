@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import SystemConfiguration
+import WiFiLensCore
 
 struct NetworkFingerprintRouteState: Equatable, Sendable {
     let interfaceName: String?

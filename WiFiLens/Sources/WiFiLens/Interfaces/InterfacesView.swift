@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreWLAN
+import WiFiLensCore
 
 private let headerHeight: CGFloat = 28
 

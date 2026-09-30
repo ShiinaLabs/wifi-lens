@@ -3,6 +3,7 @@ import Foundation
 import Network
 import Security
 import dnssd
+import WiFiLensCore
 
 enum IPv6ControlEndpointLoadOutcome: Equatable, Sendable {
     case succeeded(route: DiagnosticIPv6RouteTarget)

@@ -1,4 +1,5 @@
 import SwiftUI
+import WiFiLensCore
 
 struct NetworkDiagnosticsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

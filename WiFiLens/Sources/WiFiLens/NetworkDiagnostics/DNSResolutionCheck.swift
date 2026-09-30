@@ -1,5 +1,6 @@
 import Foundation
 import dnssd
+import WiFiLensCore
 
 enum DNSResolutionOutcome: Equatable, Sendable {
     case resolved

@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum DiagnosticEventKind: Equatable, Sendable {
     case sessionStarted

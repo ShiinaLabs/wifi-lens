@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum NetworkDiagnosticStatus: String, CaseIterable, Equatable, Sendable {
     case normal, abnormal, indeterminate, blocked, skipped

@@ -1,10 +1,6 @@
 import Foundation
+import WiFiLensCore
 
-struct DiagnosticGatewayTarget: Equatable, Sendable {
-    let interfaceName: String
-    let interfaceIndex: UInt32
-    let address: String
-}
 
 struct DiagnosticTunnelRouteTarget: Equatable, Sendable {
     let interfaceName: String

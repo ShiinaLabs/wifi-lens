@@ -1,6 +1,7 @@
 import CFNetwork
 import Foundation
 import Network
+import WiFiLensCore
 
 struct ProxyEndpoint: Hashable, Sendable {
     let host: String

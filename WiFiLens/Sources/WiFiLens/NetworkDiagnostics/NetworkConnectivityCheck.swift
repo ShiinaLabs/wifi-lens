@@ -1,6 +1,7 @@
 import Foundation
 import Darwin
 import Network
+import WiFiLensCore
 
 protocol NetworkInterfaceInfoSourcing: Sendable {
     func currentInterface() async -> NetworkInterfaceInfo?

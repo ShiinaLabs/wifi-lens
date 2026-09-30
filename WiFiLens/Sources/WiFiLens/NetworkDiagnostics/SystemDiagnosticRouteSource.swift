@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import WiFiLensCore
 
 enum DiagnosticRouteParser {
     private static let recognizedFields = ["destination", "gateway", "interface", "flags", "mask"]

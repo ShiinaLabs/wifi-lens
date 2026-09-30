@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreWLAN
 import AppKit
+import WiFiLensCore
 
 enum TestState {
     case idle

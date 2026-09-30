@@ -1,5 +1,4 @@
 import Foundation
-import WiFiLensCore
 
 public enum ChannelRecommendationEngine {
     public static func recommend(

@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCore
 
 enum DiagnosticCheckRerunPolicy: Equatable, Sendable {
     case networkSensitive
