@@ -143,11 +143,7 @@
 		FBBD169A2FD062F60093F940 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FBBD16982FD062F60093F940 /* PrivacyInfo.xcprivacy */; };
 		FBBD169C2FD063630093F940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBBD169B2FD063630093F940 /* Assets.xcassets */; };
 		FBBD169D2FD063630093F940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBBD169B2FD063630093F940 /* Assets.xcassets */; };
-		FBD0A4472FE5BEAC003658AD /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4392FE5BEAC003658AD /* SessionStore.swift */; };
-		FBD0A4482FE5BEAC003658AD /* RecordingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4352FE5BEAC003658AD /* RecordingView.swift */; };
-		FBD0A44A2FE5BEAC003658AD /* RecordingTimelineChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4342FE5BEAC003658AD /* RecordingTimelineChart.swift */; };
 		FBD0A44B2FE5BEAC003658AD /* MarkdownExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A43B2FE5BEAC003658AD /* MarkdownExportService.swift */; };
-		FBD0A44C2FE5BEAC003658AD /* RecordingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4362FE5BEAC003658AD /* RecordingViewModel.swift */; };
 		FBD0A4522FE5C05C003658AD /* RecordingModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4402FE5BEAC003658AD /* RecordingModeTests.swift */; };
 		FBD0A45A2FE5C06000000007 /* MenuBarScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A4572FE5C06000000004 /* MenuBarScene.swift */; };
 		FBD0A47F2FE5C0600000002C /* ProObservationEventBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0A47C2FE5C06000000029 /* ProObservationEventBootstrap.swift */; };
@@ -338,10 +334,6 @@
 		FBBD16932FCF4E560093F940 /* OSS.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = OSS.xctestplan; sourceTree = "<group>"; };
 		FBBD16982FD062F60093F940 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FBBD169B2FD063630093F940 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		FBD0A4342FE5BEAC003658AD /* RecordingTimelineChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingTimelineChart.swift; sourceTree = "<group>"; };
-		FBD0A4352FE5BEAC003658AD /* RecordingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingView.swift; sourceTree = "<group>"; };
-		FBD0A4362FE5BEAC003658AD /* RecordingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingViewModel.swift; sourceTree = "<group>"; };
-		FBD0A4392FE5BEAC003658AD /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		FBD0A43B2FE5BEAC003658AD /* MarkdownExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExportService.swift; sourceTree = "<group>"; };
 		FBD0A43E2FE5BEAC003658AD /* PRO.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = PRO.xctestplan; path = ../../../Pro/Tests/TestPlans/PRO.xctestplan; sourceTree = "<group>"; };
 		FBD0A4402FE5BEAC003658AD /* RecordingModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingModeTests.swift; sourceTree = "<group>"; };
@@ -774,9 +766,6 @@
 		FBD0A4372FE5BEAC003658AD /* Recording */ = {
 			isa = PBXGroup;
 			children = (
-				FBD0A4342FE5BEAC003658AD /* RecordingTimelineChart.swift */,
-				FBD0A4352FE5BEAC003658AD /* RecordingView.swift */,
-				FBD0A4362FE5BEAC003658AD /* RecordingViewModel.swift */,
 			);
 			path = Recording;
 			sourceTree = "<group>";
@@ -784,7 +773,6 @@
 		FBD0A43A2FE5BEAC003658AD /* Session */ = {
 			isa = PBXGroup;
 			children = (
-				FBD0A4392FE5BEAC003658AD /* SessionStore.swift */,
 			);
 			path = Session;
 			sourceTree = "<group>";
@@ -1454,11 +1442,7 @@
 				EC2000000000000000000000C /* ProSpectrumCompositionView.swift in Sources */,
 				EC20000000000000000000024 /* ProReviewRequestBridge.swift in Sources */,
 				EC20000000000000000000026 /* FeedbackContact.swift in Sources */,
-				FBD0A4472FE5BEAC003658AD /* SessionStore.swift in Sources */,
-				FBD0A4482FE5BEAC003658AD /* RecordingView.swift in Sources */,
-				FBD0A44A2FE5BEAC003658AD /* RecordingTimelineChart.swift in Sources */,
 				FBD0A44B2FE5BEAC003658AD /* MarkdownExportService.swift in Sources */,
-				FBD0A44C2FE5BEAC003658AD /* RecordingViewModel.swift in Sources */,
 				FB1E32612FC7316C009D1BDC /* SparkleUpdater.swift in Sources */,
 				FB1E32672FC7316C009D1BDC /* CrashReporter.swift in Sources */,
 				FB1E32682FC7316C009D1BDC /* MetricKitManager.swift in Sources */,
