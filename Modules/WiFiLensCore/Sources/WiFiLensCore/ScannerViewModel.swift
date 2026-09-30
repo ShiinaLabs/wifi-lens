@@ -87,26 +87,26 @@ public final class ScannerViewModel {
     public let throughputMonitor = ThroughputMonitor()
     public var hiddenBSSIDs: Set<String> = []
     public var hiddenBands: Set<String> = []       // band IDs ("24"/"5"/"6") to hide
-    public var hideHiddenSSIDs: Bool = false       // hide networks with empty SSID
+    var hideHiddenSSIDs: Bool = false       // hide networks with empty SSID
     public private(set) var lastNetworks: [WiFiNetwork] = []  // cached for toggle rebuild + MCP
-    public private(set) var lastObservationTimestamp = Date.distantPast
-    public private(set) var vendorDatabaseRevision = 0
-    public private(set) var deduplicatedNetworks: [WiFiNetwork] = []
+    private(set) var lastObservationTimestamp = Date.distantPast
+    private(set) var vendorDatabaseRevision = 0
+    private(set) var deduplicatedNetworks: [WiFiNetwork] = []
     private(set) var displayStatesByID: [String: APDisplayState] = [:]
-    public private(set) var panelFilterQueries: [SpectrumPanelID: String] = [:]
+    private(set) var panelFilterQueries: [SpectrumPanelID: String] = [:]
     // Cached derived values for stable reads (Overview hero + network table).
     // Rebuilt only at stable-change boundaries — scan arrival, vendor database
     // refresh, visibility toggles, and global filter/hidden-network changes —
     // never on the 60fps animation tick, which only mutates `displayRSSI`.
-    public private(set) var cachedTotalNetworks: Int = 0
-    public private(set) var cachedBandSummary: String = ""
-    public private(set) var cachedCombinedTableRows: [NetworkTableRow] = []
+    private(set) var cachedTotalNetworks: Int = 0
+    private(set) var cachedBandSummary: String = ""
+    private(set) var cachedCombinedTableRows: [NetworkTableRow] = []
     let wifiPowerMonitor = WiFiPowerMonitor()
     public internal(set) var wifiPowerState: WiFiPowerState = .poweredOn
 
-    public var band24 = BandChartViewModel(band: .band24GHz)
-    public var band5 = BandChartViewModel(band: .band5GHz)
-    public var band6 = BandChartViewModel(band: .band6GHz)
+    var band24 = BandChartViewModel(band: .band24GHz)
+    var band5 = BandChartViewModel(band: .band5GHz)
+    var band6 = BandChartViewModel(band: .band6GHz)
     /// Panel band ViewModels are created lazily when a panel actually requests
     /// a band view. Panels that never open a band (for example a Table-only
     /// panel) do not allocate or refresh these stateful objects.
@@ -183,7 +183,7 @@ public final class ScannerViewModel {
     /// Trigger the Location Services authorization flow:
     /// - `.notDetermined` → system dialog
     /// - `.denied` → alert offering to open System Settings
-    public func requestAuthorization() {
+    func requestAuthorization() {
         guard requiresLiveWiFiAuthorization else { return }
         locationManager.refreshStatus()
         if locationManager.authorizationStatus == .notDetermined {
@@ -193,18 +193,18 @@ public final class ScannerViewModel {
         }
     }
 
-    public var globalFilterQuery: String = "" {
+    var globalFilterQuery: String = "" {
         didSet { applyGlobalFilterToBands() }
     }
     public var selectedNetworkID: String?
     public internal(set) var networkInfo: [NetworkInterfaceInfo] = []
-    public private(set) var channelQualities: [ChannelQuality] = []
+    private(set) var channelQualities: [ChannelQuality] = []
 
     // Regulatory-aware recommendations (Phase 2: computed alongside channelQualities)
     let regulatoryPipeline = RegulatoryPipeline()
     public internal(set) var channelRecommendations: [ChannelRecommendation] = []
     var inferredRegion: RegionInferenceResult? { regulatoryPipeline.inferredRegion }
-    public var userRegionOverride: RegulatoryDomain? {
+    var userRegionOverride: RegulatoryDomain? {
         get { regulatoryPipeline.userRegionOverride }
         set { regulatoryPipeline.userRegionOverride = newValue }
     }
@@ -219,7 +219,7 @@ public final class ScannerViewModel {
         return result
     }
 
-    public func bandViewModel(for panelID: SpectrumPanelID, band: ChannelBand) -> BandChartViewModel {
+    func bandViewModel(for panelID: SpectrumPanelID, band: ChannelBand) -> BandChartViewModel {
 
         var byBand = panelBandViewModelsByID[panelID] ?? [:]
         if let existing = byBand[band] {
@@ -244,21 +244,21 @@ public final class ScannerViewModel {
         return created
     }
 
-    public func filterQuery(for panelID: SpectrumPanelID) -> String {
+    func filterQuery(for panelID: SpectrumPanelID) -> String {
         panelFilterQueries[panelID, default: ""]
     }
 
-    public func setFilterQuery(_ query: String, for panelID: SpectrumPanelID) {
+    func setFilterQuery(_ query: String, for panelID: SpectrumPanelID) {
         panelFilterQueries[panelID] = query
         refreshPanelBandViewModels(panelID)
     }
 
-    public func releasePanelState(for panelID: SpectrumPanelID) {
+    func releasePanelState(for panelID: SpectrumPanelID) {
         panelFilterQueries.removeValue(forKey: panelID)
         panelBandViewModelsByID.removeValue(forKey: panelID)
     }
 
-    public func panelBandViewModels(for panelID: SpectrumPanelID) -> [BandChartViewModel] {
+    func panelBandViewModels(for panelID: SpectrumPanelID) -> [BandChartViewModel] {
         guard let byBand = panelBandViewModelsByID[panelID] else { return [] }
         return Array(byBand.values)
             .filter { supportedBands.contains($0.band) }
@@ -367,7 +367,7 @@ public final class ScannerViewModel {
         return ""
     }
 
-    public func vendorDatabaseDidChange() {
+    func vendorDatabaseDidChange() {
         vendorDatabaseRevision &+= 1
         rebuildCachedDerivedData()
     }
@@ -386,7 +386,7 @@ public final class ScannerViewModel {
     private var effectiveScanIntervalSeconds = 3
     private var scanIntervalLeases: [UUID: Int] = [:]
 
-    public var activeScanIntervalLeaseCount: Int { scanIntervalLeases.count }
+    var activeScanIntervalLeaseCount: Int { scanIntervalLeases.count }
 
     public func acquireScanIntervalLease(seconds: Int) -> UUID {
         let token = UUID()
@@ -982,7 +982,7 @@ public final class ScannerViewModel {
         rebuildCachedDerivedData()
     }
 
-    public func applyGlobalFilterToBands() {
+    func applyGlobalFilterToBands() {
         band24.applyFilter(globalFilterQuery, hiddenBands: hiddenBands, hideHiddenSSIDs: hideHiddenSSIDs)
         band5.applyFilter(globalFilterQuery, hiddenBands: hiddenBands, hideHiddenSSIDs: hideHiddenSSIDs)
         band6.applyFilter(globalFilterQuery, hiddenBands: hiddenBands, hideHiddenSSIDs: hideHiddenSSIDs)
@@ -1001,7 +1001,7 @@ public final class ScannerViewModel {
         rebuildCachedDerivedData()
     }
 
-    public func toggleVisibilityLocked(seriesID: String) {
+    func toggleVisibilityLocked(seriesID: String) {
         let current = displayStatesByID[seriesID] ?? APDisplayState(visibility: true, visibilityLocked: false)
         displayStatesByID[seriesID] = APDisplayState(
             visibility: current.visibility,

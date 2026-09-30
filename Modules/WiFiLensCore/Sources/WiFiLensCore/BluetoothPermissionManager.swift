@@ -8,9 +8,9 @@ public final class BluetoothPermissionManager {
     private static let logger = Logger(label: "ble")
 
     public private(set) var authorizationStatus: CBManagerAuthorization = .notDetermined
-    public var showDeniedAlert = false
+    var showDeniedAlert = false
 
-    public var isAuthorized: Bool {
+    var isAuthorized: Bool {
         switch authorizationStatus {
         case .allowedAlways:
             return true
@@ -23,7 +23,7 @@ public final class BluetoothPermissionManager {
         refreshStatus()
     }
 
-    public func refreshStatus() {
+    func refreshStatus() {
         authorizationStatus = CBCentralManager.authorization
         showDeniedAlert = authorizationStatus == .denied || authorizationStatus == .restricted
         Self.logger.debug("Bluetooth auth status: \(authorizationStatus.rawValue)")
@@ -32,7 +32,7 @@ public final class BluetoothPermissionManager {
     /// Creating a CBCentralManager triggers the system permission dialog
     /// when status is .notDetermined. We create a temporary one just for
     /// authorization — BLEScanner creates its own for actual scanning.
-    public func requestPermissionIfNeeded() {
+    func requestPermissionIfNeeded() {
         refreshStatus()
         guard authorizationStatus == .notDetermined else { return }
         let temp = CBCentralManager(delegate: nil, queue: nil)
@@ -43,7 +43,7 @@ public final class BluetoothPermissionManager {
         _ = temp
     }
 
-    public func openBluetoothPreferences() {
+    func openBluetoothPreferences() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Bluetooth") {
             NSWorkspace.shared.open(url)
         }
