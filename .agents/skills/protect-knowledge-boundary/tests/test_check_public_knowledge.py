@@ -33,24 +33,24 @@ class AuxiliaryContentLintTests(unittest.TestCase):
     def scan(self, public_text: str, private_text: str = ""):
         public = self.write("docs/public.md", public_text)
         if private_text:
-            self.write("Pro/docs/private.md", private_text)
+            self.write("WiFiLensPro/docs/private.md", private_text)
         module = load_module()
         return module.scan_repository(self.root, [public])
 
     def test_allows_private_document_index_without_summary(self):
         result = self.scan(
-            "| `Pro/docs/ARCHITECTURE.md` | Private Pro architecture; read it only inside the Pro repository. |\n"
+            "| `WiFiLensPro/docs/ARCHITECTURE.md` | Private Pro architecture; read it only inside the Pro repository. |\n"
         )
         self.assertEqual(result.exit_code, 0, result.findings)
 
     def test_allows_private_agent_instruction_entrypoint(self):
         result = self.scan(
-            "For explicitly Pro-scoped work, follow `Pro/AGENTS.md` inside the private repository.\n"
+            "For explicitly Pro-scoped work, follow `WiFiLensPro/AGENTS.md` inside the private repository.\n"
         )
         self.assertEqual(result.exit_code, 0, result.findings)
 
     def test_rejects_private_source_path(self):
-        result = self.scan("Inspect `Pro/Sources/EventJournal.swift` for details.\n")
+        result = self.scan("Inspect `WiFiLensPro/Sources/EventJournal.swift` for details.\n")
         self.assertEqual(result.exit_code, 1)
         self.assertIn("private-path", {item.code for item in result.findings})
 

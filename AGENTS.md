@@ -13,7 +13,7 @@ Project documentation lives under `docs/`; see [`docs/README.md`](docs/README.md
 | `docs/ISSUES.md` | Active known issues and deferred defects |
 | `.agents/references/README.md` | Task-oriented technical reference router |
 | `.agents/references/collaboration-rules.md` | AI assistant behavior rules, enforced prohibitions, and must-follows |
-| `Pro/AGENTS.md` | Entry point for tasks explicitly scoped to the private Pro edition |
+| `WiFiLensPro/AGENTS.md` | Entry point for tasks explicitly scoped to the private Pro edition |
 
 ## Agent Assets
 
@@ -32,10 +32,10 @@ Before acting on a repository task, read and follow `.agents/references/collabor
 ## Edition Documentation Boundary
 
 - Public repository documentation may acknowledge the Pro edition and link to
-  documentation in the private `Pro/` submodule.
+  documentation in the private `WiFiLensPro/` submodule.
 - Do not copy, summarize, or mirror Pro implementation details into the root
   repository or `.agents/`.
-- For work explicitly scoped to Pro, follow `Pro/AGENTS.md` and read the private
+- For work explicitly scoped to Pro, follow `WiFiLensPro/AGENTS.md` and read the private
   references it routes. Otherwise, do not load Pro documentation.
 
 The knowledge-boundary skill is an opt-in manual audit. Run it only when the
@@ -48,9 +48,9 @@ documentation, Agent-asset, refactoring, commit, or push work.
 ```sh
 # App — always use xcodebuild, never swift build / swift test
 # Build configurations: Debug / Release
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' build
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests
-xed WiFiLens/WiFiLens.xcodeproj                   # open in Xcode GUI
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' build
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests
+xed WiFiLens.xcodeproj                   # open in Xcode GUI
 
 # ChartLens library (standalone Swift Package)
 cd ChartLens && swift build                        # build

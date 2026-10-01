@@ -13,7 +13,7 @@ set -euo pipefail
 # (.agents/skills/verify-build/scripts/).
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-PROJECT="$REPO_ROOT/WiFiLens/WiFiLens.xcodeproj"
+PROJECT="$REPO_ROOT/WiFiLens.xcodeproj"
 
 QUICK=false
 for arg in "$@"; do

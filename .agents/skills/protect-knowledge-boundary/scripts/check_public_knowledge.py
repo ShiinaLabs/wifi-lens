@@ -16,7 +16,7 @@ from typing import NamedTuple
 
 
 PRIVATE_PATH = re.compile(
-    r"(?<![\w.-])Pro/(?!AGENTS\.md\b|docs/[A-Za-z0-9._/-]+\.md\b)[A-Za-z0-9._/-]+"
+    r"(?<![\w.-])WiFiLensPro/(?!AGENTS\.md\b|docs/[A-Za-z0-9._/-]+\.md\b)[A-Za-z0-9._/-]+"
 )
 PRO_ASSERTION = re.compile(
     r"\bPro(?:\s+(?:edition|target|implementation|app))?\s+"
@@ -156,7 +156,7 @@ def scan_repository(root: Path, paths: list[Path] | None = None) -> ScanResult:
                         "private-path",
                         relative.as_posix(),
                         line_number,
-                        "Public content references a private path outside Pro/docs/*.md.",
+                        "Public content references a private path outside WiFiLensPro/docs/*.md.",
                     )
                 )
 

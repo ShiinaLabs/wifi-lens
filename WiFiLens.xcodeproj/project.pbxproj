@@ -248,7 +248,7 @@
 		FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugContainerView.swift; sourceTree = "<group>"; };
 		FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugThroughputView.swift; sourceTree = "<group>"; };
 		FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugRoamingChartView.swift; sourceTree = "<group>"; };
-		CC0000000000000000000001 /* DebugTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugTimelineView.swift; path = ../Pro/Timeline/DebugTimelineView.swift; sourceTree = SOURCE_ROOT; };
+		CC0000000000000000000001 /* DebugTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugTimelineView.swift; path = WiFiLensPro/Timeline/DebugTimelineView.swift; sourceTree = SOURCE_ROOT; };
 		FBA000030000000000000003 /* WiFiLensUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WiFiLensUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBA000050000000000000005 /* WiFiLensUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLensUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		FBA000210000000000000021 /* UITestHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestHelpers.swift; sourceTree = "<group>"; };
@@ -266,9 +266,9 @@
 		FBBD16982FD062F60093F940 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FBBD169B2FD063630093F940 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FBD0A43B2FE5BEAC003658AD /* MarkdownExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExportService.swift; sourceTree = "<group>"; };
-		FBD0A43E2FE5BEAC003658AD /* PRO.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = PRO.xctestplan; path = ../../../Pro/Tests/TestPlans/PRO.xctestplan; sourceTree = "<group>"; };
+		FBD0A43E2FE5BEAC003658AD /* PRO.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = PRO.xctestplan; path = ../../../WiFiLensPro/Tests/TestPlans/PRO.xctestplan; sourceTree = "<group>"; };
 		FBD0A4402FE5BEAC003658AD /* RecordingModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingModeTests.swift; sourceTree = "<group>"; };
-		FBD0A4502FE5BF24003658AD /* WiFiLensPro-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WiFiLensPro-Info.plist"; path = "../Pro/WiFiLensPro-Info.plist"; sourceTree = SOURCE_ROOT; };
+		FBD0A4502FE5BF24003658AD /* WiFiLensPro-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WiFiLensPro-Info.plist"; path = WiFiLensPro/WiFiLensPro-Info.plist; sourceTree = SOURCE_ROOT; };
 		FBD0A4572FE5C06000000004 /* MenuBarScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarScene.swift; sourceTree = "<group>"; };
 		FBD0A47C2FE5C06000000029 /* ProObservationEventBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProObservationEventBootstrap.swift; sourceTree = "<group>"; };
 		FBD329512FC500000057B038 /* MetricKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKitManager.swift; sourceTree = "<group>"; };
@@ -410,6 +410,7 @@
 /* Begin PBXGroup section */
 		1D3644357E3565223E7F160A = {
 			isa = PBXGroup;
+			path = WiFiLens;
 			children = (
 				FBD0A4502FE5BF24003658AD /* WiFiLensPro-Info.plist */,
 				FB5A212C2FC31C6100828D9F /* WiFiLens-Info.plist */,
@@ -664,7 +665,7 @@
 				FB8FCB192FF6C4E300BB2929 /* SecondaryToolbarProTests.swift */,
 			);
 			name = WiFiLensProTests;
-			path = ../Pro/Tests/WiFiLensProTests;
+			path = WiFiLensPro/Tests/WiFiLensProTests;
 			sourceTree = SOURCE_ROOT;
 		};
 		FBA000060000000000000006 /* WiFiLensUITests */ = {
@@ -720,7 +721,7 @@
 				FBD0A4402FE5BEAC003658AD /* RecordingModeTests.swift */,
 			);
 			name = WiFiLensProUITests;
-			path = ../../Pro/Tests/WiFiLensProUITests;
+			path = ../WiFiLensPro/Tests/WiFiLensProUITests;
 			sourceTree = "<group>";
 		};
 		FBD0A4442FE5BEAC003658AD /* Pro */ = {
@@ -737,8 +738,8 @@
 				FBD0A43D2FE5BEAC003658AD /* SnapshotExport */,
 				FBD0A4562FE5C06000000003 /* MenuBar */,
 			);
-			name = Pro;
-			path = ../Pro;
+			name = WiFiLensPro;
+			path = WiFiLensPro;
 			sourceTree = SOURCE_ROOT;
 		};
 		A55100000000000000000006 /* Demo */ = {
@@ -1795,7 +1796,7 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				INFOPLIST_FILE = "../Pro/WiFiLensPro-Info.plist";
+				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
@@ -1842,7 +1843,7 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				INFOPLIST_FILE = "../Pro/WiFiLensPro-Info.plist";
+				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
@@ -2039,7 +2040,7 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				INFOPLIST_FILE = "../Pro/WiFiLensPro-Info.plist";
+				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
@@ -2087,7 +2088,7 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				INFOPLIST_FILE = "../Pro/WiFiLensPro-Info.plist";
+				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
@@ -2256,15 +2257,15 @@
 /* Begin XCLocalSwiftPackageReference section */
 		F9A000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensCore" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Modules/WiFiLensCore;
+			relativePath = WiFiLensCore;
 		};
 		B0B000000000000000000003 /* XCLocalSwiftPackageReference "WiFiLensProCore" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Pro/Modules/WiFiLensProCore;
+			relativePath = WiFiLensPro/WiFiLensProCore;
 		};
 		C70000000000000000000001 /* XCLocalSwiftPackageReference "WiFiLensCaptureSupport" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Pro/Modules/WiFiLensCaptureSupport;
+			relativePath = WiFiLensPro/WiFiLensCaptureSupport;
 		};
 /* End XCLocalSwiftPackageReference section */
 

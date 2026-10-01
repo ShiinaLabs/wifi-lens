@@ -19,7 +19,7 @@ code changes, during routine refactors, or during routine code review.
 The Production Pro binary audit is a separate release invariant. Keep it in
 the release verification chain; this opt-in policy does not disable it.
 
-Keep private Pro implementation knowledge inside the `Pro/` submodule while
+Keep private Pro implementation knowledge inside the `WiFiLensPro/` submodule while
 allowing the public repository to index approved private entrypoints.
 
 ## Required context
@@ -36,7 +36,7 @@ When an explicitly requested audit is part of a task, follow the per-commit
 consent protocol in `.agents/references/collaboration-rules.md` before running
 checks whose purpose is to gate that commit.
 
-1. Treat the root repository as public and `Pro/` as a separate private
+1. Treat the root repository as public and `WiFiLensPro/` as a separate private
    repository. Inspect their Git status and diffs separately.
 2. Split the change into modules and review every changed file individually.
    For each file, record its physical location, owning module, edition
@@ -71,7 +71,7 @@ Use the public repository's existing architecture map as the starting point:
   composition implementation and must remain safe for the OSS target.
 - `WiFiLens/Configs/OSS.xcconfig` and `WiFiLens/Configs/PRO.xcconfig` select
   the target-specific compilation entrypoints.
-- `WiFiLens/WiFiLens.xcodeproj/project.pbxproj` is the source of truth for
+- `WiFiLens.xcodeproj/project.pbxproj` is the source of truth for
   target membership and for the public project's Pro build wiring.
 
 For each changed module, follow its edges through the scanner/runtime,
@@ -86,7 +86,7 @@ files and project wiring, not on a scanner summary:
 
 | File | Physical repository | Module | Edition | Target membership | Callers / callees / composition seam | Decision |
 | --- | --- | --- | --- | --- | --- | --- |
-| `path` | root or `Pro/` | concrete module | `OSS`, shared contract, or `Pro` | OSS / Pro / both / tests | inspected relationship and evidence | `PASS`, `REVIEW`, or `FAIL` |
+| `path` | root or `WiFiLensPro/` | concrete module | `OSS`, shared contract, or `Pro` | OSS / Pro / both / tests | inspected relationship and evidence | `PASS`, `REVIEW`, or `FAIL` |
 
 Also list every edge that crosses an edition boundary and state why the edge is
 allowed, unresolved, or forbidden. A review is incomplete if a row or edge is

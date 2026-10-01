@@ -54,7 +54,7 @@ eliminate the failure mode. The same user-visible symptoms returned; see the inc
 for the mechanism that actually drives the window frame.
 
 Private edition windowing documentation is indexed at
-[Pro/docs/WINDOWING.md](../../../Pro/docs/WINDOWING.md) and must be read only for
+[WiFiLensPro/docs/WINDOWING.md](../../../WiFiLensPro/docs/WINDOWING.md) and must be read only for
 work explicitly scoped to Pro.
 
 ## P0 Incident: Hidden Page Minimum Height Drives the Window

@@ -49,20 +49,20 @@ Default verification for an app source change = **build + `-only-testing:WiFiLen
 
 Build (OSS):
 ```sh
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens" \
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
   -configuration Debug -destination 'platform=macOS' build
 ```
 
 Build (Pro) — always run this too when the change touches shared source, because
 `WiFiLensPro` has its own independent Sources build phase:
 ```sh
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens Pro" \
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens Pro" \
   -configuration Debug -destination 'platform=macOS' build
 ```
 
 Unit tests (the only tests run by default):
 ```sh
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens" \
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
   -configuration Debug -destination 'platform=macOS' \
   -skipPackageUpdates test -only-testing:WiFiLensTests
 ```

@@ -233,7 +233,7 @@ func projectConfigurationError(_ description: String) -> NSError {
 
 func privacyCopyProjectURL() throws -> URL {
     var directory = URL(filePath: #filePath).deletingLastPathComponent()
-    let marker = "WiFiLens/WiFiLens.xcodeproj/project.pbxproj"
+    let marker = "WiFiLens.xcodeproj/project.pbxproj"
 
     while directory.path != directory.deletingLastPathComponent().path {
         let candidate = directory.appending(path: marker)

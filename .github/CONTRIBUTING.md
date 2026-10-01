@@ -49,14 +49,14 @@ git submodule update --init ChartLens
 Open the project with:
 
 ```sh
-xed WiFiLens/WiFiLens.xcodeproj
+xed WiFiLens.xcodeproj
 ```
 
 Build the open-source edition:
 
 ```sh
 xcodebuild \
-  -project WiFiLens/WiFiLens.xcodeproj \
+  -project WiFiLens.xcodeproj \
   -scheme "WiFi Lens" \
   -configuration Debug \
   -destination 'platform=macOS' \
@@ -104,7 +104,7 @@ Run the build before submitting a pull request:
 
 ```sh
 xcodebuild \
-  -project WiFiLens/WiFiLens.xcodeproj \
+  -project WiFiLens.xcodeproj \
   -scheme "WiFi Lens" \
   -configuration Debug \
   -destination 'platform=macOS' \
@@ -115,7 +115,7 @@ Run the unit tests:
 
 ```sh
 xcodebuild \
-  -project WiFiLens/WiFiLens.xcodeproj \
+  -project WiFiLens.xcodeproj \
   -scheme "WiFi Lens" \
   -configuration Debug \
   -destination 'platform=macOS' \
