@@ -25,8 +25,10 @@ assets may index that documentation for explicitly Pro-scoped work, but must
 not copy, summarize, or mirror private architecture, persistence, lifecycle,
 feature, or test details.
 
-Use `skills/protect-knowledge-boundary/` whenever a documentation or Agent
-asset change mentions Pro or crosses the root/submodule boundary.
+`skills/protect-knowledge-boundary/` is an opt-in manual audit. Run it only
+when the user explicitly requests a knowledge-boundary audit or the active
+task names that audit as a required deliverable. Do not trigger it for routine
+documentation, Agent-asset, refactoring, commit, or push work.
 
 ## Platform Discovery
 

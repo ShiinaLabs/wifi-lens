@@ -1,5 +1,16 @@
 # WiFi Lens Knowledge Boundary Policy
 
+## Invocation policy
+
+This skill is an opt-in manual audit. Run it only when the user explicitly
+requests a knowledge-boundary audit or the active task names that audit as a
+required deliverable. Do not run it automatically before commits or pushes,
+after code changes, for routine refactors or reviews, or merely because a
+change touches Pro, shared contracts, documentation, or Agent assets.
+
+The Production Pro binary audit is a separate deterministic release check and
+remains required by its own release workflow.
+
 ## Trust boundary
 
 - The root repository, including `.agents/`, is public.

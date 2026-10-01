@@ -38,13 +38,10 @@ Before acting on a repository task, read and follow `.agents/references/collabor
 - For work explicitly scoped to Pro, follow `Pro/AGENTS.md` and read the private
   references it routes. Otherwise, do not load Pro documentation.
 
-Use `.agents/skills/protect-knowledge-boundary/` for every documentation or
-Agent-asset change that mentions Pro or crosses the root/submodule boundary.
-
-<!-- knowledge-boundary-gate:start -->
-Complete the manual module-by-module edition-boundary review described in `.agents/skills/protect-knowledge-boundary/SKILL.md` before completing knowledge-boundary changes.
-Integrity manifest SHA-256: `0b810bcb1f5715d63cbcfd5f5d07107aa32eb8a8907b8fcc5ee66403c8ab70bd`
-<!-- knowledge-boundary-gate:end -->
+The knowledge-boundary skill is an opt-in manual audit. Run it only when the
+user explicitly requests a boundary audit or the active task names that audit
+as a required deliverable. Do not run it automatically for ordinary
+documentation, Agent-asset, refactoring, commit, or push work.
 
 ## Build & Test
 

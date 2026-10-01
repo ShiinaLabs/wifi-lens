@@ -1,9 +1,23 @@
 ---
 name: protect-knowledge-boundary
-description: Use when editing, moving, reviewing, or preparing to commit WiFi Lens documentation and Agent assets that mention Pro, paid editions, private modules, cross-repository references, AGENTS.md, CLAUDE.md, .agents/, or docs/.
+description: Invoke only when the user explicitly requests a WiFi Lens knowledge-boundary audit or the active task names that audit as a required deliverable. This skill is opt-in only; do not run it automatically for documentation, Agent assets, Pro changes, commits, pushes, refactors, or reviews.
 ---
 
 # Protect Knowledge Boundary
+
+## Default invocation policy
+
+**OPT-IN ONLY.** Do not run this skill automatically. Run it only when the
+user explicitly requests a knowledge-boundary audit or the active task names
+that audit as a required deliverable.
+
+Do not infer permission to run it from a change touching `WiFiLensCore`, the
+private Pro repository, edition composition, documentation, Agent assets, or
+the OSS/Pro boundary. Do not run it before commits or pushes, after ordinary
+code changes, during routine refactors, or during routine code review.
+
+The Production Pro binary audit is a separate release invariant. Keep it in
+the release verification chain; this opt-in policy does not disable it.
 
 Keep private Pro implementation knowledge inside the `Pro/` submodule while
 allowing the public repository to index approved private entrypoints.
@@ -18,8 +32,9 @@ of modules, file locations, target membership, and dependency direction.
 
 ## Workflow
 
-When this workflow is being used to gate a requested commit, first follow the
-per-commit consent protocol in `.agents/references/collaboration-rules.md`.
+When an explicitly requested audit is part of a task, follow the per-commit
+consent protocol in `.agents/references/collaboration-rules.md` before running
+checks whose purpose is to gate that commit.
 
 1. Treat the root repository as public and `Pro/` as a separate private
    repository. Inspect their Git status and diffs separately.

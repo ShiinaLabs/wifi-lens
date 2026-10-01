@@ -35,15 +35,21 @@ class CommitCheckConsentPolicyTests(unittest.TestCase):
         self.assertIn("Consent applies to one commit request only", self.collaboration)
 
     def test_boundary_check_is_manual_and_not_build_or_test_based(self):
-        self.assertIn("Boundary verification", self.collaboration)
-        self.assertIn("manual module-by-module review", self.collaboration)
-        self.assertIn("Build success", self.collaboration)
-        self.assertIn("unit-test results", self.collaboration)
-        self.assertIn("cannot establish a boundary", self.collaboration)
+        self.assertIn("Knowledge-boundary audit is opt-in", self.collaboration)
+        self.assertIn("Run it only when the", self.collaboration)
+        self.assertIn("module-by-module", self.collaboration)
+        self.assertIn("Builds, unit tests, and scripts cannot establish", self.collaboration)
+        self.assertIn("manual boundary `PASS`", self.collaboration)
         self.assertNotIn(
             "all code changes must be verified by running `xcodebuild build` successfully",
             self.collaboration,
         )
+
+    def test_skill_is_explicitly_opt_in(self):
+        skill = (ROOT / ".agents/skills/protect-knowledge-boundary/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("OPT-IN ONLY", skill)
+        self.assertIn("Do not run this skill automatically", skill)
+        self.assertIn("Do not run it before commits or pushes", skill)
 
 
 if __name__ == "__main__":
