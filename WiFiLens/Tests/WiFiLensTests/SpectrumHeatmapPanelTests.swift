@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 import SwiftUI
@@ -80,6 +81,36 @@ import SwiftUI
     @Test func panelUsesStandardRasterStorageIndependentOfDisplaySize() {
         #expect(SpectrumHeatmapPanel.rasterResolution(for: CGSize(width: 80, height: 40)) == .standard)
         #expect(SpectrumHeatmapPanel.rasterResolution(for: CGSize(width: 2_000, height: 1_000)) == .standard)
+    }
+
+    @Test(arguments: [false, true])
+    func panelFollowsAvailableSizeAcrossResizes(hasNetworks: Bool) {
+        let viewModel = ScannerViewModel()
+        applyCurrentScan(
+            hasNetworks ? [makeNetwork(bssid: "aa:bb:cc:dd:ee:01")] : [],
+            to: viewModel
+        )
+        let controller = NSHostingController(rootView: SpectrumHeatmapPanel(
+            viewModel: viewModel,
+            band: .band24GHz
+        ))
+        let window = NSWindow(contentViewController: controller)
+        window.styleMask = [.titled, .resizable]
+
+        // Exercise both expansion and compression on the same mounted panel.
+        for size in [
+            CGSize(width: 1_200, height: 600),
+            CGSize(width: 320, height: 100),
+            CGSize(width: 700, height: 300),
+            CGSize(width: 320, height: 100)
+        ] {
+            window.setContentSize(size)
+            window.layoutIfNeeded()
+            let measured = controller.sizeThatFits(in: size)
+            #expect(abs(measured.width - size.width) <= 1)
+            #expect(abs(measured.height - size.height) <= 1,
+                    "Heatmap must fill its panel without overflowing after a resize")
+        }
     }
 
     @Test func maximumHeatmapColorIsWarmAndNotWhite() {

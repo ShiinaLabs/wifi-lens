@@ -69,7 +69,7 @@ struct SpectrumHeatmapPanel: View {
                 .font(.caption)
             Spacer()
         }
-        .frame(minHeight: 150)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     var heatmapToolbarContent: some View {
@@ -125,7 +125,6 @@ struct SpectrumHeatmapPanel: View {
                 renderCoordinator.cancel()
             }
         }
-        .frame(minHeight: 160, idealHeight: 190, maxHeight: 240)
     }
 
     private func rasterLayer(

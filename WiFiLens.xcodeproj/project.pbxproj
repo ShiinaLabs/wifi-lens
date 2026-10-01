@@ -4120,6 +4120,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 180;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZMK8PL8T8J;
 				ENABLE_APP_SANDBOX = YES;
@@ -4148,6 +4149,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.kaoru.wifi-lens-pro";
 				PRODUCT_NAME = "WiFi Lens Pro";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -4167,6 +4169,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 180;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZMK8PL8T8J;
 				ENABLE_APP_SANDBOX = YES;
@@ -4195,6 +4198,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.kaoru.wifi-lens-pro";
 				PRODUCT_NAME = "WiFi Lens Pro";
 				PROVISIONING_PROFILE_SPECIFIER = "";
