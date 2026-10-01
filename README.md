@@ -80,7 +80,7 @@ WiFi Lens brings the essential tools for understanding a local Wi-Fi environment
 | 🔍 Network details | Inspect PHY generation, channel width, 802.11k/r/v, WPA3, and connection details |
 | 🚶 Roaming and heatmap | Validate AP handoffs and compare per-band occupancy |
 | 🩺 Network Self-Check *(Preview)* | Run path, DNS, HTTPS, and configured proxy reachability checks |
-| 📻 AP Radar *(Preview)* | Track a selected AP with RSSI-based guidance and optional audio feedback |
+| 📻 AP Radar | Track a selected AP with RSSI-based guidance and optional audio feedback |
 | 🤖 MCP and export | Connect local AI tools and save charts as PNG or CSV |
 | 🔒 Local-first privacy | Keep scan data on your Mac with no usage telemetry |
 
@@ -171,6 +171,7 @@ The open-source edition is available for local analysis, development, source ins
 | 📶 Connection Info | IP, gateway, DNS, MAC, Tx rate, security summary | Stable |
 | 🚶 Roaming Test | AP handoff monitoring with session save/load | Stable |
 | 🗺️ Channel Heatmap | Per-band occupancy heatmap | Stable |
+| 📻 AP Radar | Track a selected AP with RSSI-based guidance and optional audio feedback | Stable |
 | 🎧 BLE Scanner | Bluetooth LE discovery, RSSI analysis, tracking | Stable |
 | 🎨 Smart Coloring | Deterministic SSID-based color assignment | Stable |
 | 🌐 MCP Server | Embedded HTTP API for AI tool integration | Stable |
@@ -179,7 +180,6 @@ The open-source edition is available for local analysis, development, source ins
 | ⬆️ Auto-Updates | Sparkle for the GitHub edition | Stable |
 | 🌍 Localized | English, German, Spanish, Japanese, Chinese | Stable |
 | 🩺 Network Self-Check | One-click path, DNS, HTTPS, and proxy diagnostics | Preview |
-| 📻 AP Radar | Track a selected AP with audio pulse feedback | Preview |
 
 </details>
 

@@ -60,6 +60,28 @@ private final class FakePulseScheduler: APRadarPulseScheduling {
 @MainActor
 struct APRadarViewModelTests {
 
+    @Test("Picker retains positions while updating signal readings")
+    func pickerRetainsPositionsAcrossScans() {
+        let first = APRadarAPOption(observation: makeNetwork(bssid: "AA:BB:CC:DD:EE:01", rssi: -40))
+        let second = APRadarAPOption(observation: makeNetwork(bssid: "AA:BB:CC:DD:EE:02", rssi: -50))
+        var order = APSelectionOrder()
+        order.update([first, second])
+
+        let strongerSecond = APRadarAPOption(observation: makeNetwork(bssid: second.bssid, rssi: -30))
+        let newAP = APRadarAPOption(observation: makeNetwork(bssid: "AA:BB:CC:DD:EE:03", rssi: -20))
+        let nextScan = [newAP, strongerSecond, first]
+        order.update(nextScan)
+        let arranged = order.arrange(nextScan)
+        #expect(arranged.map(\.id) == [first.id, second.id, newAP.id])
+        #expect(arranged[1].rssi == -30)
+
+        order.update([newAP, first])
+        #expect(order.arrange([newAP, first]).map(\.id) == [first.id, newAP.id])
+        order.update([])
+        order.update([newAP, first])
+        #expect(order.arrange([newAP, first]).map(\.id) == [newAP.id, first.id])
+    }
+
     // MARK: - Helpers
 
     private func makeDefaults() -> UserDefaults {

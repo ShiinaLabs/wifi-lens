@@ -1,21 +1,48 @@
 import SwiftUI
 
+/// Keeps live values fresh while retaining the positions established in this sheet.
+struct APSelectionOrder {
+    private var ids: [String] = []
+
+    mutating func update(_ options: [APRadarAPOption]) {
+        let available = Set(options.map(\.id))
+        ids.removeAll { !available.contains($0) }
+        let retained = Set(ids)
+        ids.append(contentsOf: options.map(\.id).filter { !retained.contains($0) })
+    }
+
+    func arrange(_ options: [APRadarAPOption]) -> [APRadarAPOption] {
+        let lookup = Dictionary(uniqueKeysWithValues: options.map { ($0.id, $0) })
+        let retained = Set(ids)
+        return ids.compactMap { lookup[$0] } + options.filter { !retained.contains($0.id) }
+    }
+}
+
 /// Sheet that lets the user pick one access point from the shared scan
 /// results. Reads live from the view model so the list refreshes when a new
 /// scan arrives while the sheet is open; actions route back through closures.
-/// Sorted by RSSI (strongest first), then SSID, then BSSID.
+/// Starts with the strongest APs and preserves row positions during live scans.
 struct APSelectionView: View {
     @Bindable var viewModel: APRadarViewModel
     let onSelect: (APRadarAPOption) -> Void
     let onRescan: () -> Void
     let onCancel: () -> Void
+    @State private var order = APSelectionOrder()
 
     /// Fixed sheet size keeps the picker consistent at any window size and
     /// prevents the list from growing the sheet beyond the window.
     private static let sheetSize = CGSize(width: 560, height: 500)
 
     private var options: [APRadarAPOption] {
-        viewModel.selectionOptions
+        order.arrange(viewModel.selectionOptions)
+    }
+
+    private var selectedBSSID: String? {
+        switch viewModel.state {
+        case .idle: nil
+        case .tracking(let snapshot): snapshot.target.bssid
+        case .signalLost(let snapshot): snapshot.target.bssid
+        }
     }
 
     private var isEmpty: Bool {
@@ -30,15 +57,14 @@ struct APSelectionView: View {
                 emptyState
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 4) {
+                    LazyVStack(spacing: 8) {
                         ForEach(options) { option in
-                            APSelectionRow(option: option) {
+                            APSelectionRow(option: option, isSelected: option.bssid.uppercased() == selectedBSSID) {
                                 onSelect(option)
                             }
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 2)
+                    .padding(16)
                 }
                 .scrollBounceBehavior(.basedOnSize)
             }
@@ -46,6 +72,10 @@ struct APSelectionView: View {
         .frame(width: Self.sheetSize.width, height: Self.sheetSize.height)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("ap-radar-selection")
+        .onAppear { order.update(viewModel.selectionOptions) }
+        .onChange(of: viewModel.selectionOptions.map(\.id)) { _, _ in
+            order.update(viewModel.selectionOptions)
+        }
     }
 
     // MARK: - Header
@@ -53,18 +83,20 @@ struct APSelectionView: View {
     private var header: some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
+                Circle().stroke(Color.green.opacity(0.12), lineWidth: 1)
+                    .frame(width: 48, height: 48)
+                Circle().fill(Color.green.opacity(0.06))
+                    .overlay(Circle().stroke(Color.green.opacity(0.20), lineWidth: 1))
                     .frame(width: 34, height: 34)
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+                Image(systemName: "wifi.router")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(.green)
             }
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(String(localized: "apRadar.selectTarget", comment: "AP Radar selection sheet title"))
-                    .font(.headline)
+                    .font(.title3.weight(.semibold))
                 if !isEmpty {
                     Text(selectionSummary)
                         .font(.caption)
@@ -94,7 +126,7 @@ struct APSelectionView: View {
             .keyboardShortcut(.cancelAction)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
     }
 
     private var selectionSummary: String {
@@ -144,11 +176,10 @@ struct APSelectionView: View {
     }
 }
 
-/// A single selectable AP row: signal bars, SSID/BSSID on the left, RSSI and
-/// band/channel on the right. Uses the same RSSI color scale as Overview so
-/// the sheet reads as part of the app.
+/// A quiet instrument row with a numeric signal reading and explicit selection.
 private struct APSelectionRow: View {
     let option: APRadarAPOption
+    let isSelected: Bool
     let onSelect: () -> Void
 
     @State private var isHovering = false
@@ -157,37 +188,54 @@ private struct APSelectionRow: View {
         Button(action: onSelect) {
             HStack(spacing: 12) {
                 signalBars
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(ssidLabel)
-                        .font(.body.weight(.medium))
+                        .font(.body.weight(.semibold))
                         .lineLimit(1)
                         .truncationMode(.tail)
-                    Text(option.bssid)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 6) {
+                        Text(option.band.displayName)
+                            .font(.system(size: 10, weight: .medium))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.05), in: Capsule())
+                        Text(channelLabel).font(.caption)
+                    }
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    Text(option.bssid).font(.caption.monospaced())
+                        .foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 8)
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(rssiLabel)
-                        .font(.body.weight(.semibold).monospacedDigit())
-                        .foregroundStyle(rssiColor)
-                    Text(metadataLabel)
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(verbatim: "\(option.rssi)")
+                        .font(.system(size: 24, weight: .semibold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(.primary)
+                    Text(verbatim: "dBm")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+                .fixedSize()
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "chevron.right")
+                    .font(.system(size: isSelected ? 16 : 10, weight: .semibold))
+                    .foregroundStyle(isSelected ? Color.green : Color.secondary.opacity(0.5))
+                    .frame(width: 18)
+                    .accessibilityHidden(true)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 10)
+            .padding(12)
             .contentShape(Rectangle())
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(isHovering ? Color.accentColor.opacity(0.08) : Color.clear)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSelected ? Color.green.opacity(0.06) : Color.primary.opacity(isHovering ? 0.05 : 0.025))
             )
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(isSelected ? Color.green.opacity(0.35) : Color.primary.opacity(isHovering ? 0.12 : 0.06), lineWidth: 1))
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
         .accessibilityLabel(accessibilityLabel)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityHint(String(localized: "apRadar.selection.hint", comment: "VoiceOver hint explaining that tapping an access point starts tracking it"))
         .accessibilityIdentifier("ap-radar-option-\(option.bssid)")
     }
@@ -199,19 +247,6 @@ private struct APSelectionRow: View {
         )
     }
 
-    private var rssiLabel: String {
-        String(
-            format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"),
-            option.rssi
-        )
-    }
-
-    private var metadataLabel: String {
-        [option.band.displayName, channelLabel]
-            .filter { !$0.isEmpty }
-            .joined(separator: " · ")
-    }
-
     private var channelLabel: String {
         String(
             format: String(localized: "apRadar.target.channel", comment: "Access point channel, e.g. Channel 149"),
@@ -219,25 +254,19 @@ private struct APSelectionRow: View {
         )
     }
 
-    private var rssiColor: Color {
-        if option.rssi >= -55 { return .green }
-        if option.rssi >= -70 { return .yellow }
-        if option.rssi >= -85 { return .orange }
-        return .red
-    }
-
-    /// Three vertical bars matching OverviewView's signal meter.
+    /// Bar count carries signal strength without competing with the RSSI value.
     private var signalBars: some View {
         let active = option.rssi >= -85 ? (option.rssi >= -70 ? (option.rssi >= -55 ? 3 : 2) : 1) : 0
         return HStack(spacing: 2) {
             ForEach(0..<3, id: \.self) { index in
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(index < active ? rssiColor : Color.secondary.opacity(0.15))
+                    .fill(index < active ? Color.green : Color.secondary.opacity(0.15))
                     .frame(width: 4, height: CGFloat(6 + index * 4))
                     .accessibilityHidden(true)
             }
         }
-        .frame(width: 18)
+        .frame(width: 34, height: 34)
+        .background(Color.green.opacity(0.05), in: Circle())
         .accessibilityHidden(true)
     }
 

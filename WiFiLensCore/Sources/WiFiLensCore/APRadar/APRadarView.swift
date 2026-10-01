@@ -17,23 +17,29 @@ public struct APRadarView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showSelection = false
+    @State private var secretTapTimes: [Date] = []
     /// One-shot toast shown the first time the hidden Geiger preset unlocks.
     @State private var geigerUnlockedToast = false
 
     /// Shared layout metrics so every card on the page reads as one system,
     /// matching the rest of the app (see OverviewView).
     private static let contentMaxWidth: CGFloat = 640
-    private static let cardRadius: CGFloat = 12
     private static let pagePadding: CGFloat = 16
 
-    /// Stable page key for state transitions: changes only when the page
-    /// switches between idle / tracking / signal lost, so per-scan snapshot
-    /// updates never re-trigger the page transition animation.
-    private var stateKey: Int {
+    /// Tracking and signal loss share one instrument, so only entering or
+    /// leaving a session transitions the page itself.
+    private var stateKey: Int { viewModel.state == .idle ? 0 : 1 }
+
+    private var sessionSnapshot: APRadarSnapshot? {
         switch viewModel.state {
-        case .idle: return 0
-        case .tracking: return 1
-        case .signalLost: return 2
+        case .idle: nil
+        case .tracking(let snapshot): snapshot
+        case .signalLost(let snapshot):
+            APRadarSnapshot(
+                target: snapshot.target,
+                smoothedRSSI: snapshot.lastRSSI,
+                lastSeenAt: snapshot.lastSeenAt
+            )
         }
     }
 
@@ -49,22 +55,15 @@ public struct APRadarView: View {
                 case .idle:
                     idleContent
                         .transition(.opacity)
-                case .tracking(let snapshot):
-                    trackingContent(snapshot)
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .scale(scale: 0.94)),
-                            removal: .opacity.combined(with: .scale(scale: 0.97))
-                        ))
-                case .signalLost(let snapshot):
-                    signalLostContent(snapshot)
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .scale(scale: 0.94)),
-                            removal: .opacity.combined(with: .scale(scale: 0.97))
-                        ))
+                case .tracking, .signalLost:
+                    if let snapshot = sessionSnapshot {
+                        sessionContent(snapshot)
+                            .transition(.opacity)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.45), value: stateKey)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: stateKey)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
@@ -134,7 +133,6 @@ public struct APRadarView: View {
                 .accessibilityHidden(true)
             Text(String(localized: "nav.apRadar", comment: "AP Radar sidebar navigation item"))
                 .font(.title3.weight(.semibold))
-            SidebarBadge(style: .preview)
             Spacer()
         }
         .padding(.horizontal, 16)
@@ -146,34 +144,25 @@ public struct APRadarView: View {
     /// the radar so small windows avoid needless scrolling.
     private struct RadarFit {
         var spacing: CGFloat
-        var cardSpacing: CGFloat
-        var rssiFontSize: CGFloat
         var statusIconSize: CGFloat
         var statusIconContainer: CGFloat
-        var isCompact: Bool
 
         static let regular = RadarFit(
             spacing: 16,
-            cardSpacing: 16,
-            rssiFontSize: 44,
             statusIconSize: 30,
-            statusIconContainer: 72,
-            isCompact: false
+            statusIconContainer: 160
         )
         static let compact = RadarFit(
             spacing: 10,
-            cardSpacing: 10,
-            rssiFontSize: 34,
             statusIconSize: 24,
-            statusIconContainer: 56,
-            isCompact: true
+            statusIconContainer: 112
         )
     }
 
     /// Wraps a state layout so it is centered without scrolling whenever it
     /// fits the available height, then tries a compact layout, and finally
     /// falls back to a scroll view when the window is too small. Prevents
-    /// clipped cards and needless scrollbars at the minimum window size.
+    /// clipped content and needless scrollbars at the minimum window size.
     ///
     /// Content is centered with `Spacer`s because they collapse to zero during
     /// ideal-size measurement; `.frame(maxHeight: .infinity)` instead claims
@@ -212,70 +201,72 @@ public struct APRadarView: View {
 
     private func idleLayout(fit: RadarFit) -> some View {
         VStack(spacing: fit.spacing) {
-            VStack(spacing: fit.cardSpacing) {
-                ZStack {
+            ZStack {
+                ForEach([1.0, 0.74], id: \.self) { scale in
                     Circle()
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: fit.statusIconContainer, height: fit.statusIconContainer)
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: fit.statusIconSize, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
+                        .stroke(Color.radarGreen.opacity(scale == 1 ? 0.10 : 0.18), lineWidth: 1)
+                        .frame(width: fit.statusIconContainer * scale, height: fit.statusIconContainer * scale)
                 }
-                .accessibilityHidden(true)
-                .padding(.top, 6)
+                Circle()
+                    .fill(Color.radarGreen.opacity(0.05))
+                    .overlay(Circle().stroke(Color.radarGreen.opacity(0.24), lineWidth: 1))
+                    .frame(width: fit.statusIconContainer * 0.48, height: fit.statusIconContainer * 0.48)
+                Image(systemName: "wifi.router")
+                    .font(.system(size: fit.statusIconSize, weight: .medium))
+                    .foregroundStyle(Color.radarGreen)
+            }
+            .accessibilityHidden(true)
+            .padding(.top, 6)
 
-                VStack(spacing: 8) {
-                    Text(String(localized: "apRadar.description", comment: "AP Radar feature description on the idle page"))
-                        .font(.callout)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.primary)
+            Text(String(localized: "apRadar.description", comment: "AP Radar feature description on the idle page"))
+                .font(.callout)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: 380)
 
-                    Text(String(localized: "apRadar.disclaimer", comment: "AP Radar disclaimer about RSSI-only guidance"))
-                        .font(.caption)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: 440)
+            Button {
+                showSelection = true
+            } label: {
+                Label(
+                    String(localized: "apRadar.selectTarget", comment: "Button to choose an access point to track"),
+                    systemImage: "plus"
+                )
+            }
+            .accessibilityIdentifier("ap-radar-select-target")
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
 
-                Button {
-                    showSelection = true
-                } label: {
-                    Label(
-                        String(localized: "apRadar.selectTarget", comment: "Button to choose an access point to track"),
-                        systemImage: "plus"
-                    )
-                }
-                .accessibilityIdentifier("ap-radar-select-target")
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+            if viewModel.latestNetworks.isEmpty {
+                emptyScanState
+            } else {
+                Label(selectionSummary, systemImage: "wifi")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
-                if viewModel.latestNetworks.isEmpty {
-                    emptyScanState
-                } else {
-                    Label(selectionSummary, systemImage: "wifi")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+            Text(String(localized: "apRadar.disclaimer", comment: "AP Radar disclaimer about RSSI-only guidance"))
+                .font(.caption)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: 420)
+                .padding(.top, 4)
 
-                if viewModel.scanFailed {
-                    Label(
-                        String(localized: "apRadar.scan.failed", comment: "Message shown when the latest Wi-Fi scan failed"),
-                        systemImage: "exclamationmark.triangle.fill"
-                    )
+            if viewModel.scanFailed {
+                Label(
+                    String(localized: "apRadar.scan.failed", comment: "Message shown when the latest Wi-Fi scan failed"),
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .font(.caption)
+                .foregroundStyle(.orange)
+            }
+
+            if let audioErrorMessage = viewModel.audioErrorMessage {
+                Label(audioErrorMessage, systemImage: "speaker.slash.fill")
                     .font(.caption)
                     .foregroundStyle(.orange)
-                }
-
-                if let audioErrorMessage = viewModel.audioErrorMessage {
-                    Label(audioErrorMessage, systemImage: "speaker.slash.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity)
-            .glassBackground(.regular, in: RoundedRectangle(cornerRadius: Self.cardRadius))
         }
+        .frame(maxWidth: .infinity)
         .frame(maxWidth: Self.contentMaxWidth)
         .padding(Self.pagePadding)
     }
@@ -310,155 +301,165 @@ public struct APRadarView: View {
         .frame(maxWidth: 400)
     }
 
-    // MARK: - Tracking
+    // MARK: - Tracking instrument
 
-    private func trackingContent(_ snapshot: APRadarSnapshot) -> some View {
-        GeometryReader { geo in
-            // Full-page radar canvas: the ripple square is as large as the
-            // whole content area (not a small tile), with the tracking cards
-            // floating on top.
-            let side = max(140, min(geo.size.width, geo.size.height))
-            let fit: RadarFit = geo.size.height < 560 ? .compact : .regular
+    private func sessionContent(_ snapshot: APRadarSnapshot) -> some View {
+        let isLost = viewModel.state.isSignalLost
+        return VStack(spacing: 12) {
+            targetHeader(snapshot, isLost: isLost)
 
-            ZStack {
-                RadarBackdrop(size: geo.size, color: .radarGreen)
-
-                RadarPulseVisual(
-                    smoothedRSSI: snapshot.smoothedRSSI,
-                    pulseTick: viewModel.pulseTick,
-                    soundEnabled: viewModel.soundEnabled,
-                    reduceMotion: reduceMotion,
-                    isGeiger: viewModel.soundPreset == .geiger,
-                    size: side,
-                    onSecretTap: revealGeigerPreset,
-                    isSuspended: viewModel.isSuspended
-                )
-                .frame(width: side, height: side)
-
-                VStack(spacing: fit.spacing) {
-                    targetCard(snapshot)
-                    Spacer(minLength: 8)
-
-                    if let audioErrorMessage = viewModel.audioErrorMessage {
-                        Label(audioErrorMessage, systemImage: "speaker.slash.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                            .frame(maxWidth: .infinity)
-                            .padding(10)
-                            .glassBackground(.regular, in: RoundedRectangle(cornerRadius: Self.cardRadius))
-                    }
-
-                    signalReadout(snapshot, fit: fit)
-                    controlsRow
+            GeometryReader { proxy in
+                let side = max(0, min(proxy.size.width, proxy.size.height, 640))
+                let coreDiameter = min(side, min(240, max(160, side * 0.55)))
+                ZStack {
+                    RadarBackdrop(size: proxy.size, color: isLost ? .orange : .radarGreen)
+                    RadarPulseVisual(
+                        smoothedRSSI: snapshot.smoothedRSSI,
+                        pulseTick: viewModel.pulseTick,
+                        soundEnabled: viewModel.soundEnabled,
+                        reduceMotion: reduceMotion,
+                        isGeiger: viewModel.soundPreset == .geiger,
+                        size: side,
+                        coreDiameter: coreDiameter,
+                        isSuspended: viewModel.isSuspended || isLost || snapshot.smoothedRSSI == nil
+                    )
+                    instrumentReadout(snapshot, isLost: isLost, diameter: coreDiameter)
                 }
-                .padding(Self.pagePadding)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
             }
+
+            sessionDetail(snapshot, isLost: isLost)
+            controlsRow
         }
+        .padding(Self.pagePadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .contain)
     }
 
-    /// Compact full-width readout floating over the radar: smoothed RSSI on
-    /// the left, trend and raw RSSI on the right, strength meter below.
-    private func signalReadout(_ snapshot: APRadarSnapshot, fit: RadarFit) -> some View {
-        VStack(spacing: 8) {
-            HStack(alignment: .center, spacing: 12) {
-                HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Text(rssiNumberText(snapshot.smoothedRSSI))
-                        .font(.system(size: fit.rssiFontSize, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                    Text(String(localized: "ble.table.unit.dbm", comment: "dBm unit label"))
-                        .font(.title3.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
-                .accessibilityHidden(true)
-
-                Spacer(minLength: 8)
-
-                VStack(alignment: .trailing, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(trendColor(snapshot.trend))
-                            .frame(width: 8, height: 8)
-                        Text(trendText(snapshot.trend))
-                            .font(.headline)
-                            .foregroundStyle(trendColor(snapshot.trend))
-                    }
-                    .accessibilityHidden(true)
-
-                    if let raw = snapshot.rawRSSI {
-                        Text(rawSignalText(raw))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .accessibilityHidden(true)
-                    }
-                }
-            }
-
-            strengthMeter(snapshot.smoothedRSSI)
-        }
-        .padding(fit.isCompact ? 12 : 14)
-        .frame(maxWidth: .infinity)
-        .glassBackground(.regular, in: RoundedRectangle(cornerRadius: Self.cardRadius))
-    }
-
-    private func targetCard(_ snapshot: APRadarSnapshot) -> some View {
+    private func targetHeader(_ snapshot: APRadarSnapshot, isLost: Bool) -> some View {
         HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(snapshot.target.currentSSID ?? String(localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID"))
-                        .font(.title3.weight(.semibold))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    statusPill
-                }
+            VStack(alignment: .leading, spacing: 5) {
+                Text(snapshot.target.currentSSID ?? String(localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID"))
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Text(targetSubtitle(snapshot.target))
-                    .font(.caption)
+                    .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(targetSubtitle(snapshot.target))
             }
-            Spacer(minLength: 8)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .glassBackground(.regular, in: RoundedRectangle(cornerRadius: Self.cardRadius))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(trackingAccessibilityLabel(snapshot))
-    }
-
-    private var statusPill: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(Color.green)
-                .frame(width: 6, height: 6)
-            Text(String(localized: "apRadar.status.tracking", comment: "Status pill shown while AP Radar is tracking an access point"))
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            Label(
+                isLost
+                    ? String(localized: "apRadar.signalLost.title", comment: "Signal lost title")
+                    : snapshot.smoothedRSSI == nil
+                        ? trendText(.measuring)
+                        : String(localized: "apRadar.status.tracking", comment: "Status pill shown while AP Radar is tracking an access point"),
+                systemImage: isLost ? "wifi.exclamationmark" : "dot.radiowaves.left.and.right"
+            )
+            .font(.caption.weight(.medium))
+            .foregroundStyle(isLost ? Color.orange : .secondary)
+            .lineLimit(1)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(Color.secondary.opacity(0.12)))
-        .accessibilityHidden(true)
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
     }
 
-    private func strengthMeter(_ smoothed: Double?) -> some View {
-        VStack(spacing: 6) {
-            HStack {
-                Text(String(localized: "apRadar.signal.strength", comment: "Label above the signal strength meter"))
-                    .font(.caption2)
+    /// Keep the number and trend in the same fixed core in every session state.
+    private func instrumentReadout(_ snapshot: APRadarSnapshot, isLost: Bool, diameter: CGFloat) -> some View {
+        VStack(spacing: diameter < 160 ? 6 : 10) {
+            Image(systemName: isLost ? "wifi.exclamationmark" : "wifi.router")
+                .font(.system(size: diameter < 160 ? 18 : 24, weight: .medium))
+                .foregroundStyle(isLost ? Color.orange : .radarGreen)
+                .contentShape(Rectangle())
+                .onTapGesture { handleSecretTap() }
+
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(rssiNumberText(snapshot.smoothedRSSI))
+                    .font(.system(size: max(32, min(64, diameter * 0.28)), weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(isLost ? .secondary : .primary)
+                Text(String(localized: "ble.table.unit.dbm", comment: "dBm unit label"))
+                    .font(.callout)
                     .foregroundStyle(.secondary)
-                Spacer()
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(.quaternary)
-                    Capsule()
-                        .fill(Color.accentColor.gradient)
-                        .frame(width: max(6, geo.size.width * normalizedStrength(smoothed)))
-                }
+
+            Label(
+                isLost ? String(localized: "apRadar.signalLost.title", comment: "Signal lost title") : trendText(snapshot.trend),
+                systemImage: isLost ? "exclamationmark.circle" : trendSymbol(snapshot.trend)
+            )
+            .font(.callout.weight(.medium))
+            .foregroundStyle(isLost ? .orange : trendColor(snapshot.trend))
+            .lineLimit(2)
+            .multilineTextAlignment(.center)
+            .help(isLost ? String(localized: "apRadar.signalLost.description", comment: "Signal lost explanation") : trendText(snapshot.trend))
+        }
+        .padding(diameter < 160 ? 8 : 12)
+        .frame(width: diameter, height: diameter)
+        .background {
+            Circle().fill(.background).opacity(0.94)
+        }
+        .overlay {
+            Circle().strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(sessionAccessibilityLabel(snapshot))
+    }
+
+    private func sessionDetail(_ snapshot: APRadarSnapshot, isLost: Bool) -> some View {
+        VStack(spacing: 5) {
+            if let audioErrorMessage = viewModel.audioErrorMessage {
+                Label(audioErrorMessage, systemImage: "speaker.slash.fill")
+                    .foregroundStyle(.orange)
+            } else if isLost {
+                Label(String(localized: "apRadar.signalLost.rescanning", comment: "Status shown while waiting for the next scan"), systemImage: "arrow.clockwise")
+            } else if let raw = snapshot.rawRSSI {
+                Text(rawSignalText(raw))
+            } else {
+                Text(trendText(.measuring))
             }
-            .frame(height: 6)
-            .accessibilityHidden(true)
+            if let lastSeen = snapshot.lastSeenAt {
+                Text(String(
+                    format: String(localized: "apRadar.signalLost.lastSeen", comment: "Time the access point was last seen"),
+                    Self.lastSeenFormatter.string(from: lastSeen)
+                ))
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .lineLimit(2)
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+    }
+
+    private func sessionAccessibilityLabel(_ snapshot: APRadarSnapshot) -> String {
+        if case .signalLost(let lost) = viewModel.state {
+            return signalLostAccessibilityLabel(lost)
+        }
+        return trackingAccessibilityLabel(snapshot)
+    }
+
+    private func trendSymbol(_ trend: SignalTrend) -> String {
+        switch trend {
+        case .measuring: "waveform"
+        case .gettingCloser: "arrow.up.right"
+        case .stable: "minus"
+        case .movingAway: "arrow.down.right"
+        }
+    }
+
+    private func handleSecretTap() {
+        let now = Date()
+        secretTapTimes.append(now)
+        secretTapTimes.removeAll { now.timeIntervalSince($0) >= 1.5 }
+        if secretTapTimes.count >= 5 {
+            secretTapTimes.removeAll()
+            revealGeigerPreset()
         }
     }
 
@@ -560,100 +561,6 @@ public struct APRadarView: View {
         )
     }
 
-    // MARK: - Signal lost
-
-    private func signalLostContent(_ snapshot: APRadarLostSnapshot) -> some View {
-        GeometryReader { geo in
-            let fit: RadarFit = geo.size.height < 560 ? .compact : .regular
-            ZStack {
-                RadarBackdrop(size: geo.size, color: .orange)
-
-                VStack(spacing: fit.spacing) {
-                    targetCard(snapshot: snapshot)
-                    Spacer(minLength: 8)
-                    lostStatusCard(snapshot, fit: fit)
-                    Spacer(minLength: 8)
-                    HStack(spacing: 12) {
-                        changeTargetButton
-                        stopTrackingButton
-                    }
-                    .controlSize(.large)
-                }
-                .padding(Self.pagePadding)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityElement(children: .contain)
-    }
-
-    private func lostStatusCard(_ snapshot: APRadarLostSnapshot, fit: RadarFit) -> some View {
-        VStack(spacing: fit.cardSpacing) {
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.12))
-                    .frame(width: fit.statusIconContainer, height: fit.statusIconContainer)
-                Image(systemName: "wifi.exclamationmark")
-                    .font(.system(size: fit.statusIconSize, weight: .medium))
-                    .foregroundStyle(.orange)
-            }
-            .accessibilityHidden(true)
-            .padding(.top, 6)
-
-            VStack(spacing: 6) {
-                Text(String(localized: "apRadar.signalLost.title", comment: "Signal lost title"))
-                    .font(.title3.weight(.semibold))
-                Text(String(localized: "apRadar.signalLost.description", comment: "Signal lost explanation"))
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: 400)
-
-            Text(String(
-                format: String(localized: "apRadar.signalLost.lastSeen", comment: "Time the access point was last seen"),
-                Self.lastSeenFormatter.string(from: snapshot.lastSeenAt)
-            ))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-
-            HStack(spacing: 8) {
-                ProgressView()
-                    .controlSize(.small)
-                Text(String(localized: "apRadar.signalLost.rescanning", comment: "Status shown while waiting for the next scan"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.top, 2)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .glassBackground(.regular, in: RoundedRectangle(cornerRadius: Self.cardRadius))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(signalLostAccessibilityLabel(snapshot))
-    }
-
-    private func targetCard(snapshot: APRadarLostSnapshot) -> some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(snapshot.target.currentSSID ?? String(localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID"))
-                        .font(.title3.weight(.semibold))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-                Text(targetSubtitle(snapshot.target))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 8)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .glassBackground(.regular, in: RoundedRectangle(cornerRadius: Self.cardRadius))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(signalLostAccessibilityLabel(snapshot))
-    }
-
     private func signalLostAccessibilityLabel(_ snapshot: APRadarLostSnapshot) -> String {
         let ssid = snapshot.target.currentSSID ?? String(localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID")
         return String(
@@ -705,12 +612,6 @@ public struct APRadarView: View {
         }
     }
 
-    /// Normalized 0...1 signal strength used only for visuals.
-    private func normalizedStrength(_ smoothed: Double?) -> Double {
-        guard let smoothed else { return 0 }
-        return min(max((smoothed + 90) / 48, 0), 1)
-    }
-
     private static let lastSeenFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
@@ -738,9 +639,9 @@ private struct RadarBackdrop: View {
                 startRadius: 0,
                 endRadius: minSide * 0.7
             )
-            ForEach([0.30, 0.52, 0.74], id: \.self) { fraction in
+            ForEach([0.42, 0.65, 0.88], id: \.self) { fraction in
                 Circle()
-                    .stroke(color.opacity(0.10), lineWidth: 1)
+                    .stroke(color.opacity(0.07), lineWidth: 1)
                     .frame(width: minSide * fraction, height: minSide * fraction)
             }
         }
@@ -757,8 +658,8 @@ private extension Color {
 // MARK: - Ripple pulse visual
 
 /// Water-ripple pulse canvas. Signal semantics are limited to strength: each
-/// audio pulse spawns a soft green ripple that expands outward from the center
-/// router icon, and the icon glows more brightly with the smoothed RSSI. The
+/// audio pulse spawns a soft green ripple that expands outward from the central
+/// readout, and the wave brightness follows the smoothed RSSI. The
 /// ripple is purely decorative — it only expresses "a pulse happened", never
 /// a direction or distance.
 private struct RadarPulseVisual: View {
@@ -771,47 +672,26 @@ private struct RadarPulseVisual: View {
     var isGeiger: Bool = false
     /// Canvas side length: as large as the page allows.
     var size: CGFloat = 220
-    /// Hidden gesture callback: five quick taps on the center icon unlock the
-    /// Geiger-counter preset.
-    var onSecretTap: (() -> Void)? = nil
-    /// Whether the app is backgrounded/asleep or Wi-Fi is off; mirrored into
-    /// `suspended` @State so the long-lived visual loop sees updates.
+    var coreDiameter: CGFloat = 180
+    /// Pause while suspended, waiting for a first sample, or signal-lost.
+    /// SwiftUI cancels the cadence task when this value changes.
     var isSuspended: Bool = false
 
     @State private var ripples: [Ripple] = []
     @State private var liveSmoothedRSSI: Double?
-    @State private var visualLoop: Task<Void, Never>?
     /// Sound state mirrored into `@State` so the long-lived visual loop sees
     /// toggles instead of the initial value captured at task creation.
     @State private var soundOn = false
-    /// Runtime mirror of `isSuspended` for the long-lived visual loop.
-    @State private var suspended = false
     /// When the last pulse beat happened (audio beat or visual fallback).
     @State private var lastPulseAt = ContinuousClock.now
-    /// Timestamps of recent secret taps used to detect a five-tap sequence.
-    @State private var secretTapTimes: [Date] = []
-
     /// How long a ripple stays on screen: animation duration plus a small tail
     /// so removal never clips the last visible frame.
     private static let rippleLifetime: Duration = .milliseconds(950)
 
     private struct Ripple: Identifiable {
         let id = UUID()
+        let strength: Double
     }
-
-    /// Scales a design value defined at 220 pt to the current canvas size.
-    private func s(_ value: CGFloat) -> CGFloat {
-        value * size / 220
-    }
-
-    /// Router icon size, capped so a full-page canvas does not blow the icon
-    /// up together with the ripple.
-    private var iconSize: CGFloat {
-        min(s(46), 64)
-    }
-
-    /// Bright green used for the router icon and ripples.
-    private var rippleColor: Color { Color(red: 0.26, green: 0.83, blue: 0.47) }
 
     var body: some View {
         ZStack {
@@ -820,50 +700,32 @@ private struct RadarPulseVisual: View {
                 RippleRingView(
                     reduceMotion: reduceMotion,
                     size: size,
-                    strength: normalizedStrength,
-                    iconSize: iconSize
+                    strength: ripple.strength,
+                    coreDiameter: coreDiameter
                 )
                 .id(ripple.id)
             }
-
-            // Center router icon; no background circle. Uses the app accent
-            // color so it reads as part of the main UI.
-            Image(systemName: "wifi.router")
-                .font(.system(size: iconSize, weight: .medium))
-                .foregroundStyle(Color.accentColor)
-                .shadow(color: Color.accentColor.opacity(0.45), radius: min(s(6), 8))
-                .scaleEffect(CGFloat(0.94 + 0.12 * normalizedStrength))
-                .opacity(0.7 + 0.3 * normalizedStrength)
-                .animation(reduceMotion ? nil : .easeInOut(duration: 0.5), value: normalizedStrength)
-                .contentShape(Rectangle())
-                .onTapGesture { handleSecretTap() }
-                .accessibilityHidden(true)
         }
         .frame(width: size, height: size)
         .clipped()
-        .onAppear {
+        .task(id: isSuspended) {
+            guard !isSuspended else { return }
             liveSmoothedRSSI = smoothedRSSI
             soundOn = soundEnabled
             lastPulseAt = .now
-            // Animate immediately: the moment a target is chosen, one wave
-            // bursts out instead of a static page while the first scan sample
-            // (and with it the first audio pulse) is still pending.
-            spawnRipple()
-            startVisualLoop()
+            await runVisualLoop()
         }
         .onDisappear {
-            visualLoop?.cancel()
-            visualLoop = nil
             ripples.removeAll()
         }
         .onChange(of: pulseTick) { _, _ in
             // Audio pulse beat: sync a ripple to the sound.
-            guard soundEnabled else { return }
+            guard soundEnabled, !isSuspended else { return }
             lastPulseAt = .now
             spawnRipple()
         }
         .onChange(of: isSuspended) { _, suspendedValue in
-            suspended = suspendedValue
+            if suspendedValue { ripples.removeAll() }
         }
         .onChange(of: soundEnabled) { _, enabled in
             soundOn = enabled
@@ -880,90 +742,72 @@ private struct RadarPulseVisual: View {
     }
 
     private func spawnRipple() {
-        let ripple = Ripple()
+        let ripple = Ripple(strength: normalizedStrength)
         ripples.append(ripple)
+        // Bound overlapping waves, including bursts from the stochastic preset.
+        ripples = Array(ripples.suffix(6))
         Task {
-            try? await Task.sleep(for: Self.rippleLifetime)
+            do {
+                try await Task.sleep(for: Self.rippleLifetime)
+            } catch {
+                return
+            }
             ripples.removeAll { $0.id == ripple.id }
         }
     }
 
-    /// Detects five quick taps (each within 1.5 s of the previous one) and
-    /// fires the secret unlock callback once the sequence completes.
-    private func handleSecretTap() {
-        let now = Date()
-        secretTapTimes.append(now)
-        secretTapTimes = secretTapTimes.filter { now.timeIntervalSince($0) < 1.5 }
-        if secretTapTimes.count >= 5 {
-            secretTapTimes.removeAll()
-            onSecretTap?()
-        }
-    }
-
     /// Visual cadence keeper. Runs for the whole lifetime of the tracking
-    /// page, so the radar is never static:
+    /// instrument while fresh samples are available:
     ///
     /// - Sound off: this loop drives the full visual cadence using the same
     ///   RSSI-to-interval mapping as the audio scheduler.
     /// - Sound on: the audio scheduler owns the cadence and fires `pulseTick`
     ///   beats; this loop only backfills when no audio beat has arrived for a
-    ///   while (first sample pending, audio failure), then yields again once
+    ///   while (audio failure), then yields again once
     ///   audio beats resume.
-    private func startVisualLoop() {
-        guard visualLoop == nil else { return }
-        visualLoop = Task {
-            while !Task.isCancelled {
-                // While the app is backgrounded or asleep the scheduler and
-                // audio are suspended, so keep the loop alive but idle: wait
-                // in one long chunk instead of stepping at full visual rate,
-                // then pick the cadence back up as soon as resume clears the
-                // flag. No ripples are spawned while suspended.
-                if suspended {
-                    try? await Task.sleep(for: .seconds(1))
-                    continue
-                }
-                if soundOn {
-                    let interval = APRadarPulseInterval.intervalSeconds(
-                        forRSSI: liveSmoothedRSSI ?? -70
-                    )
-                    if secondsSince(lastPulseAt) >= interval * 1.3 {
-                        spawnRipple()
-                        lastPulseAt = .now
-                    }
-                    try? await Task.sleep(for: .milliseconds(120))
-                } else {
+    private func runVisualLoop() async {
+        while !Task.isCancelled {
+            if soundOn {
+                let interval = APRadarPulseInterval.intervalSeconds(
+                    forRSSI: liveSmoothedRSSI ?? -70
+                )
+                if secondsSince(lastPulseAt) >= interval * 1.3 {
                     spawnRipple()
-                    let mean = APRadarPulseInterval.intervalSeconds(
-                        forRSSI: liveSmoothedRSSI ?? -70
-                    )
-                    if isGeiger {
-                        // Geiger visuals mirror the audio: irregular clicks at
-                        // a mean rate that follows the signal strength.
-                        let drawn = APRadarPulseInterval.nextExponentialInterval(mean: mean)
-                        let deadline = ContinuousClock.now.advanced(by: .seconds(drawn))
-                        while !Task.isCancelled {
-                            let remaining = deadline - ContinuousClock.now
-                            guard remaining > .zero else { break }
-                            try? await Task.sleep(for: min(remaining, .milliseconds(100)))
-                        }
-                    } else {
-                        // Mirror the audio scheduler: wait in small steps and
-                        // pull the next ripple forward when a fresh sample
-                        // shortens the interval, so muted visuals react
-                        // promptly too.
-                        var deadline = ContinuousClock.now.advanced(by: .seconds(mean))
-                        while !Task.isCancelled {
-                            let remaining = deadline - ContinuousClock.now
-                            guard remaining > .zero else { break }
-                            try? await Task.sleep(for: min(remaining, .milliseconds(100)))
-                            let desired = ContinuousClock.now.advanced(
-                                by: .seconds(APRadarPulseInterval.intervalSeconds(
-                                    forRSSI: liveSmoothedRSSI ?? -70
-                                ))
-                            )
-                            if desired < deadline {
-                                deadline = desired
-                            }
+                    lastPulseAt = .now
+                }
+                try? await Task.sleep(for: .milliseconds(120))
+            } else {
+                spawnRipple()
+                let mean = APRadarPulseInterval.intervalSeconds(
+                    forRSSI: liveSmoothedRSSI ?? -70
+                )
+                if isGeiger {
+                    // Geiger visuals mirror the audio: irregular clicks at
+                    // a mean rate that follows the signal strength.
+                    let drawn = APRadarPulseInterval.nextExponentialInterval(mean: mean)
+                    let deadline = ContinuousClock.now.advanced(by: .seconds(drawn))
+                    while !Task.isCancelled {
+                        let remaining = deadline - ContinuousClock.now
+                        guard remaining > .zero else { break }
+                        try? await Task.sleep(for: min(remaining, .milliseconds(100)))
+                    }
+                } else {
+                    // Mirror the audio scheduler: wait in small steps and
+                    // pull the next ripple forward when a fresh sample
+                    // shortens the interval, so muted visuals react
+                    // promptly too.
+                    var deadline = ContinuousClock.now.advanced(by: .seconds(mean))
+                    while !Task.isCancelled {
+                        let remaining = deadline - ContinuousClock.now
+                        guard remaining > .zero else { break }
+                        try? await Task.sleep(for: min(remaining, .milliseconds(100)))
+                        let desired = ContinuousClock.now.advanced(
+                            by: .seconds(APRadarPulseInterval.intervalSeconds(
+                                forRSSI: liveSmoothedRSSI ?? -70
+                            ))
+                        )
+                        if desired < deadline {
+                            deadline = desired
                         }
                     }
                 }
@@ -981,7 +825,7 @@ private struct RadarPulseVisual: View {
 /// A single expanding water ripple drawn as one continuous radial-gradient
 /// band whose cross-section is a single smooth crest: brightest in the middle
 /// and fading out evenly towards both the inner and outer edge — a single
-/// peak, no side lobes or echo crests. The band starts just outside the icon,
+/// peak, no side lobes or echo crests. The band starts just outside the readout,
 /// sweeps across the canvas and fades out as it travels. Stronger signals make
 /// it glow brighter.
 ///
@@ -994,8 +838,8 @@ private struct RippleRingView: View {
     var size: CGFloat
     /// Normalized 0...1 signal strength.
     var strength: Double
-    /// Capped router icon size; the wave starts just outside it.
-    var iconSize: CGFloat
+    /// The readout core stays clear of moving waves.
+    var coreDiameter: CGFloat
 
     @State private var progress: Double = 0
 
@@ -1007,27 +851,27 @@ private struct RippleRingView: View {
 
     /// Maximum band thickness: on a full-page canvas the wave stays slim and
     /// elegant instead of scaling into an over-thick stroke.
-    private static let maxBandWidth: CGFloat = 72
+    private static let maxBandWidth: CGFloat = 28
 
     /// Total width of the ripple band (a single crest), thinning slightly as
     /// it expands and capped for large canvases.
     private var bandWidth: CGFloat {
-        min(s(48) * (1 - 0.22 * CGFloat(progress)), Self.maxBandWidth)
+        min(s(12) * (1 - 0.22 * CGFloat(progress)), Self.maxBandWidth)
     }
 
     /// Band width at progress 1 (after thinning). Used to size the travel so
     /// the ripple's outer edge lands exactly on the canvas edge.
     private var finalBandWidth: CGFloat {
-        min(s(48) * (1 - 0.22), Self.maxBandWidth)
+        min(s(12) * (1 - 0.22), Self.maxBandWidth)
     }
 
-    /// Leading radius of the ripple: from just outside the icon all the way to
+    /// Leading radius of the ripple: from just outside the readout all the way to
     /// the canvas edge. The travel is fitted so the band's outer edge reaches
     /// the canvas boundary at progress 1, letting the wave sweep the whole
     /// canvas without ever being visibly clipped by the square bounds.
     private var leadingRadius: CGFloat {
-        let start = iconSize * 0.5 + s(12)
-        let travel = size * 0.5 - start - finalBandWidth * 0.5
+        let start = coreDiameter * 0.5 + bandWidth * 0.5 + 4
+        let travel = max(0, size * 0.5 - start - finalBandWidth * 0.5)
         return start + travel * CGFloat(progress)
     }
 
@@ -1071,9 +915,9 @@ private struct RippleRingView: View {
             // wash out the fade-out towards the edges.
             Circle()
                 .stroke(rippleColor, lineWidth: bandWidth * 1.4)
-                .blur(radius: s(5))
+                .blur(radius: min(s(3), 6))
                 .frame(width: radius * 2, height: radius * 2)
-                .opacity(0.12 * opacity)
+                .opacity(0.16 * opacity)
 
             // Gradient band with a single smooth crest in the middle, fading
             // out to both edges — no side lobes.

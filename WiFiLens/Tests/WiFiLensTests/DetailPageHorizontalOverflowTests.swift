@@ -259,6 +259,42 @@ struct DetailPageHorizontalOverflowTests {
         assertFitsWidth(ContentView(viewModel: viewModel, isVendorColumnAvailable: true))
     }
 
+    @Test("AP Radar fits its viewport while idle, waiting, tracking, losing and restoring a target")
+    func radarSessionFitsAcrossStateChangesAndResizes() {
+        let viewModel = APRadarViewModel(observationRuntime: WiFiObservationRuntime(store: WiFiObservationStore()))
+        let target = TrackedAccessPoint(
+            bssid: "AA:BB:CC:DD:EE:FF",
+            currentSSID: Self.pathologicalSSID,
+            channel: 149,
+            band: .band5GHz
+        )
+        let timestamp = Date(timeIntervalSince1970: 100)
+        let tracking = APRadarState.tracking(APRadarSnapshot(
+            target: target, rawRSSI: -61, smoothedRSSI: -60,
+            trend: .gettingCloser, lastSeenAt: timestamp
+        ))
+        viewModel.state = tracking
+        let (controller, window) = host(APRadarView(viewModel: viewModel, isActive: false, onRescan: {}))
+
+        for state in [
+            APRadarState.idle,
+            APRadarState.tracking(APRadarSnapshot(target: target)),
+            tracking,
+            .signalLost(APRadarLostSnapshot(target: target, lastRSSI: -60, lastSeenAt: timestamp)),
+            tracking
+        ] {
+            viewModel.state = state
+            for size in [CGSize(width: 600, height: 420), CGSize(width: 1_100, height: 680)] {
+                window.setContentSize(size)
+                window.layoutIfNeeded()
+                let measured = controller.sizeThatFits(in: size)
+                #expect(abs(measured.width - size.width) <= Self.tolerance)
+                #expect(abs(measured.height - size.height) <= Self.tolerance,
+                        "A radar state change must not expand the page beyond its viewport")
+            }
+        }
+    }
+
     @Test("Network self-check fits the minimum detail width")
     func networkDiagnosticsFitsMinimumDetailWidth() {
         assertFitsWidth(NetworkDiagnosticsView(

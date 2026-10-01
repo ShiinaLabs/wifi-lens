@@ -143,8 +143,6 @@ public struct WiFiLensEditionConfiguration {
 
     func sidebarBadgeStyle(for page: SidebarPage) -> SidebarBadge.Style? {
         switch page {
-        case .apRadar:
-            .preview
         case .wifiCallingTest:
             capabilities.contains(.wifiCalling) ? .preview : .pro
         default:
