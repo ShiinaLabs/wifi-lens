@@ -63,7 +63,7 @@ checks whose purpose is to gate that commit.
 
 Use the public repository's existing architecture map as the starting point:
 
-- `WiFiLens/Sources/WiFiLens/` contains the public and shared implementation
+- `WiFiLensCore/Sources/WiFiLensCore/` contains shared product implementation
   modules.
 - `WiFiLens/Sources/WiFiLens/App/EditionCompositionContext.swift` is the
   edition-neutral context passed across the composition seam.

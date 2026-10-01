@@ -73,7 +73,7 @@ work explicitly scoped to Pro.
 
 ### Core buggy code
 
-`BLEDisabledView` in `WiFiLens/Sources/WiFiLens/BLE/BLEScannerView.swift`:
+`BLEDisabledView` in `WiFiLensCore/Sources/WiFiLensCore/BLE/BLEScannerView.swift`:
 
 ```swift
 Text(String(localized: "ble.disabled.description", comment: "..."))
@@ -164,7 +164,7 @@ The shipping app now follows these rules:
   on the root view so SwiftUI's layout pass cannot lower it.
 - The state-preserving page `ZStack` is wrapped in a `GeometryReader` in the same file so
   hidden pages cannot impose layout minimums on the window.
-- Frame normalization logic lives in `WiFiLens/Sources/WiFiLens/Utilities/WindowFramePolicy.swift`.
+- Frame normalization logic lives in `WiFiLensCore/Sources/WiFiLensCore/Windowing/WindowFramePolicy.swift`.
 - Regression tests live in `WiFiLens/Tests/WiFiLensTests/WindowFramePolicyTests.swift`,
   `DetailPageMinimumHeightTests.swift` (upper bound), and `MainWindowMinimumSizeTests.swift`
   (lower bound).

@@ -43,7 +43,7 @@ Chart Engine (ChartLens package):
       → overlay(geo, series)
 
   DetailOverviewChart wraps two Charts + RangeSelector for linked zoom/overview.
-  See [ChartLens/README.md](../../../ChartLens/README.md) and [CHARTS.md](CHARTS.md) for full architecture.
+  See the [ChartLens package](https://github.com/ShiinaLabs/chart-lens) and [CHARTS.md](CHARTS.md) for rendering architecture.
   See [BLE.md](BLE.md) for BLE scan architecture.
   See [REGULATORY.md](REGULATORY.md) for regulatory pipeline.
   Private edition documentation is indexed at
@@ -56,6 +56,7 @@ Chart Engine (ChartLens package):
 | Path | Responsibility |
 |---------------|---------------|
 | `WiFiLens.xcodeproj/project.pbxproj` | Source of truth for app and test target membership, build settings, resources, schemes, and local package references |
+| `WiFiLensCore/Package.swift` | Shared OSS/Pro product package manifest |
 | `WiFiLensCore/Sources/WiFiLensCore/` | Shared OSS/Pro product kernel: domain and observation runtime, shared ViewModels and SwiftUI pages, diagnostics, and platform adapters |
 | `WiFiLensCore/Tests/WiFiLensCoreTests/` | Unit tests for shared product behavior and algorithms |
 | `WiFiLens/Sources/WiFiLens/WiFiLensApp.swift` | App entry point, scenes, menu commands, and root window assembly |
@@ -68,8 +69,11 @@ Chart Engine (ChartLens package):
 The repository root keeps each component at its physical ownership boundary:
 `WiFiLens/` for the app shell, `WiFiLensCore/` for the shared package,
 `WiFiLensPro/` for the private submodule, and `WiFiLens.xcodeproj` as the
-project entry point. Shared feature code belongs to `WiFiLensCore`; the app
-shell owns launch, edition assembly, and distribution-specific integrations.
+project entry point. Shared product capabilities belong to `WiFiLensCore`;
+the private edition owns its product extension. App targets contain shell,
+edition assembly, and distribution-specific integrations. Development capture
+instrumentation belongs to a private support boundary and stays outside the
+production app dependency graph.
 
 ## Key Patterns
 
@@ -80,7 +84,7 @@ shell owns launch, edition assembly, and distribution-specific integrations.
 - **Stop barrier**: `WiFiObservationRuntime.stopScanning()` invalidates the scan generation, clears pending raw work, cancels and joins the in-flight raw task, stops the source, and drains admitted edition-boundary work before returning. The final raw diagnostics have neither an in-flight nor a pending cycle.
 - **Application termination barrier**: AppKit termination requests return `.terminateLater` through one process-scoped delegate coordinator. Repeated Command-Q and menu-bar quit requests share one operation and receive one reply. A three-second deadline covers scanner/runtime stop plus a target-selected edition hook. `ScannerViewModel.stopForTermination()` enters a permanent gate, stops monitoring, supersedes suspended startup, and rejects later lifecycle work.
 - **Scanner presentation boundary**: `ScannerViewModel` forwards lifecycle and configuration commands to the runtime and projects runtime output into public presentation state. It does not scan directly, construct production observations, run production analyzers, or publish to the Store.
-- **Edition composition**: shared code defines a narrow target-selected contract. The public target supplies the public adapter; the private target supplies its implementation from the `WiFiLensPro/` submodule. Public source must not name or describe private concrete types.
+- **Edition composition**: shared code defines a narrow target-selected contract. Each app target supplies its edition assembly while shared product capabilities stay in packages. Public source must not name or describe private concrete types.
 - **App-owned main-window opening**: `MainWindowLifecycleCoordinator` owns the `openWindow` adapter and pending shared route independently of any `MainWindowSceneState`. Closing the final main window therefore releases all per-window state without removing the process-level ability to create the next `WindowGroup` scene and deliver its route.
 - **Shared route-resource leases**: each main window registers its current route under a stable scene ID. A process-scoped coordinator aggregates those leases for the process-shared Spectrum charts and BLE scanner; resources start on the first matching route and stop only after the final lease is released by a route change or real window close. BLE starts return generation-bound sessions whose stop operation cannot terminate a newer session, and stopping always finishes that session's event stream.
 - Selection flows bidirectionally: table row → `selectedNetworkID` → chart highlight; chart curve click → `selectedNetworkID` → table row highlight
@@ -138,4 +142,4 @@ shell owns launch, edition assembly, and distribution-specific integrations.
 - RSSI colors: green ≥ -55, yellow ≥ -70, orange ≥ -85, red below
 - Quality colors: hex strings from `QualityLevel.color`
 - Overlap badge on channel cards includes trailing "overlap" label for context
-- **Target membership**: Add new `.swift` source files only to the targets that should legally ship that code. Shared OSS runtime files must be added to both `WiFiLens` and `WiFiLensPro`; Pro-only implementations must be added only to `WiFiLensPro`. The Pro target maintains its own independent build phase, so missing membership there still causes "cannot find type in scope" errors in the `WiFi Lens Pro` scheme.
+- **Target and package ownership**: Shared product capability belongs in `WiFiLensCore`; do not duplicate it in both app Sources phases. Pro product implementation belongs inside the private Pro boundary. Capture and AppStage integration belongs in private development tooling. App targets compile shell, edition assembly, and distribution-specific sources. Keep Xcode target membership explicit and verify each target's Compile Sources phase after project changes.

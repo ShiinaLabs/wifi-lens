@@ -21,6 +21,12 @@ BLE, charts, MCP, regulatory, windowing) lives under
 [`.agents/references/`](../.agents/references/README.md). These references are
 organized for on-demand loading by task type and are not duplicated here.
 
+## Architecture
+
+| File | Purpose |
+|------|---------|
+| [architecture/product-modularization.md](architecture/product-modularization.md) | Human-maintainer record of module ownership, edition assembly, and the production/capture boundary |
+
 ## Contribution and policy documents
 
 | File | Purpose |
@@ -28,10 +34,3 @@ organized for on-demand loading by task type and are not duplicated here.
 | [`.github/CONTRIBUTING.md`](../.github/CONTRIBUTING.md) | Contribution guide for human contributors |
 | [`SECURITY.md`](../SECURITY.md) | Security policy and vulnerability reporting |
 | [`LICENSE`](../LICENSE) | Apache License 2.0 |
-
-## Future direction
-
-A possible future cleanup is to migrate general-purpose technical
-documentation into `docs/architecture/` and let `.agents/references/README.md`
-focus purely on routing. That migration is deferred to avoid large-scale
-renaming and link churn in this pass.

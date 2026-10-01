@@ -52,13 +52,8 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug 
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests
 xed WiFiLens.xcodeproj                   # open in Xcode GUI
 
-# ChartLens library (standalone Swift Package)
-cd ChartLens && swift build                        # build
-cd ChartLens && swift test                         # test
-
-# ChartLens Demo app (Xcode project)
-xcodebuild -project ChartLensDemo/ChartLensDemo.xcodeproj -scheme "ChartLensDemo" -configuration Debug -destination 'platform=macOS' build
-xed ChartLensDemo/ChartLensDemo.xcodeproj
+# ChartLens is consumed as a remote Swift package dependency of WiFiLensCore.
+# Resolve/build it through the app project or the owning package, not a root-level checkout.
 
 ```
 

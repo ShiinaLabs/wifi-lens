@@ -13,9 +13,9 @@ description: >
 ## Core Principle
 
 **The app is verified with `xcodebuild`, never `swift build` / `swift test`.**
-`swift build/test` only applies to the standalone `ChartLens` package. Running
-`swift build` in the repo root or the app tree will not reflect the real target
-configuration and gives misleading results.
+`swift build` in the repo root or app tree will not reflect the real target
+configuration and gives misleading results. ChartLens is a remote Swift package
+dependency, not a root-level checkout.
 
 **Silence is not success.** A green exit code on the wrong scheme or the wrong
 test subset does not mean the change is verified. Match the command to what
@@ -25,10 +25,10 @@ changed (table below).
 
 | Change | Verify with |
 |--------|-------------|
-| Any Swift source under `WiFiLens/Sources/WiFiLens/` (shared OSS+Pro code) | Build **both** schemes + unit tests → `scripts/verify.sh` |
-| App source that is OSS-only or Pro-only | Build the matching scheme + unit tests |
+| Shared source under `WiFiLensCore/` | Run relevant Core package tests and build both app schemes |
+| OSS or Pro app-shell source | Build the matching app scheme and relevant app-hosted tests |
 | New/edited unit test file | Build + `-only-testing:WiFiLensTests` (see below) |
-| `ChartLens/` package code | `cd ChartLens && swift build && swift test` |
+| ChartLens integration | Verify through the owning WiFiLensCore package or app scheme; ChartLens is a remote package dependency. |
 | `.xcstrings` only | Localization JSON validity + completeness scan (see i18n-completer) |
 | Docs / `.agents/` / other non-product changes | No build checks required |
 
@@ -73,9 +73,9 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
 - **Do not** run UI test bundles (`WiFiLensUITests`, `WiFiLensProUITests`) or a
   full scheme `test` (which pulls in UI tests) unless the user explicitly asks
   for UI tests. Default = `-only-testing:WiFiLensTests`.
-- When shared source changed, a passing **OSS build alone is not enough** — the
-  Pro scheme must build too (it maintains a separate Sources phase; a file added
-  only to WiFiLens compiles OSS but fails Pro with "cannot find type in scope").
+- When shared product code changes, a passing **OSS build alone is not enough** —
+  the Pro scheme must build too. Shared implementation is owned by WiFiLensCore,
+  not duplicated in both app Sources phases.
 - Use `-skipPackageUpdates` on `test` runs to avoid needless package resolution.
 - `-destination 'platform=macOS'` — this is a macOS 14+ app, no simulator.
 
