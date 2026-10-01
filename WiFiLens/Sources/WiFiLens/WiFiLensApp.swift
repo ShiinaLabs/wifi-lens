@@ -1096,6 +1096,12 @@ struct WiFiLensApp: App {
     /// UI tests launch the app with `-ApplePersistenceIgnoreState YES` as a
     /// launch argument to disable window state restoration.
     init() {
+        if EditionAppShell.opensMainWindowAtLaunch {
+            // Controlled Capture sessions need a fresh main window even when
+            // this local-only host previously saved a no-window state.
+            UserDefaults.standard.register(defaults: ["ApplePersistenceIgnoreState": true])
+        }
+
         let database = MACVendorBundledDatabase.load()
         let vendorResolver = MACVendorResolver(database: database)
         let databaseSummary = database?.summary
@@ -1122,9 +1128,7 @@ struct WiFiLensApp: App {
         )
 
         AppLogger.bootstrap()
-        CrashReporter.register()
-        MetricKitManager.start()
-        if let log = CrashReporter.consumeCrashLog() {
+        if let log = EditionAppShell.startProductDiagnostics() {
             _crashLogText = State(initialValue: log)
             _showCrashLog = State(initialValue: true)
         }
@@ -1139,36 +1143,7 @@ struct WiFiLensApp: App {
     @State private var crashLogText: String = ""
 
     var body: some Scene {
-        WindowGroup(id: Self.mainWindowSceneID) {
-            Group {
-                AppRootView(
-                    viewModel: viewModel,
-                    macVendorDatabaseManager: macVendorDatabaseManager,
-                    macVendorDatabaseSummary: macVendorDatabaseSummary,
-                    roamingViewModel: roamingViewModel,
-                    apRadarViewModel: apRadarViewModel,
-                    bleViewModel: bleViewModel,
-                    showCrashLog: $showCrashLog,
-                    crashLogText: $crashLogText,
-                    onboardingCoordinator: onboardingCoordinator,
-                    whatsNewCoordinator: whatsNewCoordinator,
-                    sparkleUpdater: sparkleUpdater,
-                    updateMCPServer: updateMCPServer,
-                    installMainWindowOpenAction: mainWindowLifecycle.installOpenSceneAction,
-                    registerMainWindow: registerMainWindow,
-                    updateMainWindowRoute: { windowID, route in
-                        routeResources.update(windowID: windowID, route: route)
-                    }
-                )
-            }
-            .preferredColorScheme(colorScheme)
-            .task {
-                terminationCoordinator.configure(
-                    stopRuntime: { await viewModel.stopForTermination() },
-                    terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
-                )
-            }
-        }
+        WindowGroup(id: Self.mainWindowSceneID) { mainWindowContent }
         // Keep a default launch size only. The app window must remain a normal
         // resizable macOS window; do not add `.windowResizability(.contentSize)`.
         .defaultSize(
@@ -1320,6 +1295,37 @@ struct WiFiLensApp: App {
             openMainWindow: { route in showMainWindow(route: route, source: .menuBar) },
             terminate: { NSApp.terminate(nil) }
         )
+    }
+
+    private var mainWindowContent: some View {
+        Group {
+            AppRootView(
+                viewModel: viewModel,
+                macVendorDatabaseManager: macVendorDatabaseManager,
+                macVendorDatabaseSummary: macVendorDatabaseSummary,
+                roamingViewModel: roamingViewModel,
+                apRadarViewModel: apRadarViewModel,
+                bleViewModel: bleViewModel,
+                showCrashLog: $showCrashLog,
+                crashLogText: $crashLogText,
+                onboardingCoordinator: onboardingCoordinator,
+                whatsNewCoordinator: whatsNewCoordinator,
+                sparkleUpdater: sparkleUpdater,
+                updateMCPServer: updateMCPServer,
+                installMainWindowOpenAction: mainWindowLifecycle.installOpenSceneAction,
+                registerMainWindow: registerMainWindow,
+                updateMainWindowRoute: { windowID, route in
+                    routeResources.update(windowID: windowID, route: route)
+                }
+            )
+        }
+        .preferredColorScheme(colorScheme)
+        .task {
+            terminationCoordinator.configure(
+                stopRuntime: { await viewModel.stopForTermination() },
+                terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
+            )
+        }
     }
 
     private var colorScheme: ColorScheme? {

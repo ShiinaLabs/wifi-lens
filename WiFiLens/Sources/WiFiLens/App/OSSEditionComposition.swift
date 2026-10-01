@@ -345,6 +345,14 @@ enum EditionAssemblyProvider {
 
 enum EditionAppShell {
     static var isControlledDemoSession: Bool { false }
+    static var opensMainWindowAtLaunch: Bool { false }
+
+    @MainActor
+    static func startProductDiagnostics() -> String? {
+        CrashReporter.register()
+        MetricKitManager.start()
+        return CrashReporter.consumeCrashLog()
+    }
 
     @ViewBuilder @MainActor
     static func roamingPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View { content() }
