@@ -76,7 +76,7 @@ public actor BLEScanner: BLEScanning {
     public init() {}
 
     public func startScanning() async -> BLEScanSession {
-        await startScanning(batchInterval: .seconds(2))
+        return await startScanning(batchInterval: .seconds(2))
     }
 
     private func startScanning(batchInterval: Duration) async -> BLEScanSession {
