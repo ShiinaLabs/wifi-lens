@@ -104,8 +104,7 @@ import WiFiLensCore
         let block = ChannelSpanCalculator.channelBlock(
             primaryChannel: 52,
             widthMHz: 80,
-            band: .band5GHz,
-            spanDirection: nil
+            band: .band5GHz
         )
 
         #expect(series.count == 1)

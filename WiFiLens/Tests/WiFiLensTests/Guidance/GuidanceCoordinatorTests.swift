@@ -224,7 +224,7 @@ final class GuidanceCoordinatorTests {
         #expect(loaded.invitationPresentationCount == 0)
         #expect(loaded.lastInvitationDate == nil)
 
-        let decision = fresh.record(.diagnosticsCompleted)
+        let decision = fresh.recordAndReturnDecision(.diagnosticsCompleted)
         #expect(decision == .showProInvitation)
         #expect(fresh.pendingInvitation != nil)
     }
