@@ -16,7 +16,7 @@ from typing import NamedTuple
 
 
 PRIVATE_PATH = re.compile(
-    r"(?<![\w.-])Pro/(?!AGENTS\.md\b|docs/[A-Za-z0-9._/-]+\.md\b)[A-Za-z0-9._/-]+"
+    r"(?<![\w.-])WiFiLensPro/(?!AGENTS\.md\b|docs/[A-Za-z0-9._/-]+\.md\b)[A-Za-z0-9._/-]+"
 )
 PRO_ASSERTION = re.compile(
     r"\bPro(?:\s+(?:edition|target|implementation|app))?\s+"
@@ -79,7 +79,7 @@ def _public_markdown_paths(root: Path) -> list[Path]:
         path
         for path in paths
         if path.is_file()
-        and not path.relative_to(root).is_relative_to(Path("Pro"))
+        and not path.relative_to(root).is_relative_to(Path("WiFiLensPro"))
         and not path.relative_to(root).is_relative_to(SELF_PROTECTED_PREFIX)
     ]
 
@@ -104,7 +104,7 @@ def _normalized_words(text: str) -> tuple[str, ...]:
 
 
 def _private_passages(root: Path) -> list[tuple[tuple[str, ...], str]]:
-    private_root = root / "Pro"
+    private_root = root / "WiFiLensPro"
     passages: list[tuple[tuple[str, ...], str]] = []
     for path in _git_paths(root, private_root):
         try:
@@ -139,7 +139,7 @@ def scan_repository(root: Path, paths: list[Path] | None = None) -> ScanResult:
         except ValueError:
             findings.append(Finding("FAIL", "outside-root", str(path), 0, "Public scan path is outside the repository."))
             continue
-        if relative.is_relative_to(Path("Pro")) or relative.is_relative_to(SELF_PROTECTED_PREFIX):
+        if relative.is_relative_to(Path("WiFiLensPro")) or relative.is_relative_to(SELF_PROTECTED_PREFIX):
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -156,7 +156,7 @@ def scan_repository(root: Path, paths: list[Path] | None = None) -> ScanResult:
                         "private-path",
                         relative.as_posix(),
                         line_number,
-                        "Public content references a private path outside Pro/docs/*.md.",
+                        "Public content references a private path outside WiFiLensPro/docs/*.md.",
                     )
                 )
 

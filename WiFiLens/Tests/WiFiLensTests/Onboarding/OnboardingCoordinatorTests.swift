@@ -1,3 +1,5 @@
+@testable import WiFiLensCore
+
 import Foundation
 import Testing
 @testable import WiFi_Lens
@@ -286,7 +288,7 @@ final class OnboardingCoordinatorTests {
         )
         detector = StubExistingInstallationDetector(evidence: existingInstallation)
         coordinator = OnboardingCoordinator(
-            store: store,
+            stateStore: store,
             existingInstallationDetector: detector,
             welcomeEnabled: welcomeEnabled
         )

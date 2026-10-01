@@ -1,3 +1,5 @@
+@testable import WiFiLensCore
+
 import AppKit
 import Testing
 @testable import WiFi_Lens
@@ -10,14 +12,14 @@ struct EditionCompositionTests {
         let defaultScene = MainWindowSceneState()
         let fallbackScene = MainWindowSceneState(selectedPage: nil)
 
-        #expect(defaultScene.selectedPage == EditionComposition.initialMainWindowRoute)
-        #expect(fallbackScene.selectedPage == EditionComposition.initialMainWindowRoute)
+        #expect(defaultScene.selectedPage == EditionAssemblyProvider.configuration.initialMainWindowRoute)
+        #expect(fallbackScene.selectedPage == EditionAssemblyProvider.configuration.initialMainWindowRoute)
     }
 
     @MainActor
     @Test("edition composition creates the roaming presentation model")
     func editionCompositionCreatesRoamingViewModel() {
-        let viewModel = EditionComposition.makeRoamingViewModel(scannerViewModel: ScannerViewModel())
+        let viewModel = EditionAssemblyProvider.configuration.shellHooks.makeRoamingViewModel(ScannerViewModel())
 
         #expect(viewModel.state == .idle)
     }
@@ -273,21 +275,23 @@ struct EditionCompositionTests {
     }
 
     @Test("OSS timeline contribution remains a locked preview")
+    @MainActor
     func ossTimelineContributionIsLockedPreview() {
-        #expect(EditionComposition.timelineToolbarDescriptor == nil)
-        #expect(EditionComposition.isTimelineLockedPreview)
+        #expect(EditionAssemblyProvider.configuration.timelineToolbarDescriptor == nil)
+        #expect(EditionAssemblyProvider.configuration.isTimelineLockedPreview)
     }
 
     @Test("OSS recording segment remains locked")
+    @MainActor
     func ossRecordingSegmentRemainsLocked() {
-        let descriptor = EditionComposition.spectrumToolbarDescriptor
+        let descriptor = EditionAssemblyProvider.configuration.spectrumToolbarDescriptor
         #expect(descriptor.items.first { $0.id == .spectrumRecording }?.isLocked == true)
     }
 
     @MainActor
     @Test("OSS supplies the locked Markdown export preview through edition composition")
     func ossSuppliesLockedMarkdownExportPreview() {
-        switch EditionComposition.markdownExportCommandContribution {
+        switch EditionAssemblyProvider.configuration.markdownExportCommandContribution {
         case .lockedPreview:
             break
         case .available:
@@ -398,7 +402,7 @@ struct EditionCompositionTests {
     @MainActor
     @Test("OSS termination hook completes without edition work")
     func ossTerminationHookIsNoOp() async {
-        await EditionComposition.prepareForTermination()
+        await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination()
     }
 }
 

@@ -8,8 +8,9 @@ on:
       - ".github/workflows/codeql.yml"
       - ".gitmodules"
       - "WiFiLens/**"
-      - "wifi-lens.xcworkspace/**"
-      - "web/**"
+      - "WiFiLensCore/**"
+      - "WiFiLensPro/**"
+      - "WiFiLens.xcodeproj/**"
 
   pull_request:
     branches:
@@ -18,8 +19,9 @@ on:
       - ".github/workflows/codeql.yml"
       - ".gitmodules"
       - "WiFiLens/**"
-      - "wifi-lens.xcworkspace/**"
-      - "web/**"
+      - "WiFiLensCore/**"
+      - "WiFiLensPro/**"
+      - "WiFiLens.xcodeproj/**"
 
   schedule:
     - cron: "23 3 * * 1"
@@ -47,7 +49,6 @@ jobs:
       matrix:
         language:
           - actions
-          - javascript-typescript
           - python
 
     steps:
@@ -84,7 +85,7 @@ jobs:
           set -o pipefail
 
           xcodebuild \
-            -workspace wifi-lens.xcworkspace \
+            -project WiFiLens.xcodeproj \
             -scheme "WiFi Lens" \
             -configuration Debug \
             -destination 'platform=macOS' \

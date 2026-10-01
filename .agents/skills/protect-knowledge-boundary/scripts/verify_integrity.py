@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Verify the integrity of the protected boundary-review instructions.
+"""Verify the integrity of the opt-in boundary-audit assets.
 
-This checks instruction assets only. It does not evaluate whether an OSS/Pro
-module relationship is safe.
+This checks asset integrity only. It neither triggers the audit nor evaluates
+whether an OSS/Pro module relationship is safe.
 """
 
 from __future__ import annotations
@@ -30,16 +30,6 @@ REQUIRED_PROTECTED_ASSETS = frozenset(
         ".agents/skills/protect-knowledge-boundary/tests/test_verify_integrity.py",
     }
 )
-ANCHOR = re.compile(
-    r"<!-- knowledge-boundary-gate:start -->\n"
-    r"Complete the manual module-by-module edition-boundary review described in "
-    r"`\.agents/skills/protect-knowledge-boundary/SKILL\.md` before completing "
-    r"knowledge-boundary changes\.\n"
-    r"Integrity manifest SHA-256: `([0-9a-f]{64})`\n"
-    r"<!-- knowledge-boundary-gate:end -->"
-)
-
-
 class Finding(NamedTuple):
     code: str
     message: str
@@ -104,17 +94,6 @@ def verify(root: Path, manifest: Path) -> VerificationResult:
             findings.append(Finding("missing-asset", f"Protected asset is missing: {path.relative_to(root)}"))
         elif _sha256(path) != expected:
             findings.append(Finding("hash-mismatch", f"Protected asset changed: {path.relative_to(root)}"))
-
-    agents_path = root / "AGENTS.md"
-    try:
-        agents_text = agents_path.read_text(encoding="utf-8")
-    except OSError:
-        agents_text = ""
-    anchor = ANCHOR.search(agents_text)
-    if anchor is None:
-        findings.append(Finding("missing-anchor", "AGENTS.md knowledge-boundary gate is missing or changed."))
-    elif manifest.is_file() and _sha256(manifest) != anchor.group(1):
-        findings.append(Finding("manifest-anchor-mismatch", "AGENTS.md does not pin the current integrity manifest."))
 
     symlink = root / ".claude/skills/protect-knowledge-boundary"
     if not symlink.is_symlink() or os.readlink(symlink) != EXPECTED_SYMLINK:

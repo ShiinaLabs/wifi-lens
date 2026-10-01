@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import MarkdownKit
 import Testing
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor

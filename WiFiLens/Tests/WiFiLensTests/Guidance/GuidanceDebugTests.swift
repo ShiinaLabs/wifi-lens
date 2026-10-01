@@ -1,3 +1,5 @@
+@testable import WiFiLensCore
+
 import Foundation
 import Testing
 @testable import WiFi_Lens
@@ -64,7 +66,7 @@ final class GuidanceDebugTests {
         #expect(events(named: "guidance.debug.invitation_eligibility_prepared").count == 1)
 
         // The next real value moment goes through the production policy.
-        #expect(coordinator.record(.diagnosticsCompleted) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
     }
 
     @Test func debugPrepareInvitationEligibilityUsesConfiguration() {
@@ -77,7 +79,7 @@ final class GuidanceDebugTests {
         let loaded = store.load()
         #expect(loaded.activeDays.count == 5)
         #expect(loaded.meaningfulCompletionCount == config.minimumInvitationCompletions)
-        #expect(coordinator.record(.diagnosticsCompleted) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
     }
 
     @Test func diagnosticsStagingIsConsumedAtomically() {
@@ -180,11 +182,11 @@ final class GuidanceDebugTests {
         ))
 
         GuidanceDebugOverrides.setProInstallationOverride(.treatAsInstalled)
-        #expect(coordinator.record(.diagnosticsCompleted) == .none(.proAppInstalled))
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.proAppInstalled))
         #expect(coordinator.pendingInvitation == nil)
 
         GuidanceDebugOverrides.setProInstallationOverride(.treatAsNotInstalled)
-        #expect(coordinator.record(.diagnosticsCompleted) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
         #expect(coordinator.pendingInvitation != nil)
 
         // The override never touches persisted state.
@@ -265,6 +267,13 @@ final class GuidanceDebugTests {
             now: { self.now },
             calendar: calendar,
             appVersion: { "2.1.0" },
+            isProAppInstalled: {
+                switch GuidanceDebugOverrides.proInstallationOverride {
+                case .useRealDetection: return false
+                case .treatAsNotInstalled: return false
+                case .treatAsInstalled: return true
+                }
+            },
             eventSink: { self.collectedEvents.append($0) }
         )
         self.coordinator = coordinator

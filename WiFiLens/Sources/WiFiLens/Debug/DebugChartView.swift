@@ -1,5 +1,6 @@
 import SwiftUI
 import ChartLens
+import WiFiLensCore
 
 #if DEBUG
 
@@ -135,7 +136,7 @@ struct DebugChartView: View {
     }
 
     private var chartView: some View {
-        BandChartView(
+        WiFiBandChart(
             model: bandVM.renderModel,
             selectedNetworkID: $selectedNetworkID,
             onResetZoom: { bandVM.resetZoom() },
@@ -602,8 +603,7 @@ struct DebugChartView: View {
         let block = ChannelSpanCalculator.channelBlock(
             primaryChannel: channel,
             widthMHz: channelWidthMHz,
-            band: selectedBand,
-            spanDirection: nil
+            band: selectedBand
         )
         let domain = ChartSeriesDomainData(
             id: "debug-signal",

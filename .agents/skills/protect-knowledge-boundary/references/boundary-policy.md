@@ -1,16 +1,27 @@
 # WiFi Lens Knowledge Boundary Policy
 
+## Invocation policy
+
+This skill is an opt-in manual audit. Run it only when the user explicitly
+requests a knowledge-boundary audit or the active task names that audit as a
+required deliverable. Do not run it automatically before commits or pushes,
+after code changes, for routine refactors or reviews, or merely because a
+change touches Pro, shared contracts, documentation, or Agent assets.
+
+The Production Pro binary audit is a separate deterministic release check and
+remains required by its own release workflow.
+
 ## Trust boundary
 
 - The root repository, including `.agents/`, is public.
-- `Pro/` is a private submodule and separate Git repository.
+- `WiFiLensPro/` is a private submodule and separate Git repository.
 - Public checks must not persist private names, excerpts, or fingerprints.
 
 ## Allowed public knowledge
 
 - The Pro edition and private repository exist.
-- `Pro/AGENTS.md` is the instruction entrypoint for explicitly Pro-scoped work.
-- A `Pro/docs/*.md` path exists and may be indexed without a content summary.
+- `WiFiLensPro/AGENTS.md` is the instruction entrypoint for explicitly Pro-scoped work.
+- A `WiFiLensPro/docs/*.md` path exists and may be indexed without a content summary.
 - Public interfaces and edition-neutral contracts already implemented in the
   public repository may be documented from their public source.
 
@@ -24,13 +35,13 @@
 
 Feature existence and public product copy are not implementation knowledge.
 When a statement mixes public product behavior with private mechanics, retain
-only the public behavior or move the statement into `Pro/`.
+only the public behavior or move the statement into `WiFiLensPro/`.
 
 ## Review rule
 
 An allowed path is an index, not permission to read and summarize its target.
 For non-Pro tasks, do not load private documents into Agent context. For
-explicitly Pro-scoped tasks, follow `Pro/AGENTS.md` and keep resulting private
+explicitly Pro-scoped tasks, follow `WiFiLensPro/AGENTS.md` and keep resulting private
 knowledge inside the private repository.
 
 ## Boundary review method

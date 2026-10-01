@@ -2,7 +2,7 @@
 #
 # verify.sh — canonical WiFi Lens verification.
 #
-# Default:  build "WiFi Lens" + "WiFi Lens Pro" (Debug), then run WiFiLensTests.
+# Default: build both app schemes (Debug), then run OSS and Core unit bundles.
 # --quick:  build + test only "WiFi Lens" (skip the Pro build).
 #
 # Never runs UI test bundles. Never uses swift build/test. See SKILL.md.
@@ -13,7 +13,7 @@ set -euo pipefail
 # (.agents/skills/verify-build/scripts/).
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-PROJECT="$REPO_ROOT/WiFiLens/WiFiLens.xcodeproj"
+PROJECT="$REPO_ROOT/WiFiLens.xcodeproj"
 
 QUICK=false
 for arg in "$@"; do
@@ -48,7 +48,7 @@ else
   echo "==> (--quick) skipping WiFi Lens Pro build"
 fi
 
-# 3. Run the unit test bundle only (no UI tests).
-run "${COMMON[@]}" -scheme "WiFi Lens" -skipPackageUpdates test -only-testing:WiFiLensTests
+# 3. Run the OSS and shared Framework unit bundles only (no UI tests).
+run "${COMMON[@]}" -scheme "WiFi Lens" -skipPackageUpdates test -only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests
 
 echo "verify.sh: OK"

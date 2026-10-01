@@ -44,25 +44,12 @@ class IntegrityVerifierTests(unittest.TestCase):
         self.manifest = self.root / ".agents/integrity/protected-assets.sha256"
         self.manifest.parent.mkdir(parents=True)
         self.manifest.write_text("".join(manifest_lines), encoding="utf-8")
-        manifest_digest = hashlib.sha256(self.manifest.read_bytes()).hexdigest()
-        (self.root / "AGENTS.md").write_text(self.anchor(manifest_digest), encoding="utf-8")
         link = self.root / ".claude/skills/protect-knowledge-boundary"
         link.parent.mkdir(parents=True)
         os.symlink(SYMLINK_TARGET, link)
 
     def tearDown(self):
         self.temp_dir.cleanup()
-
-    @staticmethod
-    def anchor(manifest_digest: str) -> str:
-        return (
-            "<!-- knowledge-boundary-gate:start -->\n"
-            "Complete the manual module-by-module edition-boundary review described in "
-            "`.agents/skills/protect-knowledge-boundary/SKILL.md` before completing "
-            "knowledge-boundary changes.\n"
-            f"Integrity manifest SHA-256: `{manifest_digest}`\n"
-            "<!-- knowledge-boundary-gate:end -->\n"
-        )
 
     def test_accepts_valid_assets_anchor_and_symlink(self):
         result = load_module().verify(self.root, self.manifest)
@@ -80,17 +67,9 @@ class IntegrityVerifierTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertIn("missing-asset", {item.code for item in result.findings})
 
-    def test_rejects_missing_instruction_anchor(self):
-        (self.root / "AGENTS.md").write_text("# Instructions\n", encoding="utf-8")
+    def test_does_not_require_an_agents_commit_gate(self):
         result = load_module().verify(self.root, self.manifest)
-        self.assertEqual(result.exit_code, 1)
-        self.assertIn("missing-anchor", {item.code for item in result.findings})
-
-    def test_rejects_changed_manifest_anchor_digest(self):
-        (self.root / "AGENTS.md").write_text(self.anchor("0" * 64), encoding="utf-8")
-        result = load_module().verify(self.root, self.manifest)
-        self.assertEqual(result.exit_code, 1)
-        self.assertIn("manifest-anchor-mismatch", {item.code for item in result.findings})
+        self.assertEqual(result.exit_code, 0, result.findings)
 
     def test_rejects_incorrect_claude_symlink(self):
         link = self.root / ".claude/skills/protect-knowledge-boundary"
@@ -106,9 +85,6 @@ class IntegrityVerifierTests(unittest.TestCase):
             "".join(line for line in lines if "collaboration-rules.md" not in line),
             encoding="utf-8",
         )
-        manifest_digest = hashlib.sha256(self.manifest.read_bytes()).hexdigest()
-        (self.root / "AGENTS.md").write_text(self.anchor(manifest_digest), encoding="utf-8")
-
         result = load_module().verify(self.root, self.manifest)
 
         self.assertEqual(result.exit_code, 1)

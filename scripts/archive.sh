@@ -9,7 +9,7 @@ SCHEME="WiFiLens"
 DERIVED="$PROJECT_DIR/.build/DerivedData"
 
 echo "==> Building $SCHEME ($CONFIG)…"
-xcodebuild -project "$PROJECT_DIR/WiFiLens/WiFiLens.xcodeproj" \
+xcodebuild -project "$PROJECT_DIR/WiFiLens.xcodeproj" \
     -scheme "$SCHEME" \
     -configuration "$CONFIG" \
     -derivedDataPath "$DERIVED" \

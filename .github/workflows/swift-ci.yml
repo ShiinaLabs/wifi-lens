@@ -9,7 +9,9 @@ on:
       - ".github/workflows/release.yml"
       - ".gitmodules"
       - "WiFiLens/**"
-      - "wifi-lens.xcworkspace/**"
+      - "WiFiLensCore/**"
+      - "WiFiLensPro/**"
+      - "WiFiLens.xcodeproj/**"
       - "scripts/create-dmg.sh"
       - "assets/**"
   pull_request:
@@ -18,7 +20,9 @@ on:
       - ".github/workflows/release.yml"
       - ".gitmodules"
       - "WiFiLens/**"
-      - "wifi-lens.xcworkspace/**"
+      - "WiFiLensCore/**"
+      - "WiFiLensPro/**"
+      - "WiFiLens.xcodeproj/**"
       - "scripts/create-dmg.sh"
       - "assets/**"
   workflow_dispatch:
@@ -40,7 +44,7 @@ jobs:
 
       - name: Build
         run: |
-          xcodebuild -workspace wifi-lens.xcworkspace \
+          xcodebuild -project WiFiLens.xcodeproj \
             -scheme "WiFi Lens" \
             -configuration "$DEBUG_CONFIG" \
             -destination 'platform=macOS' \
@@ -49,11 +53,12 @@ jobs:
 
       - name: Test
         run: |
-          xcodebuild -workspace wifi-lens.xcworkspace \
+          xcodebuild -project WiFiLens.xcodeproj \
             -scheme "WiFi Lens" \
             -configuration "$DEBUG_CONFIG" \
             -destination 'platform=macOS' \
             -skipPackageUpdates \
             -only-testing:WiFiLensTests \
+            -only-testing:WiFiLensCoreTests \
             CODE_SIGNING_ALLOWED=NO \
             test

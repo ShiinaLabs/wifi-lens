@@ -6,27 +6,32 @@
 |--------|-----------|---------|
 | WiFiLensTests | Swift Testing (`@Test`, `#expect()`) | Pure-logic unit tests with `@testable import WiFiLens` |
 | WiFiLensUITests | XCTest (`XCTestCase`) | End-to-end UI tests for the OSS app |
+| WiFiLensCoreTests | Swift Testing | Shared Framework behavior and algorithms |
 
 Private Pro test documentation is indexed at
-[Pro/docs/TESTING.md](../../../Pro/docs/TESTING.md) and must be read only for
+[WiFiLensPro/docs/TESTING.md](../../../WiFiLensPro/docs/TESTING.md) and must be read only for
 work explicitly scoped to Pro.
 
 ## Running Tests
 
 Default verification should use `xcodebuild build` plus unit-test-only runs. Do not run UI test bundles unless the user explicitly asks for UI tests.
 
+Shared product tests are owned by the native `WiFiLensCoreTests` target.
+Run them with `xcodebuild` through the OSS scheme or the `WiFiLensCore` scheme.
+App-hosted tests remain responsible for app-shell and Xcode integration.
+
 ```sh
 # Build verification — OSS target
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' build
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' build
 
 # Unit tests only — OSS target
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests
 
 # Build verification — Pro target
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens Pro" -configuration Debug -destination 'platform=macOS' build
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens Pro" -configuration Debug -destination 'platform=macOS' build
 
 # OSS UI tests — run only when explicitly requested by the user
-xcodebuild -project WiFiLens/WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensUITests
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensUITests
 ```
 
 ## Unit Tests (WiFiLensTests)
@@ -62,7 +67,7 @@ Edition-composition tests verify the shared-shell contract while each target
 compiles exactly one edition adapter. Register shared tests in `WiFiLensTests`.
 Public target tests must not import, name, or describe private implementation
 types. For explicitly Pro-scoped test work, follow
-[Pro/docs/TESTING.md](../../../Pro/docs/TESTING.md).
+[WiFiLensPro/docs/TESTING.md](../../../WiFiLensPro/docs/TESTING.md).
 
 ### Runtime Backpressure and Snapshot Coverage
 

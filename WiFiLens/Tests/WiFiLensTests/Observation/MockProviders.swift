@@ -1,4 +1,5 @@
 import Foundation
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 struct MockCurrentConnectionProvider: WiFiCurrentConnectionProviding {

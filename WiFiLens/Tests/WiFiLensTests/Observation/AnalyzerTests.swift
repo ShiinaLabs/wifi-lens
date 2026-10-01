@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import WiFi_Lens
+@testable import WiFiLensCore
 
 @Suite("Observation Analyzers")
 struct AnalyzerTests {

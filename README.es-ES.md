@@ -243,7 +243,7 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
 # Run unit tests
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
   -configuration Debug -destination 'platform=macOS' \
-  -skipPackageUpdates test -only-testing:WiFiLensTests
+  -skipPackageUpdates test -only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests
 ```
 
 La documentación de arquitectura está en [docs/](docs/).

@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite("MenuBar Main Window Behavior")
@@ -17,19 +18,20 @@ struct MenuBarWindowBehaviorTests {
     }
 
     @Test("network diagnostics route is shared and permission independent")
+    @MainActor
     func networkDiagnosticsRouteRequirements() {
         #expect(SidebarPage.networkDiagnostics.requiresLocationAuthorization == false)
         #expect(SidebarPage.networkDiagnostics.requiresWiFi == false)
         #expect(SidebarPage.networkDiagnostics.icon == "stethoscope")
-        #expect(SidebarPage.networkDiagnostics.badgeStyle == nil)
+        #expect(EditionAssemblyProvider.configuration.sidebarBadgeStyle(for: .networkDiagnostics) == nil)
     }
 
     @Test("Pro sidebar badge uses paid-feature semantics")
+    @MainActor
     func proSidebarBadgeStyle() {
         #expect(SidebarBadge.Style.pro.icon == "crown.fill")
         #expect(SidebarBadge.Style.pro.localizationKey == "common.badge.pro")
-        #expect(SidebarPage.wifiCallingBadgeStyle(for: .oss) == .pro)
-        #expect(SidebarPage.wifiCallingBadgeStyle(for: .pro) == .preview)
+        #expect(EditionAssemblyProvider.configuration.sidebarBadgeStyle(for: .wifiCallingTest) == .pro)
     }
 
     @Test("Preview sidebar badge uses preview-feature semantics")
@@ -120,20 +122,19 @@ struct MenuBarWindowBehaviorTests {
     }
 
     @Test("Timeline badge reflects edition semantics")
+    @MainActor
     func timelineBadgeReflectsEdition() {
-        #expect(SidebarPage.timelineBadgeStyle(for: .oss) == .pro)
-        #expect(SidebarPage.timelineBadgeStyle(for: .pro) == .preview)
-        #expect(SidebarPage.timeline.badgeStyle == nil)
+        #expect(EditionAssemblyProvider.configuration.sidebarBadgeStyle(for: .timeline) == nil)
+        #expect(EditionAssemblyProvider.configuration.analysisSidebarBadgeStyle == .pro)
     }
 
     @Test("Analysis group badge reflects Timeline preview semantics")
+    @MainActor
     func analysisBadgesReflectTimelinePreviewSemantics() {
         for page in [SidebarPage.timeline, .statistics, .insights] {
-            #expect(page.badgeStyle == nil)
+            #expect(EditionAssemblyProvider.configuration.sidebarBadgeStyle(for: page) == nil)
         }
-        #expect(SidebarSection.analysis.badgeStyle == SidebarPage.analysisBadgeStyle(for: .current))
-        #expect(SidebarPage.analysisBadgeStyle(for: .oss) == .pro)
-        #expect(SidebarPage.analysisBadgeStyle(for: .pro) == .preview)
+        #expect(EditionAssemblyProvider.configuration.analysisSidebarBadgeStyle == .pro)
     }
 
     @Test("sidebar section titles use localized keys")

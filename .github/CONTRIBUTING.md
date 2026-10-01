@@ -41,22 +41,21 @@ proxy endpoints, and other private network information.
 WiFi Lens requires macOS 14 or later.
 
 ```sh
-git clone https://github.com/SHIINASAMA/wifi-lens
+git clone https://github.com/ShiinaLabs/wifi-lens
 cd wifi-lens
-git submodule update --init ChartLens
 ```
 
 Open the project with:
 
 ```sh
-xed WiFiLens/WiFiLens.xcodeproj
+xed WiFiLens.xcodeproj
 ```
 
 Build the open-source edition:
 
 ```sh
 xcodebuild \
-  -project WiFiLens/WiFiLens.xcodeproj \
+  -project WiFiLens.xcodeproj \
   -scheme "WiFi Lens" \
   -configuration Debug \
   -destination 'platform=macOS' \
@@ -104,7 +103,7 @@ Run the build before submitting a pull request:
 
 ```sh
 xcodebuild \
-  -project WiFiLens/WiFiLens.xcodeproj \
+  -project WiFiLens.xcodeproj \
   -scheme "WiFi Lens" \
   -configuration Debug \
   -destination 'platform=macOS' \
@@ -115,13 +114,14 @@ Run the unit tests:
 
 ```sh
 xcodebuild \
-  -project WiFiLens/WiFiLens.xcodeproj \
+  -project WiFiLens.xcodeproj \
   -scheme "WiFi Lens" \
   -configuration Debug \
   -destination 'platform=macOS' \
   -skipPackageUpdates \
   test \
-  -only-testing:WiFiLensTests
+  -only-testing:WiFiLensTests \
+  -only-testing:WiFiLensCoreTests
 ```
 
 UI tests are not required for normal pull requests unless the change

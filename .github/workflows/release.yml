@@ -139,7 +139,7 @@ jobs:
           rm -rf "$ARCHIVE_PATH" "$EXPORT_PATH"
 
           xcodebuild archive \
-            -workspace wifi-lens.xcworkspace \
+            -project WiFiLens.xcodeproj \
             -scheme "WiFi Lens" \
             -configuration "$RELEASE_CONFIG" \
             -archivePath "$ARCHIVE_PATH" \

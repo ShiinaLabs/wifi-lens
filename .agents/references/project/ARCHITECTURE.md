@@ -43,41 +43,37 @@ Chart Engine (ChartLens package):
       → overlay(geo, series)
 
   DetailOverviewChart wraps two Charts + RangeSelector for linked zoom/overview.
-  See [ChartLens/README.md](../../../ChartLens/README.md) and [CHARTS.md](CHARTS.md) for full architecture.
+  See the [ChartLens package](https://github.com/ShiinaLabs/chart-lens) and [CHARTS.md](CHARTS.md) for rendering architecture.
   See [BLE.md](BLE.md) for BLE scan architecture.
   See [REGULATORY.md](REGULATORY.md) for regulatory pipeline.
   Private edition documentation is indexed at
-  [Pro/docs/ARCHITECTURE.md](../../../Pro/docs/ARCHITECTURE.md) and must be read
+  [WiFiLensPro/docs/ARCHITECTURE.md](../../../WiFiLensPro/docs/ARCHITECTURE.md) and must be read
   only for work explicitly scoped to Pro.
 ```
 
 ## Source Layout
 
 | Path | Responsibility |
-|------|---------------|
-| `WiFiLensApp.swift` | Root `@main` App struct, Scene, menu commands, window group |
-| `Scanner/` | Presentation-facing scanner ViewModel, CoreWLAN scan source, network/channel models, Wi-Fi power monitoring, and CWChannel extensions |
-| `Spectrum/` | ContentView (dashboard), SpectrumPanelView (reusable panel shell), SpectrumBandPanel, SpectrumTrendPanel, SpectrumTablePanel, NetworkTableRowSorter, WiFiBandChart, BandChartViewModel, BandChartRenderModel, BandChartLayout, ChartSeriesData, ChannelSpanCalculator, SignalHistoryStore, NetworkSnapshot, TrendChartView, SnapshotToChartAdapter, SSIDColorHasher |
-| `Channels/` | ChannelQualityCalculator, ChannelQualityView, RecommendationReason, RecommendationReasonCalculator, ReasonPopover |
-| `Charts/` | Universal Chart engine: ChartView, ChartTypes, DetailOverviewChart, RangeSelectorView, ChartGeometry, SplineInterpolation, ChartTimeFormatting, ChartRendering (legacy) |
-| `Interfaces/` | InterfacesView, ThroughputMonitor, ThroughputChartView, NetworkInfoService |
-| `Roaming/` | RoamingTestView, RoamingTestViewModel, AP transition tracking, timeline chart with DetailOverviewChart |
-| `SignalProcessing/` | RSSI signal smoothing: SignalSmoothing protocol, ExponentialMovingAverage, KalmanFilter1D, HysteresisEMA |
-| `Table/` | NativeTableView (NSViewRepresentable wrapping NSTableView) |
-| `App/` | OverviewView, SidebarView, SettingsView, Logging, CrashReporter, SparkleUpdater, TitleBadge, HelpCenterView, LocationPermissionRequiredView, WiFiOffView, MetricKitManager |
-| `BLE/` | BLEScanner, BLEDeviceTracker, BLEViewModel, BLEScannerView, BLETrendChartView, BLEAdvertisementEvent, BLEChannel, BLEDeviceSnapshot, BLERSSISample, BluetoothPermissionManager. See [BLE.md](BLE.md) |
-| `Debug/` | DebugChartView, DebugRoamingChartView (DEV builds only) |
-| `MCP/` | MCPServer — embedded HTTP/1.1 JSON API (NWListener on 127.0.0.1:19840) exposing scan data |
-| `NetworkDiagnostics/` | Shared OSS/Pro manual network self-check: This Mac / LAN / Internet stages with derived stage status, path state, gateway reachability, sampled DNS, base HTTP/HTTPS and captive-portal evidence, forced IPv6, ordered proxy/PAC candidates evaluated for each target route, network-change reruns, and normal/abnormal/indeterminate/blocked/skipped results |
-| `Regulatory/` | RegulatoryPipeline, RegulatoryDatabase, RegulatoryFilter, RegionInferenceEngine, ChannelRecommendation, DeviceCompatibilityFilter, RegulatoryDomain. See [REGULATORY.md](REGULATORY.md) |
-| `Observation/` | Immutable Wi-Fi observation models, providers, analyzers, single-cycle pipeline, Store projection, and the production observation runtime |
-| `Utilities/` | Constants, Color extensions, BuildConfig, DeviceCapabilities, GatewayPinger |
-| `Resources/` | Localizable.xcstrings (String Catalog) |
+|---------------|---------------|
+| `WiFiLens.xcodeproj/project.pbxproj` | Source of truth for app and test target membership, build settings, resources, schemes, native Framework dependencies, and remote package references |
+| `WiFiLensCore` Xcode Framework target | Shared OSS/Pro product module, configured in `project.pbxproj` |
+| `WiFiLensCore/Sources/WiFiLensCore/` | Shared OSS/Pro product kernel: domain and observation runtime, shared ViewModels and SwiftUI pages, diagnostics, and platform adapters |
+| `WiFiLensCore/Tests/WiFiLensCoreTests/` | Sources for the native `WiFiLensCoreTests` unit-test target |
+| `WiFiLens/Sources/WiFiLens/WiFiLensApp.swift` | App entry point, scenes, menu commands, and root window assembly |
+| `WiFiLens/Sources/WiFiLens/App/` | App-shell integrations such as public edition composition, build configuration, logging, crash reporting, and update handling |
+| `WiFiLens/Configs/` | Shared, OSS, and Pro Xcode configuration files |
+| `WiFiLens/Sources/WiFiLens/Resources/` | App assets, icon, privacy manifest, and localized resources |
+| `WiFiLens/Tests/` | App-hosted unit tests, UI test sources, and test plans |
+| `WiFiLensPro/` | Private Pro submodule. Public references may identify this repository and link to its private documentation, but must not describe private implementation. |
 
-The private Pro implementation lives in the `Pro/` submodule at the repository
-root. Public documentation records only the shared edition boundary; consult
-[Pro/docs/ARCHITECTURE.md](../../../Pro/docs/ARCHITECTURE.md) only for work
-explicitly scoped to Pro.
+The repository root keeps each component at its physical ownership boundary:
+`WiFiLens/` for the app shell, `WiFiLensCore/` for the shared Framework,
+`WiFiLensPro/` for the private submodule, and `WiFiLens.xcodeproj` as the
+project entry point. Shared product capabilities belong to `WiFiLensCore`;
+the private edition owns its product extension. App targets contain shell,
+edition assembly, and distribution-specific integrations. Development capture
+instrumentation belongs to a private support boundary and stays outside the
+production app dependency graph.
 
 ## Key Patterns
 
@@ -88,7 +84,7 @@ explicitly scoped to Pro.
 - **Stop barrier**: `WiFiObservationRuntime.stopScanning()` invalidates the scan generation, clears pending raw work, cancels and joins the in-flight raw task, stops the source, and drains admitted edition-boundary work before returning. The final raw diagnostics have neither an in-flight nor a pending cycle.
 - **Application termination barrier**: AppKit termination requests return `.terminateLater` through one process-scoped delegate coordinator. Repeated Command-Q and menu-bar quit requests share one operation and receive one reply. A three-second deadline covers scanner/runtime stop plus a target-selected edition hook. `ScannerViewModel.stopForTermination()` enters a permanent gate, stops monitoring, supersedes suspended startup, and rejects later lifecycle work.
 - **Scanner presentation boundary**: `ScannerViewModel` forwards lifecycle and configuration commands to the runtime and projects runtime output into public presentation state. It does not scan directly, construct production observations, run production analyzers, or publish to the Store.
-- **Edition composition**: shared code defines a narrow target-selected contract. The public target supplies the public adapter; the private target supplies its implementation from the `Pro/` submodule. Public source must not name or describe private concrete types.
+- **Edition composition**: shared code defines a narrow target-selected contract. Each app target supplies its edition assembly while shared product capabilities stay in Frameworks. Public source must not name or describe private concrete types.
 - **App-owned main-window opening**: `MainWindowLifecycleCoordinator` owns the `openWindow` adapter and pending shared route independently of any `MainWindowSceneState`. Closing the final main window therefore releases all per-window state without removing the process-level ability to create the next `WindowGroup` scene and deliver its route.
 - **Shared route-resource leases**: each main window registers its current route under a stable scene ID. A process-scoped coordinator aggregates those leases for the process-shared Spectrum charts and BLE scanner; resources start on the first matching route and stop only after the final lease is released by a route change or real window close. BLE starts return generation-bound sessions whose stop operation cannot terminate a newer session, and stopping always finishes that session's event stream.
 - Selection flows bidirectionally: table row → `selectedNetworkID` → chart highlight; chart curve click → `selectedNetworkID` → table row highlight
@@ -105,7 +101,7 @@ explicitly scoped to Pro.
   Changes to `SignalHistoryStore` must be verified against both the OSS and Pro schemes
   (`verify.sh` builds both).
 - Private edition behavior must remain behind the shared edition contract and
-  inside the `Pro/` submodule. Public navigation or preview surfaces must not
+  inside the `WiFiLensPro/` submodule. Public navigation or preview surfaces must not
   import private domain code.
 - `ScannerViewModel.scanIntervalSeconds` supports temporary external overrides
   and restores the UserDefaults-configured value when the final override ends.
@@ -146,4 +142,4 @@ explicitly scoped to Pro.
 - RSSI colors: green ≥ -55, yellow ≥ -70, orange ≥ -85, red below
 - Quality colors: hex strings from `QualityLevel.color`
 - Overlap badge on channel cards includes trailing "overlap" label for context
-- **Target membership**: Add new `.swift` source files only to the targets that should legally ship that code. Shared OSS runtime files must be added to both `WiFiLens` and `WiFiLensPro`; Pro-only implementations must be added only to `WiFiLensPro`. The Pro target maintains its own independent build phase, so missing membership there still causes "cannot find type in scope" errors in the `WiFi Lens Pro` scheme.
+- **Target and package ownership**: Shared product capability belongs in the `WiFiLensCore` Framework; do not duplicate it in both app Sources phases. Pro product implementation belongs inside the private Pro boundary. Capture and AppStage integration belongs in private development tooling. App targets compile shell, edition assembly, and distribution-specific sources. Keep Xcode target membership explicit and verify each target's Compile Sources phase after project changes.

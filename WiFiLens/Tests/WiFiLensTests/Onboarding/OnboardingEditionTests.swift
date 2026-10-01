@@ -1,11 +1,12 @@
 import Foundation
 import Testing
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor
 final class OnboardingEditionTests {
     @Test func ossEnablesWelcomeWithProLink() {
-        let config = EditionComposition.onboardingConfiguration
+        let config = EditionAssemblyProvider.configuration.onboardingConfiguration
 
         #expect(config.welcomeEnabled == true)
         #expect(config.showsProLink == true)

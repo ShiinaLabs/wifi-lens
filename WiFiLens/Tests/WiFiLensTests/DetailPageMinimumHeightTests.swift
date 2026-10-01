@@ -1,3 +1,5 @@
+@testable import WiFiLensCore
+
 import AppKit
 import SwiftUI
 import Testing
@@ -59,7 +61,10 @@ struct DetailPageMinimumHeightTests {
 
     @Test("Network self-check page minimum height stays within the default window height")
     func networkDiagnosticsMinimumHeightIsBounded() {
-        let height = minimumHeight(of: NetworkDiagnosticsView(viewModel: NetworkDiagnosticsViewModel()))
+        let height = minimumHeight(of: NetworkDiagnosticsView(
+            viewModel: NetworkDiagnosticsViewModel(),
+            guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
+        ))
         #expect(height <= Self.maximumMinimumHeight)
     }
 
