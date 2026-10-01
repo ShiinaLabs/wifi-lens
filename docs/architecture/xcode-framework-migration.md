@@ -1,6 +1,6 @@
 # Local Package to Xcode Framework Migration
 
-Status: implemented and locally verified; remote CI has not run for this migration.
+Status: implemented; local verification and OSS GitHub CI passed.
 
 ## Goal and acceptance contract
 
@@ -116,8 +116,14 @@ CodeQL and Release already use the canonical root project directly.
 Other edition build, native test, signing, and production-artifact checks are
 recorded in [the private result](../../WiFiLensPro/docs/xcode-framework-migration.md).
 No UI bundles or additional AppStage scenario runs were executed. Local checks
-used Xcode 27.0 on macOS 27.0.1; the GitHub runner remains unverified. No
-notarization or publishing was performed for this migration.
+used Xcode 27.0 on macOS 27.0.1. No notarization or publishing was performed for
+this migration.
+
+[Swift CI run 36846811382](https://github.com/ShiinaLabs/wifi-lens/actions/runs/36846811382)
+passed the OSS build and all 1,201 OSS/Core tests at commit `0edd25f`, without
+initializing the private submodule. The project retains seven external remote
+package references. All `Logging` products now share one `swift-log` reference,
+and the root `Package.resolved` retains its single existing pin.
 
 ## References
 

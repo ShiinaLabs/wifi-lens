@@ -4562,14 +4562,6 @@
 				minimumVersion = 1.15.1;
 			};
 		};
-		FB1E32462FC7316C009D1BDC /* XCRemoteSwiftPackageReference "swift-log" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-log";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.15.1;
-			};
-		};
 		FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
@@ -4688,7 +4680,7 @@
 		};
 		FB1E32452FC7316C009D1BDC /* Logging */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = FB1E32462FC7316C009D1BDC /* XCRemoteSwiftPackageReference "swift-log" */;
+			package = FB0573C402FBBEAE4005F8214 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
 		};
 		FB85B8A82FE6526D00D2D391 /* ChartLens */ = {
