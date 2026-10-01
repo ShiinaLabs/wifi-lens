@@ -54,30 +54,22 @@ Chart Engine (ChartLens package):
 ## Source Layout
 
 | Path | Responsibility |
-|------|---------------|
-| `WiFiLensApp.swift` | Root `@main` App struct, Scene, menu commands, window group |
-| `Scanner/` | Presentation-facing scanner ViewModel, CoreWLAN scan source, network/channel models, Wi-Fi power monitoring, and CWChannel extensions |
-| `Spectrum/` | ContentView (dashboard), SpectrumPanelView (reusable panel shell), SpectrumBandPanel, SpectrumTrendPanel, SpectrumTablePanel, NetworkTableRowSorter, WiFiBandChart, BandChartViewModel, BandChartRenderModel, BandChartLayout, ChartSeriesData, ChannelSpanCalculator, SignalHistoryStore, NetworkSnapshot, TrendChartView, SnapshotToChartAdapter, SSIDColorHasher |
-| `Channels/` | ChannelQualityCalculator, ChannelQualityView, RecommendationReason, RecommendationReasonCalculator, ReasonPopover |
-| `Charts/` | Universal Chart engine: ChartView, ChartTypes, DetailOverviewChart, RangeSelectorView, ChartGeometry, SplineInterpolation, ChartTimeFormatting, ChartRendering (legacy) |
-| `Interfaces/` | InterfacesView, ThroughputMonitor, ThroughputChartView, NetworkInfoService |
-| `Roaming/` | RoamingTestView, RoamingTestViewModel, AP transition tracking, timeline chart with DetailOverviewChart |
-| `SignalProcessing/` | RSSI signal smoothing: SignalSmoothing protocol, ExponentialMovingAverage, KalmanFilter1D, HysteresisEMA |
-| `Table/` | NativeTableView (NSViewRepresentable wrapping NSTableView) |
-| `App/` | OverviewView, SidebarView, SettingsView, Logging, CrashReporter, SparkleUpdater, TitleBadge, HelpCenterView, LocationPermissionRequiredView, WiFiOffView, MetricKitManager |
-| `BLE/` | BLEScanner, BLEDeviceTracker, BLEViewModel, BLEScannerView, BLETrendChartView, BLEAdvertisementEvent, BLEChannel, BLEDeviceSnapshot, BLERSSISample, BluetoothPermissionManager. See [BLE.md](BLE.md) |
-| `Debug/` | DebugChartView, DebugRoamingChartView (DEV builds only) |
-| `MCP/` | MCPServer — embedded HTTP/1.1 JSON API (NWListener on 127.0.0.1:19840) exposing scan data |
-| `NetworkDiagnostics/` | Shared OSS/Pro manual network self-check: This Mac / LAN / Internet stages with derived stage status, path state, gateway reachability, sampled DNS, base HTTP/HTTPS and captive-portal evidence, forced IPv6, ordered proxy/PAC candidates evaluated for each target route, network-change reruns, and normal/abnormal/indeterminate/blocked/skipped results |
-| `Regulatory/` | RegulatoryPipeline, RegulatoryDatabase, RegulatoryFilter, RegionInferenceEngine, ChannelRecommendation, DeviceCompatibilityFilter, RegulatoryDomain. See [REGULATORY.md](REGULATORY.md) |
-| `Observation/` | Immutable Wi-Fi observation models, providers, analyzers, single-cycle pipeline, Store projection, and the production observation runtime |
-| `Utilities/` | Constants, Color extensions, BuildConfig, DeviceCapabilities, GatewayPinger |
-| `Resources/` | Localizable.xcstrings (String Catalog) |
+|---------------|---------------|
+| `WiFiLens.xcodeproj/project.pbxproj` | Source of truth for app and test target membership, build settings, resources, schemes, and local package references |
+| `WiFiLensCore/Sources/WiFiLensCore/` | Shared OSS/Pro product kernel: domain and observation runtime, shared ViewModels and SwiftUI pages, diagnostics, and platform adapters |
+| `WiFiLensCore/Tests/WiFiLensCoreTests/` | Unit tests for shared product behavior and algorithms |
+| `WiFiLens/Sources/WiFiLens/WiFiLensApp.swift` | App entry point, scenes, menu commands, and root window assembly |
+| `WiFiLens/Sources/WiFiLens/App/` | App-shell integrations such as public edition composition, build configuration, logging, crash reporting, and update handling |
+| `WiFiLens/Configs/` | Shared, OSS, and Pro Xcode configuration files |
+| `WiFiLens/Sources/WiFiLens/Resources/` | App assets, icon, privacy manifest, and localized resources |
+| `WiFiLens/Tests/` | App-hosted unit tests, UI test sources, and test plans |
+| `WiFiLensPro/` | Private Pro submodule. Public references may identify this repository and link to its private documentation, but must not describe private implementation. |
 
-The private Pro implementation lives in the `WiFiLensPro/` submodule at the repository
-root. Public documentation records only the shared edition boundary; consult
-[WiFiLensPro/docs/ARCHITECTURE.md](../../../WiFiLensPro/docs/ARCHITECTURE.md) only for work
-explicitly scoped to Pro.
+The repository root keeps each component at its physical ownership boundary:
+`WiFiLens/` for the app shell, `WiFiLensCore/` for the shared package,
+`WiFiLensPro/` for the private submodule, and `WiFiLens.xcodeproj` as the
+project entry point. Shared feature code belongs to `WiFiLensCore`; the app
+shell owns launch, edition assembly, and distribution-specific integrations.
 
 ## Key Patterns
 

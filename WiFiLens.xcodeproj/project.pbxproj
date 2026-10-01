@@ -1542,7 +1542,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = WiFiLens.entitlements;
+				CODE_SIGN_ENTITLEMENTS = WiFiLens/WiFiLens.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -1562,7 +1562,7 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				INFOPLIST_FILE = "WiFiLens-Info.plist";
+				INFOPLIST_FILE = "WiFiLens/WiFiLens-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
@@ -1729,7 +1729,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = WiFiLens.entitlements;
+				CODE_SIGN_ENTITLEMENTS = WiFiLens/WiFiLens.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -1749,7 +1749,7 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				INFOPLIST_FILE = "WiFiLens-Info.plist";
+				INFOPLIST_FILE = "WiFiLens/WiFiLens-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
