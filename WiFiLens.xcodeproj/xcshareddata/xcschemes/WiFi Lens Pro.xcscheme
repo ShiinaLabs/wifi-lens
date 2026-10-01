@@ -30,7 +30,7 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:../WiFiLensPro/Tests/TestPlans/PRO.xctestplan"
+            reference = "container:WiFiLensPro/Tests/TestPlans/PRO.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>

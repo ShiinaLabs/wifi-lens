@@ -39,7 +39,7 @@
       </MacroExpansion>
       <TestPlans>
          <TestPlanReference
-            reference = "container:Tests/TestPlans/OSS.xctestplan"
+            reference = "container:WiFiLens/Tests/TestPlans/OSS.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>
