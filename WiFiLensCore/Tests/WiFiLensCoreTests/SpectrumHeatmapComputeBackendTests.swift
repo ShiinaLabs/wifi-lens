@@ -90,7 +90,7 @@ import Testing
     }
 
     @Test func concurrentFailedMetalRendersEachFallBackToCPU() async throws {
-        let failingBackend = TestHeatmapBackend(kind: .metal, failure: TestHeatmapBackendError.failed)
+        let failingBackend = CoordinatedFailedMetalBackend()
         let worker = SpectrumHeatmapRenderWorker(
             factory: SpectrumHeatmapComputeBackendFactory { failingBackend }
         )
@@ -103,7 +103,8 @@ import Testing
 
         #expect(firstResult.raster.values.allSatisfy { $0.isFinite && (0...1).contains($0) })
         #expect(secondResult.raster.values.allSatisfy { $0.isFinite && (0...1).contains($0) })
-        #expect(failingBackend.computeCount == 2)
+        let computeCount = await failingBackend.computeCount
+        #expect(computeCount == 2)
 
         let selectedKind = await worker.selectedBackendKind()
         #expect(selectedKind == .cpu)
@@ -125,6 +126,28 @@ import Testing
 
 private enum TestHeatmapBackendError: Error {
     case failed
+}
+
+private actor CoordinatedFailedMetalBackend: SpectrumHeatmapComputeBackend {
+    nonisolated let kind: SpectrumHeatmapBackendKind = .metal
+    private var submissions = 0
+    private var firstSubmission: CheckedContinuation<Void, Never>?
+
+    var computeCount: Int { submissions }
+
+    func compute(_ input: SpectrumHeatmapComputeInput) async throws -> SpectrumHeatmapRaster {
+        submissions += 1
+        if submissions == 1 {
+            // Both requests must enter Metal before either failure can switch the worker to CPU.
+            await withCheckedContinuation { continuation in
+                firstSubmission = continuation
+            }
+        } else {
+            firstSubmission?.resume()
+            firstSubmission = nil
+        }
+        throw TestHeatmapBackendError.failed
+    }
 }
 
 private struct TestHeatmapBackend: SpectrumHeatmapComputeBackend, Sendable {
