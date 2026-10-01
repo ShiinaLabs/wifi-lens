@@ -243,7 +243,7 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
 # Run unit tests
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
   -configuration Debug -destination 'platform=macOS' \
-  -skipPackageUpdates test -only-testing:WiFiLensTests
+  -skipPackageUpdates test -only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests
 ```
 
 架构文档位于 [docs/](docs/)。

@@ -57,6 +57,26 @@
                ReferencedContainer = "container:WiFiLens.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "30E5DBA89B11E877E38DAF73"
+               BuildableName = "WiFiLensCoreTests.xctest"
+               BlueprintName = "WiFiLensCoreTests"
+               ReferencedContainer = "container:WiFiLens.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "207473A260E7AD51B3B0EDE5"
+               BuildableName = "WiFiLensProCoreTests.xctest"
+               BlueprintName = "WiFiLensProCoreTests"
+               ReferencedContainer = "container:WiFiLens.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

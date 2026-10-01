@@ -28,23 +28,13 @@ The following rules are **hard constraints** and must be followed in all circums
 
 - **Verify target before editing pbxproj**: OSS and PRO target build settings blocks look nearly identical. Check `baseConfigurationReference` (`OSS.xcconfig` vs `PRO.xcconfig`) before modifying any block. Never use `replace_all` on pbxproj — edit each occurrence individually with enough context.
 
-## Commit Check Consent
+## Commit Verification
 
-For every commit request, ask the user exactly:
-
-> Run the checks relevant to this commit before committing?
-
-Ask before running build, test, formatting, knowledge-boundary, integrity, or
-other checks whose purpose is to gate that commit.
-
-- If the user answers yes, select checks from the intended commit scope and
-  run fresh checks before committing. Report failures instead of committing
-  through them unless the user gives new direction.
-- If the user answers no, the commit may proceed without pre-commit checks.
-  The final report must state that checks were skipped by user choice.
-- If the user has not answered, neither run pre-commit checks nor commit.
-- Consent applies to one commit request only. Ask again for every later commit,
-  including another commit in the same conversation.
+Do not require a separate check-consent question before an authorized commit.
+Select relevant verification from the change scope and respect the user's
+instructions to run or skip checks. Reuse completed verification when it still
+covers the current changes, and state what ran or was skipped. Explicit user
+authorization is still required to commit and push.
 
 ## Must Follow
 

@@ -1,6 +1,8 @@
 @preconcurrency import Metal
 import Foundation
 
+private final class WiFiLensCoreBundleMarker: NSObject {}
+
 enum SpectrumHeatmapMetalBackendError: Error, Equatable, Sendable {
     case bufferAllocationFailed
     case commandEncoderUnavailable
@@ -19,7 +21,7 @@ actor MetalHeatmapComputeBackend: SpectrumHeatmapComputeBackend {
     init?() {
         guard let device = MTLCreateSystemDefaultDevice(),
               let commandQueue = device.makeCommandQueue(),
-              let library = try? device.makeDefaultLibrary(bundle: .module),
+              let library = try? device.makeDefaultLibrary(bundle: Bundle(for: WiFiLensCoreBundleMarker.self)),
               let fieldFunction = library.makeFunction(name: "heatmapFieldKernel"),
               let smoothFunction = library.makeFunction(name: "heatmapSmoothKernel"),
               let fieldPipeline = try? device.makeComputePipelineState(function: fieldFunction),

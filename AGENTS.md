@@ -49,17 +49,17 @@ documentation, Agent-asset, refactoring, commit, or push work.
 # App — always use xcodebuild, never swift build / swift test
 # Build configurations: Debug / Release
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' build
-xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests
 xed WiFiLens.xcodeproj                   # open in Xcode GUI
 
-# ChartLens is consumed as a remote Swift package dependency of WiFiLensCore.
-# Resolve/build it through the app project or the owning package, not a root-level checkout.
+# ChartLens is consumed as a remote Swift package dependency of the WiFiLensCore Framework target.
+# Resolve/build it through the app project, not a root-level checkout.
 
 ```
 
 The product name is `WiFi Lens.app` (with space). Unit tests use Swift Testing (`@Test`) with `TEST_HOST` — the test bundle is injected into the app process for `@testable import` symbol resolution. All test `.swift` files must be added to the WiFiLensTests target's Sources build phase (in `project.pbxproj`) for `xcodebuild test` to compile and run them. The `WiFiLensTests` scheme must reference the test bundle in both `<Testables>` and `<MacroExpansion>`.
 
-Do not run UI test bundles (`WiFiLensUITests`, `WiFiLensProUITests`) or full scheme test commands that include UI tests unless the user explicitly asks for UI tests. Default verification is build plus `-only-testing:WiFiLensTests`.
+Do not run UI test bundles (`WiFiLensUITests`, `WiFiLensProUITests`) or full scheme test commands that include UI tests unless the user explicitly asks for UI tests. Default verification is build plus `-only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests`.
 
 When adding new test files, ensure they are:
 1. Added as PBXFileReference in project.pbxproj
@@ -81,7 +81,6 @@ When adding new test files, ensure they are:
 ## Rules
 
 - Never commit without explicit user instruction
-- Before every commit, ask `Run the checks relevant to this commit before committing?` and follow the consent protocol in `.agents/references/collaboration-rules.md`
 - Never push unless asked
 - **English is the primary language for repository-facing artifacts.** Repository-facing artifacts must be written in English, including source code comments, documentation, commit messages, issue descriptions, pull request content, and other text committed to the repository. Only `.xcstrings` localization files are exceptions.
 - **Agent–developer communication follows the developer's language preference.** Communication between agents and developers may use the developer's preferred language unless explicitly requested otherwise.

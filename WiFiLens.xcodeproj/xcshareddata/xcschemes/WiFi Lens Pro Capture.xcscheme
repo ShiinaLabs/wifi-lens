@@ -28,6 +28,38 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "30E5DBA89B11E877E38DAF73"
+               BuildableName = "WiFiLensCoreTests.xctest"
+               BlueprintName = "WiFiLensCoreTests"
+               ReferencedContainer = "container:WiFiLens.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "207473A260E7AD51B3B0EDE5"
+               BuildableName = "WiFiLensProCoreTests.xctest"
+               BlueprintName = "WiFiLensProCoreTests"
+               ReferencedContainer = "container:WiFiLens.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2C0032D2AF1658BFF7BE4245"
+               BuildableName = "WiFiLensCaptureSupportTests.xctest"
+               BlueprintName = "WiFiLensCaptureSupportTests"
+               ReferencedContainer = "container:WiFiLens.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

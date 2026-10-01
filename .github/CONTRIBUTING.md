@@ -41,9 +41,8 @@ proxy endpoints, and other private network information.
 WiFi Lens requires macOS 14 or later.
 
 ```sh
-git clone https://github.com/SHIINASAMA/wifi-lens
+git clone https://github.com/ShiinaLabs/wifi-lens
 cd wifi-lens
-git submodule update --init ChartLens
 ```
 
 Open the project with:
@@ -121,7 +120,8 @@ xcodebuild \
   -destination 'platform=macOS' \
   -skipPackageUpdates \
   test \
-  -only-testing:WiFiLensTests
+  -only-testing:WiFiLensTests \
+  -only-testing:WiFiLensCoreTests
 ```
 
 UI tests are not required for normal pull requests unless the change

@@ -32,9 +32,9 @@ of modules, file locations, target membership, and dependency direction.
 
 ## Workflow
 
-When an explicitly requested audit is part of a task, follow the per-commit
-consent protocol in `.agents/references/collaboration-rules.md` before running
-checks whose purpose is to gate that commit.
+When an explicitly requested audit is part of a task, follow the commit
+verification guidance in `.agents/references/collaboration-rules.md` and the
+user's instructions for running or skipping checks.
 
 1. Treat the root repository as public and `WiFiLensPro/` as a separate private
    repository. Inspect their Git status and diffs separately.

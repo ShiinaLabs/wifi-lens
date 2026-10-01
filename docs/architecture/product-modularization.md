@@ -8,7 +8,7 @@ blurred the boundary between the public and paid editions, and made development
 instrumentation difficult to keep out of the shipped product. Adding another
 edition or host would have repeated those problems.
 
-The modularization moves shared product capability behind a package boundary,
+The modularization moves shared product capability behind a Framework boundary,
 leaves each edition responsible for its app assembly, and separates development
 instrumentation from production dependencies.
 
@@ -23,10 +23,28 @@ WiFiLens.xcodeproj
 WiFiLensPro/                 # private Pro repository submodule
 ```
 
-`WiFiLensCore` is the shared product package. `WiFiLens/` contains the public
+`WiFiLensCore` is the shared product Framework. `WiFiLens/` contains the public
 macOS app shell and its resources and tests. `WiFiLensPro/` is a separate
 private repository; public documentation identifies that boundary without
 describing its implementation.
+
+## Public CI and release builds
+
+A public checkout opens and builds `WiFiLens.xcodeproj` directly. No private
+submodule, generated project, placeholder package, or preparation script is
+required for the OSS scheme. GitHub CI, Swift CodeQL, and public Release use
+that same canonical project.
+
+Repository-owned product modules are native macOS Framework targets. Xcode
+owns their source membership, resources, target dependencies, app embedding,
+and unit-test targets. Only external dependencies use remote Swift packages;
+there are no project-level local package references. The OSS scheme builds
+only the public app and shared Framework, even when private sources are absent.
+
+The shared Framework has its own `WiFiLensCoreTests` target, included alongside
+app-hosted tests in the OSS test plan. Explicit unit-test selections exclude
+UI bundles. The migration contract is documented in
+[xcode-framework-migration.md](xcode-framework-migration.md).
 
 ## Composition and dependency rules
 
@@ -34,7 +52,7 @@ The public app depends on `WiFiLensCore`. The private edition assembles its
 additional product capability at its own boundary and consumes shared
 capability through `WiFiLensCore`. App targets remain thin: they own process
 entry, scenes, edition composition, resources, and distribution-specific
-integrations, while reusable product behavior belongs in a package.
+integrations, while reusable product behavior belongs in a Framework.
 
 Development capture is a separate tooling boundary. AppStage and synthetic
 scenario support are available to the capture host, while production app

@@ -34,7 +34,7 @@ final class GuidanceCoordinatorTests {
 
     @Test("value moments route to their App Store campaigns")
     func valueMomentsRouteToAppStoreCampaigns() throws {
-        let coordinator = makeCoordinator()
+        let coordinator = EditionAssemblyProvider.configuration.guidanceCoordinator
         let routings: [(moment: GuidanceValueMoment, campaign: String)] = [
             (.diagnosticsCompleted, "oss_diagnosis"),
             (.analysisLoaded, "oss_diagnosis"),

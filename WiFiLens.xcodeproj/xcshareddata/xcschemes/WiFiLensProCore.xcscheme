@@ -6,6 +6,36 @@
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
       buildArchitectures = "Automatic">
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C107EF0FBB615F00BE5ABCBA"
+               BuildableName = "WiFiLensProCore.framework"
+               BlueprintName = "WiFiLensProCore"
+               ReferencedContainer = "container:WiFiLens.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "207473A260E7AD51B3B0EDE5"
+               BuildableName = "WiFiLensProCoreTests.xctest"
+               BlueprintName = "WiFiLensProCoreTests"
+               ReferencedContainer = "container:WiFiLens.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
    </BuildAction>
    <TestAction
       buildConfiguration = "Debug"
@@ -15,36 +45,16 @@
       shouldAutocreateTestPlan = "YES">
       <Testables>
          <TestableReference
-            skipped = "NO"
-            useTestTargetApplicationEnvironment = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "32B8DFED1C1CBAD8FD8C797C"
-               BuildableName = "WiFiLensTests.xctest"
-               BlueprintName = "WiFiLensTests"
-               ReferencedContainer = "container:WiFiLens.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "30E5DBA89B11E877E38DAF73"
-               BuildableName = "WiFiLensCoreTests.xctest"
-               BlueprintName = "WiFiLensCoreTests"
+               BlueprintIdentifier = "207473A260E7AD51B3B0EDE5"
+               BuildableName = "WiFiLensProCoreTests.xctest"
+               BlueprintName = "WiFiLensProCoreTests"
                ReferencedContainer = "container:WiFiLens.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4815C3B026D255EF85C56198"
-            BuildableName = "WiFi Lens.app"
-            BlueprintName = "WiFiLens"
-            ReferencedContainer = "container:WiFiLens.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
