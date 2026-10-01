@@ -2,7 +2,7 @@
 name: verify-build
 description: >
   Use when a change touches the WiFi Lens product itself (Swift app source,
-  unit tests, or the web/ site) before claiming that work is complete, before
+  unit tests) before claiming that work is complete, before
   committing such a change, or when asked to build, run tests, verify, or
   check compilation. Non-product changes (docs, agent assets, other
   repositories) do not trigger build verification.
@@ -29,7 +29,6 @@ changed (table below).
 | App source that is OSS-only or Pro-only | Build the matching scheme + unit tests |
 | New/edited unit test file | Build + `-only-testing:WiFiLensTests` (see below) |
 | `ChartLens/` package code | `cd ChartLens && swift build && swift test` |
-| `web/` site | `cd web && pnpm --config.minimum-release-age=0 build` |
 | `.xcstrings` only | Localization JSON validity + completeness scan (see i18n-completer) |
 | Docs / `.agents/` / other non-product changes | No build checks required |
 

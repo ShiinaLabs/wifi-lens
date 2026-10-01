@@ -63,11 +63,6 @@ cd ChartLens && swift test                         # test
 xcodebuild -project ChartLensDemo/ChartLensDemo.xcodeproj -scheme "ChartLensDemo" -configuration Debug -destination 'platform=macOS' build
 xed ChartLensDemo/ChartLensDemo.xcodeproj
 
-# Website — redirect page to wifi-lens.shiinalabs.com (Astro + pnpm, outputs to dist/)
-cd web && pnpm install --config.minimum-release-age=0
-cd web && pnpm dev                           # dev server at localhost:4321
-cd web && pnpm --config.minimum-release-age=0 build
-cd web && pnpm preview                       # preview production build
 ```
 
 The product name is `WiFi Lens.app` (with space). Unit tests use Swift Testing (`@Test`) with `TEST_HOST` — the test bundle is injected into the app process for `@testable import` symbol resolution. All test `.swift` files must be added to the WiFiLensTests target's Sources build phase (in `project.pbxproj`) for `xcodebuild test` to compile and run them. The `WiFiLensTests` scheme must reference the test bundle in both `<Testables>` and `<MacroExpansion>`.
