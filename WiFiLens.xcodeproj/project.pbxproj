@@ -514,6 +514,24 @@
 		OB00000000000000000000B3 /* RoamingMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B2 /* RoamingMigrationTests.swift */; };
 		OB00000000000000000000B5 /* DiagnosticMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */; };
 		OB00000000000000000000D4 /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000D1 /* RuntimeTests.swift */; };
+		A314AA2C4E5B225B4C3BA2D7 /* de.md in Resources */ = {isa = PBXBuildFile; fileRef = BEA0A8062E73D7ACA2EB7D12 /* de.md */; };
+		58768CB132B3A171133704EE /* en.md in Resources */ = {isa = PBXBuildFile; fileRef = 81BB5972383303B6E57E1AEF /* en.md */; };
+		96EC2F7B815B38A510398540 /* es.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DA5763F2B6D48DEABAA0B76 /* es.md */; };
+		B97BAAD66F695721C08AD2A8 /* fr.md in Resources */ = {isa = PBXBuildFile; fileRef = AD3DEBF2363CBD3278EACB5B /* fr.md */; };
+		2C827EDF1BBD22A255B290E9 /* ja.md in Resources */ = {isa = PBXBuildFile; fileRef = 2C9F86C92AE283D62BFB5DB6 /* ja.md */; };
+		302192CB6034FD068AA5CA48 /* zh-Hans.md in Resources */ = {isa = PBXBuildFile; fileRef = 0A9C31FB0FFE9D2F4673EAED /* zh-Hans.md */; };
+		F845059FA12E28AA4F1B5CA6 /* de.md in Resources */ = {isa = PBXBuildFile; fileRef = BEA0A8062E73D7ACA2EB7D12 /* de.md */; };
+		C85FB2D95680165BF6CEFD32 /* en.md in Resources */ = {isa = PBXBuildFile; fileRef = 81BB5972383303B6E57E1AEF /* en.md */; };
+		E6540C2A1474DB63EB98DA19 /* es.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DA5763F2B6D48DEABAA0B76 /* es.md */; };
+		36E2E7BBE61DADD31D0EBCF1 /* fr.md in Resources */ = {isa = PBXBuildFile; fileRef = AD3DEBF2363CBD3278EACB5B /* fr.md */; };
+		ABD1246CB898FC573E794D5F /* ja.md in Resources */ = {isa = PBXBuildFile; fileRef = 2C9F86C92AE283D62BFB5DB6 /* ja.md */; };
+		1A358C4237BDDE0194DB21F8 /* zh-Hans.md in Resources */ = {isa = PBXBuildFile; fileRef = 0A9C31FB0FFE9D2F4673EAED /* zh-Hans.md */; };
+		1D3292173733C1AA9CF6F5A6 /* de.md in Resources */ = {isa = PBXBuildFile; fileRef = BEA0A8062E73D7ACA2EB7D12 /* de.md */; };
+		C0279C53FC5744BBA946EBC0 /* en.md in Resources */ = {isa = PBXBuildFile; fileRef = 81BB5972383303B6E57E1AEF /* en.md */; };
+		C296346F56DE4E8D5D775B2D /* es.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DA5763F2B6D48DEABAA0B76 /* es.md */; };
+		3F28807C946EABCC3D780EFD /* fr.md in Resources */ = {isa = PBXBuildFile; fileRef = AD3DEBF2363CBD3278EACB5B /* fr.md */; };
+		FA527563B25D83F17A904384 /* ja.md in Resources */ = {isa = PBXBuildFile; fileRef = 2C9F86C92AE283D62BFB5DB6 /* ja.md */; };
+		F16A988E671B2A2CB37F4E8E /* zh-Hans.md in Resources */ = {isa = PBXBuildFile; fileRef = 0A9C31FB0FFE9D2F4673EAED /* zh-Hans.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1132,6 +1150,12 @@
 		OB00000000000000000000B2 /* RoamingMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000D1 /* RuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeTests.swift; sourceTree = "<group>"; };
+		BEA0A8062E73D7ACA2EB7D12 /* de.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = de.md; sourceTree = "<group>"; };
+		81BB5972383303B6E57E1AEF /* en.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = en.md; sourceTree = "<group>"; };
+		6DA5763F2B6D48DEABAA0B76 /* es.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = es.md; sourceTree = "<group>"; };
+		AD3DEBF2363CBD3278EACB5B /* fr.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = fr.md; sourceTree = "<group>"; };
+		2C9F86C92AE283D62BFB5DB6 /* ja.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ja.md; sourceTree = "<group>"; };
+		0A9C31FB0FFE9D2F4673EAED /* zh-Hans.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = zh-Hans.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2135,6 +2159,7 @@
 				FBBD16982FD062F60093F940 /* PrivacyInfo.xcprivacy */,
 				FBB1F0AB2FC61E3D00E9D2C6 /* Localizable.xcstrings */,
 				MV0000000000000000000050 /* mac-vendor-database.json */,
+				66DC827C6F629620D7F438EC /* WhatsNew */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -2335,6 +2360,19 @@
 				OB00000000000000000000D1 /* RuntimeTests.swift */,
 			);
 			path = Observation;
+			sourceTree = "<group>";
+		};
+		66DC827C6F629620D7F438EC /* WhatsNew */ = {
+			isa = PBXGroup;
+			children = (
+				BEA0A8062E73D7ACA2EB7D12 /* de.md */,
+				81BB5972383303B6E57E1AEF /* en.md */,
+				6DA5763F2B6D48DEABAA0B76 /* es.md */,
+				AD3DEBF2363CBD3278EACB5B /* fr.md */,
+				2C9F86C92AE283D62BFB5DB6 /* ja.md */,
+				0A9C31FB0FFE9D2F4673EAED /* zh-Hans.md */,
+			);
+			path = WhatsNew;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -2760,6 +2798,12 @@
 				FB39A198306E19190084F54C /* InfoPlist.xcstrings in Resources */,
 				FB39A199306E19190084F54C /* mac-vendor-database.json in Resources */,
 				FB39A19A306E19190084F54C /* WiFi Lens.icon in Resources */,
+				1D3292173733C1AA9CF6F5A6 /* de.md in Resources */,
+				C0279C53FC5744BBA946EBC0 /* en.md in Resources */,
+				C296346F56DE4E8D5D775B2D /* es.md in Resources */,
+				3F28807C946EABCC3D780EFD /* fr.md in Resources */,
+				FA527563B25D83F17A904384 /* ja.md in Resources */,
+				F16A988E671B2A2CB37F4E8E /* zh-Hans.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2773,6 +2817,12 @@
 				FB23154B304D9B6400619D14 /* InfoPlist.xcstrings in Resources */,
 				MV0000000000000000000051 /* mac-vendor-database.json in Resources */,
 				A1C0DE0000000000000000F3 /* WiFi Lens.icon in Resources */,
+				F845059FA12E28AA4F1B5CA6 /* de.md in Resources */,
+				C85FB2D95680165BF6CEFD32 /* en.md in Resources */,
+				E6540C2A1474DB63EB98DA19 /* es.md in Resources */,
+				36E2E7BBE61DADD31D0EBCF1 /* fr.md in Resources */,
+				ABD1246CB898FC573E794D5F /* ja.md in Resources */,
+				1A358C4237BDDE0194DB21F8 /* zh-Hans.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2786,6 +2836,12 @@
 				FB23154C304D9B6400619D14 /* InfoPlist.xcstrings in Resources */,
 				MV0000000000000000000049 /* mac-vendor-database.json in Resources */,
 				A1C0DE0000000000000000F2 /* WiFi Lens.icon in Resources */,
+				A314AA2C4E5B225B4C3BA2D7 /* de.md in Resources */,
+				58768CB132B3A171133704EE /* en.md in Resources */,
+				96EC2F7B815B38A510398540 /* es.md in Resources */,
+				B97BAAD66F695721C08AD2A8 /* fr.md in Resources */,
+				2C827EDF1BBD22A255B290E9 /* ja.md in Resources */,
+				302192CB6034FD068AA5CA48 /* zh-Hans.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

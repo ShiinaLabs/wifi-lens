@@ -10,6 +10,16 @@ final class WhatsNewCoordinatorTests {
     private var store: InMemoryWhatsNewStateStore!
     private var coordinator: WhatsNewCoordinator!
 
+    // MARK: - Bundled release notes
+
+    @Test(arguments: ["de", "en", "es", "fr", "ja", "zh-Hans"])
+    func releaseNotesAreReadableFromAppBundle(language: String) throws {
+        let url = try #require(Bundle.main.url(forResource: language, withExtension: "md"))
+        let markdown = try String(contentsOf: url, encoding: .utf8)
+        #expect(!markdown.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        #expect(!MarkdownRenderer.render(markdown, pointSize: 13).string.isEmpty)
+    }
+
     // MARK: - Version gating
 
     @Test func showsSheetWhenVersionDiffers() {

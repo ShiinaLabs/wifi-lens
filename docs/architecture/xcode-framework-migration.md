@@ -69,6 +69,10 @@ These are implementation stages, not authorization to commit or push.
 - Preserve the app-owned String Catalog and current localization lookup.
   Verify lookup through app-hosted tests after linking the shared framework;
   do not move or rewrite translations as part of this migration.
+- Register all six localized release-note Markdown files in each app target's
+  Copy Bundle Resources phase. Keep the files at the app resource root to match
+  the existing `Bundle.main` lookup. Verify readable notes in actual built apps;
+  a successful compile or files left in old DerivedData do not prove packaging.
 - Preserve each former package's test suite as a dedicated Xcode test target.
   Register sources, dependencies, scheme Testables, and test-plan entries.
   App integration tests retain their app host; shared framework unit tests do
