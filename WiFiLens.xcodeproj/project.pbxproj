@@ -325,6 +325,8 @@
 		74000000000000000000000A /* StorageMigrationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000005 /* StorageMigrationCoordinatorTests.swift */; };
 		740000000000000000000010 /* SQLiteStorageMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000014 /* SQLiteStorageMigrator.swift */; };
 		740000000000000000000012 /* SQLiteStorageMigrator.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000014 /* SQLiteStorageMigrator.swift */; };
+		740000000000000000000011 /* AuxiliaryStorageMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000015 /* AuxiliaryStorageMigrator.swift */; };
+		740000000000000000000013 /* AuxiliaryStorageMigrator.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000015 /* AuxiliaryStorageMigrator.swift */; };
 		C90000000000000000000006 /* ProSettingsComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000007 /* ProSettingsComposition.swift */; };
 		C90000000000000000000007 /* ProSpectrumCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000D /* ProSpectrumCompositionView.swift */; };
 		C9000000000000000000000A /* ProProductionEditionHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90000000000000000000009 /* ProProductionEditionHooks.swift */; };
@@ -1080,6 +1082,7 @@
 		740000000000000000000004 /* StorageMigrationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageMigrationError.swift; sourceTree = "<group>"; };
 		740000000000000000000005 /* StorageMigrationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageMigrationCoordinatorTests.swift; sourceTree = "<group>"; };
 		740000000000000000000014 /* SQLiteStorageMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteStorageMigrator.swift; sourceTree = "<group>"; };
+		740000000000000000000015 /* AuxiliaryStorageMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuxiliaryStorageMigrator.swift; sourceTree = "<group>"; };
 		EC20000000000000000000007 /* ProSettingsComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSettingsComposition.swift; sourceTree = "<group>"; };
 		EC20000000000000000000009 /* ProMenuBarComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProMenuBarComposition.swift; sourceTree = "<group>"; };
 		EC2000000000000000000000D /* ProSpectrumCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSpectrumCompositionView.swift; sourceTree = "<group>"; };
@@ -2155,6 +2158,7 @@
 				740000000000000000000003 /* StorageMigrationCoordinator.swift */,
 				740000000000000000000004 /* StorageMigrationError.swift */,
 				740000000000000000000014 /* SQLiteStorageMigrator.swift */,
+				740000000000000000000015 /* AuxiliaryStorageMigrator.swift */,
 			);
 			path = StorageMigration;
 			sourceTree = "<group>";
@@ -3333,6 +3337,7 @@
 				74000000000000000000000E /* StorageMigrationCoordinator.swift in Capture Sources */,
 				74000000000000000000000F /* StorageMigrationError.swift in Capture Sources */,
 				740000000000000000000012 /* SQLiteStorageMigrator.swift in Capture Sources */,
+				740000000000000000000013 /* AuxiliaryStorageMigrator.swift in Capture Sources */,
 				FB39A17F306E19190084F54C /* ExistingInstallationDetector.swift in Sources */,
 				C90000000000000000000004 /* ProCaptureEditionComposition.swift in Sources */,
 				C90000000000000000000005 /* ProEditionComposition.swift in Sources */,
@@ -3364,6 +3369,7 @@
 				740000000000000000000008 /* StorageMigrationCoordinator.swift in Sources */,
 				740000000000000000000009 /* StorageMigrationError.swift in Sources */,
 				740000000000000000000010 /* SQLiteStorageMigrator.swift in Sources */,
+				740000000000000000000011 /* AuxiliaryStorageMigrator.swift in Sources */,
 				G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */,
 				EC20000000000000000000004 /* ProEditionComposition.swift in Sources */,
 				EC20000000000000000000008 /* ProSettingsComposition.swift in Sources */,
