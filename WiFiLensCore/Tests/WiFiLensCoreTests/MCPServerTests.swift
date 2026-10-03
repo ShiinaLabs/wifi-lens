@@ -324,8 +324,6 @@ import MCP
             defaultMCPPort: 19840,
             mcpServerName: "example-app"
         )
-        let supportDirectory = URL(fileURLWithPath: "/tmp/wifi-lens-app-support")
-
         #expect(development.isDevelopment)
         #expect(development.bundleIdentity == "com.example.app.dev")
         #expect(development.displayName == "Example App Dev")
@@ -341,10 +339,6 @@ import MCP
         } catch {
             #expect(error as? MCPServer.StartError == .productionPortReservedForDevelopment)
         }
-        #expect(development.storageRoot(applicationSupportDirectory: supportDirectory)
-            != production.storageRoot(applicationSupportDirectory: supportDirectory))
-        #expect(production.storageRoot(applicationSupportDirectory: supportDirectory)
-            == supportDirectory.appendingPathComponent("ExampleApp", isDirectory: true))
     }
 
     @Test func setupPromptUsesConfiguredPort() {

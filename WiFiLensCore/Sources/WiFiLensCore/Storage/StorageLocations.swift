@@ -23,8 +23,9 @@ public struct StorageLocations: Sendable {
         applicationSupportDirectory: URL,
         cachesDirectory: URL
     ) {
-        let root = environment.storageRoot(
-            applicationSupportDirectory: applicationSupportDirectory
+        let root = applicationSupportDirectory.appendingPathComponent(
+            environment.storageNamespace,
+            isDirectory: true
         )
         applicationSupportRoot = root
         observationDatabase = root.appendingPathComponent(
