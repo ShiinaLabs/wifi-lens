@@ -52,6 +52,19 @@ struct MCPSnapshot: Sendable {
 /// MCP Streamable HTTP server on localhost.
 /// Only accessible from this machine — no external network exposure.
 final class MCPServer: @unchecked Sendable {
+    static let maximumRequestBodyLength = 1_048_576
+
+    enum ContentLengthFailure: Error, Equatable {
+        case badRequest
+        case payloadTooLarge
+    }
+
+    enum BodyFraming: Equatable {
+        case complete(Data)
+        case needsMore(Int)
+        case invalid
+    }
+
     private static let logger = Logger(label: "mcp")
     private let lock = NSLock()
     private var listener: NWListener?
@@ -273,15 +286,27 @@ final class MCPServer: @unchecked Sendable {
                 headers[key] = value
             }
 
-            let contentLength = Int(headers["content-length"] ?? "") ?? 0
+            let contentLength: Int
+            switch Self.parseContentLength(headers["content-length"]) {
+            case .success(let parsedLength):
+                contentLength = parsedLength
+            case .failure(let failure):
+                let statusCode = failure == .payloadTooLarge ? 413 : 400
+                let message = failure == .payloadTooLarge ? "Payload Too Large" : "Bad Request"
+                conn.send(content: Self.serialize(statusCode: statusCode, body: Data(message.utf8)),
+                          completion: .contentProcessed { _ in conn.cancel() })
+                return
+            }
             let bodySoFar = Data(afterHeaders)
 
-            if bodySoFar.count >= contentLength {
-                let body = bodySoFar.prefix(contentLength)
+            switch Self.frameBody(bodySoFar, contentLength: contentLength) {
+            case .complete(let body):
                 self.processRequest(conn, transport: transport, method: method, path: path, headers: headers, body: body)
-            } else {
+            case .needsMore:
                 self.receiveBody(conn, transport: transport, method: method, path: path,
                                  headers: headers, bodySoFar: bodySoFar, contentLength: contentLength)
+            case .invalid:
+                conn.cancel()
             }
         }
     }
@@ -291,10 +316,13 @@ final class MCPServer: @unchecked Sendable {
         method: String, path: String, headers: [String: String],
         bodySoFar: Data, contentLength: Int
     ) {
-        let remaining = contentLength - bodySoFar.count
-        guard remaining > 0 else {
-            processRequest(conn, transport: transport, method: method, path: path,
-                           headers: headers, body: bodySoFar)
+        guard case .needsMore(let remaining) = Self.frameBody(bodySoFar, contentLength: contentLength) else {
+            if case .complete(let body) = Self.frameBody(bodySoFar, contentLength: contentLength) {
+                processRequest(conn, transport: transport, method: method, path: path,
+                               headers: headers, body: body)
+            } else {
+                conn.cancel()
+            }
             return
         }
         conn.receive(minimumIncompleteLength: remaining, maximumLength: remaining) { [weak self] data, _, _, error in
@@ -302,9 +330,36 @@ final class MCPServer: @unchecked Sendable {
             if error != nil { conn.cancel(); return }
             var full = bodySoFar
             if let data { full.append(data) }
-            self.processRequest(conn, transport: transport, method: method, path: path,
-                                headers: headers, body: full.prefix(contentLength))
+            switch Self.frameBody(full, contentLength: contentLength) {
+            case .complete(let body):
+                self.processRequest(conn, transport: transport, method: method, path: path,
+                                    headers: headers, body: body)
+            case .needsMore:
+                self.receiveBody(conn, transport: transport, method: method, path: path,
+                                 headers: headers, bodySoFar: full, contentLength: contentLength)
+            case .invalid:
+                conn.cancel()
+            }
         }
+    }
+
+    static func parseContentLength(_ header: String?) -> Result<Int, ContentLengthFailure> {
+        guard let header else { return .success(0) }
+        let bytes = header.utf8
+        guard !bytes.isEmpty, bytes.allSatisfy({ $0 >= 48 && $0 <= 57 }),
+              let length = Int(header) else {
+            return .failure(.badRequest)
+        }
+        guard length <= maximumRequestBodyLength else { return .failure(.payloadTooLarge) }
+        return .success(length)
+    }
+
+    static func frameBody(_ body: Data, contentLength: Int) -> BodyFraming {
+        guard (0...maximumRequestBodyLength).contains(contentLength) else {
+            return .invalid
+        }
+        if body.count < contentLength { return .needsMore(contentLength - body.count) }
+        return .complete(Data(body.prefix(contentLength)))
     }
 
     private func processRequest(
@@ -323,28 +378,36 @@ final class MCPServer: @unchecked Sendable {
     // MARK: - HTTP response serialization
 
     private static func serialize(_ response: HTTPResponse) -> Data {
+        serialize(statusCode: response.statusCode, headers: response.headers, body: response.bodyData ?? Data())
+    }
+
+    static func serialize(statusCode: Int, body: Data) -> Data {
+        serialize(statusCode: statusCode, headers: [:], body: body)
+    }
+
+    private static func serialize(statusCode: Int, headers: [String: String], body: Data) -> Data {
         let statusLine: String
-        switch response.statusCode {
+        switch statusCode {
         case 200: statusLine = "HTTP/1.1 200 OK\r\n"
         case 202: statusLine = "HTTP/1.1 202 Accepted\r\n"
         case 400: statusLine = "HTTP/1.1 400 Bad Request\r\n"
+        case 413: statusLine = "HTTP/1.1 413 Payload Too Large\r\n"
         case 404: statusLine = "HTTP/1.1 404 Not Found\r\n"
         case 405: statusLine = "HTTP/1.1 405 Method Not Allowed\r\n"
         case 406: statusLine = "HTTP/1.1 406 Not Acceptable\r\n"
         case 415: statusLine = "HTTP/1.1 415 Unsupported Media Type\r\n"
-        default:  statusLine = "HTTP/1.1 \(response.statusCode) Error\r\n"
+        default:  statusLine = "HTTP/1.1 \(statusCode) Error\r\n"
         }
 
-        let bodyData = response.bodyData ?? Data()
         var headerStr = statusLine
-        for (key, value) in response.headers {
+        for (key, value) in headers {
             headerStr += "\(key): \(value)\r\n"
         }
-        headerStr += "Content-Length: \(bodyData.count)\r\n"
+        headerStr += "Content-Length: \(body.count)\r\n"
         headerStr += "\r\n"
 
         guard let headerData = headerStr.data(using: .ascii) else { return Data() }
-        return headerData + bodyData
+        return headerData + body
     }
 
     // MARK: - Tool dispatch
