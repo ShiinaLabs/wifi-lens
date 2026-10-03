@@ -25,9 +25,7 @@ actor MACVendorDatabaseStore {
         commitPendingFile: CommitPendingFile? = nil
     ) {
         self.fileManager = fileManager
-        self.baseDirectory = baseDirectory ?? fileManager
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appending(path: "WiFi Lens/MACVendorDatabase", directoryHint: .isDirectory)
+        self.baseDirectory = baseDirectory ?? StorageLocations.current.macVendorDatabase
         self.commitPendingFile = commitPendingFile ?? { pendingURL, databaseURL in
             if FileManager.default.fileExists(atPath: databaseURL.path) {
                 _ = try FileManager.default.replaceItemAt(databaseURL, withItemAt: pendingURL)

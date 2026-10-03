@@ -266,6 +266,8 @@
 		ACB82A2C80A21A3E58C8C529 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 956DE9019C6E16DBBBE975E7 /* MCP */; };
 		AD3512BDF1DF56B2101BFB63 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59593DC4F8361B2526A85B97 /* SettingsView.swift */; };
 		AD66698C941A72AB6774CE78 /* MACVendorDatabaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D560223B45D5C10948D2D085 /* MACVendorDatabaseStore.swift */; };
+		710000000000000000000004 /* StorageLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000001 /* StorageLocations.swift */; };
+		710000000000000000000005 /* StorageLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000002 /* StorageLocationsTests.swift */; };
 		AD6B85315B7749C89CF49F65 /* SpectrumHeatmapActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F432AAE54AE9233BB586EA4 /* SpectrumHeatmapActivity.swift */; };
 		ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */; };
 		ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000003 /* DebugMultiAPScenario.swift */; };
@@ -1033,6 +1035,8 @@
 		D14393ECC64A14D68705BFFB /* IEParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IEParserTests.swift; sourceTree = "<group>"; };
 		D3E2BD9945FD69F33D8C24DC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D560223B45D5C10948D2D085 /* MACVendorDatabaseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseStore.swift; sourceTree = "<group>"; };
+		710000000000000000000001 /* StorageLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocations.swift; sourceTree = "<group>"; };
+		710000000000000000000002 /* StorageLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocationsTests.swift; sourceTree = "<group>"; };
 		D567C1BB3B54FC932634E36D /* NativeTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeTableView.swift; sourceTree = "<group>"; };
 		D92298452F334CDAAA9695D3 /* WindowFramePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicyTests.swift; sourceTree = "<group>"; };
 		D9289D069FBAE8E6BDDEA04D /* RecordingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingViewModel.swift; sourceTree = "<group>"; };
@@ -1616,6 +1620,7 @@
 		61E38B6F594EC279885460DF /* WiFiLensCoreTests */ = {
 			isa = PBXGroup;
 			children = (
+				710000000000000000000002 /* StorageLocationsTests.swift */,
 				2CF8F9B5DD7A847BE1145FCE /* Channels */,
 				487F4EEE86781884383EB1F3 /* Observation */,
 				B514D3472A83210B9FE6883B /* Regulatory */,
@@ -1897,6 +1902,7 @@
 		CAA4600A0F8E3473D5869021 /* WiFiLensCore */ = {
 			isa = PBXGroup;
 			children = (
+				710000000000000000000003 /* Storage */,
 				229562F0F20B864253CE7EED /* App */,
 				8396E2C331A86C642BBEAC65 /* APRadar */,
 				1D175F7D7AD178AA9CB5CCDD /* BLE */,
@@ -1985,6 +1991,14 @@
 				83D5D8E3A6D9DCEBA5E4B38B /* WiFiPowerMonitor.swift */,
 			);
 			path = WiFiLensCore;
+			sourceTree = "<group>";
+		};
+		710000000000000000000003 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				710000000000000000000001 /* StorageLocations.swift */,
+			);
+			path = Storage;
 			sourceTree = "<group>";
 		};
 		D04EFE6CE2410ABA20BFAFD9 /* Analyzers */ = {
@@ -2974,6 +2988,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				710000000000000000000005 /* StorageLocationsTests.swift in Sources */,
 				C94E78B4E1D29F278D5A4BFD /* APRadarSignalProcessorTests.swift in Sources */,
 				F5CB685AD7407C0619390870 /* APRadarSoundSynthesizerTests.swift in Sources */,
 				28199D9AC03B2660F3A03F2B /* APRadarViewModelTests.swift in Sources */,
@@ -3014,6 +3029,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				710000000000000000000004 /* StorageLocations.swift in Sources */,
 				1BFF89425A53EF7DA96988D7 /* APDisplayState.swift in Sources */,
 				0E0000F1524FC2B3BD876330 /* APRadarView.swift in Sources */,
 				325F2166A960C703E2734DCB /* APSelectionView.swift in Sources */,
