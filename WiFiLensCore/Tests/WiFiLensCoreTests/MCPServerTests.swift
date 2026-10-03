@@ -307,23 +307,63 @@ import MCP
 
     // MARK: - Setup prompt
 
+    @Test func appEnvironmentSeparatesBuildDefaultsAndStorageNamespaces() {
+        let development = AppEnvironment(
+            environmentValue: "development",
+            bundleIdentity: "com.example.app.dev",
+            displayName: "Example App Dev",
+            storageNamespace: "ExampleApp-Dev",
+            defaultMCPPort: 19841,
+            mcpServerName: "example-app-dev"
+        )
+        let production = AppEnvironment(
+            environmentValue: "production",
+            bundleIdentity: "com.example.app",
+            displayName: "Example App",
+            storageNamespace: "ExampleApp",
+            defaultMCPPort: 19840,
+            mcpServerName: "example-app"
+        )
+        let supportDirectory = URL(fileURLWithPath: "/tmp/wifi-lens-app-support")
+
+        #expect(development.isDevelopment)
+        #expect(development.bundleIdentity == "com.example.app.dev")
+        #expect(development.displayName == "Example App Dev")
+        #expect(development.defaultMCPPort == 19841)
+        #expect(production.defaultMCPPort == 19840)
+        #expect(!development.allowsMCPPort(AppEnvironment.productionMCPPort))
+        #expect(development.allowsMCPPort(19841))
+        #expect(production.allowsMCPPort(AppEnvironment.productionMCPPort))
+        #expect(production.allowsMCPPort(28461))
+        do {
+            try MCPServer.validatePort(UInt16(AppEnvironment.productionMCPPort), environment: development)
+            Issue.record("Development must not listen on the production MCP port")
+        } catch {
+            #expect(error as? MCPServer.StartError == .productionPortReservedForDevelopment)
+        }
+        #expect(development.storageRoot(applicationSupportDirectory: supportDirectory)
+            != production.storageRoot(applicationSupportDirectory: supportDirectory))
+        #expect(production.storageRoot(applicationSupportDirectory: supportDirectory)
+            == supportDirectory.appendingPathComponent("ExampleApp", isDirectory: true))
+    }
+
     @Test func setupPromptUsesConfiguredPort() {
         let prompt = MCPServer.setupPrompt(port: 28461)
 
-        #expect(prompt.contains("wifi-lens"))
+        #expect(prompt.contains(AppEnvironment.current.mcpServerName))
         #expect(prompt.contains("http://127.0.0.1:28461/"))
         #expect(!prompt.contains("19840"))
     }
 
     @Test func setupPromptIncludesClientFormatsAndSafetyBoundaries() {
-        let prompt = MCPServer.setupPrompt(port: 19840)
+        let prompt = MCPServer.setupPrompt(port: UInt16(AppEnvironment.current.defaultMCPPort))
 
         #expect(prompt.contains("Streamable HTTP"))
         #expect(prompt.lowercased().contains("read-only"))
         #expect(prompt.contains("127.0.0.1"))
         #expect(prompt.contains("Preserve every other setting"))
         #expect(prompt.contains("Do not expose this server"))
-        #expect(prompt.contains("verify that the wifi-lens MCP server"))
+        #expect(prompt.contains("verify that the \(AppEnvironment.current.mcpServerName) MCP server"))
         #expect(prompt.contains("Use this client's native configuration format"))
     }
 }

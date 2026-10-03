@@ -1,4 +1,83 @@
+import Foundation
 import SwiftUI
+
+/// Runtime settings injected by the host app's build configuration.
+/// An unconfigured host keeps the historical WiFi Lens defaults.
+public struct AppEnvironment: Equatable, Sendable {
+    public static let productionMCPPort = 19840
+
+    public enum Kind: String, Sendable {
+        case development
+        case production
+    }
+
+    public let kind: Kind
+    public let bundleIdentity: String?
+    public let displayName: String
+    public let storageNamespace: String
+    public let defaultMCPPort: Int
+    public let mcpServerName: String
+    public let isConfigured: Bool
+    public let hasValidKind: Bool
+
+    public var isDevelopment: Bool { kind == .development }
+    public func allowsMCPPort(_ port: Int) -> Bool {
+        !isDevelopment || port != Self.productionMCPPort
+    }
+    public var loggingSubsystem: String {
+        bundleIdentity ?? "com.kaoru.wifi-lens"
+    }
+
+    public init(
+        environmentValue: String?,
+        bundleIdentity: String?,
+        displayName: String?,
+        storageNamespace: String?,
+        defaultMCPPort: Int?,
+        mcpServerName: String?
+    ) {
+        let resolvedKind = environmentValue.flatMap(Kind.init(rawValue:))
+        self.kind = resolvedKind ?? .production
+        self.bundleIdentity = bundleIdentity
+        self.displayName = displayName ?? "WiFi Lens"
+        self.storageNamespace = storageNamespace ?? "WiFiLens"
+        self.defaultMCPPort = defaultMCPPort ?? Self.productionMCPPort
+        self.mcpServerName = mcpServerName ?? "wifi-lens"
+        self.isConfigured = environmentValue != nil
+        self.hasValidKind = environmentValue == nil || resolvedKind != nil
+    }
+
+    public func storageRoot(fileManager: FileManager = .default) -> URL {
+        let applicationSupport = fileManager.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        ).first ?? fileManager.temporaryDirectory
+        return storageRoot(applicationSupportDirectory: applicationSupport)
+    }
+
+    public func storageRoot(applicationSupportDirectory: URL) -> URL {
+        applicationSupportDirectory.appendingPathComponent(storageNamespace, isDirectory: true)
+    }
+
+    public static let current: AppEnvironment = {
+        let info = Bundle.main.infoDictionary ?? [:]
+        return AppEnvironment(
+            environmentValue: info["APP_ENVIRONMENT"] as? String,
+            bundleIdentity: Bundle.main.bundleIdentifier,
+            displayName: info["APP_DISPLAY_NAME"] as? String
+                ?? info["CFBundleDisplayName"] as? String,
+            storageNamespace: info["APP_STORAGE_NAMESPACE"] as? String,
+            defaultMCPPort: integerValue(info["DEFAULT_MCP_PORT"]),
+            mcpServerName: info["MCP_SERVER_NAME"] as? String
+        )
+    }()
+
+    private static func integerValue(_ value: Any?) -> Int? {
+        if let number = value as? NSNumber { return number.intValue }
+        if let string = value as? String { return Int(string) }
+        return nil
+    }
+}
 
 public enum Constants {
     static let scanInterval: Duration = .seconds(3)

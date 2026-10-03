@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FB1E32402FC7316C009D1BDC"
-               BuildableName = "WiFi Lens Pro.app"
+               BuildableName = "WiFi Lens Pro Dev.app"
                BlueprintName = "WiFiLensPro"
                ReferencedContainer = "container:WiFiLens.xcodeproj">
             </BuildableReference>
@@ -96,7 +96,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FB1E32402FC7316C009D1BDC"
-            BuildableName = "WiFi Lens Pro.app"
+            BuildableName = "WiFi Lens Pro Dev.app"
             BlueprintName = "WiFiLensPro"
             ReferencedContainer = "container:WiFiLens.xcodeproj">
          </BuildableReference>
@@ -116,7 +116,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FB1E32402FC7316C009D1BDC"
-            BuildableName = "WiFi Lens Pro.app"
+            BuildableName = "WiFi Lens Pro Dev.app"
             BlueprintName = "WiFiLensPro"
             ReferencedContainer = "container:WiFiLens.xcodeproj">
          </BuildableReference>

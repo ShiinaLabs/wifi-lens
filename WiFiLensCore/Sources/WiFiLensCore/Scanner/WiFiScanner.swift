@@ -81,7 +81,7 @@ public struct WiFiScanCadenceDiagnostics: Equatable, Sendable {
 }
 
 actor WiFiScanner: WiFiScanStreaming {
-    private static let logger = Logger(subsystem: "com.kaoru.wifi-lens", category: "scanner")
+    private static let logger = Logger(subsystem: AppEnvironment.current.loggingSubsystem, category: "scanner")
     private let client = CWWiFiClient.shared()
     private let clock: any WiFiScanClock
     private var shouldStop = false

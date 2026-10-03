@@ -2,6 +2,7 @@ import Foundation
 import Logging
 import OSLog
 import AppKit
+import WiFiLensCore
 
 // MARK: - AppLogger
 
@@ -68,7 +69,11 @@ enum AppLogger {
     // MARK: Log directory
 
     static var logDirectory: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let environment = AppEnvironment.current
+        if environment.isDevelopment {
+            return environment.storageRoot().appendingPathComponent("Logs", isDirectory: true)
+        }
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("WiFi Lens")
             .appendingPathComponent("Logs")
     }

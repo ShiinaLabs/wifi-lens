@@ -472,7 +472,7 @@ public final class WiFiObservationRuntime {
 
 @MainActor
 private final class ObservationConsumerWorker {
-    private let logger = Logger(subsystem: "com.kaoru.wifi-lens", category: "observation")
+    private let logger = Logger(subsystem: AppEnvironment.current.loggingSubsystem, category: "observation")
     let consumer: any WiFiObservationConsuming
 
     private var pendingTimestamps: [Date] = []

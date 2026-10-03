@@ -1087,7 +1087,7 @@ struct WiFiLensApp: App {
     @State private var routeResources = MainWindowRouteResourceCoordinator()
     @State private var pendingResolvedMainWindowFocus = false
     @AppStorage("mcpEnabled") private var mcpEnabled: Bool = false
-    @AppStorage("mcpPort") private var mcpPort: Int = 19840
+    @AppStorage("mcpPort") private var mcpPort: Int = AppEnvironment.current.defaultMCPPort
     @State private var mcpLifecycleTask: Task<Void, Never>? = nil
     @AppStorage("appearance") private var appearance: String = "system"
     @AppStorage("bleEnabled") private var bleEnabled: Bool = false
@@ -1143,7 +1143,7 @@ struct WiFiLensApp: App {
     @State private var crashLogText: String = ""
 
     var body: some Scene {
-        WindowGroup(id: Self.mainWindowSceneID) { mainWindowContent }
+        WindowGroup(AppEnvironment.current.displayName, id: Self.mainWindowSceneID) { mainWindowContent }
         // Keep a default launch size only. The app window must remain a normal
         // resizable macOS window; do not add `.windowResizability(.contentSize)`.
         .defaultSize(

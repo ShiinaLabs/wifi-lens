@@ -3961,6 +3961,11 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
 			buildSettings = {
+				APP_DISPLAY_NAME = "WiFi Lens Pro Capture";
+				APP_ENVIRONMENT = development;
+				APP_STORAGE_NAMESPACE = WiFiLens-Pro-Capture;
+				DEFAULT_MCP_PORT = 19842;
+				MCP_SERVER_NAME = "wifi-lens-pro-capture";
 				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -3984,7 +3989,12 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
+				INFOPLIST_KEY_APP_DISPLAY_NAME = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_APP_ENVIRONMENT = "$(APP_ENVIRONMENT)";
+				INFOPLIST_KEY_APP_STORAGE_NAMESPACE = "$(APP_STORAGE_NAMESPACE)";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
+				INFOPLIST_KEY_DEFAULT_MCP_PORT = "$(DEFAULT_MCP_PORT)";
+				INFOPLIST_KEY_MCP_SERVER_NAME = "$(MCP_SERVER_NAME)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings.";
@@ -4009,6 +4019,11 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
 			buildSettings = {
+				APP_DISPLAY_NAME = "WiFi Lens Pro Capture";
+				APP_ENVIRONMENT = development;
+				APP_STORAGE_NAMESPACE = WiFiLens-Pro-Capture;
+				DEFAULT_MCP_PORT = 19842;
+				MCP_SERVER_NAME = "wifi-lens-pro-capture";
 				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -4032,7 +4047,12 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
+				INFOPLIST_KEY_APP_DISPLAY_NAME = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_APP_ENVIRONMENT = "$(APP_ENVIRONMENT)";
+				INFOPLIST_KEY_APP_STORAGE_NAMESPACE = "$(APP_STORAGE_NAMESPACE)";
 				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
+				INFOPLIST_KEY_DEFAULT_MCP_PORT = "$(DEFAULT_MCP_PORT)";
+				INFOPLIST_KEY_MCP_SERVER_NAME = "$(MCP_SERVER_NAME)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings.";
@@ -4169,12 +4189,18 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
 			buildSettings = {
+				APP_DISPLAY_NAME = "WiFi Lens Pro Dev";
+				APP_ENVIRONMENT = development;
+				APP_STORAGE_NAMESPACE = WiFiLens-Dev;
+				DEFAULT_MCP_PORT = 19841;
+				MCP_SERVER_NAME = "wifi-lens-pro-dev";
 				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = WiFiLensPro/WiFiLensPro-Development.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 180;
 				DEAD_CODE_STRIPPING = YES;
@@ -4193,7 +4219,13 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro";
+				INFOPLIST_KEY_APP_DISPLAY_NAME = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_APP_ENVIRONMENT = "$(APP_ENVIRONMENT)";
+				INFOPLIST_KEY_APP_STORAGE_NAMESPACE = "$(APP_STORAGE_NAMESPACE)";
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_CFBundleName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_DEFAULT_MCP_PORT = "$(DEFAULT_MCP_PORT)";
+				INFOPLIST_KEY_MCP_SERVER_NAME = "$(MCP_SERVER_NAME)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings.";
@@ -4206,8 +4238,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 2.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.kaoru.wifi-lens-pro";
-				PRODUCT_NAME = "WiFi Lens Pro";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kaoru.wifi-lens-pro.dev";
+				PRODUCT_MODULE_NAME = WiFi_Lens_Pro;
+				PRODUCT_NAME = "$(APP_DISPLAY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
@@ -4218,6 +4251,11 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
 			buildSettings = {
+				APP_DISPLAY_NAME = "WiFi Lens Pro";
+				APP_ENVIRONMENT = production;
+				APP_STORAGE_NAMESPACE = WiFiLens;
+				DEFAULT_MCP_PORT = 19840;
+				MCP_SERVER_NAME = "wifi-lens-pro";
 				ASSETCATALOG_COMPILER_APPICON_NAME = "WiFi Lens";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -4242,7 +4280,13 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				INFOPLIST_FILE = "WiFiLensPro/WiFiLensPro-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro";
+				INFOPLIST_KEY_APP_DISPLAY_NAME = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_APP_ENVIRONMENT = "$(APP_ENVIRONMENT)";
+				INFOPLIST_KEY_APP_STORAGE_NAMESPACE = "$(APP_STORAGE_NAMESPACE)";
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_CFBundleName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_DEFAULT_MCP_PORT = "$(DEFAULT_MCP_PORT)";
+				INFOPLIST_KEY_MCP_SERVER_NAME = "$(MCP_SERVER_NAME)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSMinimumSystemVersion = 14.6;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "WiFi Lens may use Bluetooth to discover nearby BLE devices and analyze signal strength when Bluetooth Analysis is enabled in Settings.";
@@ -4256,7 +4300,8 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.kaoru.wifi-lens-pro";
-				PRODUCT_NAME = "WiFi Lens Pro";
+				PRODUCT_MODULE_NAME = WiFi_Lens_Pro;
+				PRODUCT_NAME = "$(APP_DISPLAY_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
@@ -4290,7 +4335,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WiFi Lens Pro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WiFi Lens Pro";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WiFi Lens Pro Dev.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WiFi Lens Pro Dev";
 			};
 			name = Debug;
 		};

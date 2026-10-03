@@ -54,6 +54,10 @@ struct MCPSnapshot: Sendable {
 final class MCPServer: @unchecked Sendable {
     static let maximumRequestBodyLength = 1_048_576
 
+    enum StartError: Error, Equatable {
+        case productionPortReservedForDevelopment
+    }
+
     enum ContentLengthFailure: Error, Equatable {
         case badRequest
         case payloadTooLarge
@@ -69,7 +73,8 @@ final class MCPServer: @unchecked Sendable {
     private let lock = NSLock()
     private var listener: NWListener?
     private(set) var isRunning = false
-    var port: UInt16 = 19840
+    var port: UInt16 = UInt16(exactly: AppEnvironment.current.defaultMCPPort)
+        ?? UInt16(AppEnvironment.productionMCPPort)
 
     var snapshotProvider: (@MainActor @Sendable () -> MCPSnapshot)? {
         get { lock.withLock { _snapshotProvider } }
@@ -83,14 +88,21 @@ final class MCPServer: @unchecked Sendable {
 
     init() {}
 
+    static func validatePort(_ port: UInt16, environment: AppEnvironment) throws {
+        guard environment.allowsMCPPort(Int(port)) else {
+            throw StartError.productionPortReservedForDevelopment
+        }
+    }
+
     func start() async throws {
         guard !isRunning else { return }
+        try Self.validatePort(port, environment: AppEnvironment.current)
 
         let transport = StatelessHTTPServerTransport()
         self.transport = transport
 
         let server = Server(
-            name: "WiFi Lens",
+            name: AppEnvironment.current.displayName,
             version: "1.0.0",
             capabilities: .init(tools: .init(listChanged: true))
         )
@@ -225,17 +237,18 @@ final class MCPServer: @unchecked Sendable {
 
     static func setupPrompt(port: UInt16) -> String {
         let url = "http://127.0.0.1:\(port)/"
+        let serverName = AppEnvironment.current.mcpServerName
 
         return """
-        Add or update an MCP server entry named "wifi-lens" with these properties:
+        Add or update an MCP server entry named "\(serverName)" with these properties:
         - Transport: Streamable HTTP
         - URL: \(url)
-        - Purpose: Read-only access to local Wi-Fi scan data exposed by the WiFi Lens macOS app.
+        - Purpose: Read-only access to local Wi-Fi scan data exposed by \(AppEnvironment.current.displayName).
 
         Use this client's native configuration format. Preserve every other setting and MCP server.
         Do not expose this server through LAN, tunneling, or public networking. It must stay bound to 127.0.0.1.
         Do not install dependencies or modify unrelated settings.
-        After applying the configuration, verify that the wifi-lens MCP server is available and list its tools.
+        After applying the configuration, verify that the \(serverName) MCP server is available and list its tools.
         If you cannot modify the client configuration directly, return the exact minimal configuration snippet and the manual step required.
         """
     }

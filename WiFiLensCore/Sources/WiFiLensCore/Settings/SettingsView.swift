@@ -31,7 +31,7 @@ public struct SettingsView: View {
     @AppStorage("scanIntervalSeconds") private var scanInterval: Int = 3
     @AppStorage("regulatoryRegionOverride") private var regionOverride: String = "auto"
     @AppStorage("mcpEnabled") private var mcpEnabled: Bool = false
-    @AppStorage("mcpPort") private var mcpPort: Int = 19840
+    @AppStorage("mcpPort") private var mcpPort: Int = AppEnvironment.current.defaultMCPPort
     @AppStorage("appearance") private var appearance: String = "system"
     @AppStorage(OverviewVisualStyle.storageKey) private var overviewVisualStyleRaw = OverviewVisualStyle.system.rawValue
     @AppStorage("hideTitleBadge") private var hideTitleBadge = true

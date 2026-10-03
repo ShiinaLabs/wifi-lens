@@ -1,12 +1,13 @@
 import Foundation
 import MetricKit
+import WiFiLensCore
 
 /// Receives MetricKit payloads and persists them to disk for debugging
 /// and performance analysis. Modeled after CrashReporter — lightweight,
 /// self-contained, registered once at app launch.
 ///
-/// Payloads are stored as JSON in:
-/// ~/Library/Application Support/WiFi Lens/Metrics/
+/// Payloads are stored as JSON in the legacy production location, or in the
+/// development container's application-support namespace.
 final class MetricKitManager: NSObject, MXMetricManagerSubscriber, @unchecked Sendable {
     static let shared = MetricKitManager()
 
@@ -15,6 +16,12 @@ final class MetricKitManager: NSObject, MXMetricManagerSubscriber, @unchecked Se
     // MARK: - Directory
 
     private static let metricsDir: URL = {
+        let environment = AppEnvironment.current
+        if environment.isDevelopment {
+            let dir = environment.storageRoot().appendingPathComponent("Metrics", isDirectory: true)
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            return dir
+        }
         let dir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/WiFi Lens/Metrics")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
