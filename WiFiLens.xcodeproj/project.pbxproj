@@ -288,6 +288,7 @@
 		B7D400F1DC5DF37D97CA7306 /* WiFiObservationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015D8A16F2AEFBC44121808A /* WiFiObservationEvent.swift */; };
 		B83A01F49EB684415C8C69C2 /* NetworkDiagnosticEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BBE7A16D3534B73BF80F65F /* NetworkDiagnosticEvent.swift */; };
 		B89BCDE0766C4998B46372B /* LoggingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D4F1A65F0142A18B9C161 /* LoggingTests.swift */; };
+		C5A000000000000000000003 /* CSVExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A000000000000000000002 /* CSVExportTests.swift */; };
 		B8F9DAF28D1143794564A0B3 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4C633EAD2670D0C4A957180F /* MarkdownKit */; };
 		B95191072A78BE4B8FEA398D /* GuidanceDebug.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A1DA0814135BE935BD79D2 /* GuidanceDebug.swift */; };
 		B9AB60F3D002A7B9123D2520 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EAF444453E304ABB57AF3AA /* CoreLocation.framework */; };
@@ -739,6 +740,7 @@
 		040BD0885C3B3DA6CB7A11A7 /* ChannelRecommendation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelRecommendation.swift; sourceTree = "<group>"; };
 		0691E16E6CD0A547B57AFBD1 /* MarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextView.swift; sourceTree = "<group>"; };
 		08D4F1A65F0142A18B9C161 /* LoggingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggingTests.swift; sourceTree = "<group>"; };
+		C5A000000000000000000002 /* CSVExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExportTests.swift; sourceTree = "<group>"; };
 		0BA76E8524E8F442F1327680 /* EditionNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionNavigation.swift; sourceTree = "<group>"; };
 		0D0218918BBFA65D8998888E /* SpectrumTablePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumTablePanel.swift; sourceTree = "<group>"; };
 		0DD12DBEE91E4799A7373350 /* APSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APSelectionView.swift; sourceTree = "<group>"; };
@@ -2278,6 +2280,7 @@
 				A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */,
 				A10000000000000000000003 /* SecondaryToolbarTests.swift */,
 				08D4F1A65F0142A18B9C161 /* LoggingTests.swift */,
+				C5A000000000000000000002 /* CSVExportTests.swift */,
 				C1D2E3F4A5B6123456789ABE /* APFilterServiceTests.swift */,
 				E4A2B3C4D5E6F708112233B0 /* SpectrumPanelViewTests.swift */,
 				A3C7A1B2C3D4E5F678900003 /* SpectrumTablePanelTests.swift */,
@@ -3259,6 +3262,7 @@
 				A10000000000000000000015 /* SecondaryToolbarDescriptorExpansionTests.swift in Sources */,
 				A10000000000000000000011 /* SecondaryToolbarTests.swift in Sources */,
 				B89BCDE0766C4998B46372B /* LoggingTests.swift in Sources */,
+				C5A000000000000000000003 /* CSVExportTests.swift in Sources */,
 				C1D2E3F4A5B6123456789ABF /* APFilterServiceTests.swift in Sources */,
 				E4A2B3C4D5E6F708112233B1 /* SpectrumPanelViewTests.swift in Sources */,
 				A3C7A1B2C3D4E5F678900015 /* SpectrumTablePanelTests.swift in Sources */,

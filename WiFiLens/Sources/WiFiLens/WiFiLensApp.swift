@@ -1509,11 +1509,21 @@ struct WiFiLensApp: App {
         let ts = ISO8601DateFormatter().string(from: Date())
         var csv = "timestamp,band,channel,rssi,ssid,bssid,phy_mode,channel_width,k,r,v,hidden_ssid\n"
         for s in vm.displayedSeriesData {
-            let escaped = s.ssid.replacingOccurrences(of: "\"", with: "\"\"")
-            csv += "\(ts),\(vm.band.displayName),\(s.channel),\(s.rssi),\"\(escaped)\",\(s.bssid),"
-            csv += "\(s.phyMode),\(s.channelWidth),"
-            csv += "\(s.supportsK),\(s.supportsR),\(s.supportsV),"
-            csv += "\(s.isHiddenSSID)\n"
+            let fields = [
+                CSVExportFieldEncoder.text(ts),
+                CSVExportFieldEncoder.text(vm.band.displayName),
+                String(s.channel),
+                String(s.rssi),
+                CSVExportFieldEncoder.text(s.ssid, protectSpreadsheetFormula: true),
+                CSVExportFieldEncoder.text(s.bssid),
+                CSVExportFieldEncoder.text(s.phyMode),
+                CSVExportFieldEncoder.text(s.channelWidth),
+                String(s.supportsK),
+                String(s.supportsR),
+                String(s.supportsV),
+                String(s.isHiddenSSID)
+            ]
+            csv += fields.joined(separator: ",") + "\n"
         }
         guard let data = csv.data(using: .utf8) else { return }
 
@@ -1525,5 +1535,18 @@ struct WiFiLensApp: App {
                 try? data.write(to: url)
             }
         }
+    }
+}
+
+enum CSVExportFieldEncoder {
+    static func text(_ value: String, protectSpreadsheetFormula: Bool = false) -> String {
+        var value = value
+        if protectSpreadsheetFormula,
+           let firstSignificantCharacter = value.first(where: { !$0.isWhitespace && !$0.isNewline }),
+           "=+-@".contains(firstSignificantCharacter) {
+            value.insert("'", at: value.startIndex)
+        }
+        let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
+        return "\"\(escaped)\""
     }
 }

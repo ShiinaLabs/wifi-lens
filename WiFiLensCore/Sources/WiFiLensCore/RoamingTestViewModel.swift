@@ -57,6 +57,9 @@ public final class RoamingTestViewModel {
 
     let roamingProvider: RoamingProbeProviding
     let latencyProvider: GatewayLatencyProviding
+    @ObservationIgnored var fallbackRouterProvider: @MainActor () -> String? = {
+        NetworkInfoService.fetch()?.router
+    }
 
     // MARK: - Guidance
 
@@ -193,7 +196,7 @@ public final class RoamingTestViewModel {
 
     // MARK: - Tick
 
-    private func tick() {
+    func tick() {
         guard state == .running else { return }
         // Skip this tick when the previous cycle is still awaiting a probe
         // fetch or latency measurement, so ticks never overlap and samples
@@ -211,11 +214,20 @@ public final class RoamingTestViewModel {
             let status = await roamingProvider.fetchCurrentProbe()
             guard state == .running, generation == tickGeneration else { return }
 
+            // Resolve the gateway against this tick's connection snapshot. A
+            // gateway captured from an earlier AP can otherwise be charted as
+            // latency for the newly joined network.
+            routerIP = status.isConnected
+                ? (status.routerIP ?? fallbackRouterProvider())
+                : nil
+
             // Ping gateway asynchronously
             if let router = routerIP {
                 let result = await latencyProvider.measure(routerIP: router)
                 guard state == .running, generation == tickGeneration else { return }
                 gatewayLatency = result.latencyMs
+            } else {
+                gatewayLatency = nil
             }
 
             let newBSSID = status.bssid
@@ -257,9 +269,13 @@ public final class RoamingTestViewModel {
                 currentSegmentIndex = segments.count - 1
             }
 
-            self.lastBSSID = newBSSID
-            self.lastRSSI = newRSSI
-            self.lastChannel = newChannel
+            // Keep the last known AP identity across a transient disconnect
+            // probe so the next connected sample can still form a handoff.
+            if let newBSSID {
+                self.lastBSSID = newBSSID
+                self.lastRSSI = newRSSI
+                self.lastChannel = newChannel
+            }
 
             applyProbe(status)
             appendSample()
@@ -282,9 +298,9 @@ public final class RoamingTestViewModel {
         currentChannel = status.channel ?? 0
         currentTxRate = status.txRate ?? 0
         currentPhyMode = status.phyMode
-        if routerIP == nil {
-            routerIP = status.routerIP ?? NetworkInfoService.fetch()?.router
-        }
+        routerIP = status.isConnected
+            ? (status.routerIP ?? fallbackRouterProvider())
+            : nil
     }
 
     private func appendSample() {

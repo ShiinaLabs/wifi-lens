@@ -9,17 +9,12 @@ import MetricKit
 /// ~/Library/Application Support/WiFi Lens/Metrics/
 final class MetricKitManager: NSObject, MXMetricManagerSubscriber, @unchecked Sendable {
     static let shared = MetricKitManager()
+    private static let payloadStore = MetricKitPayloadStore(
+        directory: FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/WiFi Lens/Metrics")
+    )
 
     private override init() {}
-
-    // MARK: - Directory
-
-    private static let metricsDir: URL = {
-        let dir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/WiFi Lens/Metrics")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }()
 
     // MARK: - Registration
 
@@ -53,10 +48,13 @@ final class MetricKitManager: NSObject, MXMetricManagerSubscriber, @unchecked Se
 
     // MARK: - Helpers
 
+    static func clearPayloads() {
+        payloadStore.clear()
+    }
+
     private static func save(_ data: Data, prefix: String) {
         let safe = prefix.replacingOccurrences(of: ":", with: "-")
-        let url = metricsDir.appendingPathComponent("\(safe).json")
-        try? data.write(to: url, options: .atomic)
+        payloadStore.save(data, filename: "\(safe).json")
     }
 
     private static func logPayload(_ payload: MXMetricPayload) {
@@ -67,5 +65,24 @@ final class MetricKitManager: NSObject, MXMetricManagerSubscriber, @unchecked Se
         AppLogger.app.info(
             "MetricKit payload received — peakMem=\(peakMem)"
         )
+    }
+}
+
+struct MetricKitPayloadStore: Sendable {
+    let directory: URL
+
+    func save(_ data: Data, filename: String) {
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try? data.write(to: directory.appendingPathComponent(filename), options: .atomic)
+    }
+
+    func clear() {
+        guard let contents = try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ) else { return }
+        for item in contents {
+            try? FileManager.default.removeItem(at: item)
+        }
     }
 }

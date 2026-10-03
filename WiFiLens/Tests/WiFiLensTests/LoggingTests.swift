@@ -29,4 +29,21 @@ import Testing
         let reopenedLog = try String(contentsOf: activeLog, encoding: .utf8)
         #expect(reopenedLog.contains("after clear"))
     }
+
+    @Test("clear removes persisted MetricKit payloads")
+    func clearRemovesMetricKitPayloads() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("wifi-lens-metrics-tests", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = MetricKitPayloadStore(directory: directory)
+        store.save(Data("metrics".utf8), filename: "metrics-sample.json")
+        store.save(Data("diagnostics".utf8), filename: "diagnostics-sample.json")
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).count == 2)
+
+        store.clear()
+
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
+    }
 }

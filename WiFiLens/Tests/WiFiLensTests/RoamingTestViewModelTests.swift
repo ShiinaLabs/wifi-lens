@@ -129,6 +129,59 @@ import Testing
         vm.stopTest(userInitiated: false)
     }
 
+    @Test("a transient disconnected probe does not erase the next AP handoff")
+    func transientDisconnectPreservesHandoffIdentity() async {
+        let provider = ScriptedRoamingProbeProvider(statuses: [
+            roamingStatus(bssid: "AA:00:00:00:00:01"),
+            roamingStatus(bssid: "AA:00:00:00:00:01"),
+            WiFiCurrentStatus(timestamp: Date(), isConnected: false, isWiFiPowerOn: true),
+            roamingStatus(bssid: "BB:00:00:00:00:02")
+        ])
+        let vm = RoamingTestViewModel(
+            roamingProvider: provider,
+            latencyProvider: MockGatewayLatencyProvider(result: .init(timestamp: Date(), latencyMs: 5))
+        )
+        vm.fallbackRouterProvider = { nil }
+
+        await vm.checkReadiness()
+        await waitUntil { vm.state == .ready }
+        vm.startTest()
+        await waitUntil { vm.state == .running }
+
+        vm.tick()
+        await waitUntil { vm.currentBSSID == nil }
+        vm.tick()
+        await waitUntil { vm.transitions.count == 1 }
+
+        #expect(vm.transitions.first?.fromBSSID == "AA:00:00:00:00:01")
+        #expect(vm.transitions.first?.toBSSID == "BB:00:00:00:00:02")
+        #expect(vm.transitions.first?.rssiBefore == -50)
+        vm.stopTest(userInitiated: false)
+    }
+
+    @Test("gateway latency is measured against the current probe route")
+    func gatewayLatencyUsesCurrentRoute() async {
+        let provider = ScriptedRoamingProbeProvider(statuses: [
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "BB:00:00:00:00:02", routerIP: "192.0.2.2")
+        ])
+        let latency = RecordingGatewayLatencyProvider(result: .init(timestamp: Date(), latencyMs: 5))
+        let vm = RoamingTestViewModel(roamingProvider: provider, latencyProvider: latency)
+        vm.fallbackRouterProvider = { "198.51.100.1" }
+
+        await vm.checkReadiness()
+        await waitUntil { vm.state == .ready }
+        vm.startTest()
+        await waitUntil { vm.state == .running }
+        vm.tick()
+        await waitUntil { vm.transitions.count == 1 }
+
+        #expect(await latency.measuredRouterIPs == ["192.0.2.2"])
+        #expect(vm.routerIP == "192.0.2.2")
+        vm.stopTest(userInitiated: false)
+    }
+
     // MARK: - Helpers
 
     private func makeConnectedViewModel(guidance: GuidanceCoordinator) -> RoamingTestViewModel {
@@ -151,6 +204,20 @@ import Testing
         )
     }
 
+    private func roamingStatus(bssid: String, routerIP: String? = nil) -> WiFiCurrentStatus {
+        WiFiCurrentStatus(
+            timestamp: Date(),
+            ssid: "TestNet",
+            bssid: bssid,
+            channel: 36,
+            rssi: -50,
+            txRate: 300,
+            routerIP: routerIP,
+            isConnected: true,
+            isWiFiPowerOn: true
+        )
+    }
+
     @MainActor
     private func waitUntil(_ condition: () -> Bool) async {
         var spins = 0
@@ -158,6 +225,19 @@ import Testing
             spins += 1
             await Task.yield()
         }
+    }
+}
+
+private actor ScriptedRoamingProbeProvider: RoamingProbeProviding {
+    private var statuses: [WiFiCurrentStatus]
+
+    init(statuses: [WiFiCurrentStatus]) {
+        self.statuses = statuses
+    }
+
+    func fetchCurrentProbe() async -> WiFiCurrentStatus {
+        guard statuses.count > 1 else { return statuses[0] }
+        return statuses.removeFirst()
     }
 }
 

@@ -80,9 +80,10 @@ enum AppLogger {
         NSWorkspace.shared.open(dir)
     }
 
-    /// Deletes all files in the log directory.
+    /// Deletes app log files and persisted MetricKit payloads.
     static func clearLogs() {
         LogFileWriter.shared.clear()
+        MetricKitManager.clearPayloads()
     }
 }
 
