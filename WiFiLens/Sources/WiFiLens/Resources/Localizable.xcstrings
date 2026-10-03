@@ -33658,6 +33658,39 @@
         }
       }
     },
+    "recording.replace.action" : {
+      "comment" : "Replace the current recording with the selected session",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ersetzen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Replace" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Reemplazar" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "置き換える" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "替换" } }
+      }
+    },
+    "recording.replace.message" : {
+      "comment" : "Explain that replacing the current recording or session is destructive",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Beim Laden dieser Sitzung wird die aktuelle Aufnahme oder Sitzung verworfen. Dieser Vorgang kann nicht rückgängig gemacht werden." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading this session will discard the current recording or session. This cannot be undone." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Al cargar esta sesión, se descartará la grabación o sesión actual. Esta acción no se puede deshacer." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "このセッションを読み込むと、現在の録画またはセッションは破棄されます。この操作は取り消せません。" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "加载此会话将丢弃当前录制或会话，此操作无法撤销。" } }
+      }
+    },
+    "recording.replace.title" : {
+      "comment" : "Confirm replacing an existing recording session with a loaded session",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Aktuelle Aufnahme ersetzen?" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Replace Current Recording?" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "¿Reemplazar la grabación actual?" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "現在の録画を置き換えますか？" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "替换当前录制？" } }
+      }
+    },
     "recording.start" : {
       "comment" : "Start recording button",
       "extractionState" : "manual",
@@ -51118,6 +51151,60 @@
         }
       }
     },
+    "wifi_calling.cell.inconclusive" : {
+      "comment" : "Status for a Wi-Fi Calling probe that received unusable evidence",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Inconclusive" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Неопределённо" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法确定" } }
+      }
+    },
+    "wifi_calling.inconclusive_reason.cancelled" : {
+      "comment" : "Reason a Wi-Fi Calling probe is inconclusive because it was cancelled",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancelled" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Отменено" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已取消" } }
+      }
+    },
+    "wifi_calling.inconclusive_reason.malformed" : {
+      "comment" : "Reason a Wi-Fi Calling probe is inconclusive because the response was malformed",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Malformed response" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Некорректный ответ" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "响应格式错误" } }
+      }
+    },
+    "wifi_calling.inconclusive_reason.not_ike" : {
+      "comment" : "Reason a Wi-Fi Calling probe is inconclusive because the packet was not IKE",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not an IKE response" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Ответ не IKE" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不是 IKE 响应" } }
+      }
+    },
+    "wifi_calling.inconclusive_reason.transport_failure" : {
+      "comment" : "Reason a Wi-Fi Calling probe is inconclusive because transport failed",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Transport failure or unavailable" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Сбой или недоступность транспорта" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "传输失败或不可用" } }
+      }
+    },
+    "wifi_calling.inconclusive_reason.unrelated" : {
+      "comment" : "Reason a Wi-Fi Calling probe is inconclusive because the response did not match the probe",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unrelated response" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Посторонний ответ" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无关响应" } }
+      }
+    },
     "wifi_calling.discovery_miss" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -51810,6 +51897,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知"
+          }
+        }
+      }
+    },
+    "wifi_calling.path.changed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network path changed during the test"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сетевой маршрут изменился во время проверки"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试期间网络路径发生变化"
           }
         }
       }

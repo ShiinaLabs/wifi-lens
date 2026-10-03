@@ -4,6 +4,39 @@ import MCP
 @testable import WiFiLensCore
 @Suite struct MCPServerTests {
 
+    @Test func contentLengthParserPreservesMissingAndAcceptsZero() {
+        #expect(MCPServer.parseContentLength(nil) == .success(0))
+        #expect(MCPServer.parseContentLength("0") == .success(0))
+    }
+
+    @Test(arguments: ["-1", "abc", ""])
+    func contentLengthParserRejectsMalformedValues(_ value: String) {
+        #expect(MCPServer.parseContentLength(value) == .failure(.badRequest))
+    }
+
+    @Test func contentLengthParserRejectsValuesOverBodyLimit() {
+        #expect(
+            MCPServer.parseContentLength(String(MCPServer.maximumRequestBodyLength + 1))
+                == .failure(.payloadTooLarge)
+        )
+    }
+
+    @Test func oversizedResponseHasPayloadTooLargeStatus() {
+        let response = MCPServer.serialize(statusCode: 413, body: Data("Payload Too Large".utf8))
+        #expect(String(decoding: response, as: UTF8.self).hasPrefix("HTTP/1.1 413 Payload Too Large\r\n"))
+    }
+
+    @Test func bodyFramingWaitsForPartialBodyAndTruncatesExcess() {
+        let partial = Data("{\"json".utf8)
+        #expect(MCPServer.frameBody(partial, contentLength: 10) == .needsMore(4))
+
+        let body = Data("{\"json\":true}extra".utf8)
+        #expect(MCPServer.frameBody(body, contentLength: 13) == .complete(Data("{\"json\":true}".utf8)))
+        #expect(MCPServer.frameBody(Data(), contentLength: 0) == .complete(Data()))
+        #expect(MCPServer.frameBody(Data(), contentLength: -1) == .invalid)
+        #expect(MCPServer.frameBody(Data(), contentLength: MCPServer.maximumRequestBodyLength + 1) == .invalid)
+    }
+
     private func makeNetwork(
         ssid: String? = "TestNet",
         bssid: String = "aa:bb:cc:dd:ee:ff",
