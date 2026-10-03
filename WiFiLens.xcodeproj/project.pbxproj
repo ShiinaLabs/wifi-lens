@@ -3962,7 +3962,7 @@
 			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
 			buildSettings = {
 				APP_DISPLAY_NAME = "WiFi Lens Pro Capture";
-				APP_ENVIRONMENT = development;
+				APP_ENVIRONMENT = capture;
 				APP_STORAGE_NAMESPACE = WiFiLens-Pro-Capture;
 				DEFAULT_MCP_PORT = 19842;
 				MCP_SERVER_NAME = "wifi-lens-pro-capture";
@@ -3992,7 +3992,8 @@
 				INFOPLIST_KEY_APP_DISPLAY_NAME = "$(APP_DISPLAY_NAME)";
 				INFOPLIST_KEY_APP_ENVIRONMENT = "$(APP_ENVIRONMENT)";
 				INFOPLIST_KEY_APP_STORAGE_NAMESPACE = "$(APP_STORAGE_NAMESPACE)";
-				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_CFBundleName = "$(APP_DISPLAY_NAME)";
 				INFOPLIST_KEY_DEFAULT_MCP_PORT = "$(DEFAULT_MCP_PORT)";
 				INFOPLIST_KEY_MCP_SERVER_NAME = "$(MCP_SERVER_NAME)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -4020,7 +4021,7 @@
 			baseConfigurationReference = FB80FA2F2FC0AC1900547708 /* PRO.xcconfig */;
 			buildSettings = {
 				APP_DISPLAY_NAME = "WiFi Lens Pro Capture";
-				APP_ENVIRONMENT = development;
+				APP_ENVIRONMENT = capture;
 				APP_STORAGE_NAMESPACE = WiFiLens-Pro-Capture;
 				DEFAULT_MCP_PORT = 19842;
 				MCP_SERVER_NAME = "wifi-lens-pro-capture";
@@ -4050,7 +4051,8 @@
 				INFOPLIST_KEY_APP_DISPLAY_NAME = "$(APP_DISPLAY_NAME)";
 				INFOPLIST_KEY_APP_ENVIRONMENT = "$(APP_ENVIRONMENT)";
 				INFOPLIST_KEY_APP_STORAGE_NAMESPACE = "$(APP_STORAGE_NAMESPACE)";
-				INFOPLIST_KEY_CFBundleDisplayName = "WiFi Lens Pro Capture";
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_CFBundleName = "$(APP_DISPLAY_NAME)";
 				INFOPLIST_KEY_DEFAULT_MCP_PORT = "$(DEFAULT_MCP_PORT)";
 				INFOPLIST_KEY_MCP_SERVER_NAME = "$(MCP_SERVER_NAME)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";

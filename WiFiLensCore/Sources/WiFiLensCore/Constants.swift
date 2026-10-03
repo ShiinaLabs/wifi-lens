@@ -9,6 +9,7 @@ public struct AppEnvironment: Equatable, Sendable {
     public enum Kind: String, Sendable {
         case development
         case production
+        case capture
     }
 
     public let kind: Kind
@@ -21,8 +22,9 @@ public struct AppEnvironment: Equatable, Sendable {
     public let hasValidKind: Bool
 
     public var isDevelopment: Bool { kind == .development }
+    public var isNonProduction: Bool { kind != .production }
     public func allowsMCPPort(_ port: Int) -> Bool {
-        !isDevelopment || port != Self.productionMCPPort
+        !isNonProduction || port != Self.productionMCPPort
     }
     public var loggingSubsystem: String {
         bundleIdentity ?? "com.kaoru.wifi-lens"
