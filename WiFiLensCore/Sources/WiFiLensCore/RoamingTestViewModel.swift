@@ -147,6 +147,9 @@ public final class RoamingTestViewModel {
 
             segments = []
             transitions = []
+            // A new run starts with no measured gateway evidence. Do not
+            // carry latency from the previous session into its first sample.
+            gatewayLatency = nil
             lastBSSID = bssid
             lastRSSI = status.rssi ?? -100
             lastChannel = status.channel ?? 0
@@ -215,6 +218,15 @@ public final class RoamingTestViewModel {
             guard state == .running, generation == tickGeneration else { return }
             let previousGatewayLatency = gatewayLatency
 
+            guard status.isConnected, let newBSSID = status.bssid else {
+                // A connected status can temporarily lack BSSID during a
+                // handoff. Update live connection details, but do not measure
+                // or retain route latency until the AP identity is confirmed.
+                applyProbe(status)
+                gatewayLatency = nil
+                return
+            }
+
             // Resolve the gateway against this tick's connection snapshot. A
             // gateway captured from an earlier AP can otherwise be charted as
             // latency for the newly joined network.
@@ -229,14 +241,6 @@ public final class RoamingTestViewModel {
                 gatewayLatency = result.latencyMs
             } else {
                 gatewayLatency = nil
-            }
-
-            guard status.isConnected, let newBSSID = status.bssid else {
-                // Connection gaps are not AP samples. Keep the last confirmed
-                // identity and signal metadata so the next AP can still form
-                // a handoff against the preceding connected sample.
-                applyProbe(status)
-                return
             }
 
             let newRSSI = status.rssi ?? -100

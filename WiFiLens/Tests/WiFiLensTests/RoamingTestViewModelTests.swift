@@ -192,6 +192,81 @@ import Testing
         vm.stopTest(userInitiated: false)
     }
 
+    @Test("a connected probe without confirmed BSSID cannot attribute the new route to the old AP")
+    func connectedIdentityGapDoesNotOverwriteConfirmedGatewayLatency() async {
+        let provider = ScriptedRoamingProbeProvider(statuses: [
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            WiFiCurrentStatus(
+                timestamp: Date(),
+                ssid: "TestNet",
+                bssid: nil,
+                routerIP: "192.0.2.2",
+                isConnected: true,
+                isWiFiPowerOn: true
+            ),
+            roamingStatus(bssid: "BB:00:00:00:00:02", routerIP: "192.0.2.2")
+        ])
+        let latency = GatewayLatencyByAddressProvider()
+        let vm = RoamingTestViewModel(roamingProvider: provider, latencyProvider: latency)
+
+        vm.checkReadiness()
+        await waitUntil { vm.state == .ready }
+        vm.startTest()
+        await waitUntil { vm.state == .running }
+        vm.tick()
+        await waitUntil { vm.segments[0].samples.count == 2 }
+        let samplesBeforeIdentityGap = vm.segments[0].samples.count
+
+        vm.tick()
+        await waitUntil { vm.currentBSSID == nil && vm.routerIP == "192.0.2.2" }
+        #expect(vm.segments[0].samples.count == samplesBeforeIdentityGap)
+        #expect(vm.gatewayLatency == nil)
+
+        vm.tick()
+        await waitUntil { vm.transitions.count == 1 }
+        #expect(vm.segments[0].samples.last?.gatewayLatency == nil)
+        #expect(vm.segments[1].samples.first?.gatewayLatency == 22)
+        #expect(await latency.measuredRouterIPs == ["192.0.2.1", "192.0.2.2"])
+        vm.stopTest(userInitiated: false)
+    }
+
+    @Test("a new roaming run does not inherit the previous run's gateway latency")
+    func newRunStartsWithoutPreviousGatewayLatency() async {
+        let provider = ScriptedRoamingProbeProvider(statuses: [
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
+            roamingStatus(bssid: "BB:00:00:00:00:02", routerIP: "192.0.2.2"),
+            roamingStatus(bssid: "BB:00:00:00:00:02", routerIP: "192.0.2.2")
+        ])
+        let latency = GatewayLatencyByAddressProvider()
+        let vm = RoamingTestViewModel(roamingProvider: provider, latencyProvider: latency)
+
+        vm.checkReadiness()
+        await waitUntil { vm.state == .ready }
+        vm.startTest()
+        await waitUntil { vm.state == .running }
+        vm.tick()
+        await waitUntil { vm.segments[0].samples.count == 2 }
+        #expect(vm.gatewayLatency == 11)
+
+        vm.stopTest(userInitiated: false)
+        await provider.waitForFetchCount(4)
+        vm.startTest()
+        await waitUntil { vm.state == .running && vm.segments.first?.bssid == "BB:00:00:00:00:02" }
+        #expect(vm.segments[0].samples.first?.gatewayLatency == nil)
+
+        vm.tick()
+        await waitUntil { vm.segments[0].samples.count == 2 }
+        #expect(await latency.measuredRouterIPs == ["192.0.2.1", "192.0.2.2"])
+        #expect(vm.segments[0].samples.first?.gatewayLatency == nil)
+        #expect(vm.segments[0].samples.last?.gatewayLatency == 22)
+        vm.stopTest(userInitiated: false)
+    }
+
     // MARK: - Helpers
 
     private func makeConnectedViewModel(guidance: GuidanceCoordinator) -> RoamingTestViewModel {
@@ -240,14 +315,22 @@ import Testing
 
 private actor ScriptedRoamingProbeProvider: RoamingProbeProviding {
     private var statuses: [WiFiCurrentStatus]
+    private var fetchCount = 0
 
     init(statuses: [WiFiCurrentStatus]) {
         self.statuses = statuses
     }
 
     func fetchCurrentProbe() async -> WiFiCurrentStatus {
+        fetchCount += 1
         guard statuses.count > 1 else { return statuses[0] }
         return statuses.removeFirst()
+    }
+
+    func waitForFetchCount(_ expectedCount: Int) async {
+        while fetchCount < expectedCount {
+            await Task.yield()
+        }
     }
 }
 
