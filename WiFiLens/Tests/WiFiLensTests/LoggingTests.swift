@@ -46,4 +46,33 @@ import Testing
 
         #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
     }
+
+    @Test("Clear Logs clears log and MetricKit stores together")
+    func clearLogsClearsBothDiagnosticStores() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("wifi-lens-clear-logs-tests", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let logsDirectory = root.appendingPathComponent("Logs", isDirectory: true)
+        let metricsDirectory = root.appendingPathComponent("Metrics", isDirectory: true)
+        try FileManager.default.createDirectory(at: logsDirectory, withIntermediateDirectories: true)
+        let writer = LogFileWriter(logDirectory: logsDirectory)
+        try Data("rotated".utf8).write(to: logsDirectory.appendingPathComponent("wifi-lens.1.log"))
+
+        let store = MetricKitPayloadStore(directory: metricsDirectory)
+        store.save(Data("payload".utf8), filename: "metrics-sample.json")
+        let unrelatedFile = root.appendingPathComponent("unrelated.txt")
+        try Data("preserve".utf8).write(to: unrelatedFile)
+
+        AppLogger.clearLogs(logWriter: writer, clearMetricKitPayloads: { store.clear() })
+
+        let activeLog = try String(
+            contentsOf: logsDirectory.appendingPathComponent("wifi-lens.log"),
+            encoding: .utf8
+        )
+        #expect(activeLog.isEmpty)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: metricsDirectory.path).isEmpty)
+        #expect(FileManager.default.fileExists(atPath: unrelatedFile.path))
+    }
 }

@@ -213,6 +213,7 @@ public final class RoamingTestViewModel {
 
             let status = await roamingProvider.fetchCurrentProbe()
             guard state == .running, generation == tickGeneration else { return }
+            let previousGatewayLatency = gatewayLatency
 
             // Resolve the gateway against this tick's connection snapshot. A
             // gateway captured from an earlier AP can otherwise be charted as
@@ -230,12 +231,19 @@ public final class RoamingTestViewModel {
                 gatewayLatency = nil
             }
 
-            let newBSSID = status.bssid
+            guard status.isConnected, let newBSSID = status.bssid else {
+                // Connection gaps are not AP samples. Keep the last confirmed
+                // identity and signal metadata so the next AP can still form
+                // a handoff against the preceding connected sample.
+                applyProbe(status)
+                return
+            }
+
             let newRSSI = status.rssi ?? -100
             let newChannel = status.channel ?? 0
 
             // Detect AP transition
-            if let newBSSID, let lastBSSID, newBSSID != lastBSSID {
+            if let lastBSSID, newBSSID != lastBSSID {
                 let transitionTime = Date()
 
                 // Append final sample to old segment at the exact transition time
@@ -245,7 +253,7 @@ public final class RoamingTestViewModel {
                         rssi: lastRSSI ?? 0,
                         channel: lastChannel ?? 0,
                         txRate: currentTxRate,
-                        gatewayLatency: gatewayLatency
+                        gatewayLatency: previousGatewayLatency
                     )
                     segments[currentSegmentIndex].samples.append(finalSample)
                     segments[currentSegmentIndex].endTime = transitionTime
@@ -271,11 +279,9 @@ public final class RoamingTestViewModel {
 
             // Keep the last known AP identity across a transient disconnect
             // probe so the next connected sample can still form a handoff.
-            if let newBSSID {
-                self.lastBSSID = newBSSID
-                self.lastRSSI = newRSSI
-                self.lastChannel = newChannel
-            }
+            self.lastBSSID = newBSSID
+            self.lastRSSI = newRSSI
+            self.lastChannel = newChannel
 
             applyProbe(status)
             appendSample()

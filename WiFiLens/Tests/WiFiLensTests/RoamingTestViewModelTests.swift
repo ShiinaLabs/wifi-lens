@@ -63,7 +63,7 @@ import Testing
         let guidance = RoamingGuidanceHarness()
         let vm = makeConnectedViewModel(guidance: guidance.coordinator)
 
-        await vm.checkReadiness()
+        vm.checkReadiness()
         await waitUntil { vm.state == .ready }
         vm.startTest()
         await waitUntil { vm.state == .running }
@@ -79,7 +79,7 @@ import Testing
         let guidance = RoamingGuidanceHarness()
         let vm = makeConnectedViewModel(guidance: guidance.coordinator)
 
-        await vm.checkReadiness()
+        vm.checkReadiness()
         await waitUntil { vm.state == .ready }
         vm.startTest()
         await waitUntil { vm.state == .running }
@@ -143,13 +143,15 @@ import Testing
         )
         vm.fallbackRouterProvider = { nil }
 
-        await vm.checkReadiness()
+        vm.checkReadiness()
         await waitUntil { vm.state == .ready }
         vm.startTest()
         await waitUntil { vm.state == .running }
+        let samplesBeforeDisconnect = vm.segments[0].samples.count
 
         vm.tick()
         await waitUntil { vm.currentBSSID == nil }
+        #expect(vm.segments[0].samples.count == samplesBeforeDisconnect)
         vm.tick()
         await waitUntil { vm.transitions.count == 1 }
 
@@ -163,22 +165,30 @@ import Testing
     func gatewayLatencyUsesCurrentRoute() async {
         let provider = ScriptedRoamingProbeProvider(statuses: [
             roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
-            roamingStatus(bssid: "AA:00:00:00:00:01", routerIP: "192.0.2.1"),
-            roamingStatus(bssid: "BB:00:00:00:00:02", routerIP: "192.0.2.2")
+            roamingStatus(bssid: "AA:00:00:00:00:01"),
+            roamingStatus(bssid: "AA:00:00:00:00:01"),
+            roamingStatus(bssid: "BB:00:00:00:00:02")
         ])
-        let latency = RecordingGatewayLatencyProvider(result: .init(timestamp: Date(), latencyMs: 5))
+        let latency = GatewayLatencyByAddressProvider()
         let vm = RoamingTestViewModel(roamingProvider: provider, latencyProvider: latency)
-        vm.fallbackRouterProvider = { "198.51.100.1" }
+        let fallbackGateway = GatewayAddressBox("192.0.2.1")
+        vm.fallbackRouterProvider = { fallbackGateway.address }
 
-        await vm.checkReadiness()
+        vm.checkReadiness()
         await waitUntil { vm.state == .ready }
         vm.startTest()
         await waitUntil { vm.state == .running }
         vm.tick()
+        await waitUntil { vm.segments[0].samples.count == 2 }
+
+        fallbackGateway.address = "192.0.2.2"
+        vm.tick()
         await waitUntil { vm.transitions.count == 1 }
 
-        #expect(await latency.measuredRouterIPs == ["192.0.2.2"])
+        #expect(await latency.measuredRouterIPs == ["192.0.2.1", "192.0.2.2"])
         #expect(vm.routerIP == "192.0.2.2")
+        #expect(vm.segments[0].samples.last?.gatewayLatency == 11)
+        #expect(vm.segments[1].samples.first?.gatewayLatency == 22)
         vm.stopTest(userInitiated: false)
     }
 
@@ -238,6 +248,25 @@ private actor ScriptedRoamingProbeProvider: RoamingProbeProviding {
     func fetchCurrentProbe() async -> WiFiCurrentStatus {
         guard statuses.count > 1 else { return statuses[0] }
         return statuses.removeFirst()
+    }
+}
+
+private actor GatewayLatencyByAddressProvider: GatewayLatencyProviding {
+    private(set) var measuredRouterIPs: [String?] = []
+
+    func measure(routerIP: String?) async -> GatewayLatencyResult {
+        measuredRouterIPs.append(routerIP)
+        let latency = routerIP == "192.0.2.1" ? 11.0 : 22.0
+        return GatewayLatencyResult(timestamp: Date(), routerIP: routerIP, latencyMs: latency)
+    }
+}
+
+@MainActor
+private final class GatewayAddressBox {
+    var address: String?
+
+    init(_ address: String?) {
+        self.address = address
     }
 }
 

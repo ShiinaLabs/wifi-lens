@@ -82,8 +82,15 @@ enum AppLogger {
 
     /// Deletes app log files and persisted MetricKit payloads.
     static func clearLogs() {
-        LogFileWriter.shared.clear()
-        MetricKitManager.clearPayloads()
+        clearLogs(logWriter: .shared, clearMetricKitPayloads: { MetricKitManager.clearPayloads() })
+    }
+
+    static func clearLogs(
+        logWriter: LogFileWriter,
+        clearMetricKitPayloads: () -> Void
+    ) {
+        logWriter.clear()
+        clearMetricKitPayloads()
     }
 }
 
