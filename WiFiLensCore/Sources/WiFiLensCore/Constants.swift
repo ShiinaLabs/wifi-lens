@@ -49,18 +49,6 @@ public struct AppEnvironment: Equatable, Sendable {
         self.hasValidKind = environmentValue == nil || resolvedKind != nil
     }
 
-    public func storageRoot(fileManager: FileManager = .default) -> URL {
-        let applicationSupport = fileManager.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first ?? fileManager.temporaryDirectory
-        return storageRoot(applicationSupportDirectory: applicationSupport)
-    }
-
-    public func storageRoot(applicationSupportDirectory: URL) -> URL {
-        applicationSupportDirectory.appendingPathComponent(storageNamespace, isDirectory: true)
-    }
-
     public static let current: AppEnvironment = {
         let info = Bundle.main.infoDictionary ?? [:]
         return AppEnvironment(

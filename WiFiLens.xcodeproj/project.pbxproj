@@ -266,6 +266,8 @@
 		ACB82A2C80A21A3E58C8C529 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 956DE9019C6E16DBBBE975E7 /* MCP */; };
 		AD3512BDF1DF56B2101BFB63 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59593DC4F8361B2526A85B97 /* SettingsView.swift */; };
 		AD66698C941A72AB6774CE78 /* MACVendorDatabaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D560223B45D5C10948D2D085 /* MACVendorDatabaseStore.swift */; };
+		710000000000000000000004 /* StorageLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000001 /* StorageLocations.swift */; };
+		710000000000000000000005 /* StorageLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000002 /* StorageLocationsTests.swift */; };
 		AD6B85315B7749C89CF49F65 /* SpectrumHeatmapActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F432AAE54AE9233BB586EA4 /* SpectrumHeatmapActivity.swift */; };
 		ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */; };
 		ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000003 /* DebugMultiAPScenario.swift */; };
@@ -312,6 +314,19 @@
 		C8B85B473AE362E4E0369CBB /* GuidanceState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3AADDC23666CA3E58C81937 /* GuidanceState.swift */; };
 		C90000000000000000000004 /* ProCaptureEditionComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90000000000000000000001 /* ProCaptureEditionComposition.swift */; };
 		C90000000000000000000005 /* ProEditionComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000003 /* ProEditionComposition.swift */; };
+		74000000000000000000000C /* LegacyStorageLocations.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000001 /* LegacyStorageLocations.swift */; };
+		74000000000000000000000D /* StorageContractState.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000002 /* StorageContractState.swift */; };
+		74000000000000000000000E /* StorageMigrationCoordinator.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000003 /* StorageMigrationCoordinator.swift */; };
+		74000000000000000000000F /* StorageMigrationError.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000004 /* StorageMigrationError.swift */; };
+		740000000000000000000006 /* LegacyStorageLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000001 /* LegacyStorageLocations.swift */; };
+		740000000000000000000007 /* StorageContractState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000002 /* StorageContractState.swift */; };
+		740000000000000000000008 /* StorageMigrationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000003 /* StorageMigrationCoordinator.swift */; };
+		740000000000000000000009 /* StorageMigrationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000004 /* StorageMigrationError.swift */; };
+		74000000000000000000000A /* StorageMigrationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000005 /* StorageMigrationCoordinatorTests.swift */; };
+		740000000000000000000010 /* SQLiteStorageMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000014 /* SQLiteStorageMigrator.swift */; };
+		740000000000000000000012 /* SQLiteStorageMigrator.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000014 /* SQLiteStorageMigrator.swift */; };
+		740000000000000000000011 /* AuxiliaryStorageMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000015 /* AuxiliaryStorageMigrator.swift */; };
+		740000000000000000000013 /* AuxiliaryStorageMigrator.swift in Capture Sources */ = {isa = PBXBuildFile; fileRef = 740000000000000000000015 /* AuxiliaryStorageMigrator.swift */; };
 		C90000000000000000000006 /* ProSettingsComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC20000000000000000000007 /* ProSettingsComposition.swift */; };
 		C90000000000000000000007 /* ProSpectrumCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2000000000000000000000D /* ProSpectrumCompositionView.swift */; };
 		C9000000000000000000000A /* ProProductionEditionHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90000000000000000000009 /* ProProductionEditionHooks.swift */; };
@@ -1033,6 +1048,8 @@
 		D14393ECC64A14D68705BFFB /* IEParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IEParserTests.swift; sourceTree = "<group>"; };
 		D3E2BD9945FD69F33D8C24DC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D560223B45D5C10948D2D085 /* MACVendorDatabaseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACVendorDatabaseStore.swift; sourceTree = "<group>"; };
+		710000000000000000000001 /* StorageLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocations.swift; sourceTree = "<group>"; };
+		710000000000000000000002 /* StorageLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocationsTests.swift; sourceTree = "<group>"; };
 		D567C1BB3B54FC932634E36D /* NativeTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeTableView.swift; sourceTree = "<group>"; };
 		D92298452F334CDAAA9695D3 /* WindowFramePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicyTests.swift; sourceTree = "<group>"; };
 		D9289D069FBAE8E6BDDEA04D /* RecordingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingViewModel.swift; sourceTree = "<group>"; };
@@ -1059,6 +1076,13 @@
 		EC10000000000000000000006 /* OSSEditionComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSSEditionComposition.swift; sourceTree = "<group>"; };
 		EC20000000000000000000001 /* EditionCompositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionCompositionTests.swift; sourceTree = "<group>"; };
 		EC20000000000000000000003 /* ProEditionComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProEditionComposition.swift; sourceTree = "<group>"; };
+		740000000000000000000001 /* LegacyStorageLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStorageLocations.swift; sourceTree = "<group>"; };
+		740000000000000000000002 /* StorageContractState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageContractState.swift; sourceTree = "<group>"; };
+		740000000000000000000003 /* StorageMigrationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageMigrationCoordinator.swift; sourceTree = "<group>"; };
+		740000000000000000000004 /* StorageMigrationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageMigrationError.swift; sourceTree = "<group>"; };
+		740000000000000000000005 /* StorageMigrationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageMigrationCoordinatorTests.swift; sourceTree = "<group>"; };
+		740000000000000000000014 /* SQLiteStorageMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteStorageMigrator.swift; sourceTree = "<group>"; };
+		740000000000000000000015 /* AuxiliaryStorageMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuxiliaryStorageMigrator.swift; sourceTree = "<group>"; };
 		EC20000000000000000000007 /* ProSettingsComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSettingsComposition.swift; sourceTree = "<group>"; };
 		EC20000000000000000000009 /* ProMenuBarComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProMenuBarComposition.swift; sourceTree = "<group>"; };
 		EC2000000000000000000000D /* ProSpectrumCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSpectrumCompositionView.swift; sourceTree = "<group>"; };
@@ -1616,6 +1640,7 @@
 		61E38B6F594EC279885460DF /* WiFiLensCoreTests */ = {
 			isa = PBXGroup;
 			children = (
+				710000000000000000000002 /* StorageLocationsTests.swift */,
 				2CF8F9B5DD7A847BE1145FCE /* Channels */,
 				487F4EEE86781884383EB1F3 /* Observation */,
 				B514D3472A83210B9FE6883B /* Regulatory */,
@@ -1897,6 +1922,7 @@
 		CAA4600A0F8E3473D5869021 /* WiFiLensCore */ = {
 			isa = PBXGroup;
 			children = (
+				710000000000000000000003 /* Storage */,
 				229562F0F20B864253CE7EED /* App */,
 				8396E2C331A86C642BBEAC65 /* APRadar */,
 				1D175F7D7AD178AA9CB5CCDD /* BLE */,
@@ -1985,6 +2011,14 @@
 				83D5D8E3A6D9DCEBA5E4B38B /* WiFiPowerMonitor.swift */,
 			);
 			path = WiFiLensCore;
+			sourceTree = "<group>";
+		};
+		710000000000000000000003 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				710000000000000000000001 /* StorageLocations.swift */,
+			);
+			path = Storage;
 			sourceTree = "<group>";
 		};
 		D04EFE6CE2410ABA20BFAFD9 /* Analyzers */ = {
@@ -2103,6 +2137,7 @@
 		EC2000000000000000000000B /* App */ = {
 			isa = PBXGroup;
 			children = (
+				74000000000000000000000B /* StorageMigration */,
 				EC20000000000000000000003 /* ProEditionComposition.swift */,
 				EC20000000000000000000007 /* ProSettingsComposition.swift */,
 				EC20000000000000000000009 /* ProMenuBarComposition.swift */,
@@ -2113,6 +2148,19 @@
 				C90000000000000000000001 /* ProCaptureEditionComposition.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		74000000000000000000000B /* StorageMigration */ = {
+			isa = PBXGroup;
+			children = (
+				740000000000000000000001 /* LegacyStorageLocations.swift */,
+				740000000000000000000002 /* StorageContractState.swift */,
+				740000000000000000000003 /* StorageMigrationCoordinator.swift */,
+				740000000000000000000004 /* StorageMigrationError.swift */,
+				740000000000000000000014 /* SQLiteStorageMigrator.swift */,
+				740000000000000000000015 /* AuxiliaryStorageMigrator.swift */,
+			);
+			path = StorageMigration;
 			sourceTree = "<group>";
 		};
 		F006873221194FE8152F10D8 /* Channels */ = {
@@ -2167,6 +2215,7 @@
 		FB8FCB1B2FF6C4E300BB2929 /* WiFiLensProTests */ = {
 			isa = PBXGroup;
 			children = (
+				740000000000000000000005 /* StorageMigrationCoordinatorTests.swift */,
 				B05D236E635B93825959AC92 /* TimelineLocalizationTests.swift */,
 				C9000000000000000000000B /* TimelinePresentationLocalizationTests.swift */,
 				EC20000000000000000000001 /* EditionCompositionTests.swift */,
@@ -2974,6 +3023,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				710000000000000000000005 /* StorageLocationsTests.swift in Sources */,
 				C94E78B4E1D29F278D5A4BFD /* APRadarSignalProcessorTests.swift in Sources */,
 				F5CB685AD7407C0619390870 /* APRadarSoundSynthesizerTests.swift in Sources */,
 				28199D9AC03B2660F3A03F2B /* APRadarViewModelTests.swift in Sources */,
@@ -3014,6 +3064,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				710000000000000000000004 /* StorageLocations.swift in Sources */,
 				1BFF89425A53EF7DA96988D7 /* APDisplayState.swift in Sources */,
 				0E0000F1524FC2B3BD876330 /* APRadarView.swift in Sources */,
 				325F2166A960C703E2734DCB /* APSelectionView.swift in Sources */,
@@ -3281,6 +3332,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				74000000000000000000000C /* LegacyStorageLocations.swift in Capture Sources */,
+				74000000000000000000000D /* StorageContractState.swift in Capture Sources */,
+				74000000000000000000000E /* StorageMigrationCoordinator.swift in Capture Sources */,
+				74000000000000000000000F /* StorageMigrationError.swift in Capture Sources */,
+				740000000000000000000012 /* SQLiteStorageMigrator.swift in Capture Sources */,
+				740000000000000000000013 /* AuxiliaryStorageMigrator.swift in Capture Sources */,
 				FB39A17F306E19190084F54C /* ExistingInstallationDetector.swift in Sources */,
 				C90000000000000000000004 /* ProCaptureEditionComposition.swift in Sources */,
 				C90000000000000000000005 /* ProEditionComposition.swift in Sources */,
@@ -3307,6 +3364,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				740000000000000000000006 /* LegacyStorageLocations.swift in Sources */,
+				740000000000000000000007 /* StorageContractState.swift in Sources */,
+				740000000000000000000008 /* StorageMigrationCoordinator.swift in Sources */,
+				740000000000000000000009 /* StorageMigrationError.swift in Sources */,
+				740000000000000000000010 /* SQLiteStorageMigrator.swift in Sources */,
+				740000000000000000000011 /* AuxiliaryStorageMigrator.swift in Sources */,
 				G900000000000000000000A8 /* ExistingInstallationDetector.swift in Sources */,
 				EC20000000000000000000004 /* ProEditionComposition.swift in Sources */,
 				EC20000000000000000000008 /* ProSettingsComposition.swift in Sources */,
@@ -3337,6 +3400,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				74000000000000000000000A /* StorageMigrationCoordinatorTests.swift in Sources */,
 				63BB596DECFDBA8763C84656 /* TimelineLocalizationTests.swift in Sources */,
 				C9000000000000000000000C /* TimelinePresentationLocalizationTests.swift in Sources */,
 				EC20000000000000000000002 /* EditionCompositionTests.swift in Sources */,

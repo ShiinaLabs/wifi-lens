@@ -69,13 +69,7 @@ enum AppLogger {
     // MARK: Log directory
 
     static var logDirectory: URL {
-        let environment = AppEnvironment.current
-        if environment.isDevelopment {
-            return environment.storageRoot().appendingPathComponent("Logs", isDirectory: true)
-        }
-        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("WiFi Lens")
-            .appendingPathComponent("Logs")
+        StorageLocations.current.logs
     }
 
     /// Opens the log directory in Finder.

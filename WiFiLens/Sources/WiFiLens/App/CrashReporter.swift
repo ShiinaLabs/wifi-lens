@@ -4,14 +4,7 @@ import WiFiLensCore
 /// Lightweight crash reporter — writes stack traces to disk for review on the next launch.
 enum CrashReporter {
     private static let logDir: URL = {
-        let environment = AppEnvironment.current
-        if environment.isDevelopment {
-            let dir = environment.storageRoot().appendingPathComponent("CrashLogs", isDirectory: true)
-            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-            return dir
-        }
-        let dir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Logs/WiFiLens")
+        let dir = StorageLocations.current.crashLogs
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()
