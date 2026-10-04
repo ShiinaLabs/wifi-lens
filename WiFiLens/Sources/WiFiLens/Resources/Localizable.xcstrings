@@ -59833,49 +59833,49 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No NAT"
+            "value": "No NAT-D mismatch observed"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Без NAT"
+            "value": "Несовпадение NAT-D не обнаружено"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无 NAT"
+            "value": "未观察到 NAT-D 不匹配"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "沒有 NAT"
+            "value": "未觀察到 NAT-D 不匹配"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kein NAT"
+            "value": "Keine NAT-D-Abweichung festgestellt"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sin NAT"
+            "value": "No se observó discrepancia NAT-D"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun NAT"
+            "value": "Aucune divergence NAT-D observée"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "NAT なし"
+            "value": "NAT-D の不一致は未検出"
           }
         }
       }
@@ -60257,49 +60257,49 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Domain not found"
+            "value": "No address returned by system resolver"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Домен не найден"
+            "value": "Системный резолвер не вернул адрес"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "域名不存在"
+            "value": "系统解析器未返回地址"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "找不到網域"
+            "value": "系統解析器未返回位址"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Domain nicht gefunden"
+            "value": "Systemresolver hat keine Adresse zurückgegeben"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dominio no encontrado"
+            "value": "El resolvedor del sistema no devolvió una dirección"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Domaine introuvable"
+            "value": "Le résolveur système n’a renvoyé aucune adresse"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ドメインが見つかりません"
+            "value": "システムリゾルバーからアドレスが返されませんでした"
           }
         }
       }
@@ -60575,49 +60575,49 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Resolver failure"
+            "value": "System resolver lookup did not complete"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ошибка DNS-резолвера"
+            "value": "Системный резолвер не завершил поиск"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "解析失败"
+            "value": "系统解析器未能完成查询"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "解析器失敗"
+            "value": "系統解析器未能完成查詢"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fehler des DNS-Resolvers"
+            "value": "Systemresolver hat die Abfrage nicht abgeschlossen"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Error del resolvedor"
+            "value": "El resolvedor del sistema no completó la consulta"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec du résolveur"
+            "value": "Le résolveur système n’a pas terminé la recherche"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "リゾルバーエラー"
+            "value": "システムリゾルバーの検索が完了しませんでした"
           }
         }
       }
