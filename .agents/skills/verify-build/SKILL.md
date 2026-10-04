@@ -78,7 +78,7 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
   the Pro scheme must build too. Shared implementation is owned by WiFiLensCore,
   not duplicated in both app Sources phases.
 - Use `-skipPackageUpdates` on `test` runs to avoid needless package resolution.
-- `-destination 'platform=macOS'` — this is a macOS 14+ app, no simulator.
+- `-destination 'platform=macOS'` — this is a macOS 14.6+ app, no simulator.
 
 ## Reporting
 

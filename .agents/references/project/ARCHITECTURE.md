@@ -1,6 +1,6 @@
 # Architecture
 
-Native macOS network diagnostics application with Wi-Fi analysis, BLE diagnostics, and local integrations (SwiftUI + CoreWLAN + CoreBluetooth + AppKit interop). Targets macOS 14+, Swift 6.0.
+Native macOS network diagnostics application with Wi-Fi analysis, BLE diagnostics, and local integrations (SwiftUI + CoreWLAN + CoreBluetooth + AppKit interop). Targets macOS 14.6+, Swift 6.0.
 
 ## Data Flow
 
@@ -124,7 +124,7 @@ production app dependency graph.
 - Domains: `common` (shared UI), `nav` (sidebar), `settings`, `overview`, `spectrum`, `channels`, `interfaces`, `roaming`, `ble`, `permission`, `wifi` (terminology), `format` (parameterized)
 - Example: `"overview.diagnosis.congested.title"` for "Channel is congested" diagnosis heading
 - Parameterized strings use `String(format: String(localized: "format.key"), args...)` — never interpolate values into the key string
-- Translations in `Resources/Localizable.xcstrings` (Xcode String Catalog, `en`, `de`, `es`, `ja`, `zh-Hans`)
+- Translations in `Resources/Localizable.xcstrings` (Xcode String Catalog, `en`, `de`, `es`, `fr`, `ja`, `ru`, `zh-Hans`, `zh-Hant`)
 - New strings must be manually added to `.xcstrings` with `"extractionState": "manual"` and an explicit `en` localization with `"state": "translated"`
 - Xcode auto-extraction is disabled (`SWIFT_EMIT_LOC_STRINGS = NO`)
 

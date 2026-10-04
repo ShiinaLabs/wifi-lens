@@ -70,10 +70,10 @@ When adding new test files, ensure they are:
 
 ## Key Facts
 
-- macOS 14+, Swift 6.0, SwiftUI + AppKit interop with CoreWLAN and CoreBluetooth
+- macOS 14.6+, Swift 6.0, SwiftUI + AppKit interop with CoreWLAN and CoreBluetooth
 - `ScannerViewModel` is `@Observable`, passed via `@Bindable`
 - Tests use Swift Testing (`@Test`, `#expect()`) with `@testable import WiFiLens`
-- Localization: `String(localized: "domain.component.element", comment: "Context for translators")` → `Resources/Localizable.xcstrings` (`en`, `de`, `es`, `ja`, `zh-Hans`)
+- Localization: `String(localized: "domain.component.element", comment: "Context for translators")` → `Resources/Localizable.xcstrings` (`en`, `de`, `es`, `fr`, `ja`, `ru`, `zh-Hans`, `zh-Hant`)
 - Keys use hierarchical dot-notation (e.g., `settings.scan.interval_1s`, `overview.diagnosis.great.title`) — see `.agents/references/project/ARCHITECTURE.md` for full convention
 - New strings must be manually added to `.xcstrings` with `"extractionState": "manual"` and explicit `en` localization — auto-extraction is off
 - Use `String(format: String(localized: "format.key"), args...)` for parameterized strings, not string interpolation in keys
