@@ -1,6 +1,6 @@
-# What's New in 1.6.0
+# What's New in 2.0
 
-WiFi Lens 1.6.0 expands the live Wi-Fi workspace for OSS and Pro with AP Radar, a componentized Spectrum workspace, and a new aggregate Heatmap — while Pro continues the path from live diagnosis to history, reporting, and analysis.
+WiFi Lens 2.0 is a major foundation release focused on making Wi-Fi analysis more accurate, reliable, and consistent.
 
 ## Join the Community
 
@@ -8,43 +8,34 @@ Questions, feedback, or just want to talk about WiFi Lens?
 
 **Join us on Discord:** https://discord.gg/gH6sTCYaJ7
 
-## Highlights
+## Deeper Wi-Fi Protocol Analysis
 
-### AP Radar (Preview)
+* WiFi Lens now performs more robust low-level parsing of 802.11 Information Elements advertised by nearby access points.
+* Improved detection of operating channel width, including 20, 40, 80, 160, and 80+80 MHz configurations.
+* More reliable identification of WPA3 security, encryption suites, 802.11k/r/v/w capabilities, Wi-Fi generations, MCS, and spatial streams.
+* Malformed or incomplete wireless metadata is now handled more conservatively instead of being guessed, reducing misleading capability results.
 
-* Select an access point and follow its received signal strength as you move around.
-* See whether the signal is getting stronger, getting weaker, or staying stable, with a clear signal-lost state when the target disappears.
-* Optional pulse audio changes with signal strength; sound controls and pulse presets are available in Settings.
-* AP Radar provides RSSI-based guidance. It does not determine an access point’s exact direction or distance.
+## A Stronger Troubleshooting Foundation
 
-### Componentized Spectrum Workspace
+* Network Self-Check has been rebuilt around clearer, evidence-based diagnostics for connectivity, DNS, HTTPS, IPv6, and configured proxies.
+* Wi-Fi analysis components now share a cleaner internal architecture, improving consistency across Spectrum, Channels, Interfaces, AP Radar, and diagnostics.
+* Runtime and storage handling have been redesigned to better protect user data and improve reliability across different app environments.
 
-* Spectrum panels are now componentized, so each panel can be switched between Spectrum, Trend, Table, and Heatmap views.
-* The existing network table is easier to tailor: choose the columns you want to keep visible alongside the network details that matter to you.
-* Band selection and view-specific controls stay together, making it easier to build the workspace that fits your current task.
+## WiFi Lens Pro
 
-### Aggregate Spectrum Heatmap
+* Timeline storage and historical data handling are more robust, including safer migration for existing installations.
+* Long-term observation infrastructure has been strengthened to provide a more dependable foundation for history, Statistics, Insights, and investigation workflows.
+* Production and development environments now use isolated identities, storage, and MCP endpoints.
 
-* See where Wi-Fi activity is concentrated across frequency and signal strength.
-* Compare the current environment as an aggregate view instead of following one access point at a time.
-* Switch between supported 2.4 GHz, 5 GHz, and 6 GHz bands with a band-aware heatmap.
+## AI & MCP
 
-### WiFi Lens Pro
+* The built-in MCP server is now integrated more cleanly with the app runtime.
+* Compatible AI clients can continue to access live Wi-Fi information locally through the MCP endpoint enabled in Settings.
+* MCP environments are now better isolated between development and production builds.
 
-* Timeline can export an anonymized Markdown report and provides richer localized event details.
-* Statistics and Insights now have clearer localized actions and feedback entry points.
-* Pro connects live observation with recording, historical events, recurring-pattern analysis, menu-bar access, and export workflows.
+## Reliability
 
-## Reliability, Localization, and Accessibility
+* Improved persistence boundaries, startup validation, logging, crash diagnostics, and MetricKit storage.
+* Numerous fixes and tests were added across networking, diagnostics, localization, accessibility, and runtime behavior.
 
-* Heatmap rendering now uses hardware acceleration when available and falls back safely when it is not.
-* Improved rendering stability for concurrent updates, changing scan results, and sparse channel plans.
-* Expanded localization and accessibility coverage across AP Radar and the new Spectrum workspace.
-
-## Edition Availability
-
-The componentized Spectrum workspace, aggregate Heatmap, AP Radar Preview, and core live Wi-Fi analysis are available in both the open-source (OSS) and Pro editions.
-
-WiFi Lens Pro adds recording, Timeline history, Statistics, Insights, menu-bar access, and extended export workflows for longer-term observation and analysis.
-
-**Full Changelog:** [v1.5.1...v1.6.0](https://github.com/SHIINASAMA/wifi-lens/compare/v1.5.1...v1.6.0)
+WiFi Lens 2.0 provides a more trustworthy foundation for understanding what your wireless environment is actually advertising — and for investigating problems when they happen.

@@ -16,7 +16,7 @@ WiFi Lens Proは、リアルタイムWi-Fi分析、ネットワーク診断、�
 
 <p align="center"><img alt="macOSで接続履歴を表示するWiFi Lens ProのEvent Timeline" src="assets/screenshot-timeline.webp" width="800"></p>
 
-<p align="center">macOS 14以降 &nbsp;·&nbsp; Apple Silicon / Intel &nbsp;·&nbsp; テレメトリーなし</p>
+<p align="center">macOS 14.6以降 &nbsp;·&nbsp; Apple Silicon / Intel &nbsp;·&nbsp; テレメトリーなし</p>
 
 <p align="center">
   🔒 <strong>ローカルファーストのプライバシー</strong> — アカウント、クラウド、テレメトリーなし<br>
@@ -29,7 +29,7 @@ WiFi Lens Proは、リアルタイムWi-Fi分析、ネットワーク診断、�
 ---
 
 <p align="center">
-  <a href="README.md">🇺🇸 English</a> · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · 🇯🇵 日本語
+  <a href="README.md">🇺🇸 English</a> · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · 🇯🇵 日本語 · <a href="README.zh-Hant.md">🇭🇰 繁體中文</a>
 </p>
 <p align="center">
   <a href="#wifi-lens-proを選ぶ理由">WiFi Lens Proを選ぶ理由</a> · <a href="#コア機能">コア機能</a> · <a href="#エディション">エディション</a> · <a href="#ai--mcp連携">AI / MCP</a> · <a href="#オープンソース版">オープンソース版</a> · <a href="#プライバシー">プライバシー</a> · <a href="#wifi-lensを入手">入手方法</a> · <a href="#開発">開発</a> · <a href="#コントリビュート">コントリビュート</a> · <a href="#ライセンス">ライセンス</a>
@@ -205,7 +205,7 @@ WiFi Lensは、利用分析、クラッシュテレメトリー、Wi-Fiスキャ
 
 ## WiFi Lensを入手
 
-**macOS 14（Sonoma）以降**が必要です。IntelとApple Siliconの両方に対応しています。6 GHzスキャンにはWi-Fi 6E/7対応ハードウェアが必要です。
+**macOS 14.6（Sonoma）以降**が必要です。IntelとApple Siliconの両方に対応しています。6 GHzスキャンにはWi-Fi 6E/7対応ハードウェアが必要です。
 
 ### WiFi Lens Pro
 
@@ -224,7 +224,7 @@ GitHubからの配布とコミュニティ開発向けです。
 - ソースコード：このリポジトリ
 
 > [!IMPORTANT]
-> macOS 14以降では、Wi-FiのSSID名を読み取るために**位置情報サービス**を有効にする必要があります。**システム設定 → プライバシーとセキュリティ → 位置情報サービス**を開き、要求されたらWiFi Lensを有効にしてください。
+> macOS 14.6以降では、Wi-FiのSSID名を読み取るために**位置情報サービス**を有効にする必要があります。**システム設定 → プライバシーとセキュリティ → 位置情報サービス**を開き、要求されたらWiFi Lensを有効にしてください。
 
 ---
 

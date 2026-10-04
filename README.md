@@ -16,7 +16,7 @@ WiFi Lens Pro combines live Wi-Fi analysis, network diagnostics, continuous moni
 
 <p align="center"><img alt="WiFi Lens Pro showing Event Timeline history on macOS" src="assets/screenshot-timeline.webp" width="800"></p>
 
-<p align="center">macOS 14+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; No telemetry</p>
+<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; No telemetry</p>
 
 <p align="center">
   🔒 <strong>Local-first privacy</strong> — No accounts, no cloud, no telemetry<br>
@@ -29,7 +29,7 @@ WiFi Lens Pro combines live Wi-Fi analysis, network diagnostics, continuous moni
 ---
 
 <p align="center">
-  🇺🇸 English · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · <a href="README.ja.md">🇯🇵 日本語</a>
+  🇺🇸 English · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · <a href="README.ja.md">🇯🇵 日本語</a> · <a href="README.zh-Hant.md">🇭🇰 繁體中文</a>
 </p>
 <p align="center">
   <a href="#why-wifi-lens-pro">Why WiFi Lens Pro</a> · <a href="#core-capabilities">Core Capabilities</a> · <a href="#editions">Editions</a> · <a href="#ai--mcp-integration">AI / MCP</a> · <a href="#open-source-edition">Open-source edition</a> · <a href="#privacy">Privacy</a> · <a href="#get-wifi-lens">Get WiFi Lens</a> · <a href="#development">Development</a> · <a href="#contributing">Contributing</a> · <a href="#license">License</a>
@@ -205,7 +205,7 @@ WiFi Lens does not collect usage analytics, crash telemetry, or Wi-Fi scan data.
 
 ## Get WiFi Lens
 
-Requires **macOS 14 (Sonoma) or later**. Works on both Intel and Apple Silicon. 6 GHz scanning requires Wi-Fi 6E/7 hardware.
+Requires **macOS 14.6 (Sonoma) or later**. Works on both Intel and Apple Silicon. 6 GHz scanning requires Wi-Fi 6E/7 hardware.
 
 ### WiFi Lens Pro
 
@@ -224,7 +224,7 @@ For GitHub distribution and community development:
 - Source code: this repository
 
 > [!IMPORTANT]
-> On macOS 14+, **Location Services** must be enabled for the app to read Wi-Fi SSID names. Go to **System Settings → Privacy & Security → Location Services** and enable WiFi Lens when prompted.
+> On macOS 14.6+, **Location Services** must be enabled for the app to read Wi-Fi SSID names. Go to **System Settings → Privacy & Security → Location Services** and enable WiFi Lens when prompted.
 
 ---
 

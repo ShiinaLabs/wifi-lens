@@ -34,6 +34,35 @@ Standardized terms for `en`, `de`, `es`, `fr`, `ja`, `ru`, `zh-Hans` translation
 | moderate (overlap) | 中等 | — | Overlap level |
 | high (overlap) | 高 | — | Overlap level |
 
+## zh-Hant (繁體中文)
+
+| English | Use | Do NOT use | Notes |
+|---------|-----|------------|-------|
+| channel | 信道 | ~~頻道~~ | Wi-Fi radio channel; use 信道寬度 for channel width |
+| network | 網路 | ~~網絡~~ | Traditional Chinese networking terminology |
+| signal | 訊號 | ~~信號~~ | Signal strength: 訊號強度 |
+| scan / scanning | 掃描 | ~~掃瞄~~ | Preserve scan as an action or noun according to context |
+| System Settings | 系統設定 | ~~系統偏好設定~~ | Current macOS terminology |
+| Location Services | 定位服務 | ~~位置服務~~ | Apple terminology |
+| device | 裝置 | ~~設備~~ | |
+| interface (network) | 介面 | ~~接口~~ | Network interface: 網路介面 |
+| recommendation | 建議 | ~~推薦~~ | For channel and troubleshooting recommendations |
+| AP | AP | ~~存取點~~, ~~接入點~~ | Keep the abbreviation in compact UI and product terms |
+| roaming | 漫遊 | ~~漫游~~ | Wi-Fi roaming |
+| data | 資料 | ~~數據~~ | User data and stored data |
+| privacy | 隱私權 | ~~隱私~~ | Apple terminology |
+| security | 安全性 | ~~安全~~ | Security state and settings |
+| Wi-Fi | Wi-Fi | ~~WiFi~~, ~~Wifi~~ | Preserve Apple typography |
+| WiFi Lens | WiFi Lens | — | Product name; never translate or hyphenate |
+
+### zh-Hant general rules
+
+1. Use Traditional Chinese based on the English source; consult `zh-Hans` for meaning, not as text to mechanically convert.
+2. Use the established zh-Hant Apple terms 系統設定, 隱私權與安全性, and 定位服務.
+3. Preserve technical abbreviations such as AP, RSSI, MCS, NSS, BSSID, SSID, DFS, EMA, MCP, WPA3, and IEEE 802.11 identifiers.
+4. Keep format placeholders such as `%@`, `%lld`, and `%1$@` exactly as in the source.
+5. Use Traditional Chinese punctuation and an informal, direct tone; address the user as 你.
+
 ## ja (日本語)
 
 | English | Use | Do NOT use | Notes |

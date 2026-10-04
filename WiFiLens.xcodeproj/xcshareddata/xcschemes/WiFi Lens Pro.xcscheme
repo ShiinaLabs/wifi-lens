@@ -83,7 +83,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = "en"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -97,7 +96,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FB1E32402FC7316C009D1BDC"
             BuildableName = "WiFi Lens Pro Dev.app"
-            BlueprintName = "WiFiLensPro"
             ReferencedContainer = "container:WiFiLens.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

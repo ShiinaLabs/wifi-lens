@@ -16,7 +16,7 @@ WiFi Lens Pro réunit l’analyse Wi-Fi en direct, le diagnostic réseau, la sur
 
 <p align="center"><img alt="WiFi Lens Pro affichant l’historique Event Timeline sur macOS" src="assets/screenshot-timeline.webp" width="800"></p>
 
-<p align="center">macOS 14+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; Sans télémétrie</p>
+<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; Sans télémétrie</p>
 
 <p align="center">
   🔒 <strong>Confidentialité locale</strong> — Pas de compte, pas de cloud, pas de télémétrie<br>
@@ -29,7 +29,7 @@ WiFi Lens Pro réunit l’analyse Wi-Fi en direct, le diagnostic réseau, la sur
 ---
 
 <p align="center">
-  <a href="README.md">🇺🇸 English</a> · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · 🇫🇷 Français · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · <a href="README.ja.md">🇯🇵 日本語</a>
+  <a href="README.md">🇺🇸 English</a> · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · 🇫🇷 Français · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · <a href="README.ja.md">🇯🇵 日本語</a> · <a href="README.zh-Hant.md">🇭🇰 繁體中文</a>
 </p>
 <p align="center">
   <a href="#pourquoi-wifi-lens-pro">Pourquoi WiFi Lens Pro</a> · <a href="#capacités-principales">Capacités principales</a> · <a href="#éditions">Éditions</a> · <a href="#intégration-ia--mcp">IA / MCP</a> · <a href="#édition-open-source">Édition open source</a> · <a href="#confidentialité">Confidentialité</a> · <a href="#obtenir-wifi-lens">Obtenir WiFi Lens</a> · <a href="#développement">Développement</a> · <a href="#contribuer">Contribuer</a> · <a href="#licence">Licence</a>
@@ -205,7 +205,7 @@ WiFi Lens ne collecte aucune analytique d’utilisation, télémétrie de planta
 
 ## Obtenir WiFi Lens
 
-Nécessite **macOS 14 (Sonoma) ou ultérieur**. Fonctionne sur Mac Intel et Apple Silicon. Le scan 6 GHz nécessite un matériel Wi-Fi 6E/7.
+Nécessite **macOS 14.6 (Sonoma) ou ultérieur**. Fonctionne sur Mac Intel et Apple Silicon. Le scan 6 GHz nécessite un matériel Wi-Fi 6E/7.
 
 ### WiFi Lens Pro
 
@@ -224,7 +224,7 @@ Pour la distribution GitHub et le développement communautaire :
 - Code source : ce dépôt
 
 > [!IMPORTANT]
-> Sur macOS 14+, les **Services de localisation** doivent être activés pour que l’app puisse lire les noms SSID Wi-Fi. Ouvrez **Réglages Système → Confidentialité et sécurité → Service de localisation** et activez WiFi Lens lorsque le système le demande.
+> Sur macOS 14.6+, les **Services de localisation** doivent être activés pour que l’app puisse lire les noms SSID Wi-Fi. Ouvrez **Réglages Système → Confidentialité et sécurité → Service de localisation** et activez WiFi Lens lorsque le système le demande.
 
 ---
 

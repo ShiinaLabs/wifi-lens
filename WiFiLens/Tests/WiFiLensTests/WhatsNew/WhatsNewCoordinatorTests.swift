@@ -12,12 +12,50 @@ final class WhatsNewCoordinatorTests {
 
     // MARK: - Bundled release notes
 
-    @Test(arguments: ["de", "en", "es", "fr", "ja", "zh-Hans"])
+    @Test(arguments: ["de", "en", "es", "fr", "ja", "zh-Hans", "zh-Hant"])
     func releaseNotesAreReadableFromAppBundle(language: String) throws {
         let url = try #require(Bundle.main.url(forResource: language, withExtension: "md"))
         let markdown = try String(contentsOf: url, encoding: .utf8)
         #expect(!markdown.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         #expect(!MarkdownRenderer.render(markdown, pointSize: 13).string.isEmpty)
+    }
+
+    @Test func releaseNotesResolveChineseScriptAndRegionVariants() {
+        let available: Set<String> = ["en", "fr", "zh-Hans", "zh-Hant"]
+
+        #expect(ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: ["zh-Hant"],
+            availableLanguages: available
+        ) == "zh-Hant")
+        #expect(ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: ["zh-Hant-HK"],
+            availableLanguages: available
+        ) == "zh-Hant")
+        #expect(ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: ["zh_TW"],
+            availableLanguages: available
+        ) == "zh-Hant")
+        #expect(ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: ["zh-Hans-CN"],
+            availableLanguages: available
+        ) == "zh-Hans")
+        #expect(ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: ["zh"],
+            availableLanguages: available
+        ) == "zh-Hans")
+    }
+
+    @Test func releaseNotesResolveLanguageOnlyAndFallbackToEnglish() {
+        let available: Set<String> = ["en", "fr"]
+
+        #expect(ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: ["fr-CA"],
+            availableLanguages: available
+        ) == "fr")
+        #expect(ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: ["ru"],
+            availableLanguages: available
+        ) == "en")
     }
 
     // MARK: - Version gating

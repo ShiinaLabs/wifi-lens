@@ -119,22 +119,19 @@ public struct WhatsNewSheetView: View {
     /// Uses the bundle's preferred localizations rather than the global
     /// `Locale.current`, so the Markdown matches the app's own language even
     /// when the user has set a per-app language override in System Settings.
-    /// Only simplified Chinese (`zh-Hans`) notes are shipped, so any Chinese
-    /// script resolves to that file; otherwise the localization tag is used
-    /// verbatim and falls back to `en`.
+    /// Chinese script and region subtags are normalized to the matching notes
+    /// file. Generic Chinese defaults to simplified Chinese; unsupported
+    /// languages fall back to English.
     private func resolvedMarkdownLanguage() -> String? {
-        for preferred in Bundle.main.preferredLocalizations {
-            let candidate: String
-            if preferred.hasPrefix("zh") {
-                candidate = "zh-Hans"
-            } else {
-                candidate = preferred
+        let availableLanguages = Set(
+            Bundle.main.paths(forResourcesOfType: "md", inDirectory: nil).map {
+                URL(fileURLWithPath: $0).deletingPathExtension().lastPathComponent
             }
-            if Bundle.main.url(forResource: candidate, withExtension: "md", subdirectory: nil) != nil {
-                return candidate
-            }
-        }
-        return "en"
+        )
+        return ReleaseNotesLanguageResolver.resolve(
+            preferredLocalizations: Bundle.main.preferredLocalizations,
+            availableLanguages: availableLanguages
+        )
     }
 
     private func loadMarkdown() -> String? {
@@ -177,6 +174,34 @@ public struct WhatsNewSheetView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
+    }
+}
+
+enum ReleaseNotesLanguageResolver {
+    static func resolve(preferredLocalizations: [String], availableLanguages: Set<String>) -> String? {
+        for preferred in preferredLocalizations {
+            for candidate in candidates(for: preferred) where availableLanguages.contains(candidate) {
+                return candidate
+            }
+        }
+        return availableLanguages.contains("en") ? "en" : nil
+    }
+
+    private static func candidates(for localization: String) -> [String] {
+        let subtags = localization.replacingOccurrences(of: "_", with: "-").split(separator: "-")
+        guard let language = subtags.first?.lowercased() else { return [] }
+        guard language == "zh" else { return [language] }
+
+        let normalizedSubtags = subtags.dropFirst().map { $0.lowercased() }
+        if normalizedSubtags.contains("hant") || normalizedSubtags.contains("tw")
+            || normalizedSubtags.contains("hk") || normalizedSubtags.contains("mo") {
+            return ["zh-Hant", "zh-Hans"]
+        }
+        if normalizedSubtags.contains("hans") || normalizedSubtags.contains("cn")
+            || normalizedSubtags.contains("sg") {
+            return ["zh-Hans", "zh-Hant"]
+        }
+        return ["zh-Hans", "zh-Hant"]
     }
 }
 

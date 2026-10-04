@@ -16,7 +16,7 @@ WiFi Lens Pro 将实时 Wi-Fi 分析、网络诊断、持续监控、Timeline �
 
 <p align="center"><img alt="WiFi Lens Pro 在 macOS 上展示 Event Timeline 历史记录" src="assets/screenshot-timeline.webp" width="800"></p>
 
-<p align="center">macOS 14+ &nbsp;·&nbsp; Apple Silicon 与 Intel &nbsp;·&nbsp; 无遥测</p>
+<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon 与 Intel &nbsp;·&nbsp; 无遥测</p>
 
 <p align="center">
   🔒 <strong>本地优先隐私</strong> — 无账号、无云端、无遥测<br>
@@ -29,7 +29,7 @@ WiFi Lens Pro 将实时 Wi-Fi 分析、网络诊断、持续监控、Timeline �
 ---
 
 <p align="center">
-  <a href="README.md">🇺🇸 English</a> · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · 🇨🇳 简体中文 · <a href="README.ja.md">🇯🇵 日本語</a>
+  <a href="README.md">🇺🇸 English</a> · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · 🇨🇳 简体中文 · <a href="README.ja.md">🇯🇵 日本語</a> · <a href="README.zh-Hant.md">🇭🇰 繁體中文</a>
 </p>
 <p align="center">
   <a href="#为什么选择-wifi-lens-pro">为什么选择 WiFi Lens Pro</a> · <a href="#核心能力">核心能力</a> · <a href="#版本">版本</a> · <a href="#ai--mcp-集成">AI / MCP</a> · <a href="#开源版">开源版</a> · <a href="#隐私">隐私</a> · <a href="#获取-wifi-lens">获取 WiFi Lens</a> · <a href="#开发">开发</a> · <a href="#贡献">贡献</a> · <a href="#许可证">许可证</a>
@@ -205,7 +205,7 @@ WiFi Lens 不收集使用分析、崩溃遥测或 Wi-Fi 扫描数据。
 
 ## 获取 WiFi Lens
 
-需要 **macOS 14（Sonoma）或更高版本**。支持 Intel 和 Apple Silicon。6 GHz 扫描需要 Wi-Fi 6E/7 硬件。
+需要 **macOS 14.6（Sonoma）或更高版本**。支持 Intel 和 Apple Silicon。6 GHz 扫描需要 Wi-Fi 6E/7 硬件。
 
 ### WiFi Lens Pro
 
@@ -224,7 +224,7 @@ WiFi Lens 不收集使用分析、崩溃遥测或 Wi-Fi 扫描数据。
 - 源码：本仓库
 
 > [!IMPORTANT]
-> 在 macOS 14+ 上，必须启用**定位服务**，应用才能读取 Wi-Fi SSID 名称。请前往**系统设置 → 隐私与安全性 → 定位服务**，并在系统提示时启用 WiFi Lens。
+> 在 macOS 14.6+ 上，必须启用**定位服务**，应用才能读取 Wi-Fi SSID 名称。请前往**系统设置 → 隐私与安全性 → 定位服务**，并在系统提示时启用 WiFi Lens。
 
 ---
 

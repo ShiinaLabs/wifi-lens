@@ -1,50 +1,41 @@
-# Nouveautés de la version 1.6.0
+# Nouveautés de la version 2.0
 
-WiFi Lens 1.6.0 enrichit l’espace de travail Wi-Fi en direct pour OSS et Pro avec AP Radar, un espace de travail Spectre composé de composants et une nouvelle carte thermique agrégée. Pro poursuit le chemin du diagnostic en direct vers l’historique, les rapports et l’analyse.
+WiFi Lens 2.0 renforce ses fondations pour rendre l’analyse Wi-Fi plus précise, fiable et cohérente.
 
 ## Rejoindre la communauté
 
-Une question, un retour ou simplement envie de parler de WiFi Lens ?
+Une question, un commentaire ou simplement envie de parler de WiFi Lens ?
 
 **Rejoignez-nous sur Discord :** https://discord.gg/gH6sTCYaJ7
 
-## Points forts
+## Analyse plus poussée des protocoles Wi-Fi
 
-### AP Radar (Preview)
+* WiFi Lens analyse désormais plus rigoureusement, à bas niveau, les éléments d’information 802.11 annoncés par les points d’accès à proximité.
+* La détection de la largeur de canal utilisée a été améliorée, notamment pour les configurations 20, 40, 80, 160 et 80+80 MHz.
+* L’app identifie plus fiablement la sécurité WPA3, les suites de chiffrement, les capacités 802.11k/r/v/w, les générations Wi-Fi, MCS et les flux spatiaux.
+* Les métadonnées sans fil mal formées ou incomplètes sont traitées avec davantage de prudence au lieu d’être devinées, ce qui réduit les informations trompeuses sur les capacités.
 
-* Sélectionnez un point d’accès et suivez la puissance de son signal reçu pendant vos déplacements.
-* Voyez si le signal devient plus fort, plus faible ou reste stable, avec un état clair lorsque la cible disparaît.
-* L’audio optionnel par impulsions varie selon la puissance du signal ; les commandes audio et les préréglages sont disponibles dans Réglages.
-* AP Radar fournit une indication basée sur le RSSI. Il ne détermine pas la direction exacte ni la distance précise d’un point d’accès.
+## Des bases plus solides pour le dépannage
 
-### Espace de travail Spectre composé de composants
+* Network Self-Check a été repensé avec des diagnostics plus clairs, fondés sur des éléments vérifiables, pour la connectivité, le DNS, HTTPS, IPv6 et les proxys configurés.
+* Les composants d’analyse Wi-Fi partagent maintenant une architecture interne plus cohérente, ce qui harmonise Spectrum, Channels, Interfaces, AP Radar et les diagnostics.
+* La gestion de l’environnement d’exécution et du stockage a été repensée afin de mieux protéger les données des utilisateurs et d’améliorer la fiabilité entre les environnements de l’app.
 
-* Les panneaux Spectre sont maintenant composés de composants : chaque panneau peut passer du Spectre à la Tendance, au Tableau ou à la carte thermique.
-* Le tableau des réseaux existant est plus personnalisable : choisissez les colonnes à conserver visibles avec les détails réseau qui vous intéressent.
-* La sélection de bande et les commandes propres à chaque vue restent regroupées pour adapter plus facilement l’espace de travail à votre tâche.
+## WiFi Lens Pro
 
-### Carte thermique agrégée du spectre
+* Le stockage de Timeline et la gestion de l’historique sont plus fiables, avec une migration plus sûre des installations existantes.
+* L’infrastructure d’observation à long terme a été renforcée pour offrir une base plus fiable à l’historique, Statistics, Insights et aux enquêtes.
+* Les environnements de production et de développement utilisent désormais des identités, des espaces de stockage et des points de terminaison MCP distincts.
 
-* Visualisez où l’activité Wi-Fi se concentre selon la fréquence et la puissance du signal.
-* Comparez l’environnement actuel sous forme agrégée, sans suivre un point d’accès à la fois.
-* Basculez entre les bandes prises en charge : 2,4 GHz, 5 GHz et 6 GHz.
+## IA et MCP
 
-### WiFi Lens Pro
+* Le serveur MCP intégré s’intègre plus proprement à l’environnement d’exécution de l’app.
+* Les clients d’IA compatibles peuvent toujours accéder localement aux informations Wi-Fi en direct via le point de terminaison MCP activé dans Réglages.
+* Les environnements MCP sont mieux isolés entre les versions de développement et de production.
 
-* Timeline peut exporter des rapports Markdown anonymisés et fournit des détails d’événements localisés plus complets.
-* Statistics et Insights proposent des actions localisées plus claires et des points d’entrée pour les retours.
-* Pro relie l’observation en direct à l’enregistrement, à l’historique des événements, à l’analyse des tendances récurrentes, à l’accès depuis la barre des menus et à des flux d’export étendus.
+## Fiabilité
 
-## Fiabilité, localisation et accessibilité
+* Les limites de persistance, la validation au démarrage, la journalisation, le diagnostic des plantages et le stockage MetricKit ont été améliorés.
+* De nombreuses corrections et vérifications ont été ajoutées pour le réseau, les diagnostics, la localisation, l’accessibilité et le comportement à l’exécution.
 
-* La carte thermique utilise l’accélération matérielle lorsqu’elle est disponible et bascule proprement sur une autre méthode dans le cas contraire.
-* Le rendu est plus stable lors des mises à jour simultanées, des changements de résultats de scan et des plans de canaux discontinus.
-* La couverture de localisation et d’accessibilité d’AP Radar et du nouvel espace de travail Spectre a été étendue.
-
-## Disponibilité par édition
-
-L’espace de travail Spectre composé de composants, la carte thermique agrégée, l’aperçu AP Radar et l’analyse Wi-Fi en direct sont disponibles dans les éditions open source (OSS) et Pro.
-
-WiFi Lens Pro ajoute l’enregistrement, l’historique Timeline, Statistics, Insights, l’accès depuis la barre des menus et des flux d’export étendus pour l’observation et l’analyse à long terme.
-
-**Changelog complet :** [v1.5.1...v1.6.0](https://github.com/SHIINASAMA/wifi-lens/compare/v1.5.1...v1.6.0)
+WiFi Lens 2.0 offre une base plus digne de confiance pour comprendre ce que votre environnement sans fil annonce réellement et pour enquêter sur les problèmes lorsqu’ils surviennent.
