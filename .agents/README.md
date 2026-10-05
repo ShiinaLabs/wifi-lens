@@ -25,11 +25,6 @@ repository. Public Agent assets must not copy, summarize, or mirror private
 architecture, persistence, lifecycle, feature, or test details. For private
 work, use an authorized checkout and its own root instructions.
 
-`skills/protect-knowledge-boundary/` is an opt-in manual audit. Run it only
-when the user explicitly requests a knowledge-boundary audit or the active
-task names that audit as a required deliverable. Do not trigger it for routine
-documentation, Agent-asset, refactoring, commit, or push work.
-
 ## Platform Discovery
 
 - Codex and OpenCode discover `.agents/skills/` directly.

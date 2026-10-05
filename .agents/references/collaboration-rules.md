@@ -42,25 +42,14 @@ authorization is still required to commit and push.
 
 - **Enter plan mode**: Non-trivial implementation tasks must enter plan mode (EnterPlanMode) and receive approval before any code is written.
 
-- **Knowledge-boundary audit is opt-in**: Do not run the
-  `protect-knowledge-boundary` skill automatically because work touches OSS,
-  Pro, documentation, Agent assets, or a commit/push. Run it only when the
-  user explicitly requests that audit or the active task names it as a
-  required deliverable. When requested, use the skill's manual
-  module-by-module
-  review of file locations, target membership, composition seams, and
-  dependency direction. Builds, unit tests, and scripts cannot establish a
-  manual boundary `PASS`.
 - **Production binary audit remains separate**: Keep the deterministic
-  Production Pro artifact audit in the release verification chain. It is not a
-  knowledge-boundary audit and is not disabled by the opt-in policy.
+  Production Pro artifact audit in the release verification chain.
 
 - **Product verification**: When product behavior changes, use the relevant build
   and unit-test workflow if product verification is in scope. Do not run
   `WiFiLensUITests` or full scheme `xcodebuild test`
   commands that include UI test bundles unless the user explicitly asks for UI
-  tests. Product verification does not replace a manual boundary audit when one
-  is explicitly requested.
+  tests.
 
 - **Place Markdown by responsibility**: Project roadmaps, known issues, design records, and implementation plans go under `docs/` (see `docs/README.md`). Agent-oriented technical references (architecture, testing, etc.) live under `.agents/references/project/`. Agent Skills and Agent-only workflow references go under `.agents/`. The only root exceptions are `AGENTS.md`, `CLAUDE.md`, and `README.md`.
 

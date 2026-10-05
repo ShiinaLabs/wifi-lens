@@ -23,7 +23,6 @@ Before acting on a repository task, read and follow `.agents/references/collabor
 | File | Purpose |
 |------|---------|
 | `.agents/skills/i18n-completer/SKILL.md` | Scan `Localizable.xcstrings` for missing translations and fill them via the repository scripts while enforcing glossary terminology |
-| `.agents/skills/protect-knowledge-boundary/SKILL.md` | Protect the public/private implementation boundary in public documentation and Agent assets |
 | `.agents/skills/verify-build/SKILL.md` | Run the canonical WiFi Lens build and unit-test verification workflow |
 | `.agents/references/README.md` | Route tasks to architecture, accessibility, BLE, chart, MCP, regulatory, testing, and windowing references |
 | `.agents/references/collaboration-rules.md` | AI assistant behavior rules, enforced prohibitions, and must-follows |
@@ -37,11 +36,6 @@ Before acting on a repository task, read and follow `.agents/references/collabor
 - For work explicitly scoped to a private edition, use its separately
   authorized checkout and follow that repository's root instructions. Do not
   load private documentation for public-only work.
-
-The knowledge-boundary skill is an opt-in manual audit. Run it only when the
-user explicitly requests a boundary audit or the active task names that audit
-as a required deliverable. Do not run it automatically for ordinary
-documentation, Agent-asset, refactoring, commit, or push work.
 
 ## Build & Test
 
