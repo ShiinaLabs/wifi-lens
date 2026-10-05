@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Legacy heuristic for public Markdown content.
-
-This is an auxiliary content lint only. It is not an OSS/Pro boundary
-verifier, and its result must never be treated as a boundary ``PASS``.
-"""
+"""Auxiliary duplicate-content check for public Markdown assets."""
 
 from __future__ import annotations
 
@@ -14,24 +10,9 @@ import sys
 from pathlib import Path
 from typing import NamedTuple
 
-
-PRIVATE_PATH = re.compile(
-    r"(?<![\w.-])WiFiLensPro/(?!AGENTS\.md\b|docs/[A-Za-z0-9._/-]+\.md\b)[A-Za-z0-9._/-]+"
-)
-PRO_ASSERTION = re.compile(
-    r"\bPro(?:\s+(?:edition|target|implementation|app))?\s+"
-    r"(?:uses|stores|implements|owns|creates|persists|routes|manages|contains|"
-    r"relies|writes|reads|publishes|registers)\b",
-    re.IGNORECASE,
-)
-IMPLEMENTATION_SIGNAL = re.compile(
-    r"\b(?:class|struct|actor|protocol|enum|SQLite|schema|table|database|queue|"
-    r"journal|persistence|backpressure|observer|coordinator)\b",
-    re.IGNORECASE,
-)
-WORD = re.compile(r"[A-Za-z0-9_]+")
 MIN_COPY_WORDS = 12
 SELF_PROTECTED_PREFIX = Path(".agents/skills/protect-knowledge-boundary")
+WORD = re.compile(r"[A-Za-z0-9_]+")
 
 
 class Finding(NamedTuple):
@@ -48,40 +29,19 @@ class ScanResult:
 
     @property
     def exit_code(self) -> int:
-        if any(item.level == "FAIL" for item in self.findings):
-            return 1
-        if any(item.level == "REVIEW" for item in self.findings):
-            return 2
-        return 0
+        return 1 if any(item.level == "FAIL" for item in self.findings) else 0
 
 
-def _git_paths(root: Path, directory: Path, pattern: str = "*.md") -> list[Path]:
-    command = [
-        "git",
-        "-C",
-        str(directory),
-        "ls-files",
-        "--cached",
-        "--others",
-        "--exclude-standard",
-        "--",
-        pattern,
-    ]
-    result = subprocess.run(command, capture_output=True, text=True, check=False)
+def _git_markdown_paths(directory: Path) -> list[Path]:
+    result = subprocess.run(
+        ["git", "-C", str(directory), "ls-files", "--cached", "--others", "--exclude-standard", "--", "*.md"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     if result.returncode == 0:
         return [directory / line for line in result.stdout.splitlines() if line]
-    return list(directory.rglob(pattern)) if directory.exists() else []
-
-
-def _public_markdown_paths(root: Path) -> list[Path]:
-    paths = _git_paths(root, root)
-    return [
-        path
-        for path in paths
-        if path.is_file()
-        and not path.relative_to(root).is_relative_to(Path("WiFiLensPro"))
-        and not path.relative_to(root).is_relative_to(SELF_PROTECTED_PREFIX)
-    ]
+    return list(directory.rglob("*.md")) if directory.exists() else []
 
 
 def _paragraphs(text: str):
@@ -103,19 +63,19 @@ def _normalized_words(text: str) -> tuple[str, ...]:
     return tuple(word.lower() for word in WORD.findall(text))
 
 
-def _private_passages(root: Path) -> list[tuple[tuple[str, ...], str]]:
-    private_root = root / "WiFiLensPro"
+def _reference_passages(reference_root: Path | None) -> list[tuple[tuple[str, ...], str]]:
+    if reference_root is None:
+        return []
     passages: list[tuple[tuple[str, ...], str]] = []
-    for path in _git_paths(root, private_root):
+    for path in _git_markdown_paths(reference_root.resolve()):
         try:
-            relative = path.relative_to(root).as_posix()
             text = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeError, ValueError):
+        except (OSError, UnicodeError):
             continue
         for _, paragraph in _paragraphs(text):
             words = _normalized_words(paragraph)
             if len(words) >= MIN_COPY_WORDS:
-                passages.append((words, relative))
+                passages.append((words, "authorized reference"))
     return passages
 
 
@@ -126,10 +86,14 @@ def _contains_words(haystack: tuple[str, ...], needle: tuple[str, ...]) -> bool:
     return any(haystack[index : index + width] == needle for index in range(len(haystack) - width + 1))
 
 
-def scan_repository(root: Path, paths: list[Path] | None = None) -> ScanResult:
+def scan_repository(
+    root: Path,
+    paths: list[Path] | None = None,
+    reference_root: Path | None = None,
+) -> ScanResult:
     root = root.resolve()
-    candidates = paths if paths is not None else _public_markdown_paths(root)
-    private_passages = _private_passages(root)
+    candidates = paths if paths is not None else _git_markdown_paths(root)
+    reference_passages = _reference_passages(reference_root)
     findings: list[Finding] = []
 
     for path in candidates:
@@ -139,7 +103,7 @@ def scan_repository(root: Path, paths: list[Path] | None = None) -> ScanResult:
         except ValueError:
             findings.append(Finding("FAIL", "outside-root", str(path), 0, "Public scan path is outside the repository."))
             continue
-        if relative.is_relative_to(Path("WiFiLensPro")) or relative.is_relative_to(SELF_PROTECTED_PREFIX):
+        if relative.is_relative_to(SELF_PROTECTED_PREFIX):
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -148,44 +112,20 @@ def scan_repository(root: Path, paths: list[Path] | None = None) -> ScanResult:
             continue
 
         for line_number, paragraph in _paragraphs(text):
-            private_path = PRIVATE_PATH.search(paragraph)
-            if private_path:
-                findings.append(
-                    Finding(
-                        "FAIL",
-                        "private-path",
-                        relative.as_posix(),
-                        line_number,
-                        "Public content references a private path outside WiFiLensPro/docs/*.md.",
-                    )
-                )
-
-            if PRO_ASSERTION.search(paragraph) and IMPLEMENTATION_SIGNAL.search(paragraph):
-                findings.append(
-                    Finding(
-                        "FAIL",
-                        "implementation-detail",
-                        relative.as_posix(),
-                        line_number,
-                        "Public content makes a Pro implementation assertion.",
-                    )
-                )
-
             public_words = _normalized_words(paragraph)
             if len(public_words) < MIN_COPY_WORDS:
                 continue
-            for private_words, private_path_name in private_passages:
-                if _contains_words(public_words, private_words):
-                    findings.append(
-                        Finding(
-                            "FAIL",
-                            "copied-private-passage",
-                            relative.as_posix(),
-                            line_number,
-                            f"Public content duplicates a passage from {private_path_name}.",
-                        )
+            if any(_contains_words(public_words, passage) for passage, _ in reference_passages):
+                findings.append(
+                    Finding(
+                        "FAIL",
+                        "copied-reference-passage",
+                        relative.as_posix(),
+                        line_number,
+                        "Public content duplicates a passage from the authorized reference checkout.",
                     )
-                    break
+                )
+                break
 
     return ScanResult(findings)
 
@@ -193,6 +133,7 @@ def scan_repository(root: Path, paths: list[Path] | None = None) -> ScanResult:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[4])
+    parser.add_argument("--reference-root", type=Path, help="Optional authorized checkout used for duplicate-content comparison.")
     parser.add_argument("paths", nargs="*", type=Path)
     return parser.parse_args()
 
@@ -201,11 +142,11 @@ def main() -> int:
     args = _parse_args()
     root = args.root.resolve()
     paths = [path if path.is_absolute() else root / path for path in args.paths] or None
-    result = scan_repository(root, paths)
+    result = scan_repository(root, paths, args.reference_root)
     for item in result.findings:
         print(f"{item.level} {item.path}:{item.line} [{item.code}] {item.message}")
-    status = {0: "PASS", 1: "FAIL", 2: "REVIEW"}[result.exit_code]
-    print(f"{status}: auxiliary public-content lint; manual boundary review required")
+    status = "FAIL" if result.exit_code else "PASS"
+    print(f"{status}: auxiliary duplicate-content check; manual boundary review required")
     return result.exit_code
 
 

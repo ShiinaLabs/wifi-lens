@@ -26,7 +26,7 @@ The following rules are **hard constraints** and must be followed in all circums
 
 - **No destructive Git operations**: `git reset --hard`, `git clean -f`, and similar must be confirmed by the user.
 
-- **Verify target before editing pbxproj**: OSS and PRO target build settings blocks look nearly identical. Check `baseConfigurationReference` (`OSS.xcconfig` vs `PRO.xcconfig`) before modifying any block. Never use `replace_all` on pbxproj — edit each occurrence individually with enough context.
+- **Verify target before editing pbxproj**: Similar target build settings blocks can be easy to confuse. Check each target's `baseConfigurationReference` before modifying it. Never use `replace_all` on `project.pbxproj` — edit each occurrence individually with enough context.
 
 ## Commit Verification
 
@@ -57,7 +57,7 @@ authorization is still required to commit and push.
 
 - **Product verification**: When product behavior changes, use the relevant build
   and unit-test workflow if product verification is in scope. Do not run
-  `WiFiLensUITests`, `WiFiLensProUITests`, or full scheme `xcodebuild test`
+  `WiFiLensUITests` or full scheme `xcodebuild test`
   commands that include UI test bundles unless the user explicitly asks for UI
   tests. Product verification does not replace a manual boundary audit when one
   is explicitly requested.

@@ -26,8 +26,8 @@ changed (table below).
 
 | Change | Verify with |
 |--------|-------------|
-| Shared source under `WiFiLensCore/` | Run Core Framework tests and build both app schemes |
-| OSS or Pro app-shell source | Build the matching app scheme and relevant app-hosted tests |
+| Shared source under `WiFiLensCore/` | Run Core Framework tests and build the public app scheme |
+| Public app-shell source | Build the matching app scheme and relevant app-hosted tests |
 | New/edited unit test file | Build and run the owning unit-test bundle with an explicit `-only-testing` selection |
 | ChartLens integration | Verify through the owning WiFiLensCore Framework target or app scheme; ChartLens is a remote package dependency. |
 | `.xcstrings` only | Localization JSON validity + completeness scan (see i18n-completer) |
@@ -38,12 +38,10 @@ Default verification for an app source change = **build + `-only-testing:WiFiLen
 ## Quick path (recommended)
 
 ```sh
-# From repo root. Builds "WiFi Lens" + "WiFi Lens Pro" (Debug) and runs the
-# WiFiLensTests and WiFiLensCoreTests unit bundles. This is the default "is my change good?" check.
+# From repo root. Builds the public app (Debug) and runs the app and shared
+# Framework unit bundles.
 .agents/skills/verify-build/scripts/verify.sh
 
-# Only touched OSS-side or want a faster loop — build+test just "WiFi Lens":
-.agents/skills/verify-build/scripts/verify.sh --quick
 ```
 
 ## Exact commands (when running by hand)
@@ -51,13 +49,6 @@ Default verification for an app source change = **build + `-only-testing:WiFiLen
 Build (OSS):
 ```sh
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
-  -configuration Debug -destination 'platform=macOS' build
-```
-
-Build (Pro) — always run this too when the change touches shared source, to
-verify the private app shell still integrates with the shared Framework:
-```sh
-xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens Pro" \
   -configuration Debug -destination 'platform=macOS' build
 ```
 
@@ -71,12 +62,12 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
 ## Hard rules
 
 - **Never** run `swift build` / `swift test` to verify the app. `xcodebuild` only.
-- **Do not** run UI test bundles (`WiFiLensUITests`, `WiFiLensProUITests`) or a
+- **Do not** run UI test bundles (`WiFiLensUITests`) or a
   full scheme `test` (which pulls in UI tests) unless the user explicitly asks
   for UI tests. Default = `-only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests`.
-- When shared product code changes, a passing **OSS build alone is not enough** —
-  the Pro scheme must build too. Shared implementation is owned by WiFiLensCore,
-  not duplicated in both app Sources phases.
+- When shared public product code changes, build the public app and Framework
+  tests. Shared implementation is owned by WiFiLensCore, not duplicated in the
+  app Sources phase.
 - Use `-skipPackageUpdates` on `test` runs to avoid needless package resolution.
 - `-destination 'platform=macOS'` — this is a macOS 14.6+ app, no simulator.
 
@@ -84,4 +75,4 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
 
 State what was actually run and its result. "Build passed" is insufficient — say
 which schemes built and whether unit tests ran, e.g.:
-> OSS + Pro Debug builds succeeded; WiFiLensTests + WiFiLensCoreTests passed (N tests).
+> Public Debug build succeeded; WiFiLensTests + WiFiLensCoreTests passed (N tests).

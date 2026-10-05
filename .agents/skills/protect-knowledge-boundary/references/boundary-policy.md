@@ -1,66 +1,44 @@
 # WiFi Lens Knowledge Boundary Policy
 
-## Invocation policy
-
-This skill is an opt-in manual audit. Run it only when the user explicitly
-requests a knowledge-boundary audit or the active task names that audit as a
-required deliverable. Do not run it automatically before commits or pushes,
-after code changes, for routine refactors or reviews, or merely because a
-change touches Pro, shared contracts, documentation, or Agent assets.
-
-The Production Pro binary audit is a separate deterministic release check and
-remains required by its own release workflow.
-
 ## Trust boundary
 
-- The root repository, including `.agents/`, is public.
-- `WiFiLensPro/` is a private submodule and separate Git repository.
-- Public checks must not persist private names, excerpts, or fingerprints.
+- The public repository contains only public-owned source, project metadata,
+  documentation, and Agent assets.
+- Other editions are maintained in separately controlled repositories.
+- Public checks must not persist private names, source excerpts, local checkout
+  paths, or implementation fingerprints.
 
 ## Allowed public knowledge
 
-- The Pro edition and private repository exist.
-- `WiFiLensPro/AGENTS.md` is the instruction entrypoint for explicitly Pro-scoped work.
-- A `WiFiLensPro/docs/*.md` path exists and may be indexed without a content summary.
-- Public interfaces and edition-neutral contracts already implemented in the
-  public repository may be documented from their public source.
+- Public product behavior and public-facing edition descriptions.
+- Public interfaces and edition-neutral contracts present in this repository.
+- Public Xcode targets, schemes, source ownership, and declared public package
+  dependencies.
 
 ## Forbidden public knowledge
 
-- Private source paths, symbol names, module structure, or concrete types.
-- Private architecture, persistence, schema, storage, queues, or algorithms.
-- Private state ownership, lifecycle, event routing, or concurrency behavior.
-- Paid workflow implementation, private tests, fixtures, plans, or roadmap.
-- Copies, summaries, paraphrases, or inferred reconstructions of private docs.
+- Concrete downstream source paths, module names, target graphs, or types.
+- Downstream architecture, persistence, storage, lifecycle, event routing,
+  concurrency, algorithms, tests, fixtures, and roadmaps.
+- Copies, summaries, paraphrases, or inferred reconstructions of internal
+  documents.
 
-Feature existence and public product copy are not implementation knowledge.
-When a statement mixes public product behavior with private mechanics, retain
-only the public behavior or move the statement into `WiFiLensPro/`.
-
-## Review rule
-
-An allowed path is an index, not permission to read and summarize its target.
-For non-Pro tasks, do not load private documents into Agent context. For
-explicitly Pro-scoped tasks, follow `WiFiLensPro/AGENTS.md` and keep resulting private
-knowledge inside the private repository.
+When a statement mixes public product behavior with internal mechanics, retain
+only the public behavior. Do not record private checkout paths in public notes,
+code, documentation, issue reports, logs, or Agent assets.
 
 ## Boundary review method
 
-The boundary is semantic and architectural. A review must be performed module
-by module, not reduced to a repository-wide text search or a build result.
-For every changed file, identify its physical repository, module ownership,
-edition, target membership, callers, callees, and composition entrypoint.
-Then inspect the dependency direction and the Xcode source/resource phases
-that deliver it to each target.
+Review files module by module. For each changed file, identify its repository,
+owner, edition-neutral or edition-specific role, target membership, callers,
+callees, composition entrypoint, and resource/test relationships. Trace each
+cross-repository edge through its public contract and inspect native Xcode
+source/resource phases and package dependencies.
 
-The public repository may contain edition-neutral contracts, OSS
-implementations, and Xcode wiring needed to build the separate Pro target.
-Those facts alone do not disclose private implementation. The boundary fails
-when public source or public target membership receives private behavior, when
-the dependency direction bypasses the composition seam, or when public assets
-describe private implementation knowledge.
+A public repository may contain the shared public contract and its own native
+project graph. It must not own downstream implementation targets or compile
+concrete downstream behavior. Structural scripts assist review but cannot
+replace inspection of source ownership and dependency direction.
 
-Automated scripts may assist with navigation or protect the review
-instructions, but they cannot establish that a module relationship is safe.
 Only a complete manual review with no unresolved `REVIEW` edges can produce a
 boundary `PASS`.

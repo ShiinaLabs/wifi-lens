@@ -7,22 +7,28 @@ on:
     paths:
       - ".github/workflows/swift-ci.yml"
       - ".github/workflows/release.yml"
-      - ".gitmodules"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
-      - "WiFiLensPro/**"
       - "WiFiLens.xcodeproj/**"
+      - "AGENTS.md"
+      - ".agents/**"
+      - "docs/architecture/**"
+      - "scripts/check-public-project-boundary.py"
+      - "scripts/tests/**"
       - "scripts/create-dmg.sh"
       - "assets/**"
   pull_request:
     paths:
       - ".github/workflows/swift-ci.yml"
       - ".github/workflows/release.yml"
-      - ".gitmodules"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
-      - "WiFiLensPro/**"
       - "WiFiLens.xcodeproj/**"
+      - "AGENTS.md"
+      - ".agents/**"
+      - "docs/architecture/**"
+      - "scripts/check-public-project-boundary.py"
+      - "scripts/tests/**"
       - "scripts/create-dmg.sh"
       - "assets/**"
   workflow_dispatch:
@@ -41,6 +47,9 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v7
+
+      - name: Check public project ownership
+        run: python3 scripts/check-public-project-boundary.py
 
       - name: Build
         run: |

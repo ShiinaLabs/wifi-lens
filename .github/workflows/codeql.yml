@@ -6,10 +6,8 @@ on:
       - master
     paths:
       - ".github/workflows/codeql.yml"
-      - ".gitmodules"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
-      - "WiFiLensPro/**"
       - "WiFiLens.xcodeproj/**"
 
   pull_request:
@@ -17,10 +15,8 @@ on:
       - master
     paths:
       - ".github/workflows/codeql.yml"
-      - ".gitmodules"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
-      - "WiFiLensPro/**"
       - "WiFiLens.xcodeproj/**"
 
   schedule:

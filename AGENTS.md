@@ -13,7 +13,6 @@ Project documentation lives under `docs/`; see [`docs/README.md`](docs/README.md
 | `docs/ISSUES.md` | Active known issues and deferred defects |
 | `.agents/references/README.md` | Task-oriented technical reference router |
 | `.agents/references/collaboration-rules.md` | AI assistant behavior rules, enforced prohibitions, and must-follows |
-| `WiFiLensPro/AGENTS.md` | Entry point for tasks explicitly scoped to the private Pro edition |
 
 ## Agent Assets
 
@@ -24,19 +23,20 @@ Before acting on a repository task, read and follow `.agents/references/collabor
 | File | Purpose |
 |------|---------|
 | `.agents/skills/i18n-completer/SKILL.md` | Scan `Localizable.xcstrings` for missing translations and fill them via the repository scripts while enforcing glossary terminology |
-| `.agents/skills/protect-knowledge-boundary/SKILL.md` | Prevent private Pro implementation knowledge from entering public documentation and Agent assets |
+| `.agents/skills/protect-knowledge-boundary/SKILL.md` | Protect the public/private implementation boundary in public documentation and Agent assets |
 | `.agents/skills/verify-build/SKILL.md` | Run the canonical WiFi Lens build and unit-test verification workflow |
 | `.agents/references/README.md` | Route tasks to architecture, accessibility, BLE, chart, MCP, regulatory, testing, and windowing references |
 | `.agents/references/collaboration-rules.md` | AI assistant behavior rules, enforced prohibitions, and must-follows |
 
 ## Edition Documentation Boundary
 
-- Public repository documentation may acknowledge the Pro edition and link to
-  documentation in the private `WiFiLensPro/` submodule.
+- Public repository documentation may acknowledge other editions and their
+  public product pages.
 - Do not copy, summarize, or mirror Pro implementation details into the root
   repository or `.agents/`.
-- For work explicitly scoped to Pro, follow `WiFiLensPro/AGENTS.md` and read the private
-  references it routes. Otherwise, do not load Pro documentation.
+- For work explicitly scoped to a private edition, use its separately
+  authorized checkout and follow that repository's root instructions. Do not
+  load private documentation for public-only work.
 
 The knowledge-boundary skill is an opt-in manual audit. Run it only when the
 user explicitly requests a boundary audit or the active task names that audit
@@ -59,7 +59,7 @@ xed WiFiLens.xcodeproj                   # open in Xcode GUI
 
 The product name is `WiFi Lens.app` (with space). Unit tests use Swift Testing (`@Test`) with `TEST_HOST` — the test bundle is injected into the app process for `@testable import` symbol resolution. All test `.swift` files must be added to the WiFiLensTests target's Sources build phase (in `project.pbxproj`) for `xcodebuild test` to compile and run them. The `WiFiLensTests` scheme must reference the test bundle in both `<Testables>` and `<MacroExpansion>`.
 
-Do not run UI test bundles (`WiFiLensUITests`, `WiFiLensProUITests`) or full scheme test commands that include UI tests unless the user explicitly asks for UI tests. Default verification is build plus `-only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests`.
+Do not run UI test bundles (`WiFiLensUITests`) or full scheme test commands that include UI tests unless the user explicitly asks for UI tests. Default verification is build plus `-only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests`.
 
 When adding new test files, ensure they are:
 1. Added as PBXFileReference in project.pbxproj

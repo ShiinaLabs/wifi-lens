@@ -19,56 +19,38 @@ class AuxiliaryContentLintTests(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
-        (self.root / "WiFiLensPro" / "docs").mkdir(parents=True)
+        self.reference = self.root / "reference-source"
+        self.reference.mkdir()
 
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def write(self, relative_path: str, content: str) -> Path:
-        path = self.root / relative_path
+    def write(self, base: Path, relative_path: str, content: str) -> Path:
+        path = base / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
         return path
 
-    def scan(self, public_text: str, private_text: str = ""):
-        public = self.write("docs/public.md", public_text)
-        if private_text:
-            self.write("WiFiLensPro/docs/private.md", private_text)
-        module = load_module()
-        return module.scan_repository(self.root, [public])
-
-    def test_allows_private_document_index_without_summary(self):
-        result = self.scan(
-            "| `WiFiLensPro/docs/ARCHITECTURE.md` | Private Pro architecture; read it only inside the Pro repository. |\n"
-        )
+    def test_accepts_public_edition_language(self):
+        public = self.write(self.root, "docs/public.md", "The app supports multiple editions through a stable public composition contract.\n")
+        result = load_module().scan_repository(self.root, [public])
         self.assertEqual(result.exit_code, 0, result.findings)
 
-    def test_allows_private_agent_instruction_entrypoint(self):
-        result = self.scan(
-            "For explicitly Pro-scoped work, follow `WiFiLensPro/AGENTS.md` inside the private repository.\n"
-        )
-        self.assertEqual(result.exit_code, 0, result.findings)
-
-    def test_rejects_private_source_path(self):
-        result = self.scan("Inspect `WiFiLensPro/Sources/EventJournal.swift` for details.\n")
+    def test_detects_copy_from_authorized_reference_checkout(self):
+        passage = "The runtime publishes immutable observations through ordered delivery and explicit consumer boundaries."
+        public = self.write(self.root, "docs/public.md", passage + "\n")
+        self.write(self.reference, "docs/internal.md", passage + "\n")
+        result = load_module().scan_repository(self.root, [public], self.reference)
         self.assertEqual(result.exit_code, 1)
-        self.assertIn("private-path", {item.code for item in result.findings})
+        self.assertIn("copied-reference-passage", {item.code for item in result.findings})
 
-    def test_rejects_pro_implementation_summary(self):
-        result = self.scan(
-            "The Pro edition uses SQLite tables to persist events through an internal queue.\n"
-        )
+    def test_rejects_scan_path_outside_public_root(self):
+        with tempfile.TemporaryDirectory() as external_directory:
+            external = Path(external_directory) / "outside.md"
+            external.write_text("text\n", encoding="utf-8")
+            result = load_module().scan_repository(self.root, [external])
         self.assertEqual(result.exit_code, 1)
-        self.assertIn("implementation-detail", {item.code for item in result.findings})
-
-    def test_rejects_passage_copied_from_private_document(self):
-        private = (
-            "The private runtime publishes immutable observations through a bounded "
-            "consumer pipeline with ordered delivery and explicit backpressure."
-        )
-        result = self.scan(private + "\n", private)
-        self.assertEqual(result.exit_code, 1)
-        self.assertIn("copied-private-passage", {item.code for item in result.findings})
+        self.assertIn("outside-root", {item.code for item in result.findings})
 
 
 if __name__ == "__main__":

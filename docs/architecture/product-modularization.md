@@ -1,108 +1,66 @@
 # Product Modularization
 
-## Why the product was modularized
+## Ownership
 
-The original app targets compiled a large amount of product code directly.
-That made shared source ownership depend on duplicated Xcode target membership,
-blurred the boundary between the public and paid editions, and made development
-instrumentation difficult to keep out of the shipped product. Adding another
-edition or host would have repeated those problems.
+The public repository owns the OSS app shell, reusable `WiFiLensCore`
+Framework, public resources, public tests, and the standalone
+`WiFiLens.xcodeproj`. Its native target and scheme graph contains public
+products only. A public clone can resolve its own package graph and build
+without another repository, private checkout, or generated project.
 
-The modularization moves shared product capability behind a Framework boundary,
-leaves each edition responsible for its app assembly, and separates development
-instrumentation from production dependencies.
+Reusable public product behavior belongs in `WiFiLensCore`; the app target
+owns process entry, scenes, public edition composition, and distribution
+integration. The edition-neutral composition contract allows a downstream
+edition to consume public APIs while the public app remains independent of
+downstream implementation.
 
-## Repository topology
+## Native project ownership
 
-The public repository keeps the components that it owns at the root:
+Repository-owned public modules use native Xcode Framework targets. Xcode owns
+source membership, resources, target dependencies, app embedding, and unit-test
+targets. Remote Swift packages are used only when a public target consumes
+them. The public project does not reference a downstream project, checkout, or
+source tree.
 
-```text
-WiFiLens/
-WiFiLensCore/
-WiFiLens.xcodeproj
-WiFiLensPro/                 # private Pro repository submodule
-```
+The public target set is intentionally explicit:
 
-`WiFiLensCore` is the shared product Framework. `WiFiLens/` contains the public
-macOS app shell and its resources and tests. `WiFiLensPro/` is a separate
-private repository; public documentation identifies that boundary without
-describing its implementation.
+- `WiFiLens`
+- `WiFiLensCore`
+- `WiFiLensTests`
+- `WiFiLensCoreTests`
+- `WiFiLensUITests`
 
-## Public CI and release builds
-
-A public checkout opens and builds `WiFiLens.xcodeproj` directly. No private
-submodule, generated project, placeholder package, or preparation script is
-required for the OSS scheme. GitHub CI, Swift CodeQL, and public Release use
-that same canonical project.
-
-Repository-owned product modules are native macOS Framework targets. Xcode
-owns their source membership, resources, target dependencies, app embedding,
-and unit-test targets. Only external dependencies use remote Swift packages;
-there are no project-level local package references. The OSS scheme builds
-only the public app and shared Framework, even when private sources are absent.
-
-The shared Framework has its own `WiFiLensCoreTests` target, included alongside
-app-hosted tests in the OSS test plan. Explicit unit-test selections exclude
-UI bundles. The migration contract is documented in
-[xcode-framework-migration.md](xcode-framework-migration.md).
+See [Public Project Boundary](public-project-boundary.md) for the structural
+policy and automated guard.
 
 ## Composition and dependency rules
 
-The public app depends on `WiFiLensCore`. The private edition assembles its
-additional product capability at its own boundary and consumes shared
-capability through `WiFiLensCore`. App targets remain thin: they own process
-entry, scenes, edition composition, resources, and distribution-specific
-integrations, while reusable product behavior belongs in a Framework.
-
-Development capture is a separate tooling boundary. AppStage and synthetic
-scenario support are available to the capture host, while production app
-dependency graphs do not include capture tooling. This is enforced by module
-and target dependencies, then checked against the built production artifact.
+The public app depends on `WiFiLensCore`. Edition-specific behavior crosses
+the shared composition contract; public source must not name concrete types
+owned by another edition. Public Frameworks consume their own public modules
+and do not source-include app implementation.
 
 ```text
-Public app shell ───────────────► WiFiLensCore
-Private edition shell ─────────► private edition capability boundary
-                                      │
-                                      └────────► WiFiLensCore
-
-Capture host ──────────────────► development capture boundary
-                                      ├────────► product capabilities
-                                      └────────► AppStage tooling
+Public app shell
+      ↓
+WiFiLensCore Framework
+      ↓
+Public platform adapters
 ```
-
-Edition composition is an explicit seam between shared product code and each
-app shell. Shared code depends on the composition contract; the public and
-private apps provide their own adapters without making the public repository
-depend on private implementation types.
 
 ## Ownership principles
 
-- Share product capability through modules instead of compiling the same
-  implementation into multiple app targets.
-- Keep edition assembly and distribution behavior in the relevant app shell.
-- Keep the public/private repository boundary explicit. Public code and docs
-  must not depend on or describe private implementation details.
-- Keep capture and other development instrumentation outside the production
-  dependency graph.
-- Treat the dependency graph as an enforceable product boundary. Source layout
-  alone does not prove that a capability is absent from a shipped app.
-
-## Approaches not used
-
-The architecture does not use a broad `APPSTAGE_CAPTURE` compilation switch or
-a large tree of conditional compilation to change product behavior. Those
-approaches leave production and capture concerns interleaved in the same
-targets and make the effective product graph harder to inspect.
-
-It also avoids maintaining duplicated production and capture app targets with
-copied source membership, and avoids splitting the shared product into many
-micro-packages without independent ownership or a useful dependency boundary.
+- Share public product capability through Framework APIs rather than
+  duplicating implementation in app targets.
+- Keep app assembly and distribution behavior in the app shell.
+- Keep public source, project metadata, schemes, and package resolution
+  self-contained.
+- Review target membership and dependency direction whenever the native
+  project changes.
 
 ## Future product lessons
 
 Product capability and distribution shell are separate extension points. A
-future edition can reuse product modules while supplying its own shell and
-composition. Development tooling can add host-specific behavior without
-changing the production graph. The same model can support a future CLI or
-platform edition when it has a concrete host and dependency boundary; it does
-not require creating a new module in advance.
+downstream app can consume the public Framework and provide its own composition
+without making the public repository depend on downstream implementation. New
+modules should be added only when they have a concrete ownership boundary.

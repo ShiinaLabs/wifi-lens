@@ -20,10 +20,10 @@ in `docs/`; see `docs/README.md` for the index. Agent-oriented technical
 references live here under `references/project/` so agents can load only
 what a task needs.
 
-Private Pro documentation stays inside the `WiFiLensPro/` submodule. Public Agent
-assets may index that documentation for explicitly Pro-scoped work, but must
-not copy, summarize, or mirror private architecture, persistence, lifecycle,
-feature, or test details.
+Private implementation documentation stays in its separately access-controlled
+repository. Public Agent assets must not copy, summarize, or mirror private
+architecture, persistence, lifecycle, feature, or test details. For private
+work, use an authorized checkout and its own root instructions.
 
 `skills/protect-knowledge-boundary/` is an opt-in manual audit. Run it only
 when the user explicitly requests a knowledge-boundary audit or the active

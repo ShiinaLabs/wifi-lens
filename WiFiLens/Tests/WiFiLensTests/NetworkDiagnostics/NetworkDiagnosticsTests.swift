@@ -66,161 +66,67 @@ func appLocalNetworkUsageDescriptions() throws -> [AppLocalNetworkUsageDescripti
 func appLocalNetworkUsageDescriptions(
     from project: String
 ) throws -> [AppLocalNetworkUsageDescription] {
-    let settingPrefix = "INFOPLIST_KEY_NSLocalNetworkUsageDescription = \""
-    let selectedTargets = ["WiFiLens", "WiFiLensPro"]
+    let data = Data(project.utf8)
+    let propertyList = try PropertyListSerialization.propertyList(
+        from: data,
+        options: [],
+        format: nil
+    )
+    guard
+        let root = propertyList as? [String: Any],
+        let objects = root["objects"] as? [String: [String: Any]],
+        let rootObjectID = root["rootObject"] as? String,
+        let projectObject = objects[rootObjectID],
+        let targetIDs = projectObject["targets"] as? [String]
+    else {
+        throw projectConfigurationError("The native project has no valid target graph.")
+    }
 
-    return try selectedTargets.flatMap { targetName in
-        let target = try nativeTarget(named: targetName, in: project)
-        guard target.contains("productType = \"com.apple.product-type.application\";") else {
-            throw projectConfigurationError("\(targetName) is not an application target.")
-        }
-        let configurationListID = try pbxIdentifier(
-            after: "buildConfigurationList = ",
-            in: target,
-            context: "\(targetName) target"
-        )
-        let configurationList = try pbxObject(
-            id: configurationListID,
-            in: project,
-            context: "\(targetName) configuration list"
-        )
-        guard configurationList.contains("isa = XCConfigurationList;") else {
-            throw projectConfigurationError("\(configurationListID) is not an XCConfigurationList.")
+    let applicationTargets = targetIDs.compactMap { objects[$0] }.filter {
+        $0["isa"] as? String == "PBXNativeTarget"
+            && $0["productType"] as? String == "com.apple.product-type.application"
+    }
+    guard applicationTargets.count == 1 else {
+        throw projectConfigurationError("The public project must contain exactly one app target.")
+    }
+
+    return try applicationTargets.flatMap { target in
+        guard
+            let targetName = target["name"] as? String,
+            let configurationListID = target["buildConfigurationList"] as? String,
+            let configurationList = objects[configurationListID],
+            let configurationIDs = configurationList["buildConfigurations"] as? [String]
+        else {
+            throw projectConfigurationError("The app target has an invalid configuration list.")
         }
 
-        let configurationIDs = try buildConfigurationIDs(in: configurationList)
         let configurations = try configurationIDs.map { configurationID in
-            let configuration = try pbxObject(
-                id: configurationID,
-                in: project,
-                context: "\(targetName) build configuration"
-            )
-            guard configuration.contains("isa = XCBuildConfiguration;") else {
-                throw projectConfigurationError("\(configurationID) is not an XCBuildConfiguration.")
+            guard
+                let configuration = objects[configurationID],
+                let name = configuration["name"] as? String,
+                let baseConfigurationID = configuration["baseConfigurationReference"] as? String,
+                let baseConfiguration = objects[baseConfigurationID],
+                let baseConfigurationName = (baseConfiguration["path"] as? String)
+                    ?? (baseConfiguration["name"] as? String),
+                let buildSettings = configuration["buildSettings"] as? [String: Any],
+                let value = buildSettings["INFOPLIST_KEY_NSLocalNetworkUsageDescription"] as? String
+            else {
+                throw projectConfigurationError("An app build configuration is missing its privacy description.")
             }
-            let name = try pbxValue(
-                after: "name = ",
-                in: configuration,
-                context: "\(configurationID) name"
-            )
-            let baseConfiguration = try requiredMatch(
-                ["OSS.xcconfig", "PRO.xcconfig"],
-                in: configuration,
-                context: "\(configurationID) base configuration"
-            )
-            let settingRange = try requiredRange(
-                of: settingPrefix,
-                in: configuration,
-                context: "\(configurationID) local-network privacy copy"
-            )
-            let valueStart = settingRange.upperBound
-            let valueEnd = try requiredIndex(
-                of: "\"",
-                in: configuration[valueStart...],
-                context: "\(configurationID) local-network privacy copy closing quote"
-            )
             return AppLocalNetworkUsageDescription(
                 target: targetName,
                 configuration: name,
-                baseConfiguration: baseConfiguration,
-                value: String(configuration[valueStart..<valueEnd])
+                baseConfiguration: baseConfigurationName,
+                value: value
             )
         }
 
         guard configurations.count == 2,
               Set(configurations.map(\.configuration)) == ["Debug", "Release"] else {
-            throw projectConfigurationError("\(targetName) must provide exactly Debug and Release configurations.")
+            throw projectConfigurationError("The app target must provide Debug and Release configurations.")
         }
         return configurations
     }
-}
-
-func nativeTarget(named name: String, in project: String) throws -> String {
-    let marker = " /* \(name) */ = {\n\t\t\tisa = PBXNativeTarget;"
-    let markerRange = try requiredRange(of: marker, in: project, context: "\(name) PBXNativeTarget")
-    let lineStart = project[..<markerRange.lowerBound].lastIndex(of: "\n")
-        .map { project.index(after: $0) }
-        ?? project.startIndex
-    let identifier = String(project[lineStart..<markerRange.lowerBound])
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-    return try pbxObject(id: identifier, in: project, context: "\(name) PBXNativeTarget")
-}
-
-func pbxObject(id: String, in project: String, context: String) throws -> String {
-    let header = "\t\t\(id) "
-    let start: String.Index
-    if project.hasPrefix(header) {
-        start = project.startIndex
-    } else {
-        let headerRange = try requiredRange(of: "\n\(header)", in: project, context: context)
-        start = project.index(after: headerRange.lowerBound)
-    }
-    let suffix = String(project[start...])
-    let end = try requiredRange(
-        of: "\n\t\t};",
-        in: suffix,
-        context: "\(context) closing brace"
-    ).upperBound
-    return String(suffix[..<end])
-}
-
-func buildConfigurationIDs(in configurationList: String) throws -> [String] {
-    let start = try requiredRange(
-        of: "buildConfigurations = (",
-        in: configurationList,
-        context: "XCConfigurationList build configurations"
-    ).upperBound
-    let suffix = String(configurationList[start...])
-    let end = try requiredRange(
-        of: "\n\t\t\t);",
-        in: suffix,
-        context: "XCConfigurationList build configurations closing parenthesis"
-    ).lowerBound
-    return suffix[..<end]
-        .split(separator: "\n")
-        .compactMap { line in
-            line.trimmingCharacters(in: .whitespaces).split(separator: " ").first.map(String.init)
-        }
-}
-
-func pbxIdentifier(after prefix: String, in object: String, context: String) throws -> String {
-    let value = try pbxValue(after: prefix, in: object, context: context)
-    guard !value.isEmpty else {
-        throw projectConfigurationError("\(context) must name a PBX object identifier.")
-    }
-    return value
-}
-
-func pbxValue(after prefix: String, in object: String, context: String) throws -> String {
-    let valueStart = try requiredRange(of: prefix, in: object, context: context).upperBound
-    let valueEnd = try requiredIndex(of: ";", in: object[valueStart...], context: "\(context) terminator")
-    let value = object[valueStart..<valueEnd].trimmingCharacters(in: .whitespaces)
-    return value.split(separator: " ").first.map(String.init) ?? ""
-}
-
-func requiredMatch(_ candidates: [String], in value: String, context: String) throws -> String {
-    guard let match = candidates.first(where: value.contains) else {
-        throw projectConfigurationError("\(context) must reference OSS.xcconfig or PRO.xcconfig.")
-    }
-    return match
-}
-
-func requiredRange(of needle: String, in value: String, context: String) throws -> Range<String.Index> {
-    guard let range = value.range(of: needle) else {
-        throw projectConfigurationError("Missing \(context).")
-    }
-    return range
-}
-
-func requiredIndex(
-    of character: Character,
-    in value: Substring,
-    context: String
-) throws -> String.Index {
-    guard let index = value.firstIndex(of: character) else {
-        throw projectConfigurationError("Missing \(context).")
-    }
-    return index
 }
 
 func projectConfigurationError(_ description: String) -> NSError {

@@ -35,6 +35,7 @@ struct StorageLocationsTests {
 
         let root = applicationSupport.appendingPathComponent(namespace, isDirectory: true)
         #expect(locations.applicationSupportRoot == root)
+        #expect(locations.databaseURL(named: "sample.sqlite") == root.appendingPathComponent("sample.sqlite"))
         #expect(locations.observationDatabase == root.appendingPathComponent("wifi_observation_events.sqlite"))
         #expect(locations.logs == root.appendingPathComponent("Logs", isDirectory: true))
         #expect(locations.crashLogs == root.appendingPathComponent("CrashLogs", isDirectory: true))

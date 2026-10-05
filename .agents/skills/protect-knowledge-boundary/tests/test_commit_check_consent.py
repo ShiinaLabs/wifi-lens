@@ -3,53 +3,42 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[4]
-QUESTION = "Run the checks relevant to this commit before committing?"
 
 
-class CommitCheckConsentPolicyTests(unittest.TestCase):
+class CommitAuthorizationPolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         cls.collaboration = (
             ROOT / ".agents/references/collaboration-rules.md"
         ).read_text(encoding="utf-8")
+        cls.skill = (
+            ROOT / ".agents/skills/protect-knowledge-boundary/SKILL.md"
+        ).read_text(encoding="utf-8")
 
-    def test_agents_requires_the_consent_question_before_every_commit(self):
-        self.assertIn(QUESTION, self.agents)
-        self.assertIn("before every commit", self.agents.lower())
+    def test_commit_requires_explicit_user_instruction(self):
+        self.assertIn("Never commit without explicit user instruction", self.agents)
+        self.assertIn("Unless the user explicitly says \"commit\"", self.collaboration)
 
-    def test_collaboration_rules_define_yes_behavior(self):
-        self.assertIn(QUESTION, self.collaboration)
-        self.assertIn("If the user answers yes", self.collaboration)
-        self.assertIn("run fresh checks", self.collaboration)
+    def test_push_requires_explicit_user_instruction(self):
+        self.assertIn("Never push unless asked", self.agents)
+        self.assertIn("Unless the user explicitly says \"push\"", self.collaboration)
 
-    def test_collaboration_rules_define_no_behavior(self):
-        self.assertIn("If the user answers no", self.collaboration)
-        self.assertIn("skipped by user choice", self.collaboration)
-
-    def test_collaboration_rules_define_unanswered_behavior(self):
-        self.assertIn("If the user has not answered", self.collaboration)
-        self.assertIn("neither run pre-commit checks nor commit", self.collaboration)
-
-    def test_consent_applies_to_only_one_commit(self):
-        self.assertIn("Consent applies to one commit request only", self.collaboration)
-
-    def test_boundary_check_is_manual_and_not_build_or_test_based(self):
-        self.assertIn("Knowledge-boundary audit is opt-in", self.collaboration)
-        self.assertIn("Run it only when the", self.collaboration)
-        self.assertIn("module-by-module", self.collaboration)
-        self.assertIn("Builds, unit tests, and scripts cannot establish", self.collaboration)
-        self.assertIn("manual boundary `PASS`", self.collaboration)
-        self.assertNotIn(
-            "all code changes must be verified by running `xcodebuild build` successfully",
+    def test_authorized_commit_needs_no_extra_consent_question(self):
+        self.assertIn(
+            "Do not require a separate check-consent question before an authorized commit.",
             self.collaboration,
         )
 
+    def test_boundary_check_is_manual_and_not_build_or_test_based(self):
+        self.assertIn("Knowledge-boundary audit is opt-in", self.collaboration)
+        self.assertIn("Review every changed file", self.skill)
+        self.assertIn("target membership", self.skill)
+        self.assertIn("manual boundary `PASS`", self.skill)
+
     def test_skill_is_explicitly_opt_in(self):
-        skill = (ROOT / ".agents/skills/protect-knowledge-boundary/SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("OPT-IN ONLY", skill)
-        self.assertIn("Do not run this skill automatically", skill)
-        self.assertIn("Do not run it before commits or pushes", skill)
+        self.assertIn("OPT-IN ONLY", self.skill)
+        self.assertIn("do not run it automatically", self.skill)
 
 
 if __name__ == "__main__":
