@@ -18,11 +18,10 @@ technical knowledge organized for on-demand loading by task type.
 | `project/TESTING.md` | Test targets, launch arguments, target registration, or test diagnostics |
 | `project/WINDOWING.md` | Window sizing, restoration, activation, full screen, or multi-window policy |
 | `collaboration-rules.md` | Mandatory repository collaboration behavior and safety constraints |
-| `../../WiFiLensPro/AGENTS.md` | Entry point for tasks explicitly scoped to the private Pro edition |
 
 Skill-specific material stays with its consumer. Localization terminology is
 stored at `../skills/i18n-completer/references/LOCALIZATION_TERMS.md`, not in
 this shared reference directory.
 
-Do not load or summarize private Pro references unless the task is explicitly
-scoped to Pro.
+Do not load or summarize private references unless the task is explicitly
+scoped to that separately checked-out repository.

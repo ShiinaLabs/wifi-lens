@@ -6,9 +6,6 @@ __MACOSX/
 .LSOverride
 Icon[]
 
-# Local agent artifacts
-/docs/superpowers/
-
 # Xcode user data
 xcuserdata/
 *.xcuserstate

@@ -53,10 +53,6 @@ That fix removed scene-level content sizing and added frame normalization, but i
 eliminate the failure mode. The same user-visible symptoms returned; see the incident below
 for the mechanism that actually drives the window frame.
 
-Private edition windowing documentation is indexed at
-[WiFiLensPro/docs/WINDOWING.md](../../../WiFiLensPro/docs/WINDOWING.md) and must be read only for
-work explicitly scoped to Pro.
-
 ## P0 Incident: Hidden Page Minimum Height Drives the Window
 
 - Severity: `P0`

@@ -10,10 +10,10 @@
 
 ## Engineering
 
-- [x] Complete Network Self-Check hardening: correct default-route gateway selection and interface-bound probing first, then partial reports, bounded reruns, proxy/stage assessment, evidence-based remediation, and bounded logs. See the [implementation plan](superpowers/plans/2026-09-09-network-diagnostics-hardening.md); local verification complete, with live dual-adapter and network-switch coverage still requiring manual hardware testing.
+- [x] Complete Network Self-Check hardening: correct default-route gateway selection and interface-bound probing first, then partial reports, bounded reruns, proxy/stage assessment, evidence-based remediation, and bounded logs; local verification complete, with live dual-adapter and network-switch coverage still requiring manual hardware testing.
 - [ ] UI / integration tests (9 UI test files exist in `WiFiLensUITests`; excluded from the default test plan per AGENTS.md and not yet wired into CI — pending decision: run in a dedicated CI job, or prune)
 - [ ] Add a small verification matrix for UI regressions across light/dark mode, localization, and no-permission / no-data states
-- [x] Before the next Mac App Store submission, update `NSLocalNetworkUsageDescription` for both OSS and Pro targets to disclose that Network Self-Check may connect to a configured local proxy, in addition to the existing MCP server use case (done: both targets already disclose MCP server + Network Self-Check proxy use)
+- [x] Before the next Mac App Store submission, update the app privacy description to disclose that Network Self-Check may connect to a configured local proxy, in addition to the existing MCP server use case (done: both editions disclose MCP server + Network Self-Check proxy use)
 
 ## Out of Scope (for now)
 

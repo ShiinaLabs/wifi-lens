@@ -8,10 +8,6 @@
 | WiFiLensUITests | XCTest (`XCTestCase`) | End-to-end UI tests for the OSS app |
 | WiFiLensCoreTests | Swift Testing | Shared Framework behavior and algorithms |
 
-Private Pro test documentation is indexed at
-[WiFiLensPro/docs/TESTING.md](../../../WiFiLensPro/docs/TESTING.md) and must be read only for
-work explicitly scoped to Pro.
-
 ## Running Tests
 
 Default verification should use `xcodebuild build` plus unit-test-only runs. Do not run UI test bundles unless the user explicitly asks for UI tests.
@@ -26,9 +22,6 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug 
 
 # Unit tests only — OSS target
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests
-
-# Build verification — Pro target
-xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens Pro" -configuration Debug -destination 'platform=macOS' build
 
 # OSS UI tests — run only when explicitly requested by the user
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" -configuration Debug -destination 'platform=macOS' -skipPackageUpdates test -only-testing:WiFiLensUITests
@@ -66,8 +59,8 @@ If the answer is only that an internal number changed, a translated sentence cha
 Edition-composition tests verify the shared-shell contract while each target
 compiles exactly one edition adapter. Register shared tests in `WiFiLensTests`.
 Public target tests must not import, name, or describe private implementation
-types. For explicitly Pro-scoped test work, follow
-[WiFiLensPro/docs/TESTING.md](../../../WiFiLensPro/docs/TESTING.md).
+types. Work in another edition follows that edition's separately maintained
+test instructions and project entry point.
 
 ### Runtime Backpressure and Snapshot Coverage
 

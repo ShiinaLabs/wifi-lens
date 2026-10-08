@@ -286,7 +286,7 @@ private struct AppRootView: View {
                         .accessibilityIdentifier("page-debugChart")
 
     #if DEBUG && PRO
-                    DebugTimelineContainerView()
+                    EditionAppShell.debugTimelinePage()
                         .opacity(selectedPage == .debugTimeline ? 1 : 0)
                         .allowsHitTesting(selectedPage == .debugTimeline)
                         .accessibilityIdentifier("page-debugTimeline")

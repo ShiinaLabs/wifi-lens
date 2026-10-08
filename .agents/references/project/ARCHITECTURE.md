@@ -46,9 +46,6 @@ Chart Engine (ChartLens package):
   See the [ChartLens package](https://github.com/ShiinaLabs/chart-lens) and [CHARTS.md](CHARTS.md) for rendering architecture.
   See [BLE.md](BLE.md) for BLE scan architecture.
   See [REGULATORY.md](REGULATORY.md) for regulatory pipeline.
-  Private edition documentation is indexed at
-  [WiFiLensPro/docs/ARCHITECTURE.md](../../../WiFiLensPro/docs/ARCHITECTURE.md) and must be read
-  only for work explicitly scoped to Pro.
 ```
 
 ## Source Layout
@@ -61,19 +58,15 @@ Chart Engine (ChartLens package):
 | `WiFiLensCore/Tests/WiFiLensCoreTests/` | Sources for the native `WiFiLensCoreTests` unit-test target |
 | `WiFiLens/Sources/WiFiLens/WiFiLensApp.swift` | App entry point, scenes, menu commands, and root window assembly |
 | `WiFiLens/Sources/WiFiLens/App/` | App-shell integrations such as public edition composition, build configuration, logging, crash reporting, and update handling |
-| `WiFiLens/Configs/` | Shared, OSS, and Pro Xcode configuration files |
+| `WiFiLens/Configs/` | Public Xcode configuration files |
 | `WiFiLens/Sources/WiFiLens/Resources/` | App assets, icon, privacy manifest, and localized resources |
 | `WiFiLens/Tests/` | App-hosted unit tests, UI test sources, and test plans |
-| `WiFiLensPro/` | Private Pro submodule. Public references may identify this repository and link to its private documentation, but must not describe private implementation. |
 
-The repository root keeps each component at its physical ownership boundary:
-`WiFiLens/` for the app shell, `WiFiLensCore/` for the shared Framework,
-`WiFiLensPro/` for the private submodule, and `WiFiLens.xcodeproj` as the
-project entry point. Shared product capabilities belong to `WiFiLensCore`;
-the private edition owns its product extension. App targets contain shell,
-edition assembly, and distribution-specific integrations. Development capture
-instrumentation belongs to a private support boundary and stays outside the
-production app dependency graph.
+The public repository owns the OSS app shell, shared Framework, resources,
+tests, and the standalone `WiFiLens.xcodeproj` entry point. Shared product
+capabilities belong to `WiFiLensCore`; edition-specific composition stays
+behind the edition-neutral contract. The public project contains only public
+targets and public package dependencies.
 
 ## Key Patterns
 
@@ -96,13 +89,9 @@ production app dependency graph.
 - `displayRSSI` animates toward `rssi` each tick for smooth Gaussian curve transitions
 - AP roaming transitions share a single timestamp between old and new segments, eliminating gaps on the timeline
 - Signal history (`SignalHistoryStore`) keeps 20 snapshots per BSSID in memory
-- Cross-edition contract (DD-5): `SignalHistoryStore.allSnapshots` is consumed by the
-  Pro recording feature as its per-tick snapshot source — it is not reserved/dead API.
-  Changes to `SignalHistoryStore` must be verified against both the OSS and Pro schemes
-  (`verify.sh` builds both).
-- Private edition behavior must remain behind the shared edition contract and
-  inside the `WiFiLensPro/` submodule. Public navigation or preview surfaces must not
-  import private domain code.
+- Shared source contracts such as `SignalHistoryStore.allSnapshots` should remain
+  stable for authorized downstream consumers. Public code must not depend on
+  private implementation types.
 - `ScannerViewModel.scanIntervalSeconds` supports temporary external overrides
   and restores the UserDefaults-configured value when the final override ends.
   Its `didSet` forwards a serialized runtime restart when scanning.
@@ -142,4 +131,4 @@ production app dependency graph.
 - RSSI colors: green ≥ -55, yellow ≥ -70, orange ≥ -85, red below
 - Quality colors: hex strings from `QualityLevel.color`
 - Overlap badge on channel cards includes trailing "overlap" label for context
-- **Target and package ownership**: Shared product capability belongs in the `WiFiLensCore` Framework; do not duplicate it in both app Sources phases. Pro product implementation belongs inside the private Pro boundary. Capture and AppStage integration belongs in private development tooling. App targets compile shell, edition assembly, and distribution-specific sources. Keep Xcode target membership explicit and verify each target's Compile Sources phase after project changes.
+- **Target and package ownership**: Shared product capability belongs in the `WiFiLensCore` Framework; do not duplicate it in the app Sources phase. Keep Xcode target membership explicit and verify each target's Compile Sources phase after project changes. Public app targets must compile only public sources and use only packages required by the public project.

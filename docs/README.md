@@ -25,8 +25,9 @@ organized for on-demand loading by task type and are not duplicated here.
 
 | File | Purpose |
 |------|---------|
-| [architecture/product-modularization.md](architecture/product-modularization.md) | Human-maintainer record of module ownership, edition assembly, and the production/capture boundary |
+| [architecture/product-modularization.md](architecture/product-modularization.md) | Human-maintainer record of public module ownership and edition-neutral composition |
 | [architecture/xcode-framework-migration.md](architecture/xcode-framework-migration.md) | Migration of repository-owned local packages to native Framework and test targets |
+| [architecture/public-project-boundary.md](architecture/public-project-boundary.md) | Public Xcode target, scheme, source, and package ownership policy |
 
 ## Contribution and policy documents
 

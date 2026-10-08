@@ -18,6 +18,17 @@ public struct StorageLocations: Sendable {
     public let migrationBackup: URL
     public let contractMarker: URL
 
+    /// Resolves a database file inside the canonical application-support namespace.
+    /// `fileName` must be a single path component.
+    public func databaseURL(named fileName: String) -> URL {
+        let lastPathComponent = URL(fileURLWithPath: fileName).lastPathComponent
+        precondition(
+            !fileName.isEmpty && lastPathComponent == fileName && fileName != "." && fileName != "..",
+            "Database names must be single path components"
+        )
+        return applicationSupportRoot.appendingPathComponent(fileName, isDirectory: false)
+    }
+
     public init(
         environment: AppEnvironment,
         applicationSupportDirectory: URL,

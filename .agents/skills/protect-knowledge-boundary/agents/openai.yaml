@@ -1,4 +1,0 @@
-interface:
-  display_name: "Protect Knowledge Boundary"
-  short_description: "Prevent private Pro knowledge from entering public assets"
-  default_prompt: "Run $protect-knowledge-boundary only when the user explicitly requests a knowledge-boundary audit or the active task requires one."

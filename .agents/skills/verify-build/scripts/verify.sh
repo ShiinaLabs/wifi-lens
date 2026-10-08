@@ -2,8 +2,7 @@
 #
 # verify.sh — canonical WiFi Lens verification.
 #
-# Default: build both app schemes (Debug), then run OSS and Core unit bundles.
-# --quick:  build + test only "WiFi Lens" (skip the Pro build).
+# Default: build the public app (Debug), then run public app and Core unit bundles.
 #
 # Never runs UI test bundles. Never uses swift build/test. See SKILL.md.
 
@@ -15,18 +14,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 PROJECT="$REPO_ROOT/WiFiLens.xcodeproj"
 
-QUICK=false
-for arg in "$@"; do
-  case "$arg" in
-    --quick) QUICK=true ;;
-    -h|--help)
-      grep '^#' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
-      exit 0 ;;
-    *)
-      echo "verify.sh: unknown argument '$arg' (use --quick or --help)" >&2
-      exit 2 ;;
-  esac
-done
+if [[ $# -gt 0 ]]; then
+  echo "verify.sh accepts no arguments" >&2
+  exit 2
+fi
 
 DEST='platform=macOS'
 COMMON=(-project "$PROJECT" -configuration Debug -destination "$DEST")
@@ -41,14 +32,7 @@ echo "verify.sh: repo root = $REPO_ROOT"
 # 1. Build OSS scheme.
 run "${COMMON[@]}" -scheme "WiFi Lens" build
 
-# 2. Build Pro scheme (shared source safety) unless --quick.
-if [ "$QUICK" = false ]; then
-  run "${COMMON[@]}" -scheme "WiFi Lens Pro" build
-else
-  echo "==> (--quick) skipping WiFi Lens Pro build"
-fi
-
-# 3. Run the OSS and shared Framework unit bundles only (no UI tests).
+# 2. Run the public app and shared Framework unit bundles only (no UI tests).
 run "${COMMON[@]}" -scheme "WiFi Lens" -skipPackageUpdates test -only-testing:WiFiLensTests -only-testing:WiFiLensCoreTests
 
 echo "verify.sh: OK"
