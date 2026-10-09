@@ -46,7 +46,7 @@ struct PipelineTests {
         #expect(result.observation.channelAnalysis?.first(where: { $0.channel == 36 })?.isCurrentChannel == true)
         #expect(result.observation.channelAnalysis?.first(where: { $0.channel == 36 })?.recommendationConfidence == .exact)
         #expect(await currentProvider.fetchCount == 1)
-        #expect(await latencyProvider.measuredRouterIPs == ["192.0.2.1"])
+        #expect(await latencyProvider.measuredRouterIPs.isEmpty)
     }
 
     @Test("produceCycle marks the current channel only in the connected band")
@@ -158,9 +158,22 @@ struct PipelineTests {
     @Test("produceCycle returns one complete same-cycle observation")
     func productionCycleIsComplete() async {
         let timestamp = Date(timeIntervalSince1970: 1_750_000_100)
+        let cycleID = UUID()
+        let linkEvidence = WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID,
+            capturedAt: timestamp,
+            interfaceName: "en0",
+            mode: .station,
+            radio: .reportedOn,
+            linkActive: true,
+            ssid: "Current",
+            bssid: "AA:BB:CC:DD:EE:FF"
+        )
         let status = WiFiCurrentStatus(
             timestamp: timestamp,
+            interfaceSnapshotCycleID: cycleID,
             interfaceName: "en0",
+            interfaceIndex: 4,
             ssid: "Current",
             bssid: "AA:BB:CC:DD:EE:FF",
             channel: 36,
@@ -169,21 +182,33 @@ struct PipelineTests {
             security: "WPA3",
             routerIP: "192.0.2.1",
             isConnected: true,
-            isWiFiPowerOn: true
+            isWiFiPowerOn: true,
+            linkEvidence: linkEvidence,
+            linkAssessment: WiFiLinkInterpreter.evaluate(
+                linkEvidence,
+                expectedCycleID: cycleID,
+                expectedCapturedAt: timestamp
+            )
         )
         let latency = GatewayLatencyResult(
             timestamp: timestamp,
             routerIP: "192.0.2.1",
-            latencyMs: 18
+            latencyMs: 18,
+            probeOutcome: .replied(milliseconds: 18),
+            attemptID: UUID(),
+            cycleID: cycleID,
+            interfaceName: "en0",
+            interfaceBound: true
         )
+        let latencyProvider = TestRecordingWiFiBoundGatewayMeasurer(result: latency)
         let pipeline = makeCyclePipeline(
             currentProvider: TestCountingCurrentConnectionProvider(result: status),
-            latencyProvider: TestRecordingGatewayLatencyProvider(result: latency)
+            latencyProvider: latencyProvider
         )
 
         let result = await pipeline.produceCycle(
             networks: [network(ssid: "Current", bssid: "AA:BB:CC:DD:EE:FF", channel: 36, band: .band5GHz, rssi: -50)],
-            context: cycleContext(timestamp: timestamp, supportedBands: [.band5GHz])
+            context: cycleContext(timestamp: timestamp, cycleID: cycleID, supportedBands: [.band5GHz])
         )
         let observation = result.observation
 
@@ -191,6 +216,10 @@ struct PipelineTests {
         #expect(observation.currentStatus == status)
         #expect(observation.environmentSnapshot?.timestamp == timestamp)
         #expect(observation.gatewayLatency == latency)
+        #expect(await latencyProvider.measuredTargets.count == 1)
+        #expect(await latencyProvider.measuredTargets.first?.interfaceName == "en0")
+        #expect(await latencyProvider.measuredTargets.first?.address == "192.0.2.1")
+        #expect(await latencyProvider.measuredTargets.first?.snapshotCycleID == cycleID)
         #expect(observation.quality != nil)
         #expect(observation.diagnosis != nil)
         #expect(observation.channelAnalysis?.isEmpty == false)
@@ -257,6 +286,7 @@ struct PipelineTests {
 
     private func cycleContext(
         timestamp: Date = Date(timeIntervalSince1970: 1_750_000_000),
+        cycleID: UUID = UUID(),
         supportedBands: Set<ChannelBand> = [.band24GHz, .band5GHz, .band6GHz],
         deviceSupportedChannels: Set<String> = ["2-36", "2-40"],
         deviceCapabilities: DevicePHYCapabilities = .default,
@@ -267,7 +297,7 @@ struct PipelineTests {
         WiFiObservationCycleContext(
             timestamp: timestamp,
             interfaceSnapshot: NetworkInterfaceSnapshot(
-                cycleID: UUID(),
+                cycleID: cycleID,
                 capturedAt: timestamp,
                 interfaces: []
             ),

@@ -18,13 +18,21 @@ protocol WiFiCurrentConnectionProviding: Sendable {
 struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
     public init() {}
     func fetchCurrentStatus(from snapshot: NetworkInterfaceSnapshot) async -> WiFiCurrentStatus {
-        guard let wifi = snapshot.interfaces.first(where: { $0.ssid != nil }) else {
+        guard let wifi = snapshot.interfaces.first(where: \.isWiFiInterface) else {
+            let reason: WiFiLinkEvidenceReason = if !snapshot.interfaceEnumerationSucceeded {
+                .interfaceEnumerationFailed
+            } else if !snapshot.wifiInterfaceDiscoverySucceeded {
+                .interfaceDiscoveryUnavailable
+            } else {
+                .interfaceUnavailable
+            }
             return WiFiCurrentStatus(
                 timestamp: snapshot.capturedAt,
                 interfaceSnapshotCycleID: snapshot.cycleID,
                 isConnected: false,
                 isWiFiPowerOn: true,
-                error: .noWiFiConnection
+                error: .noWiFiConnection,
+                linkAssessment: WiFiLinkAssessment(state: .unknown, reason: reason)
             )
         }
         return Self.makeStatus(from: wifi, snapshot: snapshot)
@@ -38,6 +46,7 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
             timestamp: snapshot.capturedAt,
             interfaceSnapshotCycleID: snapshot.cycleID,
             interfaceName: wifi.interfaceName,
+            interfaceIndex: wifi.interfaceIndex,
             ssid: wifi.ssid,
             bssid: wifi.bssid,
             channel: wifi.channel,
@@ -47,8 +56,14 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
             phyMode: wifi.phyMode,
             security: wifi.security,
             routerIP: wifi.router,
-            isConnected: true,
-            isWiFiPowerOn: true
+            isConnected: wifi.ssid != nil,
+            isWiFiPowerOn: wifi.wifiLinkEvidence?.radio == .reportedOn,
+            linkEvidence: wifi.wifiLinkEvidence,
+            linkAssessment: WiFiLinkInterpreter.evaluate(
+                wifi.wifiLinkEvidence,
+                expectedCycleID: snapshot.cycleID,
+                expectedCapturedAt: snapshot.capturedAt
+            )
         )
     }
 }

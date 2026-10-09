@@ -1746,7 +1746,38 @@ private final class SequentialInterfaceSnapshotSource: NetworkInterfaceSnapshotS
         let snapshot = NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capture.capturedAt,
-            interfaces: capture.interfaces
+            interfaces: capture.interfaces.map { interface in
+                guard interface.isWiFiInterface else { return interface }
+                let evidence = WiFiLinkRawEvidence(
+                    snapshotCycleID: cycleID,
+                    capturedAt: capture.capturedAt,
+                    interfaceName: interface.interfaceName,
+                    mode: .station,
+                    radio: .reportedOn,
+                    linkActive: true,
+                    ssid: interface.ssid,
+                    bssid: interface.bssid
+                )
+                return NetworkInterfaceInfo(
+                    interfaceName: interface.interfaceName,
+                    interfaceIndex: interface.interfaceIndex ?? 4,
+                    hardwareMAC: interface.hardwareMAC,
+                    isWiFiInterface: true,
+                    wifiLinkEvidence: evidence,
+                    ipv4Addresses: interface.ipv4Addresses,
+                    subnetMasks: interface.subnetMasks,
+                    router: interface.router,
+                    dnsServers: interface.dnsServers,
+                    ssid: interface.ssid,
+                    bssid: interface.bssid,
+                    channel: interface.channel,
+                    band: interface.band,
+                    rssi: interface.rssi,
+                    txRate: interface.txRate,
+                    phyMode: interface.phyMode,
+                    security: interface.security
+                )
+            }
         )
         capturedSnapshots.append(snapshot)
         return snapshot
@@ -1775,7 +1806,7 @@ private func runtimeInterfaceInfo(
     )
 }
 
-private actor SuspendingSecondGatewayLatencyProvider: GatewayLatencyProviding {
+private actor SuspendingSecondGatewayLatencyProvider: GatewayLatencyProviding, WiFiBoundGatewayMeasuring {
     private let result: GatewayLatencyResult
     private var measurementCount = 0
     private var secondMeasurementEntered = false
@@ -1797,6 +1828,27 @@ private actor SuspendingSecondGatewayLatencyProvider: GatewayLatencyProviding {
             }
         }
         return result
+    }
+
+    func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult {
+        measurementCount += 1
+        if measurementCount == 2 {
+            secondMeasurementEntered = true
+            enteredContinuation?.resume()
+            enteredContinuation = nil
+            await withCheckedContinuation { continuation in
+                releaseContinuation = continuation
+            }
+        }
+        return GatewayLatencyResult(
+            timestamp: result.timestamp,
+            routerIP: target.address,
+            probeOutcome: .notTested,
+            attemptID: UUID(),
+            cycleID: target.snapshotCycleID,
+            interfaceName: target.interfaceName,
+            interfaceBound: true
+        )
     }
 
     func waitUntilSecondMeasurementEntered() async {

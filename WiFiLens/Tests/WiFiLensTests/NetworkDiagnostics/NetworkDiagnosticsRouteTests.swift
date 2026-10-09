@@ -186,8 +186,8 @@ extension NetworkDiagnosticsTests {
         ])
     }
 
-    @Test("overlapping gateway pings preserve the latest cancellation owner")
-    func overlappingGatewayPingsPreserveCancellationOwnership() async {
+    @Test("overlapping gateway pings cancel only their own attempts")
+    func overlappingGatewayPingsCancelOnlyTheirOwnAttempts() async {
         let runner = ControlledGatewayPingProcessRunner()
         let pinger = GatewayPinger(processRunner: runner)
 
@@ -200,13 +200,17 @@ extension NetworkDiagnosticsTests {
             await pinger.ping(host: "second.example")
         }
         await runner.waitUntilInvocationCount(2)
+        let invocationIDs = await runner.invocationIDs
 
-        await runner.cancel()
-
+        first.cancel()
         #expect(await first.value == nil)
+        #expect(await runner.cancelledInvocationIDs == [invocationIDs[0]])
+
+        second.cancel()
         #expect(await second.value == nil)
-        #expect(await runner.invocationCount == 2)
-        #expect(await runner.cancelledInvocationIDs == [1, 2])
+        #expect(await runner.invocationIDs.count == 2)
+        #expect(await runner.cancelledInvocationIDs == invocationIDs)
+        #expect(Set(invocationIDs).count == 2)
     }
 
     @Test("contextual path and gateway checks use one selected interface")

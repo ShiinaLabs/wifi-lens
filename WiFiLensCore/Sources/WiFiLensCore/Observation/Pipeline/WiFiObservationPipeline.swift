@@ -48,7 +48,32 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         context: WiFiObservationCycleContext
     ) async -> WiFiObservationCycleResult {
         let status = await currentConnectionProvider.fetchCurrentStatus(from: context.interfaceSnapshot)
-        let latency = await gatewayLatencyProvider.measure(routerIP: status.routerIP)
+        let latency: GatewayLatencyResult
+        if let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
+           let boundMeasurer = gatewayLatencyProvider as? WiFiBoundGatewayMeasuring {
+            let measured = await boundMeasurer.measure(target: target)
+            if Task.isCancelled {
+                latency = GatewayLatencyResult(
+                    timestamp: context.timestamp,
+                    routerIP: target.address,
+                    probeOutcome: .cancelled,
+                    attemptID: measured.attemptID,
+                    cycleID: target.snapshotCycleID,
+                    interfaceName: target.interfaceName,
+                    interfaceBound: true
+                )
+            } else {
+                latency = measured
+            }
+        } else {
+            latency = GatewayLatencyResult(
+                timestamp: context.timestamp,
+                routerIP: status.routerIP,
+                probeOutcome: .notTested,
+                cycleID: context.interfaceSnapshot.cycleID,
+                interfaceName: status.interfaceName
+            )
+        }
         let adaptedNetworks = NetworkObservationAdapter.adaptAll(
             networks,
             currentBSSID: status.bssid
