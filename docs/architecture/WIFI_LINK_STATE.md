@@ -32,24 +32,26 @@ as auxiliary evidence; they are not required to be false and do not define link
 association. `Link.Detaching` is also auxiliary context. Mode `none` remains
 ambiguous because its API result alone does not prove that the read succeeded.
 
-The center schedules an independent, one-shot review capture after a new
-candidate. The interval is injectable and bounded from 100 ms to 10 s; the
-current default is a provisional 1 s diagnostic interval, not a domain rule.
-Notifications and periodic compensation sampling coalesce with this review.
-Each capture has a distinct cycle ID and capture interval. A candidate remains
-`unknown` by default: production disconnect confirmation is disabled because
-the evidence has not been validated in the signed, sandboxed app. Repeated
-candidate samples cannot generate disconnect events. Tests can explicitly
-enable confirmation with synthetic evidence, but this does not enable it in
-the application.
+The center schedules one independent review capture for the first candidate in
+a continuous candidate cycle. Its interval is injectable and bounded from
+100 ms to 10 s; the current default is a provisional 1 s diagnostic interval,
+not a domain rule. Notifications and periodic compensation sampling coalesce
+with this review. Each capture has a distinct cycle ID and capture interval.
+After the review completes, ordinary compensation samples continue updating
+evidence but cannot restart active review for the same continuous candidate
+cycle. Trusted association, conflicting evidence, failed sampling, interface
+change, sleep/wake, or a session restart ends or invalidates that cycle.
 
-**Disconnect confirmation is disabled by default.** The specific negative
-evidence combination has not yet been validated in the signed, sandboxed app.
-Until that validation is complete, candidate samples publish `unknown` with a
-disconnect-candidate reason; they do not create a disconnected state or event.
-Tests can explicitly enable the candidate-confirmation policy with synthetic
-evidence. First observed association or non-association establishes a baseline
-and does not create a reconnect or disconnect event.
+**Production disconnect confirmation remains disabled.** A public Debug app
+run verified the sampler, both listener registrations, and the observed
+access-point-loss signature. The provided run summary does not include a
+truth-labeled negative-control interval demonstrating that the same pattern
+never occurs during normal operation, roaming, or lifecycle changes. In
+addition, CoreWLAN mode `none` still has no independent read-success bit.
+Accordingly, production candidates remain `unknown` and do not emit disconnect
+or recovery events. Tests can inject the strict confirmation policy with
+synthetic evidence. The first observed association or non-association remains
+a baseline and does not create a transition event.
 
 ## Snapshots, events, and continuity
 
@@ -96,9 +98,16 @@ enumeration. Both retain their caller-provided cycle ID and capture timestamp.
 
 ## Formal app validation
 
-The real signed/sandboxed application has not yet been exercised on a device.
-The independent `tools/wifi-link-lab/` collector does not establish app
-capability and must not be used as a substitute.
+The public Debug app has been exercised in its sandbox. The independent
+`tools/wifi-link-lab/` collector does not establish app capability and must not
+be used as a substitute. The Debug run recorded 97 valid samples (32
+associated and 60 candidate samples), successful SystemConfiguration and
+CoreWLAN event registration, 44 active-review schedules, and 40 review
+executions. During access-point loss it observed raw mode 0, radio on,
+`Link.Active == false`, service active, and both interface flags true. This
+validates the real app sampling and candidate path for that scenario; it does
+not establish the false-positive rate under negative controls or the release
+signing/runtime environment.
 
 The normal public Debug app starts the shared center at process startup, even
 when no window is open. Unit-test hosts, UI-test mode, and controlled demo
@@ -140,7 +149,16 @@ then run the completion marker. Manually toggle Wi-Fi off and on; with Wi-Fi
 on, make a test access point unavailable and restore it (for example, turn off
 a test router or phone hotspot). Wait for several samples after each action.
 The log records SystemConfiguration and CoreWLAN registration success or
-failure directly, so both outcomes can be checked.
+failure directly, so both outcomes can be checked. Another full access-point
+loss run is not required to reproduce the already observed signature. To
+consider enabling production confirmation later, the logs must also establish
+a marked normal-operation control (including an associated baseline and
+recovery) and show no candidate during an interface or sleep/wake continuity
+reset. If the existing run's markers and complete local JSONL files do not
+contain that negative-control window, the smallest additional experiment is a
+short marked control interval during normal connected operation plus one
+sleep/wake or interface-change cycle; the prior access-point-loss evidence can
+be reused.
 
 ```sh
 python3 tools/wifi-link-lab/analyze.py --input-dir "/path/to/Diagnostics"
@@ -152,9 +170,10 @@ conditions are validated on the intended macOS environment.
 
 ## Known limits
 
-- The signed and sandboxed production capability is unverified.
+- The release signing/runtime environment has not been validated.
 - CoreWLAN `none` and power-off values are intentionally treated as ambiguous.
-- Negative link evidence cannot produce a confirmed disconnect under the
-  default policy until the formal app experiment validates the complete rule.
+- Production disconnect confirmation remains off until negative-control
+  evidence validates that the candidate signature is specific to lost
+  association.
 - Existing scan and historical observation invalidation remains outside this
   center and is a later migration step.

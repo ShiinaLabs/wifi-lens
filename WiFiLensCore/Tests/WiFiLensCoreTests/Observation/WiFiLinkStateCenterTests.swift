@@ -120,13 +120,187 @@ struct WiFiLinkStateCenterTests {
         #expect((await center.snapshot()).state == .unknown)
         #expect((await center.snapshot()).reason == .disconnectEvidenceNotValidated)
         await clock.waitForPendingSleep()
+        let sequenceBeforeReview = (await center.snapshot()).sequence
         await clock.releaseNext()
         await collector.waitForCaptureCount(3)
+        await waitForSnapshotSequence(center, after: sequenceBeforeReview)
 
         #expect(await clock.releasedCount() == 1)
+        #expect(await clock.pendingCount() == 0)
         #expect((await center.snapshot()).state == .unknown)
         #expect((await center.snapshot()).reason == .disconnectEvidenceNotValidated)
         await center.stop()
+    }
+
+    @Test("A transient association loss gets one review and recovers without transition events")
+    func transientAssociationLossHasBoundedReview() async {
+        let baseline = evidence(mode: .station, radio: .reportedOn, linkActive: true)
+        let candidate1 = observedAPLoss(offset: 1)
+        let candidate2 = observedAPLoss(offset: 2)
+        let recovered = evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 3)
+        let collector = SequenceCollector([baseline, candidate1, candidate2, recovered])
+        let clock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600), reviewClock: clock
+        )
+        let recorder = LinkEventRecorder()
+        let stream = await center.events()
+        let eventTask = Task { for await event in stream { await recorder.append(event) } }
+
+        await center.start()
+        await center.refresh()
+        await clock.waitForPendingSleep()
+        let sequenceBeforeReview = (await center.snapshot()).sequence
+        await clock.releaseNext()
+        await collector.waitForCaptureCount(3)
+        await waitForSnapshotSequence(center, after: sequenceBeforeReview)
+
+        #expect(await clock.pendingCount() == 0)
+        #expect((await center.snapshot()).state == .unknown)
+        await center.refresh()
+        #expect((await center.snapshot()).state == .associated)
+        #expect((await center.snapshot()).linkEpoch == 0)
+
+        await center.stop()
+        await recorder.waitForCount(1)
+        eventTask.cancel()
+        await eventTask.value
+        #expect(await recorder.events().map(\.type) == [.continuityReset])
+    }
+
+    @Test("Dozens of continuous candidate samples do not restart active review or advance the epoch")
+    func sustainedCandidateCycleStaysBounded() async {
+        let baseline = evidence(mode: .station, radio: .reportedOn, linkActive: true)
+        let candidates = (1...40).map { observedAPLoss(offset: TimeInterval($0)) }
+        let collector = SequenceCollector([baseline] + candidates)
+        let clock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600), reviewClock: clock
+        )
+        let recorder = LinkEventRecorder()
+        let stream = await center.events()
+        let eventTask = Task { for await event in stream { await recorder.append(event) } }
+
+        await center.start()
+        await center.refresh()
+        await clock.waitForPendingSleep()
+        let sequenceBeforeReview = (await center.snapshot()).sequence
+        await clock.releaseNext()
+        await collector.waitForCaptureCount(3)
+        await waitForSnapshotSequence(center, after: sequenceBeforeReview)
+        for _ in 0..<38 { await center.refresh() }
+
+        let snapshot = await center.snapshot()
+        #expect(snapshot.state == .unknown)
+        #expect(snapshot.reason == .disconnectEvidenceNotValidated)
+        #expect(snapshot.linkEpoch == 0)
+        #expect(await collector.captureCount() == 41)
+        #expect(await clock.pendingCount() == 0)
+
+        await center.stop()
+        await recorder.waitForCount(1)
+        eventTask.cancel()
+        await eventTask.value
+        #expect(await recorder.events().map(\.type) == [.continuityReset])
+    }
+
+    @Test("A failed review sample invalidates the candidate cycle without link transitions")
+    func failedReviewSampleResetsCandidateCycle() async {
+        let collector = SequenceCollector([
+            evidence(mode: .station, radio: .reportedOn, linkActive: true),
+            observedAPLoss(offset: 1),
+            nil
+        ])
+        let clock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600), reviewClock: clock
+        )
+        let recorder = LinkEventRecorder()
+        let stream = await center.events()
+        let eventTask = Task { for await event in stream { await recorder.append(event) } }
+
+        await center.start()
+        await center.refresh()
+        await clock.waitForPendingSleep()
+        let sequenceBeforeReview = (await center.snapshot()).sequence
+        await clock.releaseNext()
+        await collector.waitForCaptureCount(3)
+        await waitForSnapshotSequence(center, after: sequenceBeforeReview)
+
+        #expect((await center.snapshot()).state == .unknown)
+        #expect((await center.snapshot()).reason == .interfaceDiscoveryUnavailable)
+        await clock.waitUntilNoPendingSleep()
+        #expect(await clock.pendingCount() == 0)
+        await center.stop()
+        await recorder.waitForCount(2)
+        eventTask.cancel()
+        await eventTask.value
+        #expect(await recorder.events().map(\.type) == [.continuityReset, .continuityReset])
+    }
+
+    @Test("Sleep invalidates the active candidate review and produces no link transition")
+    func sleepDuringReviewResetsWithoutTransitions() async {
+        let trigger = FakeLinkTrigger()
+        let collector = SequenceCollector([
+            evidence(mode: .station, radio: .reportedOn, linkActive: true),
+            observedAPLoss(offset: 1),
+            nil
+        ])
+        let clock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: trigger,
+            pollingInterval: .seconds(3_600), reviewClock: clock
+        )
+        let recorder = LinkEventRecorder()
+        let stream = await center.events()
+        let eventTask = Task { for await event in stream { await recorder.append(event) } }
+
+        await center.start()
+        await center.refresh()
+        await clock.waitForPendingSleep()
+        let sequenceBeforeSleep = (await center.snapshot()).sequence
+        trigger.emit(.willSleep)
+        await collector.waitForCaptureCount(3)
+        await waitForSnapshotReason(center, .interfaceDiscoveryUnavailable, after: sequenceBeforeSleep)
+
+        #expect((await center.snapshot()).state == .unknown)
+        await clock.waitUntilNoPendingSleep()
+        #expect(await clock.pendingCount() == 0)
+        await center.stop()
+        await recorder.waitForCount(3)
+        eventTask.cancel()
+        await eventTask.value
+        #expect(await recorder.events().allSatisfy { $0.type == .continuityReset })
+    }
+
+    @Test("A first observation of an unassociated interface does not emit disconnect or recovery")
+    func initialUnassociatedStateDoesNotEmitTransitions() async {
+        let clock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([observedAPLoss(offset: 1), observedAPLoss(offset: 2)]),
+            trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600), reviewClock: clock,
+            allowsUnvalidatedDisconnectConfirmation: true
+        )
+        let recorder = LinkEventRecorder()
+        let stream = await center.events()
+        let eventTask = Task { for await event in stream { await recorder.append(event) } }
+
+        await center.start()
+        await clock.waitForPendingSleep()
+        let sequenceBeforeReview = (await center.snapshot()).sequence
+        await clock.releaseNext()
+        await waitForSnapshotSequence(center, after: sequenceBeforeReview)
+
+        #expect((await center.snapshot()).state == .disconnected)
+        #expect((await center.snapshot()).linkEpoch == 0)
+        await center.stop()
+        await recorder.waitForCount(1)
+        eventTask.cancel()
+        await eventTask.value
+        #expect(await recorder.events().map(\.type) == [.continuityReset])
     }
 
     @Test("The scan compatibility subscriber moves from powered-on to unknown on ambiguous radio evidence")
@@ -337,23 +511,29 @@ struct WiFiLinkStateCenterTests {
         await center.stop()
     }
 
-    @Test("Strict review requires distinct samples and emits one disconnect and one recovery")
+    @Test("Strict test policy emits one disconnect and one recovery from anonymized real evidence")
     func strictTransitionsAndLinkEpoch() async {
         let baseline = evidence(mode: .station, radio: .reportedOn, linkActive: true)
-        let candidate1 = evidence(mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 1)
-        let candidate2 = evidence(mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 2)
-        let candidate3 = evidence(mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 3)
-        let recovered = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "New", bssid: "02:00:00:00:00:01", offset: 4)
+        let candidate1 = observedAPLoss(offset: 1)
+        let candidate2 = observedAPLoss(offset: 2)
+        let candidate3 = observedAPLoss(offset: 3)
+        let recovered = evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 4)
+        let stillAssociated = evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 5)
+        let clock = ManualReviewClock()
         let center = WiFiLinkStateCenter(
-            collector: SequenceCollector([baseline, candidate1, candidate2, candidate3, recovered]),
-            trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600),
+            collector: SequenceCollector([baseline, candidate1, candidate2, candidate3, recovered, stillAssociated]),
+            trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600), reviewClock: clock,
             allowsUnvalidatedDisconnectConfirmation: true
         )
+        let recorder = LinkEventRecorder()
         let events = await center.events()
-        var iterator = events.makeAsyncIterator()
+        let eventTask = Task { for await event in events { await recorder.append(event) } }
         await center.start()
         await center.refresh()
-        await center.refresh()
+        await clock.waitForPendingSleep()
+        let sequenceBeforeReview = (await center.snapshot()).sequence
+        await clock.releaseNext()
+        await waitForSnapshotSequence(center, after: sequenceBeforeReview)
         let disconnected = await center.snapshot()
         #expect(disconnected.state == .disconnected)
         #expect(disconnected.linkEpoch == 1)
@@ -363,13 +543,28 @@ struct WiFiLinkStateCenterTests {
         let associated = await center.snapshot()
         #expect(associated.state == .associated)
         #expect(associated.linkEpoch == 2)
-        let disconnectEvent = await iterator.next()
-        let recoveryEvent = await iterator.next()
-        #expect(disconnectEvent?.type == .disconnected)
-        #expect(disconnectEvent?.id != nil)
-        #expect(recoveryEvent?.type == .associated)
-        #expect((disconnectEvent?.sequence ?? 0) < (recoveryEvent?.sequence ?? 0))
+        await center.refresh()
         await center.stop()
+        await recorder.waitForCount(3)
+        eventTask.cancel()
+        await eventTask.value
+        let recordedEvents = await recorder.events()
+        let transitions = recordedEvents.filter { $0.type == .disconnected || $0.type == .associated }
+        #expect(transitions.count == 2)
+        let disconnectEvent = transitions[0]
+        let recoveryEvent = transitions[1]
+        #expect(disconnectEvent.type == .disconnected)
+        #expect(recoveryEvent.type == .associated)
+        #expect(disconnectEvent.id != recoveryEvent.id)
+        #expect(disconnectEvent.linkEpoch == 1)
+        #expect(recoveryEvent.linkEpoch == 2)
+        #expect(disconnectEvent.lastConfirmedPreviousAt == baseline.capturedAt)
+        #expect(disconnectEvent.firstConfirmedCurrentAt == candidate1.capturedAt)
+        #expect(disconnectEvent.confirmedAt != candidate1.capturedAt)
+        #expect(disconnectEvent.currentEvidence?.ssid == nil)
+        #expect(disconnectEvent.currentEvidence?.bssid == nil)
+        #expect(recoveryEvent.firstConfirmedCurrentAt == recovered.capturedAt)
+        #expect(recordedEvents.last?.type == .continuityReset)
     }
 
     @Test("Current-state subscribers are independent, cancellation is local, and event history remains ordered")
@@ -539,6 +734,23 @@ private actor SequenceCollector: WiFiLinkEvidenceCollecting {
     }
 }
 
+private actor LinkEventRecorder {
+    private var recordedEvents: [WiFiLinkStateEvent] = []
+
+    func append(_ event: WiFiLinkStateEvent) {
+        recordedEvents.append(event)
+    }
+
+    func events() -> [WiFiLinkStateEvent] { recordedEvents }
+
+    func waitForCount(_ expected: Int) async {
+        for _ in 0..<1_000 {
+            if recordedEvents.count >= expected { return }
+            await Task.yield()
+        }
+    }
+}
+
 private actor PausingCollector: WiFiLinkEvidenceCollecting {
     private var nextID = 0
     private var continuations: [Int: CheckedContinuation<WiFiLinkRawEvidence?, Never>] = [:]
@@ -693,6 +905,27 @@ private func observedAPLoss(offset: TimeInterval) -> WiFiLinkRawEvidence {
 private func waitForMonitorState(_ monitor: WiFiPowerMonitor, _ expected: WiFiPowerState) async {
     for _ in 0..<1_000 {
         if monitor.currentState == expected { return }
+        await Task.yield()
+    }
+}
+
+@MainActor
+private func waitForSnapshotSequence(_ center: WiFiLinkStateCenter, after sequence: UInt64) async {
+    for _ in 0..<1_000 {
+        if await center.snapshot().sequence > sequence { return }
+        await Task.yield()
+    }
+}
+
+@MainActor
+private func waitForSnapshotReason(
+    _ center: WiFiLinkStateCenter,
+    _ reason: WiFiLinkEvidenceReason,
+    after sequence: UInt64
+) async {
+    for _ in 0..<1_000 {
+        let snapshot = await center.snapshot()
+        if snapshot.sequence > sequence, snapshot.reason == reason { return }
         await Task.yield()
     }
 }

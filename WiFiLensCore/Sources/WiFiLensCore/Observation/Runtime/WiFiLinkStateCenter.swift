@@ -698,7 +698,9 @@ public actor WiFiLinkStateCenter {
         var continuityReset = false
 
         if state == .associated {
-            cancelCandidateReview(reason: "associationRestored")
+            if reason != .candidateReview {
+                cancelCandidateReview(reason: "associationRestored")
+            }
             disconnectCandidates.removeAll()
             currentContinuityValid = true
             if confirmedState == .disconnected {
@@ -723,16 +725,15 @@ public actor WiFiLinkStateCenter {
             }
             let wasFirstCandidate = disconnectCandidates.isEmpty
             let candidateWasAccepted = appendCandidate(evidence)
-            if candidateWasAccepted {
-                if wasFirstCandidate {
-                    logCandidateEvent("disconnectCandidateFirstSeen", evidence: evidence, sessionID: sessionID, generation: generation)
-                }
-                logCandidateEvent("candidateSampleObserved", evidence: evidence, sessionID: sessionID, generation: generation)
-            } else {
+            if candidateWasAccepted, wasFirstCandidate {
+                logCandidateEvent("candidateCycleStarted", evidence: evidence, sessionID: sessionID, generation: generation)
+            } else if !candidateWasAccepted {
                 cancelCandidateReview(reason: "candidateSequenceInvalid")
             }
             if allowsUnvalidatedDisconnectConfirmation, disconnectCandidates.count >= 2 {
-                cancelCandidateReview(reason: "disconnectConfirmed")
+                if reason != .candidateReview {
+                    cancelCandidateReview(reason: "disconnectConfirmed")
+                }
                 state = .disconnected
                 assessmentReason = .disconnectCandidate
                 if confirmedState == .associated, !disconnectTransitionEmitted {
@@ -743,19 +744,19 @@ public actor WiFiLinkStateCenter {
                 }
                 if confirmedState == .unknown { lastConfirmedStateAt = evidence.capturedAt }
                 confirmedState = .disconnected
-                logCandidateEvent("candidateFinalDecisionDisconnected", evidence: evidence, sessionID: sessionID, generation: generation)
             } else {
                 state = .unknown
                 assessmentReason = disconnectCandidates.isEmpty
                     ? .conflictingLinkEvidence
                     : (allowsUnvalidatedDisconnectConfirmation ? .disconnectCandidate : .disconnectEvidenceNotValidated)
-                if !disconnectCandidates.isEmpty {
+                if wasFirstCandidate, !disconnectCandidates.isEmpty {
                     scheduleCandidateReview(sessionID: sessionID)
-                    logCandidateEvent("candidateFinalDecisionUnknown", evidence: evidence, sessionID: sessionID, generation: generation)
                 }
             }
         } else {
-            cancelCandidateReview(reason: "candidateInvalidated")
+            if reason != .candidateReview {
+                cancelCandidateReview(reason: "candidateInvalidated")
+            }
             disconnectCandidates.removeAll()
             if state == .unknown {
                 if currentContinuityValid || confirmedState != .unknown {
@@ -807,12 +808,18 @@ public actor WiFiLinkStateCenter {
         ]) { _, new in new }
         WiFiLinkDiagnosticsLogger.record("sample", fields, fileName: "observations.jsonl")
         #endif
-        if reason == .candidateReview {
+        if reason == .candidateReview, let reviewID = candidateReviewID {
             logCandidateEvent(
-                state == .disconnected ? "candidateReviewDisconnected" : "candidateReviewResult",
+                "candidateReviewCompleted",
                 evidence: evidence, sessionID: sessionID, generation: generation,
-                extra: ["result": state.rawValue, "reason": assessmentReason.rawValue]
+                extra: [
+                    "reviewID": reviewID.uuidString,
+                    "result": state.rawValue,
+                    "reason": assessmentReason.rawValue,
+                    "candidateSampleCount": disconnectCandidates.count
+                ]
             )
+            candidateReviewID = nil
         }
         if oldRadio != evidence.radio, oldRadio != .unavailable {
             publishEvent(.radioChanged, previous: previousEvidence, current: evidence, firstAt: evidence.capturedAt, previousAt: previousConfirmationTime)
@@ -905,7 +912,8 @@ public actor WiFiLinkStateCenter {
 
     private func scheduleCandidateReview(sessionID: UUID) {
         guard isRunning, runSessionID == sessionID,
-              candidateReviewTask == nil, !pendingSampleReasons.contains(.candidateReview),
+              candidateReviewID == nil, candidateReviewTask == nil,
+              !pendingSampleReasons.contains(.candidateReview),
               !disconnectCandidates.isEmpty else { return }
         let reviewID = UUID()
         let generation = lifecycleGeneration
@@ -937,7 +945,6 @@ public actor WiFiLinkStateCenter {
         guard candidateReviewID == reviewID,
               isCurrent(sessionID: sessionID, generation: generation) else { return }
         candidateReviewTask = nil
-        candidateReviewID = nil
         #if DEBUG
         WiFiLinkDiagnosticsLogger.record("event", [
             "eventType": "candidateReviewStarted",
