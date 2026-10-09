@@ -119,6 +119,35 @@ probe for automatic recovery. Scan failures update scanner access state only;
 they are not disconnect evidence and do not create link events. Location
 authorization remains controlled by the existing authorization manager.
 
+## Observation validity and consumer behavior
+
+Each complete observation cycle carries its interface snapshot `sourceCycleID`
+and capture timestamp. The scan outcome is explicit on its environment
+snapshot: `error == nil` means the network list is a successful result (including
+a valid empty list); an error means the list cannot be used to infer presence or
+absence. A scan failure can still carry a separately captured current link
+assessment. It does not turn that assessment into a disconnect or radio-off
+fact.
+
+`WiFiObservationStore.apply` replaces every current projection on each accepted
+cycle, including clearing values the cycle did not measure. Per-domain
+validity distinguishes current, failed, not tested, and age-expired data. The
+latest 120 full cycles remain available in chronological history; history is
+not used as a current value. Late observations are retained in history but
+cannot replace a newer current projection. RSSI/network history remains in its
+existing history store.
+
+The scanner's current network list and channel results clear on a failed scan;
+signal-history queries remain available. Gateway probing, environment analysis,
+quality, and diagnosis are not produced from a failed environment scan. A fresh
+link status from that cycle remains independently available. Overview and
+Interfaces use a fresh `WiFiCurrentStatus.linkAssessment` to label association;
+SSID/BSSID are display identity only, and interface type comes from explicit
+interface discovery. AP Radar changes target presence only after a successful
+environment scan. On failure or scan lifecycle pause it stops pulse/audio,
+invalidates the live RSSI display, and waits for a new successful sample before
+tracking resumes. A failed scan never means the tracked AP disappeared.
+
 Window or app-focus activation only requests a new center sample. It does not
 reset continuity or increment `linkEpoch`; actual sleep/wake and interface
 changes retain their continuity-reset behavior. The app owns one shared center
@@ -203,5 +232,6 @@ conditions are validated on the intended macOS environment.
 - Production disconnect confirmation remains off until negative-control
   evidence validates that the candidate signature is specific to lost
   association.
-- Existing scan and historical observation invalidation remains outside this
-  center and is a later migration step.
+- Link state, scan readiness, scan outcome, current observation validity, and
+  retained historical observations are separate contracts. Scan failure or an
+  unavailable interface must not be interpreted as loss of Wi-Fi association.

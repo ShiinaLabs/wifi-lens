@@ -2,6 +2,9 @@ import Foundation
 
 public struct WiFiObservation: Equatable, Sendable {
     public var timestamp: Date
+    /// Source identity for this complete observation cycle. It is not a scan
+    /// success marker; inspect `environmentSnapshot.error` for that outcome.
+    public var sourceCycleID: UUID?
     public var currentStatus: WiFiCurrentStatus?
     var environmentSnapshot: WiFiEnvironmentSnapshot?
     public var gatewayLatency: GatewayLatencyResult?
@@ -13,6 +16,7 @@ public struct WiFiObservation: Equatable, Sendable {
 
     init(
         timestamp: Date = Date(),
+        sourceCycleID: UUID? = nil,
         currentStatus: WiFiCurrentStatus? = nil,
         environmentSnapshot: WiFiEnvironmentSnapshot? = nil,
         gatewayLatency: GatewayLatencyResult? = nil,
@@ -23,6 +27,7 @@ public struct WiFiObservation: Equatable, Sendable {
         errors: [WiFiObservationError] = []
     ) {
         self.timestamp = timestamp
+        self.sourceCycleID = sourceCycleID ?? environmentSnapshot?.sourceCycleID ?? currentStatus?.interfaceSnapshotCycleID
         self.currentStatus = currentStatus
         self.environmentSnapshot = environmentSnapshot
         self.gatewayLatency = gatewayLatency
@@ -35,6 +40,7 @@ public struct WiFiObservation: Equatable, Sendable {
 
     public static func == (lhs: WiFiObservation, rhs: WiFiObservation) -> Bool {
         lhs.timestamp == rhs.timestamp &&
+        lhs.sourceCycleID == rhs.sourceCycleID &&
         lhs.currentStatus == rhs.currentStatus &&
         lhs.environmentSnapshot == rhs.environmentSnapshot &&
         lhs.gatewayLatency == rhs.gatewayLatency &&

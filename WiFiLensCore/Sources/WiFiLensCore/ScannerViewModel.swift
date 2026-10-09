@@ -140,6 +140,7 @@ public final class ScannerViewModel {
     private let requiresLiveWiFiAuthorization: Bool
     private let userDefaults: UserDefaults
     private let vendorResolver: any MACVendorResolving
+    private let unknownWiFiProbeSleep: @Sendable (Duration) async throws -> Void
     private var userDefaultsRegionOverride: RegulatoryDomain?
 
     public init(
@@ -147,7 +148,8 @@ public final class ScannerViewModel {
         userDefaults: UserDefaults = .standard,
         vendorResolver: any MACVendorResolving = MACVendorResolver(),
         requiresLiveWiFiAuthorization: Bool = true,
-        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() }
+        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() },
+        unknownWiFiProbeSleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.store = store
         self.observationRuntime = WiFiObservationRuntime(store: store)
@@ -156,6 +158,7 @@ public final class ScannerViewModel {
         self.locationManager = LocationPermissionManager(liveAuthorizationEnabled: requiresLiveWiFiAuthorization)
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
+        self.unknownWiFiProbeSleep = unknownWiFiProbeSleep
         self.userDefaultsRegionOverride = Self.regionOverride(
             from: userDefaults.string(forKey: "regulatoryRegionOverride") ?? "auto"
         )
@@ -168,7 +171,8 @@ public final class ScannerViewModel {
         userDefaults: UserDefaults = .standard,
         vendorResolver: any MACVendorResolving = MACVendorResolver(),
         requiresLiveWiFiAuthorization: Bool = true,
-        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() }
+        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() },
+        unknownWiFiProbeSleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.store = observationRuntime.store
         self.observationRuntime = observationRuntime
@@ -177,6 +181,7 @@ public final class ScannerViewModel {
         self.locationManager = LocationPermissionManager(liveAuthorizationEnabled: requiresLiveWiFiAuthorization)
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
+        self.unknownWiFiProbeSleep = unknownWiFiProbeSleep
         self.userDefaultsRegionOverride = Self.regionOverride(
             from: userDefaults.string(forKey: "regulatoryRegionOverride") ?? "auto"
         )
@@ -580,9 +585,10 @@ public final class ScannerViewModel {
 
     private func scheduleUnknownWiFiProbe() {
         guard unknownWiFiProbeTask == nil, !isTerminating else { return }
+        let sleep = unknownWiFiProbeSleep
         unknownWiFiProbeTask = Task { @MainActor [weak self] in
             do {
-                try await Task.sleep(for: Self.unknownWiFiProbeDelay)
+                try await sleep(Self.unknownWiFiProbeDelay)
             } catch {
                 return
             }
@@ -726,8 +732,15 @@ public final class ScannerViewModel {
         if let error = output.cycle.observation.environmentSnapshot?.error {
             Self.logger.error("scan failure: \(String(describing: error))")
             accessState = .scanFailed(String(describing: error))
-            // supportedBands may have changed even though no networks were
-            // applied; refresh the caches so band/count reads stay consistent.
+            // Keep the prior samples in SignalHistoryStore for history views,
+            // but remove them from every projection that claims to represent
+            // the current successful environment scan.
+            lastNetworks = []
+            deduplicatedNetworks = []
+            channelQualities = []
+            channelRecommendations = []
+            regulatoryPipeline.inferredRegion = nil
+            rebuildProjection()
             rebuildCachedDerivedData()
             return
         }

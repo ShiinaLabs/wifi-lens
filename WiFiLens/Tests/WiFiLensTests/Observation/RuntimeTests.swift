@@ -1029,6 +1029,63 @@ struct ScannerRuntimeMigrationTests {
         #expect(await source.snapshot().activeStreamCount == 0)
     }
 
+    @Test("bounded recovery probe survives repeated scan failures and resumes one loop")
+    func boundedProbeRecoversAfterRepeatedEnvironmentFailures() async {
+        let source = ScriptedScanSource()
+        let store = WiFiObservationStore()
+        let runtime = WiFiObservationRuntime(
+            store: store,
+            pipeline: ErrorAwareProjectionCyclePipeline(
+                channelQualities: [],
+                recommendations: [],
+                inferredRegion: RegionInferenceResult(domain: .US, confidence: .low, contributions: [], conflicts: [])
+            ),
+            scanSource: source,
+            interfaceSource: IncrementingInterfaceSnapshotSource()
+        )
+        let recoveryClock = ControlledWiFiProbeClock()
+        let scanner = ScannerViewModel(
+            observationRuntime: runtime,
+            authorizationRefresh: { $0.authorizationStatus = .authorized },
+            unknownWiFiProbeSleep: { duration in try await recoveryClock.sleep(for: duration) }
+        )
+        scanner.locationManager.authorizationStatus = .authorized
+
+        await scanner.debugStartScanLoopForTesting()
+        for _ in 0..<3 { scanner.debugReconcileWiFiStateForTesting(.unknown) }
+        await source.waitUntilStopCallCount(1)
+        await recoveryClock.waitUntilScheduled()
+        #expect(await recoveryClock.scheduledDurations == [.seconds(30)])
+        #expect(!scanner.isScanning)
+
+        await recoveryClock.advanceOneProbe()
+        await source.waitUntilActiveStreamCount(1)
+        await scanner.debugDrainRuntimeLifecycleForTesting()
+        #expect(scanner.isScanning)
+        #expect(await source.snapshot().activeStreamCount == 1)
+
+        await source.yield(.interfaceUnavailable("radio interface unavailable"))
+        await runtime.drainRawCyclesForTesting()
+        #expect(store.latestEnvironmentSnapshot?.error == .environmentScanFailed("radio interface unavailable"))
+        #expect(scanner.isScanning)
+
+        await source.yield(.interfaceUnavailable("still unavailable"))
+        await runtime.drainRawCyclesForTesting()
+        #expect(store.latestEnvironmentSnapshot?.error == .environmentScanFailed("still unavailable"))
+        #expect(await source.snapshot().activeStreamCount == 1)
+
+        let recovered = runtimeNetwork(bssid: "AA:RECOVERED", channel: 44)
+        await source.yield(.networks([recovered]))
+        await runtime.drainRawCyclesForTesting()
+        #expect(store.latestEnvironmentSnapshot?.error == nil)
+        #expect(scanner.lastNetworks.map(\.id) == [recovered.id])
+        #expect(scanner.isScanning)
+        #expect(await source.snapshot().activeStreamCount == 1)
+
+        await scanner.stopForTermination()
+        #expect(await source.snapshot().activeStreamCount == 0)
+    }
+
     @Test("Initial unknown evidence permits one authorized controlled scan probe")
     func initialUnknownStartsControlledProbe() async {
         let source = ScriptedScanSource()
@@ -1224,8 +1281,8 @@ struct ScannerRuntimeMigrationTests {
         scanner.stop()
     }
 
-    @Test("failed scan preserves the last valid presentation projection")
-    func failedScanPreservesLastValidProjection() async {
+    @Test("failed scan invalidates current environment projections but preserves history")
+    func failedScanInvalidatesCurrentProjection() async {
         let source = ScriptedScanSource()
         let firstCapturedAt = Date(timeIntervalSince1970: 1_752_001_200)
         let secondCapturedAt = Date(timeIntervalSince1970: 1_752_001_205)
@@ -1240,11 +1297,10 @@ struct ScannerRuntimeMigrationTests {
                 (capturedAt: secondCapturedAt, interfaces: secondInterfaces),
             ]
         )
-        let gatewayLatencyProvider = SuspendingSecondGatewayLatencyProvider(
-            result: GatewayLatencyResult(timestamp: firstCapturedAt)
-        )
         let pipeline = WiFiObservationPipeline(
-            gatewayLatencyProvider: gatewayLatencyProvider
+            gatewayLatencyProvider: MockGatewayLatencyProvider(
+                result: GatewayLatencyResult(timestamp: firstCapturedAt)
+            )
         )
         let store = WiFiObservationStore()
         let runtime = WiFiObservationRuntime(
@@ -1263,30 +1319,21 @@ struct ScannerRuntimeMigrationTests {
         await scanner.debugStartScanLoopForTesting()
         await source.yield(.networks([network]))
         await runtime.drainRawCyclesForTesting()
-        let qualityChannels = scanner.channelQualities.map(\.channel)
-        let qualityScores = scanner.channelQualities.map(\.qualityScore)
-        let recommendationChannels = scanner.channelRecommendations.map(\.channel)
-        let regionDomain = scanner.inferredRegion?.domain
-        let regionConfidence = scanner.inferredRegion?.confidence
         let expectedError = WiFiObservationError.environmentScanFailed("temporary scan failure")
         await source.yield(.failure("temporary scan failure"))
-        await gatewayLatencyProvider.waitUntilSecondMeasurementEntered()
-
-        // Capturing is earlier than the pipeline await, so this proves captureCount
-        // cannot be used as a publication/projection completion signal.
-        #expect(interfaceSource.captureCount == 2)
-        #expect(store.latestEnvironmentSnapshot?.error == nil)
-
-        await gatewayLatencyProvider.releaseSecondMeasurement()
         await runtime.drainRawCyclesForTesting()
 
         #expect(interfaceSource.captureCount == 2)
-        #expect(scanner.lastNetworks.map(\.id) == [network.id])
-        #expect(scanner.channelQualities.map(\.channel) == qualityChannels)
-        #expect(scanner.channelQualities.map(\.qualityScore) == qualityScores)
-        #expect(scanner.channelRecommendations.map(\.channel) == recommendationChannels)
-        #expect(scanner.inferredRegion?.domain == regionDomain)
-        #expect(scanner.inferredRegion?.confidence == regionConfidence)
+        #expect(scanner.lastNetworks.isEmpty)
+        #expect(scanner.channelQualities.isEmpty)
+        #expect(scanner.channelRecommendations.isEmpty)
+        #expect(scanner.inferredRegion == nil)
+        #expect(store.latestEnvironmentSnapshot?.error == expectedError)
+        #expect(store.channelAnalysis == nil)
+        #expect(store.channelRecommendation == nil)
+        #expect(store.quality == nil)
+        #expect(store.diagnosis == nil)
+        #expect(store.history.count == 2)
         #expect(scanner.networkInfo.map(\.interfaceName) == secondInterfaces.map(\.interfaceName))
         #expect(scanner.networkInfo.map(\.ssid) == secondInterfaces.map(\.ssid))
         let failedCycleSnapshot = interfaceSource.capturedSnapshots[1]
@@ -1761,6 +1808,41 @@ private actor ManualWiFiScanClock: WiFiScanClock {
     }
 }
 
+private actor ControlledWiFiProbeClock {
+    private(set) var scheduledDurations: [Duration] = []
+    private var sleepers: [CheckedContinuation<Void, Error>] = []
+    private var scheduledWaiters: [CheckedContinuation<Void, Never>] = []
+
+    func sleep(for duration: Duration) async throws {
+        scheduledDurations.append(duration)
+        scheduledWaiters.forEach { $0.resume() }
+        scheduledWaiters.removeAll()
+        try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            try await withCheckedThrowingContinuation { continuation in
+                sleepers.append(continuation)
+            }
+        } onCancel: {
+            Task { await self.cancelOneProbe() }
+        }
+    }
+
+    func waitUntilScheduled() async {
+        guard sleepers.isEmpty else { return }
+        await withCheckedContinuation { continuation in scheduledWaiters.append(continuation) }
+    }
+
+    func advanceOneProbe() {
+        guard !sleepers.isEmpty else { return }
+        sleepers.removeFirst().resume()
+    }
+
+    private func cancelOneProbe() {
+        guard !sleepers.isEmpty else { return }
+        sleepers.removeFirst().resume(throwing: CancellationError())
+    }
+}
+
 private actor RecordingCyclePipeline: WiFiObservationPipelining {
     struct Call: Sendable {
         let networks: [WiFiNetwork]
@@ -1839,6 +1921,21 @@ private struct ImmediateInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcin
 }
 
 @MainActor
+private final class IncrementingInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcing {
+    private var captureCount = 0
+    private let origin = Date(timeIntervalSince1970: 1_752_003_000)
+
+    func capture(cycleID: UUID) async -> NetworkInterfaceSnapshot {
+        defer { captureCount += 1 }
+        return NetworkInterfaceSnapshot(
+            cycleID: cycleID,
+            capturedAt: origin.addingTimeInterval(Double(captureCount)),
+            interfaces: []
+        )
+    }
+}
+
+@MainActor
 private final class SequentialInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcing {
     private let captures: [(capturedAt: Date, interfaces: [NetworkInterfaceInfo])]
     private(set) var capturedSnapshots: [NetworkInterfaceSnapshot] = []
@@ -1901,6 +1998,7 @@ private func runtimeInterfaceInfo(
     NetworkInterfaceInfo(
         interfaceName: interfaceName,
         hardwareMAC: "00:11:22:33:44:55",
+        isWiFiInterface: interfaceName.hasPrefix("en"),
         ipv4Addresses: ["192.0.2.2"],
         subnetMasks: ["255.255.255.0"],
         router: "192.0.2.1",

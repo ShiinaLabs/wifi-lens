@@ -19,20 +19,40 @@ public struct OverviewView: View {
     }
 
     private var wifi: NetworkInterfaceInfo? {
-        viewModel.networkInfo.first(where: { $0.ssid != nil })
+        guard verifiedLinkState == .associated,
+              let interfaceName = store.currentStatus?.interfaceName else { return nil }
+        return viewModel.networkInfo.first {
+            $0.isWiFiInterface && $0.interfaceName == interfaceName
+        }
+    }
+
+    private var verifiedLinkState: VerifiedWiFiLinkState {
+        guard let status = store.currentStatus,
+              status.error == nil,
+              Date().timeIntervalSince(status.timestamp) <= 15 else { return .unknown }
+        return status.linkAssessment?.state ?? .unknown
     }
 
     private var currentChannelQuality: ChannelRecommendation? {
         guard wifi?.channel != nil else { return nil }
-        return viewModel.channelRecommendations.first(where: { $0.isCurrentChannel })
+        return currentChannelRecommendations.first(where: { $0.isCurrentChannel })
     }
 
     private var recommendedChannels: [ChannelRecommendation] {
-        viewModel.channelRecommendations.filter(\.isRecommended)
+        currentChannelRecommendations.filter(\.isRecommended)
     }
 
     private var recommendationAvailability: ChannelRecommendationAvailability {
-        .from(viewModel.channelRecommendations)
+        .from(currentChannelRecommendations)
+    }
+
+    private var currentChannelRecommendations: [ChannelRecommendation] {
+        guard store.validity(at: Date())?.channelRecommendation == .current else { return [] }
+        return viewModel.channelRecommendations
+    }
+
+    private var currentEnvironmentIsFresh: Bool {
+        store.validity(at: Date())?.environment == .current
     }
 
     private var overviewVisualStyle: OverviewVisualStyle.ResolvedStyle {
@@ -41,7 +61,7 @@ public struct OverviewView: View {
     }
 
     private var totalNetworks: Int {
-        guard viewModel.isWiFiAvailable else { return 0 }
+        guard viewModel.isWiFiAvailable, currentEnvironmentIsFresh else { return 0 }
         return viewModel.cachedTotalNetworks
     }
 
@@ -88,8 +108,10 @@ public struct OverviewView: View {
                                 authorizationCard
                             }
 
-                            if !viewModel.isWiFiAvailable {
+                            if viewModel.wifiPowerState == .poweredOff {
                                 wifiOffCard
+                            } else if !viewModel.isWiFiAvailable {
+                                unknownConnectionCard
                             } else if let wifi {
                                 connectionCard(wifi)
                                 signalHealthRow(wifi)
@@ -98,9 +120,11 @@ public struct OverviewView: View {
                                 }
                                 if let current = currentChannelQuality, hasBetterChannel(current) {
                                     channelAdviceCard(current)
-                                } else if !viewModel.channelRecommendations.isEmpty {
+                                } else if !currentChannelRecommendations.isEmpty {
                                     channelStatusCard(recommendationAvailability)
                                 }
+                            } else if verifiedLinkState != .disconnected {
+                                unknownConnectionCard
                             } else {
                                 noConnectionCard
                             }
@@ -234,7 +258,9 @@ public struct OverviewView: View {
     // MARK: - Diagnostic Card
 
     private func diagnosticCard(_ wifi: NetworkInterfaceInfo) -> some View {
-        let diag = store.diagnosis ?? DiagnosticResult.unknown
+        let diag = store.validity(at: Date())?.diagnosis == .current
+            ? (store.diagnosis ?? DiagnosticResult.unknown)
+            : DiagnosticResult.unknown
 
         return HStack(spacing: 12) {
             Image(systemName: diag.icon)
@@ -337,6 +363,21 @@ public struct OverviewView: View {
         .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
     }
 
+    private var unknownConnectionCard: some View {
+        VStack(spacing: 12) {
+            Text(String(localized: "common.label.unknown", comment: "Generic unknown value label"))
+                .font(.title3)
+                .fontWeight(.semibold)
+            Text(String(localized: "overview.status.connect_prompt", comment: "Prompt to connect to Wi-Fi for diagnostics"))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity)
+        .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
+    }
+
     private var wifiOffCard: some View {
         WiFiOffView()
             .padding(.horizontal, 0)
@@ -377,9 +418,11 @@ public struct OverviewView: View {
                 .foregroundColor(.accentColor)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(String(format: String(localized: "overview.environment.summary_fmt", comment: "Banner showing count of detected networks"), totalNetworks))
+                Text(currentEnvironmentIsFresh
+                     ? String(format: String(localized: "overview.environment.summary_fmt", comment: "Banner showing count of detected networks"), totalNetworks)
+                     : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
                     .font(.subheadline.weight(.semibold))
-                Text(bandSummary)
+                Text(currentEnvironmentIsFresh ? bandSummary : "")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

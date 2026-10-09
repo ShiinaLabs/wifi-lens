@@ -49,7 +49,8 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
     ) async -> WiFiObservationCycleResult {
         let status = await currentConnectionProvider.fetchCurrentStatus(from: context.interfaceSnapshot)
         let latency: GatewayLatencyResult
-        if let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
+        if context.environmentError == nil,
+           let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
            let boundMeasurer = gatewayLatencyProvider as? WiFiBoundGatewayMeasuring {
             let measured = await boundMeasurer.measure(target: target)
             if Task.isCancelled {
@@ -82,7 +83,8 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
             timestamp: context.timestamp,
             interfaceName: context.interfaceName,
             networks: adaptedNetworks,
-            error: context.environmentError
+            error: context.environmentError,
+            sourceCycleID: context.interfaceSnapshot.cycleID
         )
         let targetAP = ChannelQualityCalculator.TargetAP(
             bssid: status.bssid,
@@ -114,18 +116,22 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
                 deviceCapabilities: context.deviceCapabilities
             )
         }
-        let quality = WiFiQualityEvaluator.evaluate(
-            currentStatus: status,
-            gatewayLatency: latency
-        )
-        let diagnosis = DiagnosticEvaluator.evaluate(
-            currentStatus: status,
-            quality: quality,
-            channelAnalysis: channelAnalysis,
-            channelRecommendations: channelRecommendation
-        )
+        let quality: WiFiQualityResult? = context.environmentError == nil
+            ? WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: latency)
+            : nil
+        let diagnosis: DiagnosticResult? = if let quality {
+            DiagnosticEvaluator.evaluate(
+                currentStatus: status,
+                quality: quality,
+                channelAnalysis: channelAnalysis,
+                channelRecommendations: channelRecommendation
+            )
+        } else {
+            nil
+        }
         let observation = WiFiObservation(
             timestamp: context.timestamp,
+            sourceCycleID: context.interfaceSnapshot.cycleID,
             currentStatus: status,
             environmentSnapshot: snapshot,
             gatewayLatency: latency,

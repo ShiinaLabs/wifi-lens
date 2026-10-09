@@ -260,10 +260,59 @@ struct PipelineTests {
         #expect(result.observation.errors.contains(environmentError))
         #expect(result.observation.errors.filter { $0 == environmentError }.count == 1)
         #expect(result.observation.gatewayLatency != nil)
-        #expect(result.observation.quality != nil)
-        #expect(result.observation.diagnosis != nil)
+        #expect(result.observation.gatewayLatency?.probeOutcome == .notTested)
+        #expect(result.observation.quality == nil)
+        #expect(result.observation.diagnosis == nil)
         #expect(result.observation.channelAnalysis == nil)
         #expect(result.observation.channelRecommendation == nil)
+    }
+
+    @Test("failed cycle replaces current values while retaining bounded history")
+    @MainActor
+    func storeInvalidatesMissingCurrentFieldsAndRejectsLateProjection() {
+        let store = WiFiObservationStore()
+        let t1 = Date(timeIntervalSince1970: 1_750_000_200)
+        let t2 = t1.addingTimeInterval(5)
+        let firstCycle = UUID()
+        let secondCycle = UUID()
+        let first = WiFiObservation(
+            timestamp: t1,
+            sourceCycleID: firstCycle,
+            currentStatus: WiFiCurrentStatus(timestamp: t1, interfaceName: "en0", ssid: "Known", isConnected: true, isWiFiPowerOn: true),
+            environmentSnapshot: WiFiEnvironmentSnapshot(timestamp: t1, networks: [], sourceCycleID: firstCycle),
+            gatewayLatency: GatewayLatencyResult(timestamp: t1, routerIP: "192.0.2.1", latencyMs: 8, probeOutcome: .replied(milliseconds: 8), cycleID: firstCycle),
+            quality: WiFiQualityResult(level: .good, signalLabel: "Good", latencyLabel: "Good", summary: "Current"),
+            channelAnalysis: [],
+            channelRecommendation: [],
+            diagnosis: DiagnosticResult(icon: "checkmark", title: "Current", message: "Current", severity: .ok)
+        )
+        let failure = WiFiObservationError.environmentScanFailed("interface unavailable")
+        let second = WiFiObservation(
+            timestamp: t2,
+            sourceCycleID: secondCycle,
+            currentStatus: WiFiCurrentStatus(timestamp: t2, interfaceName: "en0", ssid: nil, isConnected: false, isWiFiPowerOn: true),
+            environmentSnapshot: WiFiEnvironmentSnapshot(timestamp: t2, networks: [], error: failure, sourceCycleID: secondCycle),
+            gatewayLatency: GatewayLatencyResult(timestamp: t2, routerIP: nil, probeOutcome: .notTested, cycleID: secondCycle),
+            errors: [failure]
+        )
+
+        store.apply(first)
+        store.apply(second)
+        store.apply(first)
+
+        #expect(store.currentObservation?.sourceCycleID == secondCycle)
+        #expect(store.currentStatus?.timestamp == t2)
+        #expect(store.latestEnvironmentSnapshot?.sourceCycleID == secondCycle)
+        #expect(store.latestEnvironmentSnapshot?.error == failure)
+        #expect(store.gatewayLatency?.probeOutcome == .notTested)
+        #expect(store.quality == nil)
+        #expect(store.channelAnalysis == nil)
+        #expect(store.channelRecommendation == nil)
+        #expect(store.diagnosis == nil)
+        #expect(store.history.count == 3)
+        #expect(store.validity?.environment == .failed)
+        #expect(store.validity?.channelRecommendation == .failed)
+        #expect(store.validity(at: t2.addingTimeInterval(20))?.currentStatus == .expired)
     }
 
     private func makeCyclePipeline(

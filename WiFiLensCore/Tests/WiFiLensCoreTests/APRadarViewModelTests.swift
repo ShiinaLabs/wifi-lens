@@ -184,6 +184,43 @@ struct APRadarViewModelTests {
         #expect(updated?.smoothedRSSI == -54)
     }
 
+    @Test("failed environment samples do not count as target loss or reuse RSSI")
+    func failedScanInvalidatesLiveRadarSignalWithoutDeclaringLoss() async throws {
+        let harness = makeHarness()
+        activateAndSelect(harness.viewModel)
+        let t0 = Date(timeIntervalSince1970: 200)
+        try await harness.viewModel.consume(
+            makeObservation(timestamp: t0, networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -51)])
+        )
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -51)
+
+        try await harness.viewModel.consume(
+            makeObservation(
+                timestamp: t0.addingTimeInterval(60),
+                networks: [],
+                error: .environmentScanFailed("interface unavailable")
+            )
+        )
+
+        #expect(harness.viewModel.scanFailed)
+        #expect(harness.viewModel.isAwaitingFreshScan)
+        #expect(harness.viewModel.latestNetworks.isEmpty)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == nil)
+        #expect(lostSnapshot(harness.viewModel) == nil)
+        #expect(harness.scheduler.cancelCount > 0)
+
+        try await harness.viewModel.consume(
+            makeObservation(
+                timestamp: t0.addingTimeInterval(61),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -47)]
+            )
+        )
+        #expect(!harness.viewModel.scanFailed)
+        #expect(!harness.viewModel.isAwaitingFreshScan)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -47)
+        #expect(lostSnapshot(harness.viewModel) == nil)
+    }
+
     @Test("matching is BSSID-based and case/whitespace insensitive")
     func matchingNormalizesBSSID() async throws {
         let harness = makeHarness()

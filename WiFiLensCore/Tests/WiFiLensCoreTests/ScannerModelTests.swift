@@ -108,6 +108,45 @@ struct WiFiScanFailureBackoffTests {
             #expect(Bool(false), "A successful zero-network scan remains a valid result")
         }
     }
+
+    @Test("unavailable interface retries on bounded clock delays and recovers to a valid empty scan")
+    func unavailableInterfaceRecoveryUsesInjectedClock() async throws {
+        let clock = StepWiFiScanClock()
+        let attempt = SequenceWiFiScanAttempt(results: [nil, nil, []])
+        let scanner = WiFiScanner(clock: clock, scanAttempt: attempt)
+        let events = AsyncStream<WiFiScanEvent>.makeStream()
+        await scanner.startScanning(interval: .seconds(1)) { event in
+            events.continuation.yield(event)
+        }
+        var iterator = events.stream.makeAsyncIterator()
+
+        guard case .interfaceUnavailable? = await iterator.next() else {
+            Issue.record("Expected the first missing-interface probe to fail")
+            await scanner.stopScanning()
+            return
+        }
+        await clock.waitForSleepCount(1)
+        #expect(await clock.recordedSleeps == [.seconds(1)])
+        await clock.advanceNextSleep()
+
+        guard case .interfaceUnavailable? = await iterator.next() else {
+            Issue.record("Expected a second bounded recovery probe")
+            await scanner.stopScanning()
+            return
+        }
+        await clock.waitForSleepCount(2)
+        #expect(await clock.recordedSleeps == [.seconds(1), .seconds(2)])
+        await clock.advanceNextSleep()
+
+        guard case .networks(let networks)? = await iterator.next() else {
+            Issue.record("A restored interface must produce a successful scan result")
+            await scanner.stopScanning()
+            return
+        }
+        #expect(networks.isEmpty)
+        #expect(await attempt.callCount == 3)
+        await scanner.stopScanning()
+    }
 }
 
 private struct StubWiFiScanAttempt: WiFiScanAttempting {
@@ -115,6 +154,72 @@ private struct StubWiFiScanAttempt: WiFiScanAttempting {
 
     func scanNetworks() throws -> [WiFiNetwork]? {
         networks
+    }
+}
+
+private final class SequenceWiFiScanAttempt: WiFiScanAttempting, @unchecked Sendable {
+    private let lock = NSLock()
+    private var results: [[WiFiNetwork]?]
+    private var calls = 0
+    var callCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return calls
+    }
+
+    init(results: [[WiFiNetwork]?]) { self.results = results }
+
+    func scanNetworks() throws -> [WiFiNetwork]? {
+        lock.lock()
+        defer { lock.unlock() }
+        calls += 1
+        return results.isEmpty ? nil : results.removeFirst()
+    }
+}
+
+private actor StepWiFiScanClock: WiFiScanClock {
+    private var instant: Duration = .zero
+    private var sleepers: [(UUID, Duration, CheckedContinuation<Void, Error>)] = []
+    private var sleepCountWaiters: [(Int, CheckedContinuation<Void, Never>)] = []
+    private(set) var recordedSleeps: [Duration] = []
+
+    func now() -> Duration { instant }
+
+    func sleep(for duration: Duration) async throws {
+        recordedSleeps.append(duration)
+        let count = recordedSleeps.count
+        sleepCountWaiters.removeAll { target, continuation in
+            guard count >= target else { return false }
+            continuation.resume()
+            return true
+        }
+        let id = UUID()
+        try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            try await withCheckedThrowingContinuation { continuation in
+                sleepers.append((id, duration, continuation))
+            }
+        } onCancel: {
+            Task { await self.cancelSleep(id) }
+        }
+    }
+
+    func waitForSleepCount(_ count: Int) async {
+        guard recordedSleeps.count < count else { return }
+        await withCheckedContinuation { continuation in sleepCountWaiters.append((count, continuation)) }
+    }
+
+    func advanceNextSleep() {
+        guard !sleepers.isEmpty else { return }
+        let (_, duration, continuation) = sleepers.removeFirst()
+        instant += duration
+        continuation.resume()
+    }
+
+    private func cancelSleep(_ id: UUID) {
+        guard let index = sleepers.firstIndex(where: { $0.0 == id }) else { return }
+        let (_, _, continuation) = sleepers.remove(at: index)
+        continuation.resume(throwing: CancellationError())
     }
 }
 

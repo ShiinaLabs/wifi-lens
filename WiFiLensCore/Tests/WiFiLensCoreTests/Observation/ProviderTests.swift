@@ -4,6 +4,15 @@ import Testing
 
 @Suite("Observation Providers")
 struct ProviderTests {
+    @Test("network identity never infers Wi-Fi interface classification")
+    func ssidDoesNotClassifyInterface() {
+        let staleIdentity = NetworkInterfaceInfo(interfaceName: "en0", ssid: "Old network")
+        let identifiedWiFiInterface = NetworkInterfaceInfo(interfaceName: "en0", isWiFiInterface: true)
+
+        #expect(!staleIdentity.isWiFiInterface)
+        #expect(identifiedWiFiInterface.isWiFiInterface)
+    }
+
     @Test("CoreWLAN channel band mapping preserves overlapping 6 GHz channels")
     func coreWLANBandMapping() {
         #expect(NetworkInfoService.channelBand(coreWLANRawValue: 1) == .band24GHz)

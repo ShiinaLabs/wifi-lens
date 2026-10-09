@@ -51,7 +51,7 @@ public struct NetworkInterfaceInfo: Sendable {
         self.interfaceName = interfaceName
         self.interfaceIndex = interfaceIndex ?? (if_nametoindex(interfaceName) == 0 ? nil : if_nametoindex(interfaceName))
         self.hardwareMAC = hardwareMAC
-        self.isWiFiInterface = isWiFiInterface || ssid != nil
+        self.isWiFiInterface = isWiFiInterface
         self.wifiLinkEvidence = wifiLinkEvidence
         self.ipv4Addresses = ipv4Addresses
         self.subnetMasks = subnetMasks

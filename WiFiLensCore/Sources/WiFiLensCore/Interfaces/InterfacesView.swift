@@ -38,7 +38,31 @@ public struct InterfacesView: View {
     }
 
     private var wifiInterface: NetworkInterfaceInfo? {
-        interfaces.first(where: { $0.ssid != nil })
+        if verifiedLinkState == .associated,
+           let interfaceName = scannerViewModel.store.currentStatus?.interfaceName {
+            return interfaces.first {
+                $0.isWiFiInterface && $0.interfaceName == interfaceName
+            }
+        }
+        return interfaces.first(where: \.isWiFiInterface)
+    }
+
+    private var verifiedLinkState: VerifiedWiFiLinkState {
+        guard let status = scannerViewModel.store.currentStatus,
+              status.error == nil,
+              Date().timeIntervalSince(status.timestamp) <= 15 else { return .unknown }
+        return status.linkAssessment?.state ?? .unknown
+    }
+
+    private var linkStateLabel: String {
+        switch verifiedLinkState {
+        case .associated:
+            String(localized: "common.label.connected", comment: "Connected state indicator")
+        case .disconnected:
+            String(localized: "overview.status.not_connected", comment: "Empty state when not connected to any Wi-Fi network")
+        case .unknown:
+            String(localized: "common.label.unknown", comment: "Generic unknown value label")
+        }
     }
 
     public var body: some View {
@@ -72,7 +96,7 @@ public struct InterfacesView: View {
                     linkDetails(wifi)
                 }
 
-                let others = interfaces.filter { $0.ssid == nil && $0.ipv4Addresses.first != nil }
+                let others = interfaces.filter { !$0.isWiFiInterface && $0.ipv4Addresses.first != nil }
                 if !others.isEmpty {
                     otherInterfaces(others)
                 }
@@ -95,7 +119,7 @@ public struct InterfacesView: View {
                     .foregroundColor(.accentColor)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(wifi.displaySSID)
+                    Text(verifiedLinkState == .associated ? wifi.displaySSID : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
                         .font(.title3)
                         .fontWeight(.semibold)
                         // Same guardrail as OverviewView.connectionCard: a long SSID
@@ -103,10 +127,10 @@ public struct InterfacesView: View {
                         // detail column at the minimum window size.
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .help(wifi.displaySSID)
+                        .help(verifiedLinkState == .associated ? wifi.displaySSID : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
                     HStack(spacing: 6) {
-                        Circle().fill(.green).frame(width: 6, height: 6).accessibilityHidden(true)
-                        Text(String(localized: "common.label.connected", comment: "Connected state indicator"))
+                        Circle().fill(verifiedLinkState == .associated ? Color.green : Color.secondary).frame(width: 6, height: 6).accessibilityHidden(true)
+                        Text(linkStateLabel)
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Text("· \(wifi.interfaceName)")
@@ -133,13 +157,12 @@ public struct InterfacesView: View {
         .padding(16)
         .frame(maxWidth: .infinity)
         .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
-        .task(id: wifi.router) {
-            guard let router = wifi.router else { return }
+        .task(id: "\(wifi.router ?? "")-\(verifiedLinkState.rawValue)") {
+            gatewayLatency = nil
+            guard verifiedLinkState == .associated, let router = wifi.router else { return }
             let pinger = GatewayPinger()
             while !Task.isCancelled {
-                if let lat = await pinger.ping(host: router) {
-                    gatewayLatency = lat
-                }
+                gatewayLatency = await pinger.ping(host: router)
                 try? await Task.sleep(for: .seconds(2))
             }
         }

@@ -51,6 +51,9 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     /// True while the app is backgrounded/asleep or Wi-Fi is off; the view's
     /// visual loop idles on this flag so it stops waking at full cadence.
     private(set) var isSuspended = false
+    /// A failed or paused scan invalidates the live RSSI display until a new
+    /// successful environment sample arrives. It is separate from target loss.
+    private(set) var isAwaitingFreshScan = true
     private var hasRegisteredConsumer = false
     private var target: TrackedAccessPoint?
     private var lastSeenAt: Date?
@@ -106,8 +109,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     func suspend() {
         guard isActive else { return }
         isSuspended = true
-        scheduler.cancel()
-        audioPlayer.stop()
+        invalidateLiveSignal()
     }
 
     /// App moved to the background or the system is about to sleep: stop
@@ -125,6 +127,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     public func handleAppActive() {
         guard isActive, isSuspended else { return }
         isSuspended = false
+        isAwaitingFreshScan = true
         signalProcessor.reset()
     }
 
@@ -133,6 +136,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         case .poweredOn:
             // Next scan sample re-establishes smoothing state.
             isSuspended = false
+            isAwaitingFreshScan = true
             signalProcessor.reset()
         case .poweredOff, .interfaceUnavailable:
             suspend()
@@ -166,6 +170,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         signalProcessor.reset()
         state = .idle
         isSuspended = false
+        isAwaitingFreshScan = true
         latestNetworks = []
         scanFailed = false
         audioErrorMessage = nil
@@ -181,6 +186,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         stopPulseAndAudio()
         signalProcessor.reset()
         isSuspended = false
+        isAwaitingFreshScan = true
         lostAt = nil
         audioErrorMessage = nil
         audioFailureReported = false
@@ -214,6 +220,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         signalProcessor.reset()
         state = .idle
         isSuspended = false
+        isAwaitingFreshScan = true
     }
 
     // MARK: - Sound
@@ -313,7 +320,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     }
 
     private var canPulse: Bool {
-        guard isActive, !isSuspended, soundEnabled, audioAvailable,
+        guard isActive, !isSuspended, !isAwaitingFreshScan, soundEnabled, audioAvailable,
               state.isTracking, signalProcessor.smoothedRSSI != nil else {
             return false
         }
@@ -353,8 +360,19 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     public func consume(_ observation: WiFiObservation) async throws {
         guard isActive else { return }
+        guard let environment = observation.environmentSnapshot,
+              environment.error == nil else {
+            scanFailed = observation.environmentSnapshot?.error != nil
+            invalidateLiveSignal()
+            return
+        }
+
         updateNetworks(from: observation)
-        updateScanFailure(from: observation)
+        scanFailed = false
+        if isAwaitingFreshScan {
+            signalProcessor.reset()
+            isAwaitingFreshScan = false
+        }
         guard let target else { return }
 
         if isSuspended {
@@ -366,7 +384,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         }
 
         let timestamp = observation.timestamp
-        let networks = observation.environmentSnapshot?.networks ?? []
+        let networks = environment.networks
         let matched = networks.first {
             TrackedAccessPoint.normalizedBSSID($0.bssid) == target.bssid
         }
@@ -417,9 +435,24 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     }
 
     public func consumeLifecycle(_ event: WiFiObservationLifecycleEvent) async throws {
-        if case .started(_, let expectedInterval) = event {
+        switch event {
+        case .started(_, let expectedInterval):
             let seconds = Double(expectedInterval.components.seconds)
             lossTimeout = .seconds(max(8, 2.5 * seconds))
+            invalidateLiveSignal()
+        case .stopped:
+            scanFailed = false
+            invalidateLiveSignal()
+        }
+    }
+
+    private func invalidateLiveSignal() {
+        isAwaitingFreshScan = true
+        latestNetworks = []
+        signalProcessor.reset()
+        stopPulseAndAudio()
+        if let target, !isSuspended {
+            state = .tracking(APRadarSnapshot(target: target))
         }
     }
 
@@ -441,7 +474,9 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     // MARK: - Selection data
 
     private func updateNetworks(from observation: WiFiObservation) {
-        let networks = observation.environmentSnapshot?.networks ?? []
+        guard let environment = observation.environmentSnapshot,
+              environment.error == nil else { return }
+        let networks = environment.networks
         var deduplicated: [String: WiFiNetworkObservation] = [:]
         for network in networks {
             let key = TrackedAccessPoint.normalizedBSSID(network.bssid)
@@ -454,14 +489,6 @@ public final class APRadarViewModel: WiFiObservationConsuming {
             }
         }
         latestNetworks = Array(deduplicated.values)
-    }
-
-    private func updateScanFailure(from observation: WiFiObservation) {
-        let failed = observation.errors.contains { error in
-            if case .environmentScanFailed = error { return true }
-            return false
-        }
-        scanFailed = failed
     }
 
     /// AP options for the selection sheet, sorted by RSSI (strongest first),

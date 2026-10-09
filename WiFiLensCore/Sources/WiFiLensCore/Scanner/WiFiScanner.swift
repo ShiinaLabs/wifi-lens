@@ -202,7 +202,7 @@ actor WiFiScanner: WiFiScanStreaming {
                 if attempt < 3 {
                     let backoff = Duration.seconds(1 << (attempt - 1))
                     Self.logger.warning("scan attempt \(attempt) failed, retrying in \(backoff): \(msg)")
-                    do { try await Task.sleep(for: backoff) }
+                    do { try await clock.sleep(for: backoff) }
                     catch { return .failure(.cancelled) }
                 } else {
                     return .failure(.scan(msg))

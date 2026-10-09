@@ -321,7 +321,7 @@ public struct APRadarView: View {
                         isGeiger: viewModel.soundPreset == .geiger,
                         size: side,
                         coreDiameter: coreDiameter,
-                        isSuspended: viewModel.isSuspended || isLost || snapshot.smoothedRSSI == nil
+                        isSuspended: viewModel.isSuspended || viewModel.isAwaitingFreshScan || isLost || snapshot.smoothedRSSI == nil
                     )
                     instrumentReadout(snapshot, isLost: isLost, diameter: coreDiameter)
                 }
