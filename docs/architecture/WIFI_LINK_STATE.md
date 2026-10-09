@@ -25,13 +25,23 @@ The raw `powerOn()` value is retained separately; a raw false is not a confirmed
 radio-off fault.
 
 The interpreter can identify a disconnect candidate when explicit or ambiguous
-no-mode, reported-on radio, and inactive system link evidence agree.
-Confirmation also requires two distinct sampling cycles with strictly
-increasing capture times, the same interface and run session, independent
-reads, no intervening positive association, and at least one supporting
-negative from CoreWLAN service activity or independent `getifaddrs` running
-flags. `Link.Detaching` is recorded as additional context, not used as the sole
-cross-check. No fixed polling interval is a domain rule.
+no-mode, reported-on radio, and inactive system link evidence agree. A real
+access-point-loss experiment observed this combination while CoreWLAN service
+activity, `IFF_UP`, and `IFF_RUNNING` remained true. Those fields are retained
+as auxiliary evidence; they are not required to be false and do not define link
+association. `Link.Detaching` is also auxiliary context. Mode `none` remains
+ambiguous because its API result alone does not prove that the read succeeded.
+
+The center schedules an independent, one-shot review capture after a new
+candidate. The interval is injectable and bounded from 100 ms to 10 s; the
+current default is a provisional 1 s diagnostic interval, not a domain rule.
+Notifications and periodic compensation sampling coalesce with this review.
+Each capture has a distinct cycle ID and capture interval. A candidate remains
+`unknown` by default: production disconnect confirmation is disabled because
+the evidence has not been validated in the signed, sandboxed app. Repeated
+candidate samples cannot generate disconnect events. Tests can explicitly
+enable confirmation with synthetic evidence, but this does not enable it in
+the application.
 
 **Disconnect confirmation is disabled by default.** The specific negative
 evidence combination has not yet been validated in the signed, sandboxed app.
@@ -66,7 +76,11 @@ being joined into a synthetic transition.
 
 ## Listener ownership and lifecycle
 
-The center serializes collection and starts one compensation sampler. Its
+The center serializes collection and starts one compensation sampler. Every
+capture is bound to its run session and lifecycle generation. Results that
+return after stop, restart, sleep, or an interface change are discarded and
+logged; they cannot update the new session. A failed capture invalidates the
+current evidence but does not mean the radio or link is disconnected. Its
 trigger registers `SCDynamicStore` notifications for the current interface's
 Link key and service IPv4 changes, plus CoreWLAN power events when the shared
 delegate is available. Notifications only request a fresh sample. Registration
@@ -86,22 +100,47 @@ The real signed/sandboxed application has not yet been exercised on a device.
 The independent `tools/wifi-link-lab/` collector does not establish app
 capability and must not be used as a substitute.
 
-For a local Debug run, set `WIFILENS_LINK_DIAGNOSTICS=1` in the app's launch
-environment. The app writes `observations.jsonl`, `events.jsonl`, an empty
-`markers.jsonl`, and `environment.json` under its sandboxed
-`Library/Application Support/WiFiLens/Diagnostics/` directory. The logger is
-compiled only in Debug and does not write SSID/BSSID values. It requires no
-network access and adds no product UI. For example, launch the built app with:
+The normal public Debug app starts the shared center at process startup, even
+when no window is open. Unit-test hosts, UI-test mode, and controlled demo
+sessions do not start real system monitoring. The app termination coordinator
+stops the scanner subscription and center.
+
+To enable diagnostics in Xcode, open **Product > Scheme > Edit Scheme > Run >
+Arguments > Environment Variables**, add `WIFILENS_LINK_DIAGNOSTICS` with value
+`1`, then run the normal **WiFi Lens** scheme. The `environment.json` file has
+`diagnosticsEnabled: true`; `events.jsonl` records `centerStarted` and the
+SystemConfiguration/CoreWLAN registration outcomes. `observations.jsonl`
+records capture start/end times, monotonic bounds, raw mode and interpretation,
+candidate/review decisions, and failed or stale captures. The logger is
+compiled only in Debug, writes asynchronously, caps each JSONL at 4 MiB, and
+never writes SSID/BSSID values. It needs no network access and adds no product
+UI.
+
+The files are under the app's sandboxed
+`~/Library/Containers/<bundle-id>/Data/Library/Application Support/WiFiLens/Diagnostics/`
+directory. If the bundle ID is not known, locate it with:
 
 ```sh
-WIFILENS_LINK_DIAGNOSTICS=1 open "/path/to/WiFi Lens.app"
+find ~/Library/Containers -path '*/Library/Application Support/WiFiLens/Diagnostics' -type d -print
 ```
 
-After the app is running, manually turn Wi-Fi off and on, then keep Wi-Fi on
-while making a test access point unavailable and restoring it (for example by
-turning off a test router or phone hotspot). Allow several samples after each
-operation. Copy the app's Diagnostics directory locally for review. The
-existing offline analyzer can read the same JSONL filenames:
+After launch, append scenario markers immediately before and after each manual
+operation. This copy-paste command uses only Python's standard library and
+writes the schema understood by the existing analyzer:
+
+```sh
+LOGDIR="$HOME/Library/Containers/<bundle-id>/Data/Library/Application Support/WiFiLens/Diagnostics"
+python3 -c 'import datetime,json,sys,time; p,scenario,kind=sys.argv[1:]; row={"schemaVersion":1,"time":datetime.datetime.now(datetime.timezone.utc).isoformat(),"monotonicNanoseconds":time.monotonic_ns(),"scenarioName":scenario,"markerType":kind}; open(p,"a",encoding="utf-8").write(json.dumps(row)+"\n")' "$LOGDIR/markers.jsonl" "AP lost while Wi-Fi on" scenario_started
+```
+
+Use `scenario_completed` for the matching closing marker. Replace the scenario
+with `Wi-Fi radio off` for the radio toggle, or `AP lost while Wi-Fi on` for
+the access-point test. For each test, run the start marker, perform the action,
+then run the completion marker. Manually toggle Wi-Fi off and on; with Wi-Fi
+on, make a test access point unavailable and restore it (for example, turn off
+a test router or phone hotspot). Wait for several samples after each action.
+The log records SystemConfiguration and CoreWLAN registration success or
+failure directly, so both outcomes can be checked.
 
 ```sh
 python3 tools/wifi-link-lab/analyze.py --input-dir "/path/to/Diagnostics"

@@ -102,7 +102,7 @@ public final class ScannerViewModel {
     private(set) var cachedBandSummary: String = ""
     private(set) var cachedCombinedTableRows: [NetworkTableRow] = []
     let wifiPowerMonitor = WiFiPowerMonitor()
-    public internal(set) var wifiPowerState: WiFiPowerState = .poweredOn
+    public internal(set) var wifiPowerState: WiFiPowerState = .unknown
 
     var band24 = BandChartViewModel(band: .band24GHz)
     var band5 = BandChartViewModel(band: .band5GHz)

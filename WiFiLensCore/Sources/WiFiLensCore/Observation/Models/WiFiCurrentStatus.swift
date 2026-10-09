@@ -47,6 +47,8 @@ public struct WiFiLinkRawEvidence: Equatable, Sendable {
     public let capturedAt: Date
     public let interfaceName: String
     public let mode: WiFiModeEvidence
+    /// CoreWLAN's raw mode value, preserved even when its interpretation is ambiguous.
+    public let coreWLANModeRawValue: Int?
     public let radio: WiFiRadioEvidence
     public let linkActive: Bool?
     public let ssid: String?
@@ -74,6 +76,7 @@ public struct WiFiLinkRawEvidence: Equatable, Sendable {
         capturedAt: Date,
         interfaceName: String,
         mode: WiFiModeEvidence,
+        coreWLANModeRawValue: Int? = nil,
         radio: WiFiRadioEvidence,
         linkActive: Bool? = nil,
         ssid: String? = nil,
@@ -98,6 +101,7 @@ public struct WiFiLinkRawEvidence: Equatable, Sendable {
         self.capturedAt = capturedAt
         self.interfaceName = interfaceName
         self.mode = mode
+        self.coreWLANModeRawValue = coreWLANModeRawValue
         self.radio = radio
         self.linkActive = linkActive
         self.ssid = ssid
@@ -178,6 +182,21 @@ public enum WiFiLinkInterpreter {
               evidence.capturedAt <= evidence.captureEndedAt else {
             return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
         }
+        if let rawMode = evidence.coreWLANModeRawValue {
+            switch evidence.mode {
+            case .station where rawMode != 1,
+                 .none where rawMode != 0,
+                 .noneOrReadFailure where rawMode != 0:
+                return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
+            case .other(let interpretedRawValue) where interpretedRawValue != rawMode:
+                return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
+            default:
+                break
+            }
+        }
+        if evidence.radio == .reportedOn, evidence.radioPowerOnRaw == false {
+            return WiFiLinkAssessment(state: .unknown, reason: .radioUnavailable)
+        }
         guard evidence.mode == .station else {
             if case .other = evidence.mode {
                 return WiFiLinkAssessment(state: .unknown, reason: .unsupportedMode)
@@ -198,10 +217,6 @@ public enum WiFiLinkInterpreter {
         }
         switch evidence.linkActive {
         case true:
-            if evidence.linkDetaching == true || evidence.serviceActive == false
-                || evidence.interfaceFlagsUp == false || evidence.interfaceFlagsRunning == false {
-                return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
-            }
             guard !evidence.interfaceName.isEmpty else {
                 return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
             }

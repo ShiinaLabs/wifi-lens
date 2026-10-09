@@ -1137,7 +1137,17 @@ struct WiFiLensApp: App {
             && !EditionAppShell.isControlledDemoSession
             && !UITestMode.isActive
         _bleViewModel = State(initialValue: bleOn ? BLEViewModel() : nil)
+        terminationCoordinator.configure(
+            stopRuntime: { await scannerViewModel.stopForTermination() },
+            terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
+        )
         AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
+        if EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
+           !EditionAppShell.isControlledDemoSession,
+           !UITestMode.isActive,
+           !ProcessInfo.processInfo.isRunningUnderTestHost {
+            Task { await WiFiLinkStateCenter.shared.start() }
+        }
     }
 
     @State private var crashLogText: String = ""
@@ -1320,12 +1330,6 @@ struct WiFiLensApp: App {
             )
         }
         .preferredColorScheme(colorScheme)
-        .task {
-            terminationCoordinator.configure(
-                stopRuntime: { await viewModel.stopForTermination() },
-                terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
-            )
-        }
     }
 
     private var colorScheme: ColorScheme? {

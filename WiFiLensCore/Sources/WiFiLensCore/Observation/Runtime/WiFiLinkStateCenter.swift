@@ -115,15 +115,28 @@ public struct WiFiLinkStateEvent: Equatable, Sendable, Identifiable {
     }
 }
 
-public enum WiFiLinkChangeReason: String, Sendable {
+public enum WiFiLinkChangeReason: String, Hashable, Sendable {
+    case startup
     case systemConfiguration
     case coreWLAN
     case compensationSample
+    case candidateReview
     case appBecameActive
     case interfaceChanged
     case willSleep
     case didWake
     case compensationSampleFailed
+}
+
+public protocol WiFiLinkReviewClock: Sendable {
+    func sleep(for duration: Duration) async throws
+}
+
+public struct ContinuousWiFiLinkReviewClock: WiFiLinkReviewClock {
+    public init() {}
+    public func sleep(for duration: Duration) async throws {
+        try await Task.sleep(for: duration)
+    }
 }
 
 public struct WiFiLinkListenerStatus: Equatable, Sendable {
@@ -141,9 +154,40 @@ public struct WiFiLinkListenerStatus: Equatable, Sendable {
 }
 
 #if DEBUG
+enum WiFiLinkDiagnosticEvidenceFields {
+    static func make(from evidence: WiFiLinkRawEvidence) -> [String: Any] {
+        let modeValue: String = switch evidence.mode {
+        case .station: "station"
+        case .none: "none"
+        case .noneOrReadFailure: "noneOrReadFailure"
+        case .other(let rawValue): "other(\(rawValue))"
+        case .unavailable: "unavailable"
+        }
+        return [
+            "mode": modeValue,
+            "modeRaw": evidence.coreWLANModeRawValue as Any? ?? NSNull(),
+            "modeInterpretation": evidence.mode == .noneOrReadFailure ? "noneOrReadFailure" : modeValue,
+            "modeReadAmbiguous": evidence.mode == .noneOrReadFailure,
+            "powerOnRaw": evidence.radioPowerOnRaw as Any? ?? NSNull(),
+            "serviceActiveRaw": evidence.serviceActive as Any? ?? NSNull(),
+            "scLinkActive": evidence.linkActive as Any? ?? NSNull(),
+            "scLinkDetaching": evidence.linkDetaching as Any? ?? NSNull(),
+            "interfaceUp": evidence.interfaceFlagsUp as Any? ?? NSNull(),
+            "interfaceRunning": evidence.interfaceFlagsRunning as Any? ?? NSNull(),
+            "scLinkKeyPresent": evidence.linkSource != nil,
+            "cycleID": evidence.snapshotCycleID.uuidString,
+            "interfaceIndex": evidence.interfaceIndex.map { String($0) } ?? "unknown",
+            "readFailures": evidence.readFailures.keys.map(\.rawValue).sorted().joined(separator: ",")
+        ]
+    }
+}
+
 private enum WiFiLinkDiagnosticsLogger {
     private static let queue = DispatchQueue(label: "WiFiLens.WiFiLinkDiagnostics")
     private static let enabled = ProcessInfo.processInfo.environment["WIFILENS_LINK_DIAGNOSTICS"] == "1"
+    private static let maximumFileSize = 4 * 1024 * 1024
+
+    static var isEnabled: Bool { enabled }
 
     static var logURL: URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
@@ -162,18 +206,28 @@ private enum WiFiLinkDiagnosticsLogger {
                 try FileManager.default.createDirectory(at: rootURL, withIntermediateDirectories: true)
                 let environmentURL = rootURL.appendingPathComponent("environment.json")
                 if !FileManager.default.fileExists(atPath: environmentURL.path) {
-                    let environment: [String: Any] = ["schemaVersion": 1, "source": "WiFi Lens DEBUG app"]
+                    let environment: [String: Any] = [
+                        "schemaVersion": 1,
+                        "source": "WiFi Lens DEBUG app",
+                        "diagnosticsEnabled": true
+                    ]
                     try JSONSerialization.data(withJSONObject: environment, options: [.sortedKeys, .prettyPrinted]).write(to: environmentURL, options: .atomic)
                     try Data().write(to: rootURL.appendingPathComponent("markers.jsonl"), options: .atomic)
                 }
                 var line = data
                 line.append(0x0A)
                 if FileManager.default.fileExists(atPath: fileURL.path) {
+                    let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+                    let currentSize = (attributes[.size] as? NSNumber)?.intValue ?? 0
+                    guard currentSize + line.count <= maximumFileSize else {
+                        return
+                    }
                     let handle = try FileHandle(forWritingTo: fileURL)
                     try handle.seekToEnd()
                     try handle.write(contentsOf: line)
                     try handle.close()
                 } else {
+                    guard line.count <= maximumFileSize else { return }
                     try line.write(to: fileURL, options: .atomic)
                 }
             } catch {
@@ -334,18 +388,25 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
 
 public actor WiFiLinkStateCenter {
     public static let shared = WiFiLinkStateCenter()
+    public static let minimumReviewInterval: Duration = .milliseconds(100)
+    public static let maximumReviewInterval: Duration = .seconds(10)
 
     private let collector: any WiFiLinkEvidenceCollecting
     private let allowsUnvalidatedDisconnectConfirmation: Bool
     private let pollingInterval: Duration
+    private let reviewInterval: Duration
+    private let reviewClock: any WiFiLinkReviewClock
     private var trigger: (any WiFiLinkChangeTriggering)?
     private var runSessionID = UUID()
     private var sequence: UInt64 = 0
     private var linkEpoch: UInt64 = 0
+    private var lifecycleGeneration: UInt64 = 0
     private var isRunning = false
-    private var isSampling = false
-    private var sampleRequestedWhileBusy = false
+    private var activeSampleID: UUID?
+    private var pendingSampleReasons: Set<WiFiLinkChangeReason> = []
     private var pollingTask: Task<Void, Never>?
+    private var candidateReviewTask: Task<Void, Never>?
+    private var candidateReviewID: UUID?
     private var currentSnapshot: WiFiLinkStateSnapshot
     private var previousEvidence: WiFiLinkRawEvidence?
     private var confirmedState: VerifiedWiFiLinkState = .unknown
@@ -360,11 +421,15 @@ public actor WiFiLinkStateCenter {
         collector: any WiFiLinkEvidenceCollecting = SystemWiFiLinkEvidenceCollector(),
         trigger: (any WiFiLinkChangeTriggering)? = nil,
         pollingInterval: Duration = .seconds(5),
+        reviewInterval: Duration = .seconds(1),
+        reviewClock: any WiFiLinkReviewClock = ContinuousWiFiLinkReviewClock(),
         allowsUnvalidatedDisconnectConfirmation: Bool = false
     ) {
         self.collector = collector
         self.trigger = trigger
         self.pollingInterval = pollingInterval
+        self.reviewInterval = min(max(reviewInterval, Self.minimumReviewInterval), Self.maximumReviewInterval)
+        self.reviewClock = reviewClock
         self.allowsUnvalidatedDisconnectConfirmation = allowsUnvalidatedDisconnectConfirmation
         let initialSessionID = UUID()
         runSessionID = initialSessionID
@@ -395,7 +460,10 @@ public actor WiFiLinkStateCenter {
         }
     }
 
-    public func refresh() async { await requestSample(reason: .compensationSample) }
+    public func refresh() async {
+        guard isRunning else { return }
+        await requestSample(reason: .compensationSample, sessionID: runSessionID)
+    }
 
     public func currentStates() -> AsyncStream<WiFiLinkStateSnapshot> {
         let id = UUID()
@@ -425,10 +493,21 @@ public actor WiFiLinkStateCenter {
                 sources: [], identity: nil, radio: .unavailable
             )
             publishCurrent()
+            #if DEBUG
+            WiFiLinkDiagnosticsLogger.record("event", [
+                "eventType": "centerStartSkipped",
+                "reason": "unitTestHost",
+                "time": Self.utcTimestamp(Date()),
+                "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+            ])
+            #endif
             return
         }
         isRunning = true
         runSessionID = UUID()
+        lifecycleGeneration &+= 1
+        let sessionID = runSessionID
+        let generation = lifecycleGeneration
         sequence = 0
         linkEpoch = 0
         previousEvidence = nil
@@ -436,31 +515,52 @@ public actor WiFiLinkStateCenter {
         disconnectTransitionEmitted = false
         lastConfirmedStateAt = nil
         disconnectCandidates.removeAll()
+        pendingSampleReasons.removeAll()
+        activeSampleID = nil
         currentContinuityValid = true
         currentSnapshot = makeSnapshot(
             state: .unknown, evidence: nil, reason: .samplingContinuityLost,
             sources: [], identity: nil, radio: .unavailable
         )
         publishCurrent()
-        await requestSample(reason: .compensationSample)
-        await startTrigger(interfaceName: currentSnapshot.interfaceName)
+        #if DEBUG
+        WiFiLinkDiagnosticsLogger.record("event", [
+            "eventType": "centerStarted",
+            "runSessionID": sessionID.uuidString,
+            "lifecycleGeneration": generation,
+            "diagnosticsEnabled": WiFiLinkDiagnosticsLogger.isEnabled,
+            "time": Self.utcTimestamp(Date()),
+            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+        ])
+        #endif
+        await requestSample(reason: .startup, sessionID: sessionID)
+        guard isCurrent(sessionID: sessionID, generation: generation) else { return }
+        await startTrigger(interfaceName: currentSnapshot.interfaceName, sessionID: sessionID)
+        guard isCurrent(sessionID: sessionID, generation: generation) else {
+            if !isRunning { await stopTrigger() }
+            return
+        }
         pollingTask = Task { [weak self, pollingInterval] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: pollingInterval)
                 guard !Task.isCancelled else { break }
-                await self?.requestSample(reason: .compensationSample)
+                await self?.compensationTick(sessionID: sessionID)
             }
         }
     }
 
     public func stop() async {
         guard isRunning else { return }
-        isRunning = false
-        pollingTask?.cancel()
-        pollingTask = nil
-        await stopTrigger()
+        let stoppedSessionID = runSessionID
         let previousEvidence = previousEvidence
         let previousConfirmationTime = lastConfirmedStateAt
+        isRunning = false
+        lifecycleGeneration &+= 1
+        pollingTask?.cancel()
+        pollingTask = nil
+        cancelCandidateReview(reason: "monitoringStopped")
+        activeSampleID = nil
+        pendingSampleReasons.removeAll()
         linkEpoch &+= 1
         currentContinuityValid = false
         confirmedState = .unknown
@@ -474,28 +574,83 @@ public actor WiFiLinkStateCenter {
         publishCurrent()
         publishEvent(.continuityReset, previous: previousEvidence, current: nil, firstAt: nil, previousAt: previousConfirmationTime)
         self.previousEvidence = nil
+        #if DEBUG
+        WiFiLinkDiagnosticsLogger.record("event", [
+            "eventType": "centerStopped",
+            "runSessionID": stoppedSessionID.uuidString,
+            "lifecycleGeneration": lifecycleGeneration,
+            "time": Self.utcTimestamp(Date()),
+            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+        ])
+        #endif
+        await stopTrigger()
     }
 
     public func applicationBecameActive() async {
         guard isRunning else { return }
         await resetContinuity(reason: .appBecameActive)
-        await requestSample(reason: .appBecameActive)
+        await requestSample(reason: .appBecameActive, sessionID: runSessionID)
     }
 
-    private func requestSample(reason: WiFiLinkChangeReason) async {
-        guard isRunning else { return }
-        guard !isSampling else { sampleRequestedWhileBusy = true; return }
-        isSampling = true
-        repeat {
-            sampleRequestedWhileBusy = false
+    private func requestSample(reason: WiFiLinkChangeReason, sessionID expectedSessionID: UUID) async {
+        guard isRunning, runSessionID == expectedSessionID else { return }
+        if activeSampleID != nil {
+            pendingSampleReasons.insert(reason)
+            return
+        }
+
+        var nextReason = reason
+        while isRunning, runSessionID == expectedSessionID {
+            let expectedGeneration = lifecycleGeneration
+            let sampleID = UUID()
+            activeSampleID = sampleID
+            let sampleStartedAt = Date()
+            let sampleStartMonotonicNanoseconds = DispatchTime.now().uptimeNanoseconds
             let evidence = await collector.capture()
-            process(evidence, reason: reason)
-        } while sampleRequestedWhileBusy && isRunning
-        isSampling = false
+            let sampleEndedAt = Date()
+            let sampleEndMonotonicNanoseconds = DispatchTime.now().uptimeNanoseconds
+            guard isCurrent(sessionID: expectedSessionID, generation: expectedGeneration),
+                  activeSampleID == sampleID else {
+                logDiscardedSample(
+                    sampleID: sampleID, sessionID: expectedSessionID,
+                    startedAt: sampleStartedAt, endedAt: sampleEndedAt,
+                    startMonotonic: sampleStartMonotonicNanoseconds,
+                    endMonotonic: sampleEndMonotonicNanoseconds,
+                    reason: "sessionOrLifecycleChanged"
+                )
+                return
+            }
+            activeSampleID = nil
+            process(
+                evidence,
+                reason: nextReason,
+                sampleID: sampleID,
+                sampleStartedAt: sampleStartedAt,
+                sampleEndedAt: sampleEndedAt,
+                sampleStartMonotonicNanoseconds: sampleStartMonotonicNanoseconds,
+                sampleEndMonotonicNanoseconds: sampleEndMonotonicNanoseconds,
+                sessionID: expectedSessionID,
+                generation: expectedGeneration
+            )
+            guard isRunning, runSessionID == expectedSessionID else { return }
+            guard let pendingReason = takePendingSampleReason() else { return }
+            nextReason = pendingReason
+        }
     }
 
-    private func process(_ evidence: WiFiLinkRawEvidence?, reason: WiFiLinkChangeReason) {
+    private func process(
+        _ evidence: WiFiLinkRawEvidence?,
+        reason: WiFiLinkChangeReason,
+        sampleID: UUID,
+        sampleStartedAt: Date,
+        sampleEndedAt: Date,
+        sampleStartMonotonicNanoseconds: UInt64,
+        sampleEndMonotonicNanoseconds: UInt64,
+        sessionID: UUID,
+        generation: UInt64
+    ) {
         guard let evidence else {
+            cancelCandidateReview(reason: "sampleFailed")
             if currentContinuityValid || confirmedState != .unknown {
                 resetContinuityWithoutAwaiting(reason: .compensationSampleFailed, previous: previousEvidence, current: nil)
             }
@@ -509,11 +664,20 @@ public actor WiFiLinkStateCenter {
                 sources: [], identity: nil, radio: .unavailable
             )
             publishCurrent()
+            logSampleFailure(
+                sampleID: sampleID, reason: reason, sessionID: sessionID,
+                generation: generation, startedAt: sampleStartedAt, endedAt: sampleEndedAt,
+                startMonotonic: sampleStartMonotonicNanoseconds,
+                endMonotonic: sampleEndMonotonicNanoseconds,
+                failureReason: "interfaceDiscoveryUnavailable",
+                resultingState: .unknown
+            )
             return
         }
 
         if let previousEvidence,
            previousEvidence.interfaceName != evidence.interfaceName || previousEvidence.interfaceIndex != evidence.interfaceIndex {
+            cancelCandidateReview(reason: "interfaceChanged")
             resetContinuityWithoutAwaiting(reason: .interfaceChanged, previous: previousEvidence, current: evidence)
         }
 
@@ -525,11 +689,16 @@ public actor WiFiLinkStateCenter {
         let previousConfirmationTime = lastConfirmedStateAt
         var state = assessment.state
         var assessmentReason = assessment.reason
+        if evidence.readFailures[.mode] == .interfaceNotFound,
+           evidence.readFailures[.radio] == .interfaceNotFound {
+            assessmentReason = .interfaceUnavailable
+        }
         var eventType: WiFiLinkStateEventType?
         var firstCurrentAt: Date?
         var continuityReset = false
 
         if state == .associated {
+            cancelCandidateReview(reason: "associationRestored")
             disconnectCandidates.removeAll()
             currentContinuityValid = true
             if confirmedState == .disconnected {
@@ -552,9 +721,18 @@ public actor WiFiLinkStateCenter {
                 disconnectCandidates.removeAll()
                 currentContinuityValid = true
             }
-            if allowsUnvalidatedDisconnectConfirmation,
-               appendCandidate(evidence),
-               disconnectCandidates.count >= 2 {
+            let wasFirstCandidate = disconnectCandidates.isEmpty
+            let candidateWasAccepted = appendCandidate(evidence)
+            if candidateWasAccepted {
+                if wasFirstCandidate {
+                    logCandidateEvent("disconnectCandidateFirstSeen", evidence: evidence, sessionID: sessionID, generation: generation)
+                }
+                logCandidateEvent("candidateSampleObserved", evidence: evidence, sessionID: sessionID, generation: generation)
+            } else {
+                cancelCandidateReview(reason: "candidateSequenceInvalid")
+            }
+            if allowsUnvalidatedDisconnectConfirmation, disconnectCandidates.count >= 2 {
+                cancelCandidateReview(reason: "disconnectConfirmed")
                 state = .disconnected
                 assessmentReason = .disconnectCandidate
                 if confirmedState == .associated, !disconnectTransitionEmitted {
@@ -565,11 +743,19 @@ public actor WiFiLinkStateCenter {
                 }
                 if confirmedState == .unknown { lastConfirmedStateAt = evidence.capturedAt }
                 confirmedState = .disconnected
+                logCandidateEvent("candidateFinalDecisionDisconnected", evidence: evidence, sessionID: sessionID, generation: generation)
             } else {
                 state = .unknown
-                assessmentReason = allowsUnvalidatedDisconnectConfirmation ? .disconnectCandidate : .disconnectEvidenceNotValidated
+                assessmentReason = disconnectCandidates.isEmpty
+                    ? .conflictingLinkEvidence
+                    : (allowsUnvalidatedDisconnectConfirmation ? .disconnectCandidate : .disconnectEvidenceNotValidated)
+                if !disconnectCandidates.isEmpty {
+                    scheduleCandidateReview(sessionID: sessionID)
+                    logCandidateEvent("candidateFinalDecisionUnknown", evidence: evidence, sessionID: sessionID, generation: generation)
+                }
             }
         } else {
+            cancelCandidateReview(reason: "candidateInvalidated")
             disconnectCandidates.removeAll()
             if state == .unknown {
                 if currentContinuityValid || confirmedState != .unknown {
@@ -591,45 +777,43 @@ public actor WiFiLinkStateCenter {
         )
         publishCurrent()
         #if DEBUG
-        let modeValue: String? = switch evidence.mode {
-        case .station: "station"
-        case .none: "none"
-        case .noneOrReadFailure, .other, .unavailable: nil
-        }
-        let powerValue = evidence.radioPowerOnRaw
-        let sampleStart = DispatchTime.now().uptimeNanoseconds
         let triggerValue: String = switch reason {
+        case .startup: "startup"
         case .compensationSample: "timer"
+        case .candidateReview: "notification"
         case .systemConfiguration, .coreWLAN, .interfaceChanged: "notification"
         case .appBecameActive, .didWake, .willSleep: "startup"
         case .compensationSampleFailed: "notification"
         }
-        WiFiLinkDiagnosticsLogger.record("sample", [
+        var fields = WiFiLinkDiagnosticEvidenceFields.make(from: evidence)
+        fields.merge([
             "schemaVersion": 1,
-            "time": ISO8601DateFormatter().string(from: evidence.capturedAt),
-            "sampleStartedAt": ISO8601DateFormatter().string(from: evidence.captureStartedAt),
-            "sampleEndedAt": ISO8601DateFormatter().string(from: evidence.captureEndedAt),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
-            "sampleStartMonotonicNanoseconds": sampleStart,
+            "time": Self.utcTimestamp(sampleEndedAt),
+            "sampleStartedAt": Self.utcTimestamp(sampleStartedAt),
+            "sampleEndedAt": Self.utcTimestamp(sampleEndedAt),
+            "monotonicNanoseconds": sampleEndMonotonicNanoseconds,
+            "sampleStartMonotonicNanoseconds": sampleStartMonotonicNanoseconds,
             "trigger": triggerValue,
-            "mode": modeValue as Any? ?? NSNull(),
-            "powerOnRaw": powerValue as Any? ?? NSNull(),
-            "serviceActiveRaw": evidence.serviceActive as Any? ?? NSNull(),
-            "scLinkActive": evidence.linkActive as Any? ?? NSNull(),
-            "scLinkDetaching": evidence.linkDetaching as Any? ?? NSNull(),
-            "interfaceUp": evidence.interfaceFlagsUp as Any? ?? NSNull(),
-            "interfaceRunning": evidence.interfaceFlagsRunning as Any? ?? NSNull(),
-            "scLinkKeyPresent": evidence.linkSource != nil,
-            "cycleID": evidence.snapshotCycleID.uuidString,
-            "interfaceIndex": evidence.interfaceIndex.map { String($0) } ?? "unknown",
-            "readFailures": evidence.readFailures.keys.map(\.rawValue).sorted().joined(separator: ","),
+            "sampleReason": reason.rawValue,
+            "sampleID": sampleID.uuidString,
+            "runSessionID": sessionID.uuidString,
+            "lifecycleGeneration": generation,
+            "interfaceName": evidence.interfaceName,
             "assessment": assessmentReason.rawValue,
             "state": state.rawValue,
             "reason": assessmentReason.rawValue,
-            "captureStartedAt": ISO8601DateFormatter().string(from: evidence.captureStartedAt),
-            "captureEndedAt": ISO8601DateFormatter().string(from: evidence.captureEndedAt)
-        ], fileName: "observations.jsonl")
+            "captureStartedAt": Self.utcTimestamp(evidence.captureStartedAt),
+            "captureEndedAt": Self.utcTimestamp(evidence.captureEndedAt)
+        ]) { _, new in new }
+        WiFiLinkDiagnosticsLogger.record("sample", fields, fileName: "observations.jsonl")
         #endif
+        if reason == .candidateReview {
+            logCandidateEvent(
+                state == .disconnected ? "candidateReviewDisconnected" : "candidateReviewResult",
+                evidence: evidence, sessionID: sessionID, generation: generation,
+                extra: ["result": state.rawValue, "reason": assessmentReason.rawValue]
+            )
+        }
         if oldRadio != evidence.radio, oldRadio != .unavailable {
             publishEvent(.radioChanged, previous: previousEvidence, current: evidence, firstAt: evidence.capturedAt, previousAt: previousConfirmationTime)
         }
@@ -641,16 +825,17 @@ public actor WiFiLinkStateCenter {
             publishEvent(.continuityReset, previous: previousEvidence, current: evidence, firstAt: nil, previousAt: previousConfirmationTime)
         }
         previousEvidence = evidence
-        if let trigger {
-            Task { @MainActor in trigger.updateInterface(evidence.interfaceName) }
+        if trigger != nil {
+            Task { await updateTriggerInterface(evidence.interfaceName, sessionID: sessionID) }
         }
     }
 
     private func appendCandidate(_ evidence: WiFiLinkRawEvidence) -> Bool {
         guard evidence.mode == .none || evidence.mode == .noneOrReadFailure,
+              evidence.coreWLANModeRawValue == nil || evidence.coreWLANModeRawValue == 0,
               evidence.radio == .reportedOn,
+              evidence.radioPowerOnRaw != false,
               evidence.linkActive == false,
-              evidence.serviceActive == false || evidence.interfaceFlagsRunning == false,
               evidence.captureStartedAt <= evidence.capturedAt,
               evidence.capturedAt <= evidence.captureEndedAt else {
             disconnectCandidates.removeAll()
@@ -680,6 +865,10 @@ public actor WiFiLinkStateCenter {
         current: WiFiLinkRawEvidence?
     ) {
         let previousConfirmationTime = lastConfirmedStateAt
+        lifecycleGeneration &+= 1
+        activeSampleID = nil
+        pendingSampleReasons.remove(.candidateReview)
+        cancelCandidateReview(reason: reason.rawValue)
         linkEpoch &+= 1
         currentContinuityValid = true
         disconnectCandidates.removeAll()
@@ -693,6 +882,180 @@ public actor WiFiLinkStateCenter {
         )
         publishCurrent()
         publishEvent(.continuityReset, previous: previous, current: current, firstAt: nil, previousAt: previousConfirmationTime)
+    }
+
+    private func isCurrent(sessionID: UUID, generation: UInt64) -> Bool {
+        isRunning && runSessionID == sessionID && lifecycleGeneration == generation
+    }
+
+    private func compensationTick(sessionID: UUID) async {
+        guard isRunning, runSessionID == sessionID else { return }
+        await requestSample(reason: .compensationSample, sessionID: sessionID)
+    }
+
+    private func takePendingSampleReason() -> WiFiLinkChangeReason? {
+        let priority: [WiFiLinkChangeReason] = [
+            .candidateReview, .appBecameActive, .systemConfiguration, .coreWLAN,
+            .interfaceChanged, .didWake, .willSleep, .compensationSample, .startup
+        ]
+        guard let reason = priority.first(where: pendingSampleReasons.contains) else { return nil }
+        pendingSampleReasons.remove(reason)
+        return reason
+    }
+
+    private func scheduleCandidateReview(sessionID: UUID) {
+        guard isRunning, runSessionID == sessionID,
+              candidateReviewTask == nil, !pendingSampleReasons.contains(.candidateReview),
+              !disconnectCandidates.isEmpty else { return }
+        let reviewID = UUID()
+        let generation = lifecycleGeneration
+        candidateReviewID = reviewID
+        candidateReviewTask = Task { [weak self, reviewClock, reviewInterval] in
+            do {
+                try await reviewClock.sleep(for: reviewInterval)
+            } catch {
+                return
+            }
+            await self?.candidateReviewFired(
+                reviewID: reviewID, sessionID: sessionID, generation: generation
+            )
+        }
+        #if DEBUG
+        WiFiLinkDiagnosticsLogger.record("event", [
+            "eventType": "candidateReviewScheduled",
+            "reviewID": reviewID.uuidString,
+            "runSessionID": sessionID.uuidString,
+            "lifecycleGeneration": generation,
+            "reviewIntervalMilliseconds": reviewIntervalMilliseconds,
+            "time": Self.utcTimestamp(Date()),
+            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+        ])
+        #endif
+    }
+
+    private func candidateReviewFired(reviewID: UUID, sessionID: UUID, generation: UInt64) async {
+        guard candidateReviewID == reviewID,
+              isCurrent(sessionID: sessionID, generation: generation) else { return }
+        candidateReviewTask = nil
+        candidateReviewID = nil
+        #if DEBUG
+        WiFiLinkDiagnosticsLogger.record("event", [
+            "eventType": "candidateReviewStarted",
+            "reviewID": reviewID.uuidString,
+            "runSessionID": sessionID.uuidString,
+            "lifecycleGeneration": generation,
+            "time": Self.utcTimestamp(Date()),
+            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+        ])
+        #endif
+        await requestSample(reason: .candidateReview, sessionID: sessionID)
+    }
+
+    private func cancelCandidateReview(reason: String) {
+        pendingSampleReasons.remove(.candidateReview)
+        guard let reviewID = candidateReviewID else { return }
+        candidateReviewTask?.cancel()
+        candidateReviewTask = nil
+        candidateReviewID = nil
+        #if DEBUG
+        WiFiLinkDiagnosticsLogger.record("event", [
+            "eventType": "candidateReviewCancelled",
+            "reviewID": reviewID.uuidString,
+            "runSessionID": runSessionID.uuidString,
+            "lifecycleGeneration": lifecycleGeneration,
+            "reason": reason,
+            "time": Self.utcTimestamp(Date()),
+            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+        ])
+        #endif
+    }
+
+    private var reviewIntervalMilliseconds: Int64 {
+        let components = reviewInterval.components
+        return components.seconds * 1_000 + components.attoseconds / 1_000_000_000_000_000
+    }
+
+    private func logCandidateEvent(
+        _ eventType: String,
+        evidence: WiFiLinkRawEvidence,
+        sessionID: UUID,
+        generation: UInt64,
+        extra: [String: Any] = [:]
+    ) {
+        #if DEBUG
+        var fields: [String: Any] = [
+            "eventType": eventType,
+            "source": "WiFiLinkStateCenter",
+            "cycleID": evidence.snapshotCycleID.uuidString,
+            "interfaceIndex": evidence.interfaceIndex.map { String($0) } ?? "unknown",
+            "runSessionID": sessionID.uuidString,
+            "lifecycleGeneration": generation,
+            "sampleTime": Self.utcTimestamp(evidence.capturedAt),
+            "linkEpoch": linkEpoch,
+            "time": Self.utcTimestamp(Date()),
+            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+        ]
+        fields.merge(extra) { _, new in new }
+        WiFiLinkDiagnosticsLogger.record("event", fields)
+        #endif
+    }
+
+    private func logDiscardedSample(
+        sampleID: UUID, sessionID: UUID, startedAt: Date, endedAt: Date,
+        startMonotonic: UInt64, endMonotonic: UInt64, reason: String
+    ) {
+        #if DEBUG
+        WiFiLinkDiagnosticsLogger.record("sample", [
+            "schemaVersion": 1,
+            "kind": "sample",
+            "time": Self.utcTimestamp(endedAt),
+            "sampleStartedAt": Self.utcTimestamp(startedAt),
+            "sampleEndedAt": Self.utcTimestamp(endedAt),
+            "monotonicNanoseconds": endMonotonic,
+            "sampleStartMonotonicNanoseconds": startMonotonic,
+            "trigger": "notification",
+            "sampleReason": "discarded",
+            "sampleID": sampleID.uuidString,
+            "runSessionID": sessionID.uuidString,
+            "state": "unknown",
+            "reason": reason,
+            "resultingStateImpact": "discardedWithoutPublication"
+        ], fileName: "observations.jsonl")
+        #endif
+    }
+
+    private func logSampleFailure(
+        sampleID: UUID, reason: WiFiLinkChangeReason, sessionID: UUID, generation: UInt64,
+        startedAt: Date, endedAt: Date, startMonotonic: UInt64, endMonotonic: UInt64,
+        failureReason: String, resultingState: VerifiedWiFiLinkState
+    ) {
+        #if DEBUG
+        let triggerValue = reason == .startup || reason == .appBecameActive || reason == .didWake || reason == .willSleep
+            ? "startup"
+            : "notification"
+        WiFiLinkDiagnosticsLogger.record("sample", [
+            "schemaVersion": 1,
+            "kind": "sample",
+            "time": Self.utcTimestamp(endedAt),
+            "sampleStartedAt": Self.utcTimestamp(startedAt),
+            "sampleEndedAt": Self.utcTimestamp(endedAt),
+            "monotonicNanoseconds": endMonotonic,
+            "sampleStartMonotonicNanoseconds": startMonotonic,
+            "trigger": triggerValue,
+            "sampleReason": reason.rawValue,
+            "sampleID": sampleID.uuidString,
+            "runSessionID": sessionID.uuidString,
+            "lifecycleGeneration": generation,
+            "mode": "unavailable",
+            "modeRaw": NSNull(),
+            "modeInterpretation": "unavailable",
+            "modeReadAmbiguous": false,
+            "state": resultingState.rawValue,
+            "reason": failureReason,
+            "failureReason": failureReason,
+            "resultingStateImpact": "currentEvidenceInvalidated"
+        ], fileName: "observations.jsonl")
+        #endif
     }
 
     private func makeSnapshot(
@@ -741,7 +1104,7 @@ public actor WiFiLinkStateCenter {
         eventSubscribers.values.forEach { $0.yield(event) }
     }
 
-    private func startTrigger(interfaceName: String?) async {
+    private func startTrigger(interfaceName: String?, sessionID: UUID) async {
         let trigger: any WiFiLinkChangeTriggering
         if let existing = self.trigger {
             trigger = existing
@@ -751,7 +1114,7 @@ public actor WiFiLinkStateCenter {
         }
         await MainActor.run { [weak self] in
             trigger.start(interfaceName: interfaceName) { [weak self] reason in
-                Task { await self?.triggered(reason) }
+                Task { await self?.triggered(reason, sessionID: sessionID) }
             }
         }
     }
@@ -761,14 +1124,20 @@ public actor WiFiLinkStateCenter {
         await MainActor.run { trigger.stop() }
     }
 
-    private func triggered(_ reason: WiFiLinkChangeReason) async {
+    private func triggered(_ reason: WiFiLinkChangeReason, sessionID: UUID) async {
+        guard isRunning, runSessionID == sessionID else { return }
         switch reason {
         case .willSleep, .didWake, .interfaceChanged:
             await resetContinuity(reason: reason)
         default:
             break
         }
-        await requestSample(reason: reason)
+        await requestSample(reason: reason, sessionID: sessionID)
+    }
+
+    private func updateTriggerInterface(_ name: String, sessionID: UUID) async {
+        guard isRunning, runSessionID == sessionID, let trigger else { return }
+        await MainActor.run { trigger.updateInterface(name) }
     }
 
     private func removeCurrentSubscriber(_ id: UUID) { currentSubscribers.removeValue(forKey: id) }
@@ -792,5 +1161,9 @@ public actor WiFiLinkStateCenter {
     private static var isUnitTestHost: Bool {
         let environment = ProcessInfo.processInfo.environment
         return environment["XCTestConfigurationFilePath"] != nil || environment["XCTestBundlePath"] != nil
+    }
+
+    private static func utcTimestamp(_ date: Date) -> String {
+        ISO8601DateFormatter().string(from: date)
     }
 }

@@ -14,7 +14,11 @@ struct WiFiLinkEvidenceInterpreterTests {
 
     @Test("A single explicit negative sample is only a candidate")
     func disconnectCandidateRemainsUnknown() {
-        let sample = evidence(mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false)
+        let sample = evidence(
+            mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false,
+            serviceActive: true, modeRawValue: 0, radioPowerOnRaw: true,
+            interfaceFlagsUp: true, interfaceFlagsRunning: true
+        )
         let result = WiFiLinkInterpreter.evaluate(sample, expectedCycleID: sample.snapshotCycleID)
         #expect(result.state == .unknown)
         #expect(result.candidateState == .disconnected)
@@ -51,6 +55,30 @@ struct WiFiLinkEvidenceInterpreterTests {
         )
         #expect(WiFiLinkInterpreter.evaluate(sample, expectedCycleID: sample.snapshotCycleID).state == .unknown)
     }
+
+    #if DEBUG
+    @Test("Debug diagnostic evidence preserves raw none mode and omits network identity")
+    func diagnosticEvidenceFieldsPreserveModeWithoutIdentity() {
+        let sample = evidence(
+            mode: .noneOrReadFailure,
+            radio: .reportedOn,
+            linkActive: false,
+            ssid: "Private SSID",
+            bssid: "02:11:22:33:44:55",
+            modeRawValue: 0,
+            radioPowerOnRaw: true
+        )
+        let fields = WiFiLinkDiagnosticEvidenceFields.make(from: sample)
+
+        #expect(fields["modeRaw"] as? Int == 0)
+        #expect(fields["mode"] as? String == "noneOrReadFailure")
+        #expect(fields["modeReadAmbiguous"] as? Bool == true)
+        #expect(!fields.keys.contains { $0.localizedCaseInsensitiveContains("ssid") })
+        #expect(!fields.keys.contains { $0.localizedCaseInsensitiveContains("bssid") })
+        #expect(!fields.values.contains { ($0 as? String) == "Private SSID" })
+        #expect(!fields.values.contains { ($0 as? String) == "02:11:22:33:44:55" })
+    }
+    #endif
 }
 
 @Suite("WiFi link state center")
@@ -70,6 +98,210 @@ struct WiFiLinkStateCenterTests {
         await center.stop()
         #expect(trigger.startCount == 1)
         #expect(trigger.stopCount == 1)
+    }
+
+    @Test("Observed AP-loss evidence enters candidate review without confirming disconnect")
+    func observedAPLossStartsActiveReviewAndStaysUnknown() async {
+        let baseline = evidence(mode: .station, radio: .reportedOn, linkActive: true)
+        let candidate1 = observedAPLoss(offset: 1)
+        let candidate2 = observedAPLoss(offset: 2)
+        let collector = SequenceCollector([baseline, candidate1, candidate2])
+        let clock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector,
+            trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600),
+            reviewInterval: .seconds(1),
+            reviewClock: clock
+        )
+
+        await center.start()
+        await center.refresh()
+        #expect((await center.snapshot()).state == .unknown)
+        #expect((await center.snapshot()).reason == .disconnectEvidenceNotValidated)
+        await clock.waitForPendingSleep()
+        await clock.releaseNext()
+        await collector.waitForCaptureCount(3)
+
+        #expect(await clock.releasedCount() == 1)
+        #expect((await center.snapshot()).state == .unknown)
+        #expect((await center.snapshot()).reason == .disconnectEvidenceNotValidated)
+        await center.stop()
+    }
+
+    @Test("The scan compatibility subscriber moves from powered-on to unknown on ambiguous radio evidence")
+    func powerMonitorDoesNotRetainOldPowerState() async {
+        let on = evidence(mode: .station, radio: .reportedOn, linkActive: true)
+        let ambiguousOff = evidence(
+            mode: .station, radio: .reportedOffOrReadFailure, linkActive: false,
+            radioPowerOnRaw: false, offset: 1
+        )
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([on, ambiguousOff]),
+            trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600)
+        )
+        let monitor = WiFiPowerMonitor(center: center)
+        monitor.startMonitoring()
+        await waitForMonitorState(monitor, .poweredOn)
+
+        monitor.refreshState()
+        await waitForMonitorState(monitor, .unknown)
+
+        #expect(monitor.currentState == .unknown)
+        monitor.stopMonitoring()
+        await center.stop()
+    }
+
+    @Test("Repeated notifications do not create parallel candidate review tasks")
+    func notificationsShareOneCandidateReview() async {
+        let trigger = FakeLinkTrigger()
+        let clock = ManualReviewClock()
+        let collector = SequenceCollector([
+            evidence(mode: .station, radio: .reportedOn, linkActive: true),
+            observedAPLoss(offset: 1), observedAPLoss(offset: 2),
+            observedAPLoss(offset: 3), observedAPLoss(offset: 4), observedAPLoss(offset: 5)
+        ])
+        let center = WiFiLinkStateCenter(
+            collector: collector,
+            trigger: trigger,
+            pollingInterval: .seconds(3_600),
+            reviewClock: clock
+        )
+        await center.start()
+        await center.refresh()
+        await clock.waitForPendingSleep()
+
+        for _ in 0..<4 { trigger.emit(.systemConfiguration) }
+        await collector.waitForCaptureCount(3)
+
+        #expect(await clock.pendingCount() == 1)
+        await center.stop()
+    }
+
+    @Test("An association found before the scheduled review cancels that review")
+    func associationCancelsScheduledReview() async {
+        let clock = ManualReviewClock()
+        let collector = SequenceCollector([
+            evidence(mode: .station, radio: .reportedOn, linkActive: true),
+            observedAPLoss(offset: 1),
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 2)
+        ])
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600), reviewClock: clock
+        )
+        await center.start()
+        await center.refresh()
+        await clock.waitForPendingSleep()
+        await center.refresh()
+
+        #expect((await center.snapshot()).state == .associated)
+        await clock.waitUntilNoPendingSleep()
+        #expect(await collector.captureCount() == 3)
+        await center.stop()
+    }
+
+    @Test("An interface change during active review establishes a fresh baseline")
+    func interfaceChangeDuringReviewInvalidatesOldEvidence() async {
+        let clock = ManualReviewClock()
+        let collector = SequenceCollector([
+            evidence(mode: .station, radio: .reportedOn, linkActive: true),
+            observedAPLoss(offset: 1),
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, interfaceName: "en1", offset: 2)
+        ])
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600), reviewClock: clock
+        )
+        await center.start()
+        await center.refresh()
+        await clock.waitForPendingSleep()
+        await clock.releaseNext()
+        await collector.waitForCaptureCount(3)
+
+        let snapshot = await center.snapshot()
+        #expect(snapshot.state == .associated)
+        #expect(snapshot.interfaceName == "en1")
+        #expect(snapshot.linkEpoch > 0)
+        await center.stop()
+    }
+
+    @Test("Stopping while a candidate review capture is suspended discards its result")
+    func stopDuringSuspendedReviewDiscardsResult() async {
+        let collector = PausingCollector()
+        let clock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600), reviewClock: clock
+        )
+        let startTask = Task { await center.start() }
+        await collector.waitForPendingCount(1)
+        await collector.resolve(await collector.pendingIDs()[0], with: evidence(mode: .station, radio: .reportedOn, linkActive: true))
+        await startTask.value
+
+        let candidateTask = Task { await center.refresh() }
+        await collector.waitForPendingCount(2)
+        await collector.resolve(await collector.pendingIDs()[1], with: observedAPLoss(offset: 1))
+        await candidateTask.value
+        await clock.waitForPendingSleep()
+        await clock.releaseNext()
+        await collector.waitForPendingCount(3)
+        let reviewRequest = await collector.pendingIDs()[2]
+        let oldSessionID = await center.snapshot().runSessionID
+
+        await center.stop()
+        await collector.resolve(reviewRequest, with: observedAPLoss(offset: 2))
+        for _ in 0..<10 { await Task.yield() }
+
+        #expect((await center.snapshot()).runSessionID == oldSessionID)
+        #expect((await center.snapshot()).state == .unknown)
+    }
+
+    @Test("A suspended startup sample cannot publish after stop or overwrite a restarted session")
+    func suspendedCaptureIsDiscardedAcrossStopAndRestart() async {
+        let collector = PausingCollector()
+        let trigger = FakeLinkTrigger()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: trigger, pollingInterval: .seconds(3_600)
+        )
+        let firstStart = Task { await center.start() }
+        await collector.waitForPendingCount(1)
+        let firstRequest = await collector.pendingIDs()[0]
+
+        await center.stop()
+        let secondStart = Task { await center.start() }
+        await collector.waitForPendingCount(2)
+        let secondRequest = await collector.pendingIDs()[1]
+        let newSessionID = await center.snapshot().runSessionID
+
+        await collector.resolve(firstRequest, with: evidence(mode: .station, radio: .reportedOn, linkActive: true))
+        await firstStart.value
+        #expect((await center.snapshot()).runSessionID == newSessionID)
+        #expect((await center.snapshot()).state == .unknown)
+
+        await collector.resolve(secondRequest, with: evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1))
+        await secondStart.value
+        #expect((await center.snapshot()).runSessionID == newSessionID)
+        #expect((await center.snapshot()).state == .associated)
+        #expect(trigger.startCount == 1)
+        await center.stop()
+    }
+
+    @Test("A callback retained by a stopped trigger cannot request another sample")
+    func staleTriggerCallbackIsIgnoredAfterStop() async {
+        let collector = SequenceCollector([evidence(mode: .station, radio: .reportedOn, linkActive: true)])
+        let trigger = FakeLinkTrigger()
+        let center = WiFiLinkStateCenter(collector: collector, trigger: trigger, pollingInterval: .seconds(3_600))
+        await center.start()
+        let callback = trigger.savedHandler
+        await center.stop()
+        let countAfterStop = await collector.captureCount()
+
+        callback?(.systemConfiguration)
+        await Task.yield()
+        await Task.yield()
+
+        #expect(await collector.captureCount() == countAfterStop)
     }
 
     @Test("A BSSID change is emitted when both observations share a trusted SSID")
@@ -287,12 +519,108 @@ struct WiFiLinkStateCenterTests {
 
 private actor SequenceCollector: WiFiLinkEvidenceCollecting {
     private var samples: [WiFiLinkRawEvidence?]
+    private var count = 0
 
     init(_ samples: [WiFiLinkRawEvidence?]) { self.samples = samples }
 
     func capture() async -> WiFiLinkRawEvidence? {
+        count += 1
         guard !samples.isEmpty else { return nil }
         return samples.removeFirst()
+    }
+
+    func captureCount() -> Int { count }
+
+    func waitForCaptureCount(_ expected: Int) async {
+        for _ in 0..<1_000 {
+            if count >= expected { return }
+            await Task.yield()
+        }
+    }
+}
+
+private actor PausingCollector: WiFiLinkEvidenceCollecting {
+    private var nextID = 0
+    private var continuations: [Int: CheckedContinuation<WiFiLinkRawEvidence?, Never>] = [:]
+    private var pendingIDsValue: [Int] = []
+    private var waiters: [(Int, CheckedContinuation<Void, Never>)] = []
+
+    func capture() async -> WiFiLinkRawEvidence? {
+        await withCheckedContinuation { continuation in
+            nextID += 1
+            continuations[nextID] = continuation
+            pendingIDsValue.append(nextID)
+            resumeWaitersIfReady()
+        }
+    }
+
+    func pendingIDs() -> [Int] { pendingIDsValue }
+
+    func waitForPendingCount(_ expected: Int) async {
+        if pendingIDsValue.count >= expected { return }
+        await withCheckedContinuation { waiters.append((expected, $0)) }
+    }
+
+    func resolve(_ id: Int, with value: WiFiLinkRawEvidence?) {
+        continuations.removeValue(forKey: id)?.resume(returning: value)
+    }
+
+    private func resumeWaitersIfReady() {
+        let ready = waiters.filter { pendingIDsValue.count >= $0.0 }
+        waiters.removeAll { pendingIDsValue.count >= $0.0 }
+        ready.forEach { $0.1.resume() }
+    }
+}
+
+private actor ManualReviewClock: WiFiLinkReviewClock {
+    private var nextID = 0
+    private var continuations: [Int: CheckedContinuation<Void, Error>] = [:]
+    private var pendingIDsValue: [Int] = []
+    private var pendingWaiters: [CheckedContinuation<Void, Never>] = []
+    private var released = 0
+
+    func sleep(for duration: Duration) async throws {
+        nextID += 1
+        let id = nextID
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                continuations[id] = continuation
+                pendingIDsValue.append(id)
+                let waiters = pendingWaiters
+                pendingWaiters.removeAll()
+                waiters.forEach { $0.resume() }
+            }
+        } onCancel: {
+            Task { await self.cancel(id) }
+        }
+    }
+
+    func waitForPendingSleep() async {
+        if !pendingIDsValue.isEmpty { return }
+        await withCheckedContinuation { pendingWaiters.append($0) }
+    }
+
+    func pendingCount() -> Int { pendingIDsValue.count }
+
+    func waitUntilNoPendingSleep() async {
+        for _ in 0..<1_000 {
+            if pendingIDsValue.isEmpty { return }
+            await Task.yield()
+        }
+    }
+
+    func releaseNext() {
+        guard let id = pendingIDsValue.first else { return }
+        pendingIDsValue.removeFirst()
+        continuations.removeValue(forKey: id)?.resume()
+        released += 1
+    }
+
+    func releasedCount() -> Int { released }
+
+    private func cancel(_ id: Int) {
+        pendingIDsValue.removeAll { $0 == id }
+        continuations.removeValue(forKey: id)?.resume(throwing: CancellationError())
     }
 }
 
@@ -303,6 +631,7 @@ private final class FakeLinkTrigger: WiFiLinkChangeTriggering {
     let systemConfigurationRegistered: Bool
     let coreWLANRegistered: Bool
     let coreWLANRegistrationError: String?
+    private(set) var savedHandler: (@Sendable (WiFiLinkChangeReason) -> Void)?
 
     init(systemConfigurationRegistered: Bool = false, coreWLANRegistered: Bool = false, coreWLANRegistrationError: String? = nil) {
         self.systemConfigurationRegistered = systemConfigurationRegistered
@@ -310,7 +639,11 @@ private final class FakeLinkTrigger: WiFiLinkChangeTriggering {
         self.coreWLANRegistrationError = coreWLANRegistrationError
     }
 
-    func start(interfaceName: String?, handler: @escaping @Sendable (WiFiLinkChangeReason) -> Void) { startCount += 1 }
+    func start(interfaceName: String?, handler: @escaping @Sendable (WiFiLinkChangeReason) -> Void) {
+        startCount += 1
+        savedHandler = handler
+    }
+    func emit(_ reason: WiFiLinkChangeReason) { savedHandler?(reason) }
     func updateInterface(_ name: String?) {}
     func stop() { stopCount += 1 }
 }
@@ -322,6 +655,10 @@ private func evidence(
     serviceActive: Bool? = nil,
     ssid: String? = nil,
     bssid: String? = nil,
+    modeRawValue: Int? = nil,
+    radioPowerOnRaw: Bool? = nil,
+    interfaceFlagsUp: Bool? = true,
+    interfaceFlagsRunning: Bool? = nil,
     interfaceName: String = "en0",
     offset: TimeInterval = 0,
     cycleID: UUID = UUID()
@@ -329,9 +666,33 @@ private func evidence(
     let capturedAt = Date(timeIntervalSince1970: 1_800_000_000 + offset)
     return WiFiLinkRawEvidence(
         snapshotCycleID: cycleID, capturedAt: capturedAt, interfaceName: interfaceName,
-        mode: mode, radio: radio, linkActive: linkActive, ssid: ssid, bssid: bssid,
+        mode: mode, coreWLANModeRawValue: modeRawValue, radio: radio, linkActive: linkActive, ssid: ssid, bssid: bssid,
         interfaceIndex: interfaceName == "en0" ? 4 : 5,
-        serviceActive: serviceActive, interfaceFlagsUp: true, interfaceFlagsRunning: linkActive,
+        radioPowerOnRaw: radioPowerOnRaw,
+        serviceActive: serviceActive, interfaceFlagsUp: interfaceFlagsUp,
+        interfaceFlagsRunning: interfaceFlagsRunning ?? linkActive,
         captureStartedAt: capturedAt, captureEndedAt: capturedAt.addingTimeInterval(0.1)
     )
+}
+
+private func observedAPLoss(offset: TimeInterval) -> WiFiLinkRawEvidence {
+    evidence(
+        mode: .noneOrReadFailure,
+        radio: .reportedOn,
+        linkActive: false,
+        serviceActive: true,
+        modeRawValue: 0,
+        radioPowerOnRaw: true,
+        interfaceFlagsUp: true,
+        interfaceFlagsRunning: true,
+        offset: offset
+    )
+}
+
+@MainActor
+private func waitForMonitorState(_ monitor: WiFiPowerMonitor, _ expected: WiFiPowerState) async {
+    for _ in 0..<1_000 {
+        if monitor.currentState == expected { return }
+        await Task.yield()
+    }
 }

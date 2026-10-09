@@ -175,8 +175,9 @@ public enum NetworkInfoService {
             )
         }
 
+        let coreWLANModeRawValue = interface.interfaceMode().rawValue
         let mode: WiFiModeEvidence
-        switch interface.interfaceMode().rawValue {
+        switch coreWLANModeRawValue {
         case 0:
             mode = .noneOrReadFailure
         case 1: mode = .station
@@ -208,6 +209,7 @@ public enum NetworkInfoService {
             capturedAt: capturedAt,
             interfaceName: name,
             mode: mode,
+            coreWLANModeRawValue: coreWLANModeRawValue,
             radio: radio,
             linkActive: linkActive,
             ssid: ssid,

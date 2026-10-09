@@ -972,6 +972,26 @@ struct ScannerRuntimeMigrationTests {
         #expect(consumer.observations.isEmpty)
     }
 
+    @Test("Unknown Wi-Fi state does not stop an active scan")
+    func unknownWiFiStatePreservesRuntimeScan() async {
+        let source = ScriptedScanSource()
+        let runtime = WiFiObservationRuntime(
+            store: WiFiObservationStore(),
+            pipeline: RecordingCyclePipeline(),
+            scanSource: source,
+            interfaceSource: ImmediateInterfaceSnapshotSource()
+        )
+        let scanner = ScannerViewModel(observationRuntime: runtime, authorizationRefresh: { _ in })
+
+        await scanner.debugStartScanLoopForTesting()
+        scanner.debugReconcileWiFiStateForTesting(.unknown)
+
+        #expect(scanner.isScanning)
+        #expect(scanner.isWiFiAvailable)
+        scanner.stop()
+        await source.waitUntilStopCallCount(1)
+    }
+
     @Test("authorization loss on a runtime output stops scanning")
     func authorizationLossStopsRuntime() async {
         let source = ScriptedScanSource()

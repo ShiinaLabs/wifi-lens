@@ -18,7 +18,7 @@ final class WiFiPowerMonitor {
     private var continuation: AsyncStream<WiFiPowerState>.Continuation?
     private var stateTask: Task<Void, Never>?
     private var isMonitoring = false
-    private(set) var currentState: WiFiPowerState = .poweredOn
+    private(set) var currentState: WiFiPowerState = .unknown
 
     init(center: WiFiLinkStateCenter = .shared) {
         self.center = center
@@ -69,9 +69,16 @@ final class WiFiPowerMonitor {
     }
 
     private func apply(_ snapshot: WiFiLinkStateSnapshot) {
-        // CoreWLAN's off result is ambiguous with a read failure; do not stop scans on it.
-        guard snapshot.radio == .reportedOn else { return }
-        let next = WiFiPowerState.poweredOn
+        let next: WiFiPowerState
+        switch snapshot.radio {
+        case .reportedOn:
+            next = .poweredOn
+        case .reportedOffOrReadFailure:
+            // CoreWLAN false can be a read failure; keep scanning in the ambiguous state.
+            next = .unknown
+        case .unavailable:
+            next = snapshot.reason == .interfaceUnavailable ? .interfaceUnavailable : .unknown
+        }
         guard currentState != next else { return }
         let previous = currentState
         currentState = next
