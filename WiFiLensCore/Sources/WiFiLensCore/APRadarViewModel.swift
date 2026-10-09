@@ -136,6 +136,8 @@ public final class APRadarViewModel: WiFiObservationConsuming {
             signalProcessor.reset()
         case .poweredOff, .interfaceUnavailable:
             suspend()
+        case .unknown:
+            break
         }
     }
 

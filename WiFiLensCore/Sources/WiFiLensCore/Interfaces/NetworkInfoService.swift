@@ -143,6 +143,93 @@ public enum NetworkInfoService {
         )
     }
 
+    /// Captures only the fields required by the process-wide link state center.
+    /// This intentionally avoids interface, DNS, and gateway enumeration.
+    static func captureWiFiLinkEvidence(
+        cycleID: UUID,
+        capturedAt: Date,
+        interfaceName preferredName: String? = nil,
+        interface preferredInterface: CWInterface? = nil,
+        store preferredStore: SCDynamicStore? = nil
+    ) -> WiFiLinkRawEvidence? {
+        let captureStartedAt = capturedAt
+        let client = CWWiFiClient.shared()
+        let names = preferredName.map { [$0] } ?? client.interfaceNames() ?? []
+        guard !names.isEmpty else { return nil }
+        let name = preferredName ?? client.interface()?.interfaceName.flatMap { names.contains($0) ? $0 : nil } ?? names.sorted().first!
+        let interface = preferredInterface ?? client.interface(withName: name)
+        var failures: [WiFiLinkEvidenceField: WiFiLinkEvidenceReadFailure] = [:]
+        guard let interface else {
+            failures[.mode] = .interfaceNotFound
+            failures[.radio] = .interfaceNotFound
+            return WiFiLinkRawEvidence(
+                snapshotCycleID: cycleID,
+                capturedAt: capturedAt,
+                interfaceName: name,
+                mode: .unavailable,
+                radio: .unavailable,
+                interfaceIndex: interfaceIndex(name),
+                captureStartedAt: captureStartedAt,
+                captureEndedAt: Date(),
+                readFailures: failures
+            )
+        }
+
+        let mode: WiFiModeEvidence
+        switch interface.interfaceMode().rawValue {
+        case 0:
+            mode = .noneOrReadFailure
+        case 1: mode = .station
+        case let rawValue: mode = .other(rawValue: rawValue)
+        }
+        let reportedPower = interface.powerOn()
+        let radio: WiFiRadioEvidence = reportedPower ? .reportedOn : .reportedOffOrReadFailure
+        let store = preferredStore ?? SCDynamicStoreCreate(nil, "WiFiLens.LinkEvidence" as CFString, nil, nil)
+        let linkKey = "State:/Network/Interface/\(name)/Link"
+        let linkDictionary = store.flatMap {
+            SCDynamicStoreCopyValue($0, linkKey as CFString) as? [String: Any]
+        }
+        let linkActive = linkDictionary?[kSCPropNetLinkActive as String] as? Bool
+        let linkDetaching = linkDictionary?["Detaching"] as? Bool
+        if linkDictionary == nil { failures[.linkActive] = .missingValue }
+        else if linkActive == nil { failures[.linkActive] = .missingValue }
+        if linkDetaching == nil { failures[.linkDetaching] = .missingValue }
+
+        let serviceActive = interface.serviceActive()
+        let flags = interfaceFlags(name)
+        if flags == nil { failures[.interfaceFlags] = .enumerationFailed }
+        let ssid = interface.ssid()
+        let bssid = interface.bssid()
+        if ssid == nil { failures[.ssid] = .apiReturnedNoValue }
+        if bssid == nil { failures[.bssid] = .apiReturnedNoValue }
+
+        return WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID,
+            capturedAt: capturedAt,
+            interfaceName: name,
+            mode: mode,
+            radio: radio,
+            linkActive: linkActive,
+            ssid: ssid,
+            bssid: bssid,
+            modeSource: .coreWLAN,
+            radioSource: .coreWLAN,
+            linkSource: linkDictionary == nil ? nil : .systemConfiguration,
+            serviceActiveSource: .coreWLAN,
+            linkDetachingSource: linkDictionary == nil ? nil : .systemConfiguration,
+            interfaceFlagsSource: flags == nil ? nil : .getifaddrs,
+            interfaceIndex: interfaceIndex(name),
+            radioPowerOnRaw: reportedPower,
+            serviceActive: serviceActive,
+            linkDetaching: linkDetaching,
+            interfaceFlagsUp: flags?.up,
+            interfaceFlagsRunning: flags?.running,
+            captureStartedAt: captureStartedAt,
+            captureEndedAt: Date(),
+            readFailures: failures
+        )
+    }
+
     /// All available network interfaces, including virtual ones.
     /// Uses `getifaddrs()` for discovery so VPN / VM / bridge adapters
     /// are visible even when they have no SystemConfiguration state.
@@ -252,42 +339,14 @@ public enum NetworkInfoService {
             let isWiFi = wifiNames.contains(name)
             let wifiInterface = isWiFi ? wifiClient.interface(withName: name) : nil
             let wiFiInfo = wifiInterface.flatMap(fetchWiFiDetails)
-            var linkEvidence: WiFiLinkRawEvidence?
-            if let cycleID, isWiFi {
-                let mode: WiFiModeEvidence
-                if let wifiInterface {
-                    switch wifiInterface.interfaceMode().rawValue {
-                    case 0: mode = .noneOrReadFailure
-                    case 1: mode = .station
-                    case let rawValue: mode = .other(rawValue: rawValue)
-                    }
-                } else {
-                    mode = .unavailable
-                }
-                let radio: WiFiRadioEvidence
-                if let wifiInterface {
-                    radio = wifiInterface.powerOn() ? .reportedOn : .reportedOffOrReadFailure
-                } else {
-                    radio = .unavailable
-                }
-                let linkKey = "State:/Network/Interface/\(name)/Link"
-                let linkDictionary = store.flatMap {
-                    SCDynamicStoreCopyValue($0, linkKey as CFString) as? [String: Any]
-                }
-                let linkActive = linkDictionary?[kSCPropNetLinkActive as String] as? Bool
-                linkEvidence = WiFiLinkRawEvidence(
-                    snapshotCycleID: cycleID,
+            let linkEvidence = cycleID.flatMap { id in
+                isWiFi ? captureWiFiLinkEvidence(
+                    cycleID: id,
                     capturedAt: capturedAt,
                     interfaceName: name,
-                    mode: mode,
-                    radio: radio,
-                    linkActive: linkActive,
-                    ssid: wiFiInfo?.ssid,
-                    bssid: wiFiInfo?.bssid,
-                    modeSource: .coreWLAN,
-                    radioSource: .coreWLAN,
-                    linkSource: linkDictionary == nil ? nil : .systemConfiguration
-                )
+                    interface: wifiInterface,
+                    store: store
+                ) : nil
             }
 
             // Router lookup from SystemConfiguration (Interface path)
@@ -333,6 +392,24 @@ public enum NetworkInfoService {
             wifiInterfaceDiscoverySucceeded: discoveredWiFiNames != nil
         )
     }
+
+    private static func interfaceIndex(_ name: String) -> UInt32? {
+        let index = if_nametoindex(name)
+        return index == 0 ? nil : index
+    }
+
+    private static func interfaceFlags(_ name: String) -> (up: Bool, running: Bool)? {
+        var addressList: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&addressList) == 0, let first = addressList else { return nil }
+        defer { freeifaddrs(first) }
+        for item in sequence(first: first, next: { $0.pointee.ifa_next }) {
+            guard let rawName = item.pointee.ifa_name, String(cString: rawName) == name else { continue }
+            let flags = Int32(item.pointee.ifa_flags)
+            return (flags & IFF_UP != 0, flags & IFF_RUNNING != 0)
+        }
+        return nil
+    }
+
 
     static func fetch() -> NetworkInterfaceInfo? {
         let client = CWWiFiClient.shared()

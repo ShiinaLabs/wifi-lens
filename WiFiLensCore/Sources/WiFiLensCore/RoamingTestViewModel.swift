@@ -128,6 +128,9 @@ public final class RoamingTestViewModel {
             stopTest(userInitiated: false)
             self.state = .idle
             errorMessage = nil
+
+        case .unknown:
+            break
         }
     }
 

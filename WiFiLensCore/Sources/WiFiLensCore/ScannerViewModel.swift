@@ -116,7 +116,7 @@ public final class ScannerViewModel {
     public internal(set) var isScanning = false
     public internal(set) var interfaceName: String = ""
     public internal(set) var accessState: ScanAccessState = .waitingForAuthorization
-    public var isWiFiAvailable: Bool { wifiPowerState == .poweredOn }
+    public var isWiFiAvailable: Bool { wifiPowerState == .poweredOn || wifiPowerState == .unknown }
     public var hasWiFiDataAuthorization: Bool {
         !requiresLiveWiFiAuthorization || locationManager.isAuthorizedForSSID
     }
@@ -477,6 +477,7 @@ public final class ScannerViewModel {
     public func handleSceneDidBecomeActive() async {
         guard !isTerminating else { return }
         guard requiresLiveWiFiAuthorization else { return }
+        await WiFiLinkStateCenter.shared.applicationBecameActive()
         locationManager.refreshStatus()
         wifiPowerMonitor.refreshState()
         reconcileWiFiState(wifiPowerMonitor.currentState)
@@ -520,6 +521,10 @@ public final class ScannerViewModel {
 
         case .poweredOff, .interfaceUnavailable:
             stop()
+
+        case .unknown:
+            // Ambiguous radio evidence does not prove power-off; preserve scanning.
+            break
         }
     }
 
@@ -546,6 +551,7 @@ public final class ScannerViewModel {
         case .poweredOn: powerState = .poweredOn
         case .poweredOff: powerState = .poweredOff
         case .interfaceUnavailable: powerState = .interfaceUnavailable
+        case .unknown: powerState = .unknown
         }
 
         let accessState: MCPSnapshot.AccessState
@@ -1041,6 +1047,7 @@ public final class ScannerViewModel {
         wifiMonitoringTask?.cancel()
         wifiMonitoringTask = nil
         wifiPowerMonitor.stopMonitoring()
+        await WiFiLinkStateCenter.shared.stop()
         runtimeLifecycleTail?.cancel()
         activeProjectionGeneration = nil
         transitionToStoppedState()
@@ -1061,7 +1068,7 @@ public final class ScannerViewModel {
 
         wifiPowerMonitor.refreshState()
         let currentPowerState = wifiPowerMonitor.currentState
-        if currentPowerState != .poweredOn {
+        if currentPowerState == .poweredOff || currentPowerState == .interfaceUnavailable {
             wifiPowerState = currentPowerState
             updateMCPDataProvider()
             transitionToStoppedState()

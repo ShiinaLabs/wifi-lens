@@ -124,6 +124,8 @@
 		741C5CBA03CA8E4B17214A59 /* SpectrumHeatmapComputeBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76B26ECD9862846300DFB24 /* SpectrumHeatmapComputeBackend.swift */; };
 		765054E53C38E20103382B57 /* InterfacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C52A90F9450D1D5B93BE65 /* InterfacesView.swift */; };
 		76B160CFCB6F7DA89A26E976 /* WiFiObservationRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24D6A37AE492D548AE6F5C88 /* WiFiObservationRuntime.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* WiFiLinkStateCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */; };
+		A1B2C3D4E5F60718293A4B5E /* WiFiLinkStateCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */; };
 		76CA69A84F26B8C9724CD4DA /* WiFiCurrentConnectionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD6F389C547E6D3D7A76E8B4 /* WiFiCurrentConnectionProvider.swift */; };
 		779BC1247711A4383FE875AD /* GuidanceStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4329871EFADE8EC1AFAD0A /* GuidanceStateStore.swift */; };
 		78D81FC200E07928056CD0E1 /* NetworkDiagnosticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F78BEED3502A1E1E1FBA88 /* NetworkDiagnosticsViewModel.swift */; };
@@ -415,6 +417,7 @@
 		21FF1FB96DA89AF017B4B4FF /* BandChartViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandChartViewModel.swift; sourceTree = "<group>"; };
 		22F45B87A389F1B93C2033C8 /* GuidanceCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidanceCoordinator.swift; sourceTree = "<group>"; };
 		24D6A37AE492D548AE6F5C88 /* WiFiObservationRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiObservationRuntime.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenter.swift; sourceTree = "<group>"; };
 		253B59A9808A33EAEB5476EB /* ChannelSeriesDataBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelSeriesDataBuilder.swift; sourceTree = "<group>"; };
 		25CD19ED3078D5666BF6A32E /* WiFiOffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOffView.swift; sourceTree = "<group>"; };
 		27C8B9A6BC76F95DCAA2E208 /* APRadarSignalProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APRadarSignalProcessor.swift; sourceTree = "<group>"; };
@@ -593,6 +596,7 @@
 		C367E9CF6E07A0388D2D525D /* NetworkDiagnosticAssessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticAssessment.swift; sourceTree = "<group>"; };
 		C3A983DCD0D9CAF8DB7B0C70 /* WiFiScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiScanner.swift; sourceTree = "<group>"; };
 		C4EA78FDC2EE0EA0F11159D6 /* ProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenterTests.swift; sourceTree = "<group>"; };
 		C70E4041B5972D72DD79BF56 /* RoamingTestViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingTestViewModelTests.swift; sourceTree = "<group>"; };
 		C8F78BEED3502A1E1E1FBA88 /* NetworkDiagnosticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsViewModel.swift; sourceTree = "<group>"; };
 		C8FF0F3B48F509D5D541650D /* NetworkSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSnapshot.swift; sourceTree = "<group>"; };
@@ -958,6 +962,7 @@
 				5B4957CCF132DDCF4AC8CACB /* ObservationTestDoubles.swift */,
 				FA6C567C46EA7104BCFA0272 /* PipelineTests.swift */,
 				C4EA78FDC2EE0EA0F11159D6 /* ProviderTests.swift */,
+				A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */,
 			);
 			path = Observation;
 			sourceTree = "<group>";
@@ -1179,6 +1184,7 @@
 			isa = PBXGroup;
 			children = (
 				24D6A37AE492D548AE6F5C88 /* WiFiObservationRuntime.swift */,
+				A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */,
 			);
 			path = Runtime;
 			sourceTree = "<group>";
@@ -1764,6 +1770,7 @@
 				8DD2CED4A1CD19FC0B654C9E /* ObservationTestDoubles.swift in Sources */,
 				2A1FB06C166A6378E123C10A /* PipelineTests.swift in Sources */,
 				92998A876CB5F17E8EEF18A2 /* ProviderTests.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5E /* WiFiLinkStateCenterTests.swift in Sources */,
 				50D36C5BE8A7AC38CBF869C5 /* DeviceCompatibilityFilterTests.swift in Sources */,
 				A53348B9F65FA51048DF07F9 /* RegionInferenceEngineTests.swift in Sources */,
 				DF23E875DA33D4709C59D163 /* RegulatoryDatabaseTests.swift in Sources */,
@@ -1888,6 +1895,7 @@
 				40ED3574FC671BB5AC807FD2 /* RoamingProbeProvider.swift in Sources */,
 				76CA69A84F26B8C9724CD4DA /* WiFiCurrentConnectionProvider.swift in Sources */,
 				76B160CFCB6F7DA89A26E976 /* WiFiObservationRuntime.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* WiFiLinkStateCenter.swift in Sources */,
 				0C807378A9C2759E160D870B /* WiFiObservationStore.swift in Sources */,
 				043BFFBE858B6EFA1F107922 /* OnboardingConfiguration.swift in Sources */,
 				12412493B10D9A18F2B5E73A /* OnboardingCoordinator.swift in Sources */,

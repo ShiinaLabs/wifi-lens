@@ -2,6 +2,9 @@ import Foundation
 
 public enum WiFiModeEvidence: Equatable, Sendable {
     case station
+    /// CoreWLAN explicitly reported no mode. This is distinct from the legacy
+    /// combined value, which remains ambiguous for source compatibility.
+    case none
     case noneOrReadFailure
     case other(rawValue: Int)
     case unavailable
@@ -16,6 +19,27 @@ public enum WiFiRadioEvidence: Equatable, Sendable {
 public enum WiFiLinkEvidenceSource: String, Equatable, Sendable {
     case coreWLAN
     case systemConfiguration
+    case getifaddrs
+}
+
+public enum WiFiLinkEvidenceField: String, Equatable, Sendable {
+    case interfaceDiscovery
+    case mode
+    case radio
+    case linkActive
+    case serviceActive
+    case linkDetaching
+    case interfaceFlags
+    case ssid
+    case bssid
+}
+
+public enum WiFiLinkEvidenceReadFailure: String, Equatable, Sendable {
+    case unavailable
+    case missingValue
+    case apiReturnedNoValue
+    case interfaceNotFound
+    case enumerationFailed
 }
 
 public struct WiFiLinkRawEvidence: Equatable, Sendable {
@@ -30,6 +54,20 @@ public struct WiFiLinkRawEvidence: Equatable, Sendable {
     public let modeSource: WiFiLinkEvidenceSource
     public let radioSource: WiFiLinkEvidenceSource
     public let linkSource: WiFiLinkEvidenceSource?
+    public let serviceActiveSource: WiFiLinkEvidenceSource?
+    public let linkDetachingSource: WiFiLinkEvidenceSource?
+    public let interfaceFlagsSource: WiFiLinkEvidenceSource?
+    public let interfaceIndex: UInt32?
+    /// The raw CoreWLAN `powerOn()` result when the interface was readable.
+    /// A false value remains ambiguous and is never interpreted as a confirmed fault.
+    public let radioPowerOnRaw: Bool?
+    public let serviceActive: Bool?
+    public let linkDetaching: Bool?
+    public let interfaceFlagsUp: Bool?
+    public let interfaceFlagsRunning: Bool?
+    public let captureStartedAt: Date
+    public let captureEndedAt: Date
+    public let readFailures: [WiFiLinkEvidenceField: WiFiLinkEvidenceReadFailure]
 
     public init(
         snapshotCycleID: UUID,
@@ -42,7 +80,19 @@ public struct WiFiLinkRawEvidence: Equatable, Sendable {
         bssid: String? = nil,
         modeSource: WiFiLinkEvidenceSource = .coreWLAN,
         radioSource: WiFiLinkEvidenceSource = .coreWLAN,
-        linkSource: WiFiLinkEvidenceSource? = nil
+        linkSource: WiFiLinkEvidenceSource? = nil,
+        serviceActiveSource: WiFiLinkEvidenceSource? = nil,
+        linkDetachingSource: WiFiLinkEvidenceSource? = nil,
+        interfaceFlagsSource: WiFiLinkEvidenceSource? = nil,
+        interfaceIndex: UInt32? = nil,
+        radioPowerOnRaw: Bool? = nil,
+        serviceActive: Bool? = nil,
+        linkDetaching: Bool? = nil,
+        interfaceFlagsUp: Bool? = nil,
+        interfaceFlagsRunning: Bool? = nil,
+        captureStartedAt: Date? = nil,
+        captureEndedAt: Date? = nil,
+        readFailures: [WiFiLinkEvidenceField: WiFiLinkEvidenceReadFailure] = [:]
     ) {
         self.snapshotCycleID = snapshotCycleID
         self.capturedAt = capturedAt
@@ -55,6 +105,18 @@ public struct WiFiLinkRawEvidence: Equatable, Sendable {
         self.modeSource = modeSource
         self.radioSource = radioSource
         self.linkSource = linkSource
+        self.serviceActiveSource = serviceActiveSource
+        self.linkDetachingSource = linkDetachingSource
+        self.interfaceFlagsSource = interfaceFlagsSource
+        self.interfaceIndex = interfaceIndex
+        self.radioPowerOnRaw = radioPowerOnRaw
+        self.serviceActive = serviceActive
+        self.linkDetaching = linkDetaching
+        self.interfaceFlagsUp = interfaceFlagsUp
+        self.interfaceFlagsRunning = interfaceFlagsRunning
+        self.captureStartedAt = captureStartedAt ?? capturedAt
+        self.captureEndedAt = captureEndedAt ?? capturedAt
+        self.readFailures = readFailures
     }
 }
 
@@ -76,15 +138,24 @@ public enum WiFiLinkEvidenceReason: String, Equatable, Sendable {
     case captureTimestampMismatch
     case linkStateUnavailable
     case conflictingLinkEvidence
+    case disconnectCandidate
+    case disconnectEvidenceNotValidated
+    case samplingContinuityLost
 }
 
 public struct WiFiLinkAssessment: Equatable, Sendable {
     public let state: VerifiedWiFiLinkState
     public let reason: WiFiLinkEvidenceReason
+    public let candidateState: VerifiedWiFiLinkState?
 
-    public init(state: VerifiedWiFiLinkState, reason: WiFiLinkEvidenceReason) {
+    public init(
+        state: VerifiedWiFiLinkState,
+        reason: WiFiLinkEvidenceReason,
+        candidateState: VerifiedWiFiLinkState? = nil
+    ) {
         self.state = state
         self.reason = reason
+        self.candidateState = candidateState
     }
 }
 
@@ -103,9 +174,22 @@ public enum WiFiLinkInterpreter {
         if let expectedCapturedAt, evidence.capturedAt != expectedCapturedAt {
             return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
         }
+        guard evidence.captureStartedAt <= evidence.capturedAt,
+              evidence.capturedAt <= evidence.captureEndedAt else {
+            return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
+        }
         guard evidence.mode == .station else {
             if case .other = evidence.mode {
                 return WiFiLinkAssessment(state: .unknown, reason: .unsupportedMode)
+            }
+            if evidence.mode == .none || evidence.mode == .noneOrReadFailure,
+               evidence.radio == .reportedOn,
+               evidence.linkActive == false {
+                return WiFiLinkAssessment(
+                    state: .unknown,
+                    reason: .disconnectCandidate,
+                    candidateState: .disconnected
+                )
             }
             return WiFiLinkAssessment(state: .unknown, reason: .modeUnavailable)
         }
@@ -114,6 +198,13 @@ public enum WiFiLinkInterpreter {
         }
         switch evidence.linkActive {
         case true:
+            if evidence.linkDetaching == true || evidence.serviceActive == false
+                || evidence.interfaceFlagsUp == false || evidence.interfaceFlagsRunning == false {
+                return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
+            }
+            guard !evidence.interfaceName.isEmpty else {
+                return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
+            }
             return WiFiLinkAssessment(state: .associated, reason: .stationMode)
         case false:
             return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)

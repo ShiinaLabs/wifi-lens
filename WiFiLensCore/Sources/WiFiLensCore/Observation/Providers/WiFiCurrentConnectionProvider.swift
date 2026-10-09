@@ -42,7 +42,12 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
         from wifi: NetworkInterfaceInfo,
         snapshot: NetworkInterfaceSnapshot
     ) -> WiFiCurrentStatus {
-        WiFiCurrentStatus(
+        let assessment = WiFiLinkInterpreter.evaluate(
+            wifi.wifiLinkEvidence,
+            expectedCycleID: snapshot.cycleID,
+            expectedCapturedAt: snapshot.capturedAt
+        )
+        return WiFiCurrentStatus(
             timestamp: snapshot.capturedAt,
             interfaceSnapshotCycleID: snapshot.cycleID,
             interfaceName: wifi.interfaceName,
@@ -56,14 +61,10 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
             phyMode: wifi.phyMode,
             security: wifi.security,
             routerIP: wifi.router,
-            isConnected: wifi.ssid != nil,
+            isConnected: assessment.state == .associated,
             isWiFiPowerOn: wifi.wifiLinkEvidence?.radio == .reportedOn,
             linkEvidence: wifi.wifiLinkEvidence,
-            linkAssessment: WiFiLinkInterpreter.evaluate(
-                wifi.wifiLinkEvidence,
-                expectedCycleID: snapshot.cycleID,
-                expectedCapturedAt: snapshot.capturedAt
-            )
+            linkAssessment: assessment
         )
     }
 }

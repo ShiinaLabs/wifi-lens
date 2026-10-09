@@ -49,12 +49,24 @@ struct ProviderTests {
     @Test("WiFiCurrentConnectionProvider deterministically projects a connected snapshot")
     func currentConnectionProvider() async {
         let provider = WiFiCurrentConnectionProvider()
+        let cycleID = UUID()
+        let capturedAt = Date(timeIntervalSince1970: 1_750_000_300)
+        let evidence = WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID,
+            capturedAt: capturedAt,
+            interfaceName: "en0",
+            mode: .station,
+            radio: .reportedOn,
+            linkActive: true
+        )
         let snapshot = NetworkInterfaceSnapshot(
-            cycleID: UUID(),
-            capturedAt: Date(timeIntervalSince1970: 1_750_000_300),
+            cycleID: cycleID,
+            capturedAt: capturedAt,
             interfaces: [NetworkInterfaceInfo(
                 interfaceName: "en0",
                 hardwareMAC: nil,
+                isWiFiInterface: true,
+                wifiLinkEvidence: evidence,
                 ipv4Addresses: ["192.0.2.2"],
                 subnetMasks: ["255.255.255.0"],
                 router: "192.0.2.1",
@@ -105,7 +117,7 @@ struct ProviderTests {
         #expect(status.ssid == nil)
         #expect(status.linkAssessment?.state == .associated)
         #expect(status.linkEvidence?.snapshotCycleID == cycleID)
-        #expect(status.isConnected == false) // Legacy projection only; Pro consumes linkAssessment.
+        #expect(status.isConnected)
     }
 
     @Test("ambiguous mode and radio values remain unknown")
