@@ -588,7 +588,8 @@ public actor WiFiLinkStateCenter {
 
     public func applicationBecameActive() async {
         guard isRunning else { return }
-        await resetContinuity(reason: .appBecameActive)
+        // AppKit may deliver scene activation once per window. Gaining focus
+        // requests fresh evidence but does not invalidate link continuity.
         await requestSample(reason: .appBecameActive, sessionID: runSessionID)
     }
 

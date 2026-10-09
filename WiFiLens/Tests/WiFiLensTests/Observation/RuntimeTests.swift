@@ -992,6 +992,96 @@ struct ScannerRuntimeMigrationTests {
         await source.waitUntilStopCallCount(1)
     }
 
+    @Test("Persistent unknown evidence pauses scans and trusted radio evidence resumes one loop")
+    func persistentUnknownUsesBoundedProbeAndRecovers() async {
+        let source = ScriptedScanSource()
+        let runtime = WiFiObservationRuntime(
+            store: WiFiObservationStore(),
+            pipeline: RecordingCyclePipeline(),
+            scanSource: source,
+            interfaceSource: ImmediateInterfaceSnapshotSource()
+        )
+        let scanner = ScannerViewModel(observationRuntime: runtime, authorizationRefresh: { _ in })
+        scanner.locationManager.authorizationStatus = .authorized
+
+        await scanner.debugStartScanLoopForTesting()
+        scanner.debugReconcileWiFiStateForTesting(.unknown)
+        #expect(scanner.isScanning)
+        scanner.debugReconcileWiFiStateForTesting(.unknown)
+        #expect(scanner.isScanning)
+        scanner.debugReconcileWiFiStateForTesting(.unknown)
+        await source.waitUntilStopCallCount(1)
+        #expect(!scanner.isScanning)
+        if case .scanFailed(let message) = scanner.accessState {
+            #expect(message.contains("unknown"))
+        } else {
+            #expect(Bool(false), "Persistent unknown evidence should be shown as temporarily unavailable")
+        }
+
+        scanner.debugReconcileWiFiStateForTesting(.poweredOn)
+        await Task.yield()
+        await scanner.debugDrainRuntimeLifecycleForTesting()
+        #expect(scanner.isScanning)
+        #expect(await source.snapshot().activeStreamCount == 1)
+        #expect(await source.snapshot().requestedIntervals.count == 2)
+
+        await scanner.stopForTermination()
+        #expect(await source.snapshot().activeStreamCount == 0)
+    }
+
+    @Test("Initial unknown evidence permits one authorized controlled scan probe")
+    func initialUnknownStartsControlledProbe() async {
+        let source = ScriptedScanSource()
+        let runtime = WiFiObservationRuntime(
+            store: WiFiObservationStore(),
+            pipeline: RecordingCyclePipeline(),
+            scanSource: source,
+            interfaceSource: ImmediateInterfaceSnapshotSource()
+        )
+        let scanner = ScannerViewModel(observationRuntime: runtime, authorizationRefresh: { _ in })
+        scanner.locationManager.authorizationStatus = .authorized
+
+        await scanner.debugStartAfterAuthorizationForTesting()
+        await scanner.debugDrainRuntimeLifecycleForTesting()
+
+        #expect(scanner.wifiPowerState == .unknown)
+        #expect(scanner.isScanning)
+        #expect(await source.snapshot().requestedIntervals == [.seconds(3)])
+        #expect(await source.snapshot().activeStreamCount == 1)
+        scanner.stop()
+        await source.waitUntilStopCallCount(1)
+    }
+
+    @Test("An unavailable interface is a failed sample, not a successful empty scan")
+    func unavailableInterfacePropagatesAsFailure() async {
+        let source = ScriptedScanSource()
+        let interfaceSource = CountingInterfaceSnapshotSource(
+            interfaces: [],
+            capturedAt: Date(timeIntervalSince1970: 1_752_000_790)
+        )
+        let runtime = WiFiObservationRuntime(
+            store: WiFiObservationStore(),
+            pipeline: WiFiObservationPipeline(),
+            scanSource: source,
+            interfaceSource: interfaceSource
+        )
+        var output: WiFiObservationScanOutput?
+        let outputCounter = EventCounter()
+        await runtime.startScanning(configuration: .testDefault) {
+            output = $0
+            outputCounter.increment()
+        }
+
+        await source.yield(.interfaceUnavailable("Wi-Fi interface unavailable"))
+        await outputCounter.waitForCount(1)
+
+        #expect(output?.rawNetworks.isEmpty == true)
+        #expect(output?.cycle.observation.environmentSnapshot?.error
+            == .environmentScanFailed("Wi-Fi interface unavailable"))
+        #expect(interfaceSource.captureCount == 1)
+        await runtime.stopScanning()
+    }
+
     @Test("authorization loss on a runtime output stops scanning")
     func authorizationLossStopsRuntime() async {
         let source = ScriptedScanSource()

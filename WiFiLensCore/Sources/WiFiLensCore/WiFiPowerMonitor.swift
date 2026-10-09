@@ -79,10 +79,13 @@ final class WiFiPowerMonitor {
         case .unavailable:
             next = snapshot.reason == .interfaceUnavailable ? .interfaceUnavailable : .unknown
         }
-        guard currentState != next else { return }
         let previous = currentState
         currentState = next
-        scannerLogger.info("WiFi radio evidence changed: \(String(describing: previous)) → \(String(describing: next))")
+        if previous != next {
+            scannerLogger.info("WiFi radio evidence changed: \(String(describing: previous)) → \(String(describing: next))")
+        }
+        // Repeated equal states are still fresh evidence samples. The scanner
+        // uses them to bound work while radio evidence remains unknown.
         continuation?.yield(next)
     }
 }

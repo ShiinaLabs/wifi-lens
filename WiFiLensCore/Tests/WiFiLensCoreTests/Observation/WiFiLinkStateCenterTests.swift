@@ -587,20 +587,24 @@ struct WiFiLinkStateCenterTests {
         await center.stop()
     }
 
-    @Test("Interface change and app resume reset continuity without synthesizing disconnect")
-    func continuityResets() async {
+    @Test("Interface change resets continuity but ordinary app activation only refreshes")
+    func interfaceChangeResetsAndAppActivationRefreshes() async {
         let initial = evidence(mode: .station, radio: .reportedOn, linkActive: true)
         let changed = evidence(mode: .station, radio: .reportedOn, linkActive: true, interfaceName: "en1", offset: 1)
-        let resumed = evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 2)
+        let resumed = evidence(mode: .station, radio: .reportedOn, linkActive: true, interfaceName: "en1", offset: 2)
         let center = WiFiLinkStateCenter(collector: SequenceCollector([initial, changed, resumed]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
         let events = await center.events()
         var iterator = events.makeAsyncIterator()
         await center.start()
         await center.refresh()
         #expect((await iterator.next())?.type == .continuityReset)
-        #expect((await center.snapshot()).state == .associated)
+        let beforeActivation = await center.snapshot()
+        #expect(beforeActivation.state == .associated)
         await center.applicationBecameActive()
-        #expect((await iterator.next())?.type == .continuityReset)
+        let afterActivation = await center.snapshot()
+        #expect(afterActivation.sequence > beforeActivation.sequence)
+        #expect(afterActivation.linkEpoch == beforeActivation.linkEpoch)
+        #expect(afterActivation.state == .associated)
         await center.stop()
     }
 

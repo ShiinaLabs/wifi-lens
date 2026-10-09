@@ -56,6 +56,68 @@ struct SpanDirectionTests {
     }
 }
 
+@Suite("WiFi scan failure backoff")
+struct WiFiScanFailureBackoffTests {
+    @Test("Failure probes back off to a bounded interval and reset after success")
+    func failureBackoffIsBoundedAndRecovers() {
+        var backoff = WiFiScanFailureBackoff(maximumDelay: .seconds(30))
+        #expect(backoff.recordFailure() == .seconds(1))
+        #expect(backoff.recordFailure() == .seconds(2))
+        #expect(backoff.recordFailure() == .seconds(4))
+        #expect(backoff.recordFailure() == .seconds(8))
+        #expect(backoff.recordFailure() == .seconds(16))
+        #expect(backoff.recordFailure() == .seconds(30))
+        #expect(backoff.recordFailure() == .seconds(30))
+        backoff.recordSuccess()
+        #expect(backoff.recordFailure() == .seconds(1))
+    }
+
+    @Test("Missing interface is distinct from a successful empty scan")
+    func scanAttemptDistinguishesUnavailableFromEmpty() async {
+        let missingInterfaceScanner = WiFiScanner(
+            clock: SystemWiFiScanClock(),
+            scanAttempt: StubWiFiScanAttempt(networks: nil)
+        )
+        let (missingStream, missingContinuation) = AsyncStream<WiFiScanEvent>.makeStream()
+        await missingInterfaceScanner.startScanning(interval: .seconds(3_600)) {
+            missingContinuation.yield($0)
+        }
+        var missingIterator = missingStream.makeAsyncIterator()
+        let missingEvent = await missingIterator.next()
+        await missingInterfaceScanner.stopScanning()
+        if case .interfaceUnavailable = missingEvent {
+            #expect(true)
+        } else {
+            #expect(Bool(false), "A missing interface must not be emitted as a successful empty scan")
+        }
+
+        let emptyScanScanner = WiFiScanner(
+            clock: SystemWiFiScanClock(),
+            scanAttempt: StubWiFiScanAttempt(networks: [])
+        )
+        let (emptyStream, emptyContinuation) = AsyncStream<WiFiScanEvent>.makeStream()
+        await emptyScanScanner.startScanning(interval: .seconds(3_600)) {
+            emptyContinuation.yield($0)
+        }
+        var emptyIterator = emptyStream.makeAsyncIterator()
+        let emptyEvent = await emptyIterator.next()
+        await emptyScanScanner.stopScanning()
+        if case .networks(let networks) = emptyEvent {
+            #expect(networks.isEmpty)
+        } else {
+            #expect(Bool(false), "A successful zero-network scan remains a valid result")
+        }
+    }
+}
+
+private struct StubWiFiScanAttempt: WiFiScanAttempting {
+    let networks: [WiFiNetwork]?
+
+    func scanNetworks() throws -> [WiFiNetwork]? {
+        networks
+    }
+}
+
 // MARK: - WiFiChannel (DEBUG init)
 
 struct WiFiChannelTests {

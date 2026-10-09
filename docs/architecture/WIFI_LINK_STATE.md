@@ -72,9 +72,9 @@ buffer. Cancelling either subscription does not stop the center.
 
 The center increments `linkEpoch` after confirmed disconnect/reassociation,
 interface change, or continuity reset. A run session ID, interface identity,
-and epoch together identify one continuity segment. Sleep/wake and app resume
-reset continuity; samples on the far side establish a new baseline rather than
-being joined into a synthetic transition.
+and epoch together identify one continuity segment. Sleep/wake samples on the
+far side establish a new baseline rather than being joined into a synthetic
+transition. Ordinary app activation only requests fresh evidence.
 
 ## Listener ownership and lifecycle
 
@@ -95,6 +95,34 @@ The existing `NetworkInterfaceSnapshot` full scan remains unchanged in shape.
 Its Wi-Fi link fields now use the same field capture helper as the lightweight
 collector, while lightweight sampling avoids DNS, gateway, and full interface
 enumeration. Both retain their caller-provided cycle ID and capture timestamp.
+
+## Scan execution readiness
+
+Link evidence and scan execution readiness are separate. `WiFiPowerMonitor`
+maps only reported-on radio evidence to `poweredOn`; ambiguous `powerOn() ==
+false` stays `unknown`. Scanner startup permits one authorized probe while the
+evidence is unknown. One or two consecutive unknown samples do not stop an
+active scan. Three consecutive unknown samples pause frequent scanning and
+schedule a probe after 30 seconds; a reported-on sample resumes scanning
+immediately. Repeated snapshots are delivered to the compatibility subscriber
+so this policy can distinguish a transient read failure from persistent
+ambiguity. An access-point loss while the radio remains on does not stop
+spectral scanning and does not change the verified link state by itself.
+
+The scanner treats a missing CoreWLAN interface as an explicit
+`interfaceUnavailable` failure, never as a successful empty network list. A
+successful scan with zero nearby networks remains a normal empty result. Failed
+scans retain the existing three-attempt retry sequence; repeated exhausted
+failures then increase the delay between probes from 1 second to a 30-second
+cap. A successful scan resets that delay. This bounds work while continuing to
+probe for automatic recovery. Scan failures update scanner access state only;
+they are not disconnect evidence and do not create link events. Location
+authorization remains controlled by the existing authorization manager.
+
+Window or app-focus activation only requests a new center sample. It does not
+reset continuity or increment `linkEpoch`; actual sleep/wake and interface
+changes retain their continuity-reset behavior. The app owns one shared center
+and terminates it through the existing process termination coordinator.
 
 ## Formal app validation
 

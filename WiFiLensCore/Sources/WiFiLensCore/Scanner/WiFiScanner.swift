@@ -5,6 +5,37 @@ import OSLog
 public enum WiFiScanEvent: Sendable {
     case networks([WiFiNetwork])
     case failure(String)
+    case interfaceUnavailable(String)
+}
+
+struct WiFiScanFailureBackoff: Sendable {
+    private(set) var consecutiveFailures = 0
+    private let maximumDelay: Duration
+
+    init(maximumDelay: Duration = .seconds(30)) {
+        self.maximumDelay = maximumDelay
+    }
+
+    mutating func recordFailure() -> Duration {
+        consecutiveFailures = min(consecutiveFailures + 1, 16)
+        let seconds = min(1 << (consecutiveFailures - 1), 30)
+        return min(.seconds(seconds), maximumDelay)
+    }
+
+    mutating func recordSuccess() {
+        consecutiveFailures = 0
+    }
+}
+
+protocol WiFiScanAttempting: Sendable {
+    func scanNetworks() throws -> [WiFiNetwork]?
+}
+
+struct CoreWLANScanAttempt: WiFiScanAttempting {
+    func scanNetworks() throws -> [WiFiNetwork]? {
+        guard let interface = CWWiFiClient.shared().interface() else { return nil }
+        return try interface.scanForNetworks(withSSID: nil).compactMap { WiFiNetwork(from: $0) }
+    }
 }
 
 public protocol WiFiScanStreaming: Sendable {
@@ -84,14 +115,19 @@ actor WiFiScanner: WiFiScanStreaming {
     private static let logger = Logger(subsystem: AppEnvironment.current.loggingSubsystem, category: "scanner")
     private let client = CWWiFiClient.shared()
     private let clock: any WiFiScanClock
+    private let scanAttempt: any WiFiScanAttempting
     private var shouldStop = false
     private var scanTask: Task<Void, Never>?
     private var skippedSlotCount: UInt64 = 0
 
-    public init() { self.clock = SystemWiFiScanClock() }
+    public init() {
+        self.clock = SystemWiFiScanClock()
+        self.scanAttempt = CoreWLANScanAttempt()
+    }
 
-    init(clock: any WiFiScanClock) {
+    init(clock: any WiFiScanClock, scanAttempt: any WiFiScanAttempting = CoreWLANScanAttempt()) {
         self.clock = clock
+        self.scanAttempt = scanAttempt
     }
 
     /// Emits scan results or failures at the configured interval.
@@ -108,18 +144,31 @@ actor WiFiScanner: WiFiScanStreaming {
         scanTask = Task {
             let startedAt = await clock.now()
             var cadence = WiFiScanCadence(interval: interval, startedAt: startedAt)
-            while !shouldStop && !Task.isCancelled {
+            var failureBackoff = WiFiScanFailureBackoff()
+            scanLoop: while !shouldStop && !Task.isCancelled {
                 let scanResult = await scanWithRetry()
+                var delayAfterFailure: Duration?
                 switch scanResult {
                 case .success(let networks):
+                    failureBackoff.recordSuccess()
                     await onEvent(.networks(networks))
-                case .failure(let error):
-                    let msg = String(describing: error)
-                    Self.logger.error("scan exhausted retries: \(msg)")
-                    await onEvent(.failure(msg))
+                case .failure(.interfaceUnavailable(let message)):
+                    let delay = failureBackoff.recordFailure()
+                    delayAfterFailure = delay
+                    Self.logger.warning("Wi-Fi interface unavailable; next bounded probe in \(delay)")
+                    await onEvent(.interfaceUnavailable(message))
+                case .failure(.scan(let error)):
+                    delayAfterFailure = failureBackoff.recordFailure()
+                    Self.logger.error("scan exhausted retries: \(error)")
+                    await onEvent(.failure(error))
+                case .failure(.cancelled):
+                    break scanLoop
                 }
 
                 do {
+                    if let delayAfterFailure {
+                        try await clock.sleep(for: delayAfterFailure)
+                    }
                     let skipped = try await cadence.waitForNextScan(using: clock)
                     skippedSlotCount &+= skipped
                     if skipped > 0 {
@@ -134,27 +183,33 @@ actor WiFiScanner: WiFiScanStreaming {
         }
     }
 
-    private enum ScanError: Error { case exhausted(String) }
+    private enum ScanError: Error {
+        case interfaceUnavailable(String)
+        case scan(String)
+        case cancelled
+    }
 
     private func scanWithRetry() async -> Result<[WiFiNetwork], ScanError> {
         for attempt in 1...3 {
             do {
-                let networks = try client.interface()?.scanForNetworks(withSSID: nil) ?? []
-                let wrapped = networks.compactMap { WiFiNetwork(from: $0) }
-                return .success(wrapped)
+                guard let networks = try scanAttempt.scanNetworks() else {
+                    return .failure(.interfaceUnavailable("Wi-Fi interface unavailable"))
+                }
+                return .success(networks)
             } catch {
+                if Task.isCancelled { return .failure(.cancelled) }
                 let msg = String(describing: error)
                 if attempt < 3 {
                     let backoff = Duration.seconds(1 << (attempt - 1))
                     Self.logger.warning("scan attempt \(attempt) failed, retrying in \(backoff): \(msg)")
                     do { try await Task.sleep(for: backoff) }
-                    catch { return .failure(.exhausted("cancelled during retry")) }
+                    catch { return .failure(.cancelled) }
                 } else {
-                    return .failure(.exhausted(msg))
+                    return .failure(.scan(msg))
                 }
             }
         }
-        return .failure(.exhausted("unknown error"))
+        return .failure(.scan("unknown error"))
     }
 
     public func stopScanning() async {

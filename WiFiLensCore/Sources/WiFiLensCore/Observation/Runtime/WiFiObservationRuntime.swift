@@ -363,6 +363,9 @@ public final class WiFiObservationRuntime {
         case .failure(let message):
             networks = []
             environmentError = .environmentScanFailed(message)
+        case .interfaceUnavailable(let message):
+            networks = []
+            environmentError = .environmentScanFailed(message)
         }
 
         let interfaceSnapshot = await interfaceSource.capture(cycleID: UUID())
