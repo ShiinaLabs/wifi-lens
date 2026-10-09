@@ -275,53 +275,9 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         }
         let interface = await interfaceSource.currentInterface()
         let gateway = await gatewayLatency.measure(routerIP: interface?.router)
-
-        if let latency = gateway.latencyMs {
-            return NetworkDiagnosticResult(
-                id: id,
-                status: .normal,
-                summary: String(
-                    localized: "network_diagnostics.gateway.normal.summary",
-                    comment: "Network self-check gateway reachability success summary"
-                ),
-                evidence: [.init(code: "gateway.latency-ms", value: String(latency))]
-            )
-        }
-        if let router = gateway.routerIP {
-            if case .gatewayPingFailed = gateway.error {
-                return NetworkDiagnosticResult(
-                    id: id,
-                    status: .indeterminate,
-                    summary: String(
-                        localized: "network_diagnostics.gateway.indeterminate.summary",
-                        comment: "Network self-check gateway reachability indeterminate summary"
-                    ),
-                    detail: String(
-                        localized: "network_diagnostics.gateway.no_response",
-                        comment: "Gateway did not respond to the ICMP probe"
-                    ),
-                    evidence: [.init(code: "gateway.no-response", value: router)]
-                )
-            }
-            return NetworkDiagnosticResult(
-                id: id,
-                status: .abnormal,
-                summary: String(
-                    localized: "network_diagnostics.gateway.abnormal.summary",
-                    comment: "Network self-check gateway reachability failure summary"
-                ),
-                evidence: [.init(code: "gateway.unreachable", value: router)]
-            )
-        }
-        return NetworkDiagnosticResult(
-            id: id,
-            status: .indeterminate,
-            summary: String(
-                localized: "network_diagnostics.gateway.indeterminate.summary",
-                comment: "Network self-check gateway reachability indeterminate summary"
-            ),
-            evidence: [.init(code: "gateway.unavailable", value: nil)]
-        )
+        let outcome = Self.interpretProbeResult(gateway)
+        let trustedOutcome: GatewayProbeInterpretation = outcome == .noReply ? .unverified : outcome
+        return result(for: trustedOutcome, value: gateway.routerIP)
     }
 
     private func contextResult(_ context: DiagnosticNetworkContext) async -> NetworkDiagnosticResult {
@@ -390,7 +346,71 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
             )
             : nil
 
-        if let latency = gateway.latencyMs {
+        var outcome = Self.interpretProbeResult(gateway)
+        if outcome == .noReply,
+           !(gateway.interfaceBound
+                && gateway.interfaceName == target.interfaceName
+                && gateway.routerIP == target.address
+                && gateway.attemptID != nil) {
+            outcome = .unverified
+        }
+        return result(
+            for: outcome,
+            value: target.address,
+            evidence: targetEvidence,
+            detail: underlayDetail
+        )
+    }
+
+    private enum GatewayProbeInterpretation: Equatable {
+        case replied(milliseconds: Double)
+        case noReply
+        case notTested
+        case executionFailed
+        case cancelled
+        case localTimeout
+        case unverified
+    }
+
+    private static func interpretProbeResult(
+        _ result: GatewayLatencyResult
+    ) -> GatewayProbeInterpretation {
+        guard let outcome = result.probeOutcome else { return .unverified }
+        switch outcome {
+        case .replied(let milliseconds):
+            guard let latency = result.latencyMs,
+                  latency.isFinite,
+                  latency >= 0,
+                  latency == milliseconds else {
+                return .unverified
+            }
+            return .replied(milliseconds: milliseconds)
+        case .noReply:
+            return result.latencyMs == nil ? .noReply : .unverified
+        case .notTested:
+            return hasValidSuccessLatency(result.latencyMs) ? .unverified : .notTested
+        case .executionFailed:
+            return hasValidSuccessLatency(result.latencyMs) ? .unverified : .executionFailed
+        case .cancelled:
+            return hasValidSuccessLatency(result.latencyMs) ? .unverified : .cancelled
+        case .localTimeout:
+            return hasValidSuccessLatency(result.latencyMs) ? .unverified : .localTimeout
+        }
+    }
+
+    private static func hasValidSuccessLatency(_ latency: Double?) -> Bool {
+        guard let latency else { return false }
+        return latency.isFinite && latency >= 0
+    }
+
+    private func result(
+        for outcome: GatewayProbeInterpretation,
+        value: String?,
+        evidence baseEvidence: [NetworkDiagnosticEvidence] = [],
+        detail supplementalDetail: String? = nil
+    ) -> NetworkDiagnosticResult {
+        switch outcome {
+        case .replied(let milliseconds):
             return NetworkDiagnosticResult(
                 id: id,
                 status: .normal,
@@ -398,34 +418,64 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
                     localized: "network_diagnostics.gateway.normal.summary",
                     comment: "Network self-check gateway reachability success summary"
                 ),
-                detail: underlayDetail,
-                evidence: targetEvidence + [.init(code: "gateway.latency-ms", value: String(latency))]
+                detail: supplementalDetail,
+                evidence: baseEvidence + [.init(code: "gateway.latency-ms", value: String(milliseconds))]
             )
-        }
-        if case .gatewayPingFailed = gateway.error {
+        case .noReply:
             return NetworkDiagnosticResult(
                 id: id,
                 status: .indeterminate,
-                summary: String(
-                    localized: "network_diagnostics.gateway.indeterminate.summary",
-                    comment: "Network self-check gateway reachability indeterminate summary"
-                ),
+                summary: indeterminateSummary,
                 detail: String(
                     localized: "network_diagnostics.gateway.no_response",
                     comment: "Gateway did not respond to the ICMP probe"
                 ),
-                evidence: targetEvidence + [.init(code: "gateway.no-response", value: target.address)]
+                evidence: baseEvidence + [.init(code: "gateway.no-response", value: value)]
+            )
+        case .notTested:
+            return indeterminateResult(
+                code: "gateway.probe.not-tested",
+                evidence: baseEvidence
+            )
+        case .executionFailed:
+            return indeterminateResult(
+                code: "gateway.probe.execution-failed",
+                evidence: baseEvidence
+            )
+        case .cancelled:
+            return indeterminateResult(
+                code: "gateway.probe.cancelled",
+                evidence: baseEvidence
+            )
+        case .localTimeout:
+            return indeterminateResult(
+                code: "gateway.probe.local-timeout",
+                evidence: baseEvidence
+            )
+        case .unverified:
+            return indeterminateResult(
+                code: "gateway.probe.unverified",
+                evidence: baseEvidence
             )
         }
-        return NetworkDiagnosticResult(
+    }
+
+    private var indeterminateSummary: String {
+        String(
+            localized: "network_diagnostics.gateway.indeterminate.summary",
+            comment: "Network self-check gateway reachability indeterminate summary"
+        )
+    }
+
+    private func indeterminateResult(
+        code: String,
+        evidence: [NetworkDiagnosticEvidence]
+    ) -> NetworkDiagnosticResult {
+        NetworkDiagnosticResult(
             id: id,
-            status: .abnormal,
-            summary: String(
-                localized: "network_diagnostics.gateway.abnormal.summary",
-                comment: "Network self-check gateway reachability failure summary"
-            ),
-            detail: underlayDetail,
-            evidence: targetEvidence + [.init(code: "gateway.unreachable", value: target.address)]
+            status: .indeterminate,
+            summary: indeterminateSummary,
+            evidence: evidence + [.init(code: code, value: nil)]
         )
     }
 

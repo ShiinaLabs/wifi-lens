@@ -47,6 +47,7 @@ actor GatewayPinger {
     }
 
     private func probe(arguments: [String], attemptID: UUID) async -> GatewayProbeOutcome {
+        guard !Task.isCancelled else { return .cancelled }
         let result = await withTaskCancellationHandler {
             await processRunner.run(
                 executablePath: "/sbin/ping",
@@ -68,13 +69,19 @@ actor GatewayPinger {
         case .localTimeout:
             return .localTimeout
         case .exited(let status, let output):
-            if status == 0, let milliseconds = parseLatency(from: output), milliseconds.isFinite, milliseconds >= 0 {
+            switch status {
+            case 0:
+                guard let milliseconds = parseLatency(from: output),
+                      milliseconds.isFinite,
+                      milliseconds >= 0 else {
+                    return .executionFailed
+                }
                 return .replied(milliseconds: milliseconds)
+            case 2:
+                return confirmsNoReply(output) ? .noReply : .executionFailed
+            default:
+                return .executionFailed
             }
-            if status != 0, confirmsNoReply(output) {
-                return .noReply
-            }
-            return .executionFailed
         }
     }
 
@@ -89,8 +96,52 @@ actor GatewayPinger {
     }
 
     private static func confirmsNoReply(_ output: String) -> Bool {
-        let normalized = output.lowercased().replacingOccurrences(of: "\n", with: " ")
-        return normalized.contains("0 packets received") && normalized.contains("100.0% packet loss")
+        let normalized = output.lowercased()
+        let localErrors = [
+            "sendto:",
+            "sendmsg:",
+            "no route to host",
+            "network is unreachable",
+            "permission denied",
+            "operation not permitted",
+            "can't assign requested address",
+            "cannot assign requested address",
+            "message too long",
+            "invalid argument",
+        ]
+        guard !localErrors.contains(where: normalized.contains) else { return false }
+
+        let statisticsLines = normalized
+            .components(separatedBy: .newlines)
+            .filter { $0.contains("packets transmitted") || $0.contains("packet loss") }
+        guard statisticsLines.count == 1,
+              let statisticsLine = statisticsLines.first else {
+            return false
+        }
+
+        let fields = statisticsLine.components(separatedBy: ", ")
+        guard fields.count == 3,
+              let sent = integerValue(in: fields[0], suffix: " packets transmitted"),
+              let received = integerValue(in: fields[1], suffix: " packets received"),
+              let packetLoss = percentageValue(in: fields[2], suffix: "% packet loss")
+        else {
+            return false
+        }
+        return sent == 1 && received == 0 && packetLoss == 100
+    }
+
+    private static func integerValue(in field: String, suffix: String) -> Int? {
+        guard field.hasSuffix(suffix) else { return nil }
+        let value = field.dropLast(suffix.count)
+        guard !value.isEmpty, value.allSatisfy({ $0 >= "0" && $0 <= "9" }) else { return nil }
+        return Int(value)
+    }
+
+    private static func percentageValue(in field: String, suffix: String) -> Double? {
+        guard field.hasSuffix(suffix) else { return nil }
+        let value = field.dropLast(suffix.count)
+        guard !value.isEmpty, let percentage = Double(value), percentage.isFinite else { return nil }
+        return percentage
     }
 }
 
@@ -100,6 +151,7 @@ actor SystemGatewayPingProcessRunner: GatewayPingProcessRunning {
     private var states: [UUID: PingWaitState] = [:]
 
     func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
+        guard !Task.isCancelled else { return .cancelled }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executablePath)
         process.arguments = arguments
@@ -109,6 +161,10 @@ actor SystemGatewayPingProcessRunner: GatewayPingProcessRunning {
         process.standardError = pipe
         let state = PingWaitState(process: process)
         states[attemptID] = state
+        guard !Task.isCancelled else {
+            if states[attemptID] === state { states[attemptID] = nil }
+            return .cancelled
+        }
 
         do {
             try process.run()
@@ -192,9 +248,14 @@ private final class PingWaitState: @unchecked Sendable {
 
     func terminate(reason: PingStopReason) {
         lock.lock()
+        guard !didResume else {
+            lock.unlock()
+            return
+        }
         if stopReason == nil { stopReason = reason }
+        let shouldTerminate = process.isRunning
         lock.unlock()
-        if process.isRunning { process.terminate() }
+        if shouldTerminate { process.terminate() }
     }
 
     func resumeIfNeeded(

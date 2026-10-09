@@ -216,23 +216,118 @@ struct ProviderTests {
         #expect(status.timestamp == capturedAt)
     }
 
-    @Test("ping process outcomes distinguish a confirmed non-response from local failures")
+    @Test("ping process outcomes require a valid exit-specific interpretation")
     func pingProcessOutcomeMapping() {
+        let noReplyOutput = "1 packets transmitted, 0 packets received, 100.0% packet loss"
         #expect(GatewayPinger.interpret(.exited(
             status: 0,
             output: "64 bytes from 192.0.2.1: icmp_seq=0 ttl=64 time=12.5 ms"
         )) == .replied(milliseconds: 12.5))
+        #expect(GatewayPinger.interpret(.exited(status: 0, output: "unparseable")) == .executionFailed)
+        #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=-1 ms")) == .executionFailed)
+        #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=nan ms")) == .executionFailed)
+        #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=inf ms")) == .executionFailed)
+
+        #expect(GatewayPinger.interpret(.exited(status: 2, output: noReplyOutput)) == .noReply)
+        #expect(GatewayPinger.interpret(.exited(status: 2, output: "")) == .executionFailed)
         #expect(GatewayPinger.interpret(.exited(
             status: 2,
-            output: "1 packets transmitted, 0 packets received, 100.0% packet loss"
-        )) == .noReply)
+            output: "0 packets received, 100.0% packet loss"
+        )) == .executionFailed)
+        for localError in [
+            "sendto: No buffer space available",
+            "sendmsg: Network is unreachable",
+            "No route to host",
+            "network is unreachable",
+            "permission denied",
+            "Operation not permitted",
+            "can't assign requested address",
+            "cannot assign requested address",
+            "message too long",
+            "invalid argument",
+        ] {
+            #expect(GatewayPinger.interpret(.exited(
+                status: 2,
+                output: localError + "\n" + noReplyOutput
+            )) == .executionFailed)
+        }
+        for status: Int32 in [1, 64, 68] {
+            #expect(GatewayPinger.interpret(.exited(
+                status: status,
+                output: noReplyOutput
+            )) == .executionFailed)
+        }
+
         #expect(GatewayPinger.interpret(.failedToLaunch) == .executionFailed)
         #expect(GatewayPinger.interpret(.terminatedBySignal(15)) == .executionFailed)
         #expect(GatewayPinger.interpret(.outputReadFailed) == .executionFailed)
         #expect(GatewayPinger.interpret(.cancelled) == .cancelled)
         #expect(GatewayPinger.interpret(.localTimeout) == .localTimeout)
-        #expect(GatewayPinger.interpret(.exited(status: 0, output: "unparseable")) == .executionFailed)
-        #expect(GatewayPinger.interpret(.exited(status: 2, output: "permission denied")) == .executionFailed)
+    }
+
+    @Test("a cancelled task does not launch its ping process")
+    func cancelledBeforeProbeDoesNotLaunchRunner() async {
+        let runner = ControlledGatewayPingProcessRunner()
+        let pinger = GatewayPinger(processRunner: runner)
+        let gate = AsyncInvocationGate()
+        let attemptID = UUID()
+
+        let task = Task {
+            await gate.wait()
+            return await pinger.probe(host: "gateway.example", attemptID: attemptID)
+        }
+        await gate.waitUntilEntered()
+        task.cancel()
+        await gate.release()
+
+        #expect(await task.value == .cancelled)
+        #expect(await runner.invocationIDs.isEmpty)
+    }
+
+    @Test("cancelling one concurrent ping leaves the other attempt independent")
+    func concurrentProbeCancellationIsAttemptScoped() async {
+        let runner = ControlledGatewayPingProcessRunner()
+        let pinger = GatewayPinger(processRunner: runner)
+        let firstID = UUID()
+        let secondID = UUID()
+
+        let first = Task { await pinger.probe(host: "first.example", attemptID: firstID) }
+        await runner.waitUntilInvocationCount(1)
+        let second = Task { await pinger.probe(host: "second.example", attemptID: secondID) }
+        await runner.waitUntilInvocationCount(2)
+
+        first.cancel()
+        #expect(await first.value == .cancelled)
+        #expect(await runner.cancelledInvocationIDs == [firstID])
+
+        await runner.complete(secondID, with: .exited(
+            status: 0,
+            output: "64 bytes from 192.0.2.2: icmp_seq=0 ttl=64 time=4.5 ms"
+        ))
+        #expect(await second.value == .replied(milliseconds: 4.5))
+        #expect(await runner.cancelledInvocationIDs == [firstID])
+    }
+
+    @Test("normal ping completion racing cancellation is delivered once")
+    func normalCompletionCancellationRaceCompletesOnce() async {
+        let runner = ControlledGatewayPingProcessRunner()
+        let pinger = GatewayPinger(processRunner: runner)
+        let attemptID = UUID()
+        let task = Task { await pinger.probe(host: "gateway.example", attemptID: attemptID) }
+        await runner.waitUntilInvocationCount(1)
+
+        let finish = Task {
+            await runner.complete(attemptID, with: .exited(
+                status: 2,
+                output: "1 packets transmitted, 0 packets received, 100.0% packet loss"
+            ))
+        }
+        task.cancel()
+        await finish.value
+        let result = await task.value
+
+        #expect(result == .cancelled || result == .noReply)
+        #expect(await runner.invocationIDs == [attemptID])
     }
 
     @Test("GatewayLatencyProvider returns result with routerIP")
@@ -252,5 +347,52 @@ struct ProviderTests {
 
         #expect(result.latencyMs == nil)
         #expect(result.error == .gatewayPingFailed("192.0.2.1"))
+    }
+}
+
+private actor AsyncInvocationGate {
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var didEnter = false
+
+    func wait() async {
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            didEnter = true
+        }
+    }
+
+    func waitUntilEntered() async {
+        while !didEnter { await Task.yield() }
+    }
+
+    func release() {
+        continuation?.resume()
+        continuation = nil
+    }
+}
+
+private actor ControlledGatewayPingProcessRunner: GatewayPingProcessRunning {
+    private(set) var invocationIDs: [UUID] = []
+    private(set) var cancelledInvocationIDs: [UUID] = []
+    private var continuations: [UUID: CheckedContinuation<GatewayPingProcessOutcome, Never>] = [:]
+
+    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
+        await withCheckedContinuation { continuation in
+            invocationIDs.append(attemptID)
+            continuations[attemptID] = continuation
+        }
+    }
+
+    func cancel(attemptID: UUID) {
+        cancelledInvocationIDs.append(attemptID)
+        continuations.removeValue(forKey: attemptID)?.resume(returning: .cancelled)
+    }
+
+    func waitUntilInvocationCount(_ count: Int) async {
+        while invocationIDs.count < count { await Task.yield() }
+    }
+
+    func complete(_ attemptID: UUID, with outcome: GatewayPingProcessOutcome) {
+        continuations.removeValue(forKey: attemptID)?.resume(returning: outcome)
     }
 }

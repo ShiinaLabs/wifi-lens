@@ -1474,10 +1474,40 @@ actor RecordingDiagnosticGatewayMeasurer: DiagnosticGatewayMeasuring {
 
     func measure(target: DiagnosticGatewayTarget) async -> GatewayLatencyResult {
         targets.append(target)
+        let attemptID = UUID()
         return GatewayLatencyResult(
             timestamp: Date(),
             routerIP: target.address,
-            latencyMs: 2.5
+            latencyMs: 2.5,
+            probeOutcome: .replied(milliseconds: 2.5),
+            attemptID: attemptID,
+            interfaceName: target.interfaceName,
+            interfaceBound: true
+        )
+    }
+}
+
+struct FixedDiagnosticGatewayMeasurer: DiagnosticGatewayMeasuring {
+    let outcome: GatewayProbeOutcome?
+    let latencyMs: Double?
+    let interfaceName: String?
+    let routerIP: String?
+    let interfaceBound: Bool
+    let attemptID: UUID?
+    var usesTargetInterface = true
+    var usesTargetAddress = true
+    let error: WiFiObservationError? = nil
+
+    func measure(target: DiagnosticGatewayTarget) async -> GatewayLatencyResult {
+        GatewayLatencyResult(
+            timestamp: Date(),
+            routerIP: usesTargetAddress ? (routerIP ?? target.address) : routerIP,
+            latencyMs: latencyMs,
+            error: error,
+            probeOutcome: outcome,
+            attemptID: attemptID,
+            interfaceName: usesTargetInterface ? (interfaceName ?? target.interfaceName) : interfaceName,
+            interfaceBound: interfaceBound
         )
     }
 }
