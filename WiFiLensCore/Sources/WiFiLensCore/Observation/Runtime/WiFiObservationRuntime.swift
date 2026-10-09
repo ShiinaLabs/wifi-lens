@@ -297,6 +297,7 @@ public final class WiFiObservationRuntime {
         let startedAt = now()
         activeLifecycleStartedAt = startedAt
         activeScanInterval = configuration.scanInterval
+        store.beginScanLifecycle(at: startedAt)
         for worker in workers.values {
             await worker.sessionStarted(at: startedAt, expectedInterval: configuration.scanInterval)
         }
@@ -446,6 +447,7 @@ public final class WiFiObservationRuntime {
         activeLifecycleStartedAt = nil
         activeScanInterval = nil
         lifecycleReplayTail = nil
+        store.endScanLifecycle()
         for worker in workers.values { await worker.sessionStopped(at: date) }
     }
 

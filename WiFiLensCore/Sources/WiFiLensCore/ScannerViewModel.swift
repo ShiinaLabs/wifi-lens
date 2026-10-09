@@ -129,6 +129,12 @@ public final class ScannerViewModel {
     private var wifiMonitoringTask: Task<Void, Never>?
     private var unknownWiFiProbeTask: Task<Void, Never>?
     private var consecutiveUnknownWiFiSamples = 0
+    private var lastReconciledWiFiSampleIdentity: WiFiPowerSampleIdentity?
+#if DEBUG
+    private var debugReconciliationRunSessionID = UUID()
+    private var debugReconciliationSequence: UInt64 = 0
+    private var debugReconciliationSampleSequences: [UUID: UInt64] = [:]
+#endif
     private var runtimeLifecycleTail: Task<Void, Never>?
     private var terminationStopTask: Task<Void, Never>?
     private var isTerminating = false
@@ -494,7 +500,6 @@ public final class ScannerViewModel {
         await WiFiLinkStateCenter.shared.applicationBecameActive()
         locationManager.refreshStatus()
         wifiPowerMonitor.refreshState()
-        reconcileWiFiState(wifiPowerMonitor.currentState)
     }
 
     private func startWiFiMonitoring() {
@@ -504,13 +509,13 @@ public final class ScannerViewModel {
         wifiMonitoringTask = Task { [weak self] in
             guard let self else { return }
             let stream = self.wifiPowerMonitor.events
-            for await state in stream {
-                self.reconcileWiFiState(state)
+            for await event in stream {
+                self.reconcileWiFiState(event.state, sampleIdentity: event.sampleIdentity)
             }
         }
     }
 
-    private func reconcileWiFiState(_ state: WiFiPowerState) {
+    private func reconcileWiFiState(_ state: WiFiPowerState, sampleIdentity: WiFiPowerSampleIdentity? = nil) {
         guard requiresLiveWiFiAuthorization else {
             wifiPowerState = .poweredOn
             updateMCPDataProvider()
@@ -572,7 +577,10 @@ public final class ScannerViewModel {
                 }
                 return
             }
-            consecutiveUnknownWiFiSamples += 1
+            if let sampleIdentity, isNewWiFiSample(sampleIdentity) {
+                lastReconciledWiFiSampleIdentity = sampleIdentity
+                consecutiveUnknownWiFiSamples += 1
+            }
             if isScanning, consecutiveUnknownWiFiSamples >= Self.unknownWiFiSampleLimit {
                 stop()
                 accessState = .scanFailed("Wi-Fi status is unknown; scanning is paused temporarily.")
@@ -581,6 +589,12 @@ public final class ScannerViewModel {
                 Task { await startScanningAfterAuth() }
             }
         }
+    }
+
+    private func isNewWiFiSample(_ identity: WiFiPowerSampleIdentity) -> Bool {
+        guard let previous = lastReconciledWiFiSampleIdentity else { return true }
+        guard identity.runSessionID == previous.runSessionID else { return true }
+        return identity.sequence > previous.sequence
     }
 
     private func scheduleUnknownWiFiProbe() {
@@ -621,8 +635,12 @@ public final class ScannerViewModel {
         try await mcpServer.start()
     }
 
-    func makeMCPSnapshot() -> MCPSnapshot {
-        let scanContextIsCurrent = isWiFiAvailable
+    func makeMCPSnapshot(at date: Date = Date()) -> MCPSnapshot {
+        let scanContextIsCurrent = isScanning
+            && isWiFiAvailable
+            && store.validity(at: date)?.environment == .current
+            && lastObservationTimestamp != .distantPast
+            && date.timeIntervalSince(lastObservationTimestamp) <= WiFiObservationStore.currentValueMaximumAge
         let capturedAt = lastObservationTimestamp == .distantPast ? nil : lastObservationTimestamp
         let powerState: MCPSnapshot.PowerState
         switch wifiPowerState {
@@ -1227,9 +1245,34 @@ extension ScannerViewModel {
         await startScanningAfterAuth()
     }
 
-    func debugReconcileWiFiStateForTesting(_ state: WiFiPowerState) {
-        reconcileWiFiState(state)
+    func debugReconcileWiFiStateForTesting(_ state: WiFiPowerState, sampleID: UUID? = nil) {
+        let identity: WiFiPowerSampleIdentity?
+        if state == .unknown {
+            let resolvedID = sampleID ?? UUID()
+            let sequence: UInt64
+            if let existing = debugReconciliationSampleSequences[resolvedID] {
+                sequence = existing
+            } else {
+                debugReconciliationSequence &+= 1
+                sequence = debugReconciliationSequence
+                debugReconciliationSampleSequences[resolvedID] = sequence
+            }
+            identity = WiFiPowerSampleIdentity(
+                runSessionID: debugReconciliationRunSessionID,
+                sequence: sequence,
+                snapshotID: resolvedID
+            )
+        } else {
+            identity = nil
+        }
+        reconcileWiFiState(state, sampleIdentity: identity)
     }
+
+    func debugReconcileWiFiSampleForTesting(_ state: WiFiPowerState, identity: WiFiPowerSampleIdentity) {
+        reconcileWiFiState(state, sampleIdentity: identity)
+    }
+
+    var debugConsecutiveUnknownSamplesForTesting: Int { consecutiveUnknownWiFiSamples }
 
     func debugDrainRuntimeLifecycleForTesting() async {
         await runtimeLifecycleTail?.value

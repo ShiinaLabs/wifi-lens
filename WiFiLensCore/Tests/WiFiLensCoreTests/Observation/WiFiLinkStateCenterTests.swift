@@ -84,6 +84,29 @@ struct WiFiLinkEvidenceInterpreterTests {
 @Suite("WiFi link state center")
 @MainActor
 struct WiFiLinkStateCenterTests {
+    @Test("A repeated delivery of the same center snapshot is not a new radio sample")
+    func monitorSubscriptionDeduplicatesSnapshotIdentity() async {
+        let monitor = WiFiPowerMonitor(center: WiFiLinkStateCenter(
+            collector: SequenceCollector([]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600)
+        ))
+        var iterator = monitor.events.makeAsyncIterator()
+        let cached = await iterator.next()
+        #expect(cached?.sampleIdentity == nil)
+
+        let sampleID = UUID()
+        let sample = WiFiLinkStateSnapshot(
+            id: sampleID, runSessionID: UUID(), sequence: 1, linkEpoch: 0,
+            interfaceName: "en0", interfaceIndex: 4, radio: .reportedOn, state: .unknown,
+            networkIdentity: nil, reason: .disconnectEvidenceNotValidated, evidenceSourceIDs: [UUID()],
+            sampledAt: Date(), publishedAt: Date()
+        )
+        monitor.debugApplySnapshotForTesting(sample)
+        let firstDelivery = await iterator.next()
+        #expect(firstDelivery?.sampleIdentity?.snapshotID == sampleID)
+        monitor.debugApplySnapshotForTesting(sample)
+        #expect(monitor.debugPublishedSampleCount == 1)
+    }
+
     @Test("Startup association establishes a baseline and missing identity remains associated")
     func startupBaselineAndUnknownSSID() async {
         let sample = evidence(mode: .station, radio: .reportedOn, linkActive: true)

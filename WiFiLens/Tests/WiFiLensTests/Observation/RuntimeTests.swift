@@ -1005,11 +1005,14 @@ struct ScannerRuntimeMigrationTests {
         scanner.locationManager.authorizationStatus = .authorized
 
         await scanner.debugStartScanLoopForTesting()
-        scanner.debugReconcileWiFiStateForTesting(.unknown)
+        let firstSampleID = UUID()
+        scanner.debugReconcileWiFiStateForTesting(.unknown, sampleID: firstSampleID)
         #expect(scanner.isScanning)
-        scanner.debugReconcileWiFiStateForTesting(.unknown)
+        scanner.debugReconcileWiFiStateForTesting(.unknown, sampleID: firstSampleID)
+        #expect(scanner.debugConsecutiveUnknownSamplesForTesting == 1)
+        scanner.debugReconcileWiFiStateForTesting(.unknown, sampleID: UUID())
         #expect(scanner.isScanning)
-        scanner.debugReconcileWiFiStateForTesting(.unknown)
+        scanner.debugReconcileWiFiStateForTesting(.unknown, sampleID: UUID())
         await source.waitUntilStopCallCount(1)
         #expect(!scanner.isScanning)
         if case .scanFailed(let message) = scanner.accessState {

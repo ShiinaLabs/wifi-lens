@@ -21,6 +21,7 @@ public struct InterfacesView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let interfaces: [NetworkInterfaceInfo]
     let scannerViewModel: ScannerViewModel
+    @ObservedObject private var store: WiFiObservationStore
     let throughputMonitor: ThroughputMonitor
     let mode: InterfaceViewMode
     @State private var gatewayLatency: Double?
@@ -33,13 +34,14 @@ public struct InterfacesView: View {
     ) {
         self.interfaces = interfaces
         self.scannerViewModel = scannerViewModel
+        _store = ObservedObject(wrappedValue: scannerViewModel.store)
         self.throughputMonitor = throughputMonitor
         self.mode = mode
     }
 
     private var wifiInterface: NetworkInterfaceInfo? {
         if verifiedLinkState == .associated,
-           let interfaceName = scannerViewModel.store.currentStatus?.interfaceName {
+           let interfaceName = store.currentStatus?.interfaceName {
             return interfaces.first {
                 $0.isWiFiInterface && $0.interfaceName == interfaceName
             }
@@ -48,9 +50,9 @@ public struct InterfacesView: View {
     }
 
     private var verifiedLinkState: VerifiedWiFiLinkState {
-        guard let status = scannerViewModel.store.currentStatus,
+        guard let status = store.currentStatus,
               status.error == nil,
-              Date().timeIntervalSince(status.timestamp) <= 15 else { return .unknown }
+              store.validity(at: Date())?.currentStatus == .current else { return .unknown }
         return status.linkAssessment?.state ?? .unknown
     }
 

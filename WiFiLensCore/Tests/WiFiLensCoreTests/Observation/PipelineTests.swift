@@ -313,6 +313,9 @@ struct PipelineTests {
         #expect(store.validity?.environment == .failed)
         #expect(store.validity?.channelRecommendation == .failed)
         #expect(store.validity(at: t2.addingTimeInterval(20))?.currentStatus == .expired)
+        store.expireCurrentValuesIfNeeded(at: t2.addingTimeInterval(20))
+        #expect(store.validity?.currentStatus == .expired)
+        #expect(store.history.count == 3)
     }
 
     private func makeCyclePipeline(

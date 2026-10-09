@@ -102,7 +102,9 @@ struct APRadarViewModelTests {
             observationRuntime: runtime,
             audioPlayer: audio,
             scheduler: scheduler,
-            userDefaults: resolvedDefaults
+            userDefaults: resolvedDefaults,
+            now: { Date(timeIntervalSince1970: 0) },
+            sleep: { _ in throw CancellationError() }
         )
         return (vm, runtime, audio, scheduler, resolvedDefaults)
     }
@@ -312,6 +314,30 @@ struct APRadarViewModelTests {
         #expect(harness.scheduler.cancelCount > cancelsBefore)
         #expect(harness.audio.stopCallCount >= 1)
         #expect(harness.viewModel.state.isTracking == false)
+    }
+
+    @Test("A stalled scan expires live RSSI without claiming the target disappeared")
+    func stalledScanExpiresSignalWithoutSignalLost() async throws {
+        let harness = makeHarness()
+        activateAndSelect(harness.viewModel)
+        let t0 = Date(timeIntervalSince1970: 100)
+        try await harness.viewModel.consume(
+            makeObservation(timestamp: t0, networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -58)])
+        )
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -58)
+
+        #expect(harness.viewModel.expireSignalIfStale(at: t0.addingTimeInterval(7)) == false)
+        #expect(harness.viewModel.expireSignalIfStale(at: t0.addingTimeInterval(8)))
+        #expect(harness.viewModel.isAwaitingFreshScan)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == nil)
+        #expect(lostSnapshot(harness.viewModel) == nil)
+
+        try await harness.viewModel.consume(
+            makeObservation(timestamp: t0.addingTimeInterval(9), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -49)])
+        )
+        #expect(!harness.viewModel.isAwaitingFreshScan)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -49)
+        #expect(lostSnapshot(harness.viewModel) == nil)
     }
 
     @Test("lifecycle scan interval extends the loss timeout to max(8s, 2.5x)")

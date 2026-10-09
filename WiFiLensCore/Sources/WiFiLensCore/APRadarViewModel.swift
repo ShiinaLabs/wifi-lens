@@ -44,6 +44,8 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     private let audioPlayer: any APRadarAudioPlaying
     private let scheduler: any APRadarPulseScheduling
     private let userDefaults: UserDefaults
+    private let now: @Sendable () -> Date
+    private let sleep: @Sendable (Duration) async throws -> Void
 
     // MARK: - Private state
 
@@ -63,6 +65,8 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     private var lossTimeout: Duration = .seconds(8)
     private var signalProcessor = APRadarSignalProcessor()
     private var audioFailureReported = false
+    private var signalFreshnessTask: Task<Void, Never>?
+    private var signalFreshnessGeneration: UInt64 = 0
 
     // MARK: - Init
 
@@ -74,12 +78,16 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         observationRuntime: WiFiObservationRuntime,
         audioPlayer: any APRadarAudioPlaying = APRadarAudioPlayer(),
         scheduler: any APRadarPulseScheduling = APRadarPulseScheduler(),
-        userDefaults: UserDefaults = .standard
+        userDefaults: UserDefaults = .standard,
+        now: @escaping @Sendable () -> Date = { Date() },
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.observationRuntime = observationRuntime
         self.audioPlayer = audioPlayer
         self.scheduler = scheduler
         self.userDefaults = userDefaults
+        self.now = now
+        self.sleep = sleep
         if let stored = userDefaults.object(forKey: Self.soundEnabledKey) as? Bool {
             soundEnabled = stored
         } else {
@@ -213,6 +221,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     }
 
     private func stopTrackingInternal() {
+        cancelSignalFreshnessExpiry()
         stopPulseAndAudio()
         target = nil
         lastSeenAt = nil
@@ -321,7 +330,9 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     private var canPulse: Bool {
         guard isActive, !isSuspended, !isAwaitingFreshScan, soundEnabled, audioAvailable,
-              state.isTracking, signalProcessor.smoothedRSSI != nil else {
+              state.isTracking, signalProcessor.smoothedRSSI != nil,
+              let lastSeenAt,
+              now().timeIntervalSince(lastSeenAt) < Double(lossTimeout.components.seconds) else {
             return false
         }
         return true
@@ -415,6 +426,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
             self.target = updatedTarget
             lastSeenAt = timestamp
             lostAt = nil
+            scheduleSignalFreshnessExpiry(from: timestamp)
 
             state = .tracking(APRadarSnapshot(
                 target: updatedTarget,
@@ -447,6 +459,7 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     }
 
     private func invalidateLiveSignal() {
+        cancelSignalFreshnessExpiry()
         isAwaitingFreshScan = true
         latestNetworks = []
         signalProcessor.reset()
@@ -456,12 +469,47 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         }
     }
 
+    private func cancelSignalFreshnessExpiry() {
+        signalFreshnessGeneration &+= 1
+        signalFreshnessTask?.cancel()
+        signalFreshnessTask = nil
+    }
+
+    private func scheduleSignalFreshnessExpiry(from timestamp: Date) {
+        signalFreshnessGeneration &+= 1
+        let generation = signalFreshnessGeneration
+        signalFreshnessTask?.cancel()
+        let delay = lossTimeout
+        let sleep = self.sleep
+        signalFreshnessTask = Task { @MainActor [weak self] in
+            do { try await sleep(delay) } catch { return }
+            guard let self, signalFreshnessGeneration == generation,
+                  lastSeenAt == timestamp, isActive, !isSuspended, state.isTracking else { return }
+            guard expireSignalIfStale(at: now()) else {
+                scheduleSignalFreshnessExpiry(from: timestamp)
+                return
+            }
+        }
+    }
+
+    @discardableResult
+    func expireSignalIfStale(at date: Date) -> Bool {
+        guard let lastSeenAt,
+              date.timeIntervalSince(lastSeenAt) >= Double(lossTimeout.components.seconds),
+              !isAwaitingFreshScan, state.isTracking else { return false }
+        // No scan result arrived before the freshness deadline. Stop using
+        // the old RSSI without claiming that the target AP disappeared.
+        invalidateLiveSignal()
+        return true
+    }
+
     private func checkSignalLoss(at date: Date) {
         guard let target, let lastSeenAt, state.isTracking else { return }
         let timeout = Double(lossTimeout.components.seconds)
         guard date.timeIntervalSince(lastSeenAt) >= timeout else { return }
 
         stopPulseAndAudio()
+        cancelSignalFreshnessExpiry()
         lostAt = date
         state = .signalLost(APRadarLostSnapshot(
             target: target,

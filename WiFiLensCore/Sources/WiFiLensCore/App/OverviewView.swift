@@ -7,7 +7,7 @@ public struct OverviewView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(OverviewVisualStyle.storageKey) private var overviewVisualStyleRaw = OverviewVisualStyle.system.rawValue
 
-    let store: WiFiObservationStore
+    @ObservedObject var store: WiFiObservationStore
 
     @State private var stableScore = StableScore()
     @State private var displayLevel: ChannelQuality.QualityLevel = .excellent
@@ -15,7 +15,7 @@ public struct OverviewView: View {
 
     public init(viewModel: ScannerViewModel, store: WiFiObservationStore = .shared) {
         self.viewModel = viewModel
-        self.store = store
+        _store = ObservedObject(wrappedValue: store)
     }
 
     private var wifi: NetworkInterfaceInfo? {
@@ -29,7 +29,7 @@ public struct OverviewView: View {
     private var verifiedLinkState: VerifiedWiFiLinkState {
         guard let status = store.currentStatus,
               status.error == nil,
-              Date().timeIntervalSince(status.timestamp) <= 15 else { return .unknown }
+              store.validity(at: Date())?.currentStatus == .current else { return .unknown }
         return status.linkAssessment?.state ?? .unknown
     }
 

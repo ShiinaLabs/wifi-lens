@@ -12,23 +12,40 @@ public enum WiFiPowerState: Sendable, Equatable {
     case unknown
 }
 
+struct WiFiPowerSampleIdentity: Equatable, Sendable {
+    let runSessionID: UUID
+    let sequence: UInt64
+    let snapshotID: UUID
+}
+
+struct WiFiPowerMonitorEvent: Sendable {
+    let state: WiFiPowerState
+    /// Nil denotes the cached initial value, not a new radio sample.
+    let sampleIdentity: WiFiPowerSampleIdentity?
+}
+
 @MainActor
 final class WiFiPowerMonitor {
     private let center: WiFiLinkStateCenter
-    private var continuation: AsyncStream<WiFiPowerState>.Continuation?
+    private var continuation: AsyncStream<WiFiPowerMonitorEvent>.Continuation?
     private var stateTask: Task<Void, Never>?
     private var isMonitoring = false
+    private var lastAppliedSnapshotID: UUID?
+    private var isReceivingInitialSnapshot = false
+#if DEBUG
+    private(set) var debugPublishedSampleCount = 0
+#endif
     private(set) var currentState: WiFiPowerState = .unknown
 
     init(center: WiFiLinkStateCenter = .shared) {
         self.center = center
     }
 
-    var events: AsyncStream<WiFiPowerState> {
+    var events: AsyncStream<WiFiPowerMonitorEvent> {
         AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
             self.continuation?.finish()
             self.continuation = continuation
-            continuation.yield(currentState)
+            continuation.yield(WiFiPowerMonitorEvent(state: currentState, sampleIdentity: nil))
         }
     }
 
@@ -39,12 +56,19 @@ final class WiFiPowerMonitor {
     func startMonitoring() {
         guard !isMonitoring else { return }
         isMonitoring = true
+        isReceivingInitialSnapshot = true
         stateTask = Task { [weak self, center] in
             await center.start()
             let stream = await center.currentStates()
             for await snapshot in stream {
                 guard !Task.isCancelled else { break }
-                self?.apply(snapshot)
+                guard let self else { break }
+                if isReceivingInitialSnapshot {
+                    isReceivingInitialSnapshot = false
+                    apply(snapshot, countsAsEvidence: false)
+                } else {
+                    apply(snapshot)
+                }
             }
         }
     }
@@ -68,7 +92,9 @@ final class WiFiPowerMonitor {
         }
     }
 
-    private func apply(_ snapshot: WiFiLinkStateSnapshot) {
+    private func apply(_ snapshot: WiFiLinkStateSnapshot, countsAsEvidence: Bool = true) {
+        guard lastAppliedSnapshotID != snapshot.id else { return }
+        lastAppliedSnapshotID = snapshot.id
         let next: WiFiPowerState
         switch snapshot.radio {
         case .reportedOn:
@@ -86,12 +112,21 @@ final class WiFiPowerMonitor {
         }
         // Repeated equal states are still fresh evidence samples. The scanner
         // uses them to bound work while radio evidence remains unknown.
-        continuation?.yield(next)
+        let identity = WiFiPowerSampleIdentity(
+            runSessionID: snapshot.runSessionID,
+            sequence: snapshot.sequence,
+            snapshotID: snapshot.id
+        )
+        continuation?.yield(WiFiPowerMonitorEvent(state: next, sampleIdentity: countsAsEvidence ? identity : nil))
+#if DEBUG
+        if countsAsEvidence { debugPublishedSampleCount += 1 }
+#endif
     }
 }
 
 #if DEBUG
 extension WiFiPowerMonitor {
     var debugIsMonitoringForTesting: Bool { isMonitoring }
+    func debugApplySnapshotForTesting(_ snapshot: WiFiLinkStateSnapshot) { apply(snapshot) }
 }
 #endif

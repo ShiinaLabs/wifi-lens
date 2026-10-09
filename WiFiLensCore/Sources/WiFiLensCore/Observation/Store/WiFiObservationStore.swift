@@ -20,8 +20,10 @@ public struct WiFiObservationValidity: Equatable, Sendable {
 @MainActor
 public final class WiFiObservationStore: ObservableObject {
     private static let historyLimit = 120
+    public static let currentValueMaximumAge: TimeInterval = 15
     public static let shared = WiFiObservationStore()
     public init() {}
+    private var validityExpiryTask: Task<Void, Never>?
     /// The latest accepted full observation cycle. A nil field means that the
     /// value was not produced by this cycle; it never means “keep the old one.”
     @Published public private(set) var currentObservation: WiFiObservation?
@@ -42,6 +44,17 @@ public final class WiFiObservationStore: ObservableObject {
     @Published public var isScanningEnvironment = false
     @Published public var lastUpdated: Date?
     @Published public var errors: [WiFiObservationError] = []
+    private var scanLifecycleStartedAt: Date?
+
+    func beginScanLifecycle(at date: Date) {
+        scanLifecycleStartedAt = date
+        isScanningEnvironment = true
+    }
+
+    func endScanLifecycle() {
+        isScanningEnvironment = false
+        scanLifecycleStartedAt = nil
+    }
 
     public func apply(_ observation: WiFiObservation) {
         history.append(observation)
@@ -68,14 +81,52 @@ public final class WiFiObservationStore: ObservableObject {
         diagnosis = observation.diagnosis
         lastUpdated = observation.timestamp
         validity = Self.validity(for: observation)
+        validityExpiryTask?.cancel()
+        let observationTimestamp = observation.timestamp
+        let observationCycleID = observation.sourceCycleID
+        validityExpiryTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: .seconds(Self.currentValueMaximumAge)) } catch { return }
+            guard let self, currentObservation?.timestamp == observationTimestamp,
+                  currentObservation?.sourceCycleID == observationCycleID else { return }
+            expireCurrentValuesIfNeeded(at: Date())
+        }
     }
 
     /// Returns per-domain freshness at read time. Historical values stay in
     /// `history`; after the age limit, a current value is explicitly expired.
     public func validity(at date: Date = Date(), maximumAge: TimeInterval = 15) -> WiFiObservationValidity? {
         guard let validity, let currentObservation else { return validity }
-        guard date.timeIntervalSince(currentObservation.timestamp) > maximumAge else { return validity }
-        return WiFiObservationValidity(
+        var result = date.timeIntervalSince(currentObservation.timestamp) > maximumAge
+            ? expired(validity)
+            : validity
+        guard isScanningEnvironment,
+              let scanLifecycleStartedAt,
+              currentObservation.timestamp >= scanLifecycleStartedAt else {
+            result = WiFiObservationValidity(
+                currentStatus: result.currentStatus,
+                gatewayLatency: result.gatewayLatency == .current ? .expired : result.gatewayLatency,
+                environment: result.environment == .current ? .expired : result.environment,
+                channelAnalysis: result.channelAnalysis == .current ? .expired : result.channelAnalysis,
+                channelRecommendation: result.channelRecommendation == .current ? .expired : result.channelRecommendation,
+                quality: result.quality == .current ? .expired : result.quality,
+                diagnosis: result.diagnosis == .current ? .expired : result.diagnosis
+            )
+            return result
+        }
+        return result
+    }
+
+    /// Publishes expiry once so SwiftUI consumers re-render even when no later
+    /// observation arrives. Historical observations remain untouched.
+    func expireCurrentValuesIfNeeded(at date: Date) {
+        guard let currentValidity = validity,
+              let currentObservation,
+              date.timeIntervalSince(currentObservation.timestamp) > Self.currentValueMaximumAge else { return }
+        validity = expired(currentValidity)
+    }
+
+    private func expired(_ validity: WiFiObservationValidity) -> WiFiObservationValidity {
+        WiFiObservationValidity(
             currentStatus: validity.currentStatus == .current ? .expired : validity.currentStatus,
             gatewayLatency: validity.gatewayLatency == .current ? .expired : validity.gatewayLatency,
             environment: validity.environment == .current ? .expired : validity.environment,

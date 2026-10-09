@@ -104,9 +104,10 @@ false` stays `unknown`. Scanner startup permits one authorized probe while the
 evidence is unknown. One or two consecutive unknown samples do not stop an
 active scan. Three consecutive unknown samples pause frequent scanning and
 schedule a probe after 30 seconds; a reported-on sample resumes scanning
-immediately. Repeated snapshots are delivered to the compatibility subscriber
-so this policy can distinguish a transient read failure from persistent
-ambiguity. An access-point loss while the radio remains on does not stop
+immediately. The compatibility stream carries the center snapshot ID. Its
+cached initial value has no sample ID, and repeated delivery of a snapshot is
+ignored, so window activation or a simultaneous refresh cannot inflate the
+unknown count. An access-point loss while the radio remains on does not stop
 spectral scanning and does not change the verified link state by itself.
 
 The scanner treats a missing CoreWLAN interface as an explicit
@@ -137,6 +138,14 @@ not used as a current value. Late observations are retained in history but
 cannot replace a newer current projection. RSSI/network history remains in its
 existing history store.
 
+Current validity expires after 15 seconds. The store publishes the expiry at
+that boundary so views update even when no later observation arrives. Scan
+derived validity is also scoped to the active scan lifecycle; a prior cycle
+cannot become current merely because a new scan starts. MCP network data is
+current only while scanning is active and the latest complete environment
+result is successful and within the same age bound; stopped, failed, or expired
+scans return no current network list while full-cycle history remains available.
+
 The scanner's current network list and channel results clear on a failed scan;
 signal-history queries remain available. Gateway probing, environment analysis,
 quality, and diagnosis are not produced from a failed environment scan. A fresh
@@ -146,7 +155,11 @@ SSID/BSSID are display identity only, and interface type comes from explicit
 interface discovery. AP Radar changes target presence only after a successful
 environment scan. On failure or scan lifecycle pause it stops pulse/audio,
 invalidates the live RSSI display, and waits for a new successful sample before
-tracking resumes. A failed scan never means the tracked AP disappeared.
+tracking resumes. A failed scan never means the tracked AP disappeared. A
+one-shot freshness deadline also invalidates RSSI when the scan source stalls
+without reporting success or failure; this suppresses stale audio and display
+values but does not report the target as lost. A fresh successful sample is
+required to resume tracking.
 
 Window or app-focus activation only requests a new center sample. It does not
 reset continuity or increment `linkEpoch`; actual sleep/wake and interface
