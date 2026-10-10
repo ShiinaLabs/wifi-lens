@@ -309,13 +309,54 @@ struct PipelineTests {
         #expect(store.channelAnalysis == nil)
         #expect(store.channelRecommendation == nil)
         #expect(store.diagnosis == nil)
-        #expect(store.history.count == 3)
+        #expect(store.history.count == 2)
+        #expect(store.history.map(\.sourceObservationID) == [first.sourceObservationID, second.sourceObservationID])
         #expect(store.validity?.environment == .failed)
         #expect(store.validity?.channelRecommendation == .failed)
         #expect(store.validity(at: t2.addingTimeInterval(20))?.currentStatus == .expired)
         store.expireCurrentValuesIfNeeded(at: t2.addingTimeInterval(20))
         #expect(store.validity?.currentStatus == .expired)
-        #expect(store.history.count == 3)
+        #expect(store.history.count == 2)
+    }
+
+    @Test("source identity is stable for copies and unique for equal timestamps")
+    func sourceObservationIdentity() async {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_250)
+        let pipeline = makeCyclePipeline()
+        let context = cycleContext(timestamp: timestamp)
+        let first = await pipeline.produceCycle(networks: [], context: context).observation
+        let copy = first
+        let second = await pipeline.produceCycle(networks: [], context: context).observation
+
+        #expect(copy.sourceObservationID == first.sourceObservationID)
+        #expect(second.timestamp == first.timestamp)
+        #expect(second.sourceCycleID == first.sourceCycleID)
+        #expect(second.sourceObservationID != first.sourceObservationID)
+        #expect(second != first)
+        #expect(first.hasSameContent(as: second))
+    }
+
+    @Test("Store rejects changed payload under an existing source identity")
+    @MainActor
+    func storeRejectsSourceIdentityConflict() {
+        let store = WiFiObservationStore()
+        let identity = UUID()
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_260)
+        let original = WiFiObservation(
+            sourceObservationID: identity,
+            timestamp: timestamp,
+            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Home", isConnected: false, isWiFiPowerOn: true)
+        )
+        let conflict = WiFiObservation(
+            sourceObservationID: identity,
+            timestamp: timestamp,
+            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Office", isConnected: false, isWiFiPowerOn: true)
+        )
+
+        #expect(store.apply(original))
+        #expect(!store.apply(conflict))
+        #expect(store.history == [original])
+        #expect(store.sourceIdentityConflictCount == 1)
     }
 
     private func makeCyclePipeline(

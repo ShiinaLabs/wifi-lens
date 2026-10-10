@@ -95,6 +95,10 @@ The existing `NetworkInterfaceSnapshot` full scan remains unchanged in shape.
 Its Wi-Fi link fields now use the same field capture helper as the lightweight
 collector, while lightweight sampling avoids DNS, gateway, and full interface
 enumeration. Both retain their caller-provided cycle ID and capture timestamp.
+Consumers that need a current connection status, including the roaming probe,
+project this snapshot through `WiFiCurrentConnectionProvider` and the shared
+`WiFiLinkInterpreter`. SSID and BSSID remain identity attributes and cannot
+establish association on their own.
 
 ## Scan execution readiness
 
@@ -122,13 +126,22 @@ authorization remains controlled by the existing authorization manager.
 
 ## Observation validity and consumer behavior
 
-Each complete observation cycle carries its interface snapshot `sourceCycleID`
-and capture timestamp. The scan outcome is explicit on its environment
+Each immutable `WiFiObservation` has one `sourceObservationID`, generated once
+when it is constructed. Value copies, accepted Store history, and all Runtime
+consumer deliveries preserve that identity. Distinct observations remain
+distinct even when timestamps and cycle IDs happen to match. `sourceCycleID`
+continues to identify the paired interface snapshot; it is not the observation
+identity. Link-evidence and gateway-probe cycle IDs retain their own evidence
+boundaries. The scan outcome is explicit on its environment
 snapshot: `error == nil` means the network list is a successful result (including
 a valid empty list); an error means the list cannot be used to infer presence or
 absence. A scan failure can still carry a separately captured current link
 assessment. It does not turn that assessment into a disconnect or radio-off
 fact.
+
+Runtime suppresses exact replay for a retained source identity and rejects
+changed content that reuses that identity before the Store or consumers receive
+it. Timeline event IDs remain independent from source observation IDs.
 
 `WiFiObservationStore.apply` replaces every current projection on each accepted
 cycle, including clearing values the cycle did not measure. Per-domain

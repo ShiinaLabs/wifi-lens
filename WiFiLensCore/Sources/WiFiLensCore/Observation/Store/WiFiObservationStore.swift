@@ -29,6 +29,7 @@ public final class WiFiObservationStore: ObservableObject {
     @Published public private(set) var currentObservation: WiFiObservation?
     /// Bounded history retains prior complete cycles without presenting them as current.
     @Published public private(set) var history: [WiFiObservation] = []
+    private(set) var sourceIdentityConflictCount = 0
     @Published public private(set) var validity: WiFiObservationValidity?
     @Published public var currentStatus: WiFiCurrentStatus?
     @Published public var gatewayLatency: GatewayLatencyResult?
@@ -56,7 +57,15 @@ public final class WiFiObservationStore: ObservableObject {
         scanLifecycleStartedAt = nil
     }
 
-    public func apply(_ observation: WiFiObservation) {
+    @discardableResult
+    public func apply(_ observation: WiFiObservation) -> Bool {
+        if let existing = history.first(where: { $0.sourceObservationID == observation.sourceObservationID }) {
+            guard existing.hasSameContent(as: observation) else {
+                sourceIdentityConflictCount &+= 1
+                return false
+            }
+            return false
+        }
         history.append(observation)
         history.sort { $0.timestamp < $1.timestamp }
         if history.count > Self.historyLimit { history.removeFirst(history.count - Self.historyLimit) }
@@ -69,7 +78,7 @@ public final class WiFiObservationStore: ObservableObject {
 
         // Late completions remain queryable in history, but cannot replace a
         // newer current projection or make its validity appear fresh again.
-        guard currentObservation.map({ observation.timestamp > $0.timestamp }) ?? true else { return }
+        guard currentObservation.map({ observation.timestamp > $0.timestamp }) ?? true else { return true }
 
         currentObservation = observation
         currentStatus = observation.currentStatus
@@ -90,6 +99,7 @@ public final class WiFiObservationStore: ObservableObject {
                   currentObservation?.sourceCycleID == observationCycleID else { return }
             expireCurrentValuesIfNeeded(at: Date())
         }
+        return true
     }
 
     /// Returns per-domain freshness at read time. Historical values stay in

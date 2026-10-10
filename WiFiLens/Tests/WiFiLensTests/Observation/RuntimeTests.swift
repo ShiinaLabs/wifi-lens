@@ -38,6 +38,59 @@ struct RuntimeTests {
         #expect(consumer.observations == [first, second])
     }
 
+    @Test("runtime fan-out preserves one identity and suppresses exact replay")
+    func fanOutPreservesSourceIdentity() async {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_300)
+        let store = WiFiObservationStore()
+        let firstConsumer = CapturingObservationConsumer()
+        let secondConsumer = CapturingObservationConsumer()
+        let runtime = WiFiObservationRuntime(store: store)
+        runtime.addConsumer(firstConsumer)
+        runtime.addConsumer(secondConsumer)
+        let first = WiFiObservation(timestamp: timestamp)
+        let distinctSameTime = WiFiObservation(timestamp: timestamp)
+
+        #expect(first.sourceObservationID != distinctSameTime.sourceObservationID)
+        #expect(await runtime.accept(first))
+        #expect(!(await runtime.accept(first)))
+        #expect(await runtime.accept(distinctSameTime))
+        await runtime.drainConsumers()
+
+        #expect(firstConsumer.observations.map(\.sourceObservationID) == [
+            first.sourceObservationID, distinctSameTime.sourceObservationID,
+        ])
+        #expect(secondConsumer.observations.map(\.sourceObservationID) == firstConsumer.observations.map(\.sourceObservationID))
+        #expect(store.history.map(\.sourceObservationID) == firstConsumer.observations.map(\.sourceObservationID))
+    }
+
+    @Test("runtime rejects changed content that reuses an accepted source identity")
+    func conflictingSourceIdentityIsRejected() async {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_310)
+        let identity = UUID()
+        let store = WiFiObservationStore()
+        let consumer = CapturingObservationConsumer()
+        let runtime = WiFiObservationRuntime(store: store)
+        runtime.addConsumer(consumer)
+        let original = WiFiObservation(
+            sourceObservationID: identity,
+            timestamp: timestamp,
+            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Home", isConnected: false, isWiFiPowerOn: true)
+        )
+        let changed = WiFiObservation(
+            sourceObservationID: identity,
+            timestamp: timestamp,
+            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Office", isConnected: false, isWiFiPowerOn: true)
+        )
+
+        #expect(await runtime.accept(original))
+        #expect(!(await runtime.accept(changed)))
+        await runtime.drainConsumers()
+
+        #expect(store.history == [original])
+        #expect(consumer.observations == [original])
+        #expect(runtime.sourceIdentityConflictCount == 1)
+    }
+
     @Test("a suspended consumer does not delay store publication")
     func storeIsImmediate() async {
         let store = WiFiObservationStore()
@@ -194,6 +247,8 @@ struct RuntimeTests {
             .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(3)),
             .stopped(date: Date(timeIntervalSince1970: 20)),
         ])
+        #expect(runtime.store.history.isEmpty)
+        #expect(runtime.store.currentObservation == nil)
     }
 
     @Test("all consumers receive one shared lifecycle timestamp")

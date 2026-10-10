@@ -129,6 +129,67 @@ struct ProviderTests {
         #expect(status.isConnected)
     }
 
+    @Test("RoamingProbeProvider does not treat a readable SSID as association evidence")
+    func roamingProbeUsesVerifiedLinkEvidence() async {
+        let capturedAt = Date(timeIntervalSince1970: 1_750_000_355)
+        let source = FixedNetworkInterfaceSnapshotSource { cycleID in
+            let evidence = WiFiLinkRawEvidence(
+                snapshotCycleID: cycleID,
+                capturedAt: capturedAt,
+                interfaceName: "en0",
+                mode: .noneOrReadFailure,
+                radio: .reportedOn,
+                linkActive: false
+            )
+            return NetworkInterfaceSnapshot(
+                cycleID: cycleID,
+                capturedAt: capturedAt,
+                interfaces: [NetworkInterfaceInfo(
+                    interfaceName: "en0",
+                    isWiFiInterface: true,
+                    wifiLinkEvidence: evidence,
+                    ssid: "Visible but unverified"
+                )]
+            )
+        }
+
+        let status = await RoamingProbeProvider(snapshotSource: source).fetchCurrentProbe()
+
+        #expect(status.ssid == "Visible but unverified")
+        #expect(status.linkAssessment?.state == .unknown)
+        #expect(!status.isConnected)
+    }
+
+    @Test("RoamingProbeProvider accepts station evidence when SSID is unavailable")
+    func roamingProbeDoesNotRequireSSID() async {
+        let capturedAt = Date(timeIntervalSince1970: 1_750_000_356)
+        let source = FixedNetworkInterfaceSnapshotSource { cycleID in
+            let evidence = WiFiLinkRawEvidence(
+                snapshotCycleID: cycleID,
+                capturedAt: capturedAt,
+                interfaceName: "en0",
+                mode: .station,
+                radio: .reportedOn,
+                linkActive: true
+            )
+            return NetworkInterfaceSnapshot(
+                cycleID: cycleID,
+                capturedAt: capturedAt,
+                interfaces: [NetworkInterfaceInfo(
+                    interfaceName: "en0",
+                    isWiFiInterface: true,
+                    wifiLinkEvidence: evidence
+                )]
+            )
+        }
+
+        let status = await RoamingProbeProvider(snapshotSource: source).fetchCurrentProbe()
+
+        #expect(status.ssid == nil)
+        #expect(status.linkAssessment?.state == .associated)
+        #expect(status.isConnected)
+    }
+
     @Test("ambiguous mode and radio values remain unknown")
     func ambiguousLinkEvidenceStaysUnknown() async {
         let cycleID = UUID()
@@ -368,6 +429,14 @@ struct ProviderTests {
 
         #expect(result.latencyMs == nil)
         #expect(result.error == .gatewayPingFailed("192.0.2.1"))
+    }
+}
+
+private struct FixedNetworkInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcing {
+    let makeSnapshot: @Sendable (UUID) -> NetworkInterfaceSnapshot
+
+    func capture(cycleID: UUID) async -> NetworkInterfaceSnapshot {
+        makeSnapshot(cycleID)
     }
 }
 
