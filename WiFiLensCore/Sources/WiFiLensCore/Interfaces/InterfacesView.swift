@@ -526,7 +526,14 @@ public struct InterfacesView: View {
         ScrollView {
             VStack(spacing: 16) {
                 ForEach(interfaces, id: \.interfaceName) { iface in
-                    InterfaceCard(info: iface)
+                    InterfaceCard(
+                        info: iface,
+                        currentWiFiStatus: InterfaceWiFiStatusResolver.resolve(
+                            interface: iface,
+                            observation: store.currentObservation,
+                            currentStatusValidity: store.validity(at: Date())?.currentStatus
+                        )
+                    )
                 }
             }
             .padding(16)
@@ -690,6 +697,31 @@ public struct InterfacesView: View {
 
 private struct InterfaceCard: View {
     let info: NetworkInterfaceInfo
+    let currentWiFiStatus: WiFiCurrentStatus?
+
+    private var verifiedMetrics: WiFiCurrentStatus? {
+        InterfaceWiFiStatusResolver.verifiedMetrics(for: currentWiFiStatus)
+    }
+
+    private var displaySSID: String {
+        currentWiFiStatus?.ssid.flatMap { $0.isEmpty ? nil : $0 } ?? info.interfaceName
+    }
+
+    private var displayRSSI: String {
+        verifiedMetrics?.rssi.map { "\($0) dBm" } ?? "—"
+    }
+
+    private var displayChannel: String {
+        verifiedMetrics?.channel.map {
+            String(format: String(localized: "interfaces.field.channel_fmt", comment: "Formatted channel label with number"), String($0))
+        } ?? "—"
+    }
+
+    private var displayPHY: String { verifiedMetrics?.phyMode ?? "—" }
+    private var displayTxRate: String { verifiedMetrics?.txRate.map { "\(Int($0)) Mbps" } ?? "—" }
+    private var displaySecurity: String { verifiedMetrics?.security ?? "—" }
+
+    private var currentBSSID: String? { currentWiFiStatus?.bssid }
 
     /// A compact row that only renders if a value is meaningful.
     private func compactRow(label: String, value: String) -> some View {
@@ -746,16 +778,16 @@ private struct InterfaceCard: View {
             // Header
             HStack(spacing: 6) {
                 typeBadge(t)
-                Text(t == .wifi ? (info.ssid ?? info.interfaceName) : info.interfaceName)
+                Text(t == .wifi ? displaySSID : info.interfaceName)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
-                if t == .wifi, !info.displayRSSI.isEmpty, info.displayRSSI != "—" {
-                    Text(info.displayRSSI)
+                if t == .wifi, let rssi = verifiedMetrics?.rssi {
+                    Text(displayRSSI)
                         .font(.caption.monospacedDigit())
-                        .foregroundColor(rssiColor(info.rssi ?? -100))
+                        .foregroundColor(rssiColor(rssi))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .background(rssiColor(info.rssi ?? -100).opacity(0.1))
+                        .background(rssiColor(rssi).opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 3))
                 }
                 Spacer()
@@ -773,11 +805,11 @@ private struct InterfaceCard: View {
             // Body — two‑column compact rows
             VStack(spacing: 2) {
                 if t == .wifi {
-                    compactRow(label: String(localized: "interfaces.field.bssid", comment: "BSSID field label"), value: info.displayBSSID)
-                    compactRow(label: String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), value: info.displayChannel)
-                    compactRow(label: String(localized: "interfaces.field.phy", comment: "PHY mode field label (short)"), value: info.displayPhyMode)
-                    compactRow(label: String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), value: info.displayTxRate)
-                    labelRow(label: String(localized: "overview.health.security_label", comment: "Security health indicator label"), value: info.displaySecurity)
+                    compactRow(label: String(localized: "interfaces.field.bssid", comment: "BSSID field label"), value: currentBSSID ?? "—")
+                    compactRow(label: String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), value: displayChannel)
+                    compactRow(label: String(localized: "interfaces.field.phy", comment: "PHY mode field label (short)"), value: displayPHY)
+                    compactRow(label: String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), value: displayTxRate)
+                    labelRow(label: String(localized: "overview.health.security_label", comment: "Security health indicator label"), value: displaySecurity)
                 }
 
                 // Network section — shown for Wi‑Fi and any interface that has network data
@@ -809,6 +841,35 @@ private struct InterfaceCard: View {
         return .red
     }
 
+}
+
+enum InterfaceWiFiStatusResolver {
+    static func verifiedMetrics(for status: WiFiCurrentStatus?) -> WiFiCurrentStatus? {
+        guard status?.metricsAttribution == .verified else { return nil }
+        return status
+    }
+
+    static func resolve(
+        interface: NetworkInterfaceInfo,
+        observation: WiFiObservation?,
+        currentStatusValidity: WiFiObservationFieldValidity?
+    ) -> WiFiCurrentStatus? {
+        guard interface.isWiFiInterface,
+              currentStatusValidity == .current,
+              let observation,
+              let status = observation.currentStatus,
+              status.error == nil,
+              status.interfaceSnapshotCycleID == observation.sourceCycleID,
+              status.interfaceName == interface.interfaceName,
+              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else { return nil }
+
+        if let interfaceIndex = interface.interfaceIndex, interfaceIndex != 0,
+           let statusIndex = status.interfaceIndex, statusIndex != 0,
+           interfaceIndex != statusIndex {
+            return nil
+        }
+        return status
+    }
 }
 
 private func latencyColor(_ ms: Double) -> Color {

@@ -18,25 +18,10 @@ public struct OverviewView: View {
         _store = ObservedObject(wrappedValue: store)
     }
 
-    private var wifi: NetworkInterfaceInfo? {
-        guard let status = store.currentStatus,
-              store.validity(at: Date())?.currentStatus == .current,
-              status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
-              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
-              let interfaceName = status.interfaceName,
-              let source = viewModel.networkInfo.first(where: {
-                  $0.isWiFiInterface && $0.interfaceName == interfaceName &&
-                  ($0.interfaceIndex == nil || status.interfaceIndex == nil || $0.interfaceIndex == status.interfaceIndex)
-              }) else { return nil }
-        return NetworkInterfaceInfo(
-            interfaceName: source.interfaceName, interfaceIndex: source.interfaceIndex,
-            hardwareMAC: source.hardwareMAC, isWiFiInterface: true,
-            wifiLinkEvidence: status.linkEvidence, metricsAttribution: status.metricsAttribution,
-            ipv4Addresses: source.ipv4Addresses, subnetMasks: source.subnetMasks,
-            router: source.router, dnsServers: source.dnsServers,
-            ssid: status.ssid, bssid: status.bssid, channel: status.channel,
-            band: status.band, rssi: status.rssi, txRate: status.txRate,
-            phyMode: status.phyMode, security: status.security ?? "—"
+    private var verifiedWiFiStatus: WiFiCurrentStatus? {
+        OverviewWiFiDataResolver.currentStatus(
+            observation: store.currentObservation,
+            validity: store.validity(at: Date())
         )
     }
 
@@ -48,7 +33,8 @@ public struct OverviewView: View {
     }
 
     private var currentChannelQuality: ChannelRecommendation? {
-        guard wifi?.channel != nil else { return nil }
+        guard verifiedWiFiStatus?.metricsAttribution == .verified,
+              verifiedWiFiStatus?.channel != nil else { return nil }
         return currentChannelRecommendations.first(where: { $0.isCurrentChannel })
     }
 
@@ -61,8 +47,10 @@ public struct OverviewView: View {
     }
 
     private var currentChannelRecommendations: [ChannelRecommendation] {
-        guard store.validity(at: Date())?.channelRecommendation == .current else { return [] }
-        return viewModel.channelRecommendations
+        OverviewWiFiDataResolver.currentChannelRecommendations(
+            observation: store.currentObservation,
+            validity: store.validity(at: Date())
+        )
     }
 
     private var currentEnvironmentIsFresh: Bool {
@@ -108,7 +96,7 @@ public struct OverviewView: View {
                             // The globe remains the hero visual. The reduced-motion
                             // map is a quiet background layer behind the connection card.
                             if overviewVisualStyle == .globe {
-                                let stateColor = wifi != nil ? rssiColor(wifi!.rssi ?? -100) : Color.secondary
+                                let stateColor = verifiedWiFiStatus?.rssi.map(rssiColor) ?? .secondary
                                 EarthGlobeView(color: stateColor, reduceMotion: reduceMotion)
                                     .frame(width: 240, height: 240)
                                     .accessibilityHidden(true)
@@ -126,11 +114,11 @@ public struct OverviewView: View {
                                 wifiOffCard
                             } else if !viewModel.isWiFiAvailable {
                                 unknownConnectionCard
-                            } else if let wifi {
-                                connectionCard(wifi)
-                                signalHealthRow(wifi)
+                            } else if let status = verifiedWiFiStatus {
+                                connectionCard(status)
+                                signalHealthRow(status)
                                 if recommendationAvailability != .currentGoodEnough {
-                                    diagnosticCard(wifi)
+                                    diagnosticCard
                                 }
                                 if let current = currentChannelQuality, hasBetterChannel(current) {
                                     channelAdviceCard(current)
@@ -164,11 +152,14 @@ public struct OverviewView: View {
 
     // MARK: - Connection Hero
 
-    private func connectionCard(_ wifi: NetworkInterfaceInfo) -> some View {
-        VStack(spacing: 12) {
+    private func connectionCard(_ status: WiFiCurrentStatus) -> some View {
+        let displaySSID = status.ssid.flatMap { $0.isEmpty ? nil : $0 }
+            ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")
+        let metrics = status.metricsAttribution == .verified ? status : nil
+        return VStack(spacing: 12) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(wifi.displaySSID)
+                    Text(displaySSID)
                         .font(.title3)
                         .fontWeight(.semibold)
                         // Long SSIDs are a single unbreakable token; without a line
@@ -176,14 +167,14 @@ public struct OverviewView: View {
                         // minimum window size. Truncate instead of overflowing.
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .help(wifi.displaySSID)
+                        .help(displaySSID)
                     HStack(spacing: 6) {
                         Circle().fill(Color.green).frame(width: 6, height: 6).accessibilityHidden(true)
                         Text(String(localized: "common.label.connected", comment: "Connected state indicator"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
-                        if let ch = wifi.channel {
+                        if let ch = metrics?.channel {
                             Text(String(format: String(localized: "format.band_channel_separator", comment: "Band and channel separator with values"), bandName(ch), ch))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -194,10 +185,10 @@ public struct OverviewView: View {
                 Spacer(minLength: 12)
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(wifi.rssi.map { String(format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"), $0) } ?? "—")
+                    Text(metrics?.rssi.map { String(format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"), $0) } ?? "—")
                         .font(.caption.monospacedDigit())
-                        .foregroundColor(wifi.rssi.map(rssiColor) ?? .secondary)
-                    if let rssi = wifi.rssi { signalBars(rssi) }
+                        .foregroundColor(metrics?.rssi.map(rssiColor) ?? .secondary)
+                    if let rssi = metrics?.rssi { signalBars(rssi) }
                 }
                 // Keep the RSSI cluster intact at its intrinsic width when the SSID
                 // compresses; all squeezing happens on the truncatable left side.
@@ -207,7 +198,7 @@ public struct OverviewView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(height: 6)
-                    if let rssi = wifi.rssi {
+                    if let rssi = metrics?.rssi {
                         RoundedRectangle(cornerRadius: 3)
                             .fill(rssiColor(rssi))
                             .frame(width: geo.size.width * rssiFraction(rssi), height: 6)
@@ -222,13 +213,16 @@ public struct OverviewView: View {
 
     // MARK: - Signal Health Row
 
-    private func signalHealthRow(_ wifi: NetworkInterfaceInfo) -> some View {
-        HStack(spacing: 10) {
+    private func signalHealthRow(_ status: WiFiCurrentStatus) -> some View {
+        let metricsVerified = status.metricsAttribution == .verified
+        let rssi = metricsVerified ? status.rssi : nil
+        let security = metricsVerified ? status.security : nil
+        return HStack(spacing: 10) {
             healthPill(
                 icon: "wave.3.right",
                 label: String(localized: "overview.health.signal_label", comment: "Signal strength health indicator label"),
-                value: wifi.rssi.map(signalLabel) ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
-                color: wifi.rssi.map(rssiColor) ?? .secondary
+                value: rssi.map(signalLabel) ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
+                color: rssi.map(rssiColor) ?? .secondary
             )
 
             if currentChannelQuality != nil {
@@ -243,8 +237,8 @@ public struct OverviewView: View {
             healthPill(
                 icon: "lock.shield.fill",
                 label: String(localized: "overview.health.security_label", comment: "Security health indicator label"),
-                value: wifi.security == "—" ? String(localized: "common.label.unknown", comment: "Generic unknown value label") : securityShort(wifi.security),
-                color: wifi.security == "—" ? .secondary : (wifi.security.contains("WPA3") ? .green : .orange)
+                value: security.map(securityShort) ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
+                color: security.map { $0.contains("WPA3") ? .green : .orange } ?? .secondary
             )
         }
     }
@@ -272,7 +266,7 @@ public struct OverviewView: View {
 
     // MARK: - Diagnostic Card
 
-    private func diagnosticCard(_ wifi: NetworkInterfaceInfo) -> some View {
+    private var diagnosticCard: some View {
         let diag = store.validity(at: Date())?.diagnosis == .current
             ? (store.diagnosis ?? DiagnosticResult.unknown)
             : DiagnosticResult.unknown
@@ -500,6 +494,33 @@ public struct OverviewView: View {
         if sec.contains("WPA") { return "WPA" }
         if sec == "—" || sec == String(localized: "common.label.none", comment: "Generic none/empty value label") { return String(localized: "wifi.security.open", comment: "Open/no password security type") }
         return sec
+    }
+}
+
+enum OverviewWiFiDataResolver {
+    static func currentStatus(
+        observation: WiFiObservation?,
+        validity: WiFiObservationValidity?
+    ) -> WiFiCurrentStatus? {
+        guard let observation,
+              validity?.currentStatus == .current,
+              let status = observation.currentStatus,
+              status.error == nil,
+              status.interfaceSnapshotCycleID == observation.sourceCycleID,
+              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else { return nil }
+        return status
+    }
+
+    static func currentChannelRecommendations(
+        observation: WiFiObservation?,
+        validity: WiFiObservationValidity?
+    ) -> [ChannelRecommendation] {
+        guard let observation,
+              validity?.channelRecommendation == .current,
+              let status = currentStatus(observation: observation, validity: validity),
+              status.metricsAttribution == .verified,
+              status.channel != nil else { return [] }
+        return observation.channelRecommendation ?? []
     }
 }
 

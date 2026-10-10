@@ -38,6 +38,14 @@ struct RoamingSampleTests {
         #expect(decoded.gatewayLatency == original.gatewayLatency)
         #expect(decoded.timestamp == original.timestamp)
     }
+
+    @Test func missingMetricsRemainNilAfterCodableRoundTrip() throws {
+        let original = RoamingSample(timestamp: Date(), rssi: nil, channel: nil, txRate: nil)
+        let decoded = try JSONDecoder().decode(RoamingSample.self, from: JSONEncoder().encode(original))
+        #expect(decoded.rssi == nil)
+        #expect(decoded.channel == nil)
+        #expect(decoded.txRate == nil)
+    }
 }
 
 // MARK: - RoamingSegment
@@ -71,6 +79,30 @@ struct RoamingSegmentTests {
         let (min, max) = segment.rssiRange
         #expect(min == -100)
         #expect(max == -30)
+    }
+
+    @Test func missingRSSISamplesSplitRunsAndDoNotAffectMeasuredRange() {
+        let start = Date(timeIntervalSince1970: 100)
+        let segment = RoamingSegment(bssid: "AP", startTime: start, samples: [
+            RoamingSample(timestamp: start, rssi: -50, channel: 36, txRate: 100),
+            RoamingSample(timestamp: start.addingTimeInterval(1), rssi: nil, channel: nil, txRate: nil),
+            RoamingSample(timestamp: start.addingTimeInterval(2), rssi: -70, channel: 44, txRate: 200),
+            RoamingSample(timestamp: start.addingTimeInterval(3), rssi: nil, channel: nil, txRate: nil),
+        ])
+
+        #expect(segment.rssiRuns.map { $0.compactMap(\.rssi) } == [[-50], [-70]])
+        #expect(segment.rssiRange.min == -70)
+        #expect(segment.rssiRange.max == -50)
+    }
+
+    @Test func allMissingRSSIRangeUsesOnlyTheChartAxisFallback() {
+        let now = Date()
+        let segment = RoamingSegment(bssid: "AP", startTime: now, samples: [
+            RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil),
+        ])
+        #expect(segment.rssiRuns.isEmpty)
+        #expect(segment.rssiRange.min == -100)
+        #expect(segment.rssiRange.max == -30)
     }
 
     @Test func durationWithoutEndTimeUsesLastSample() {
@@ -184,7 +216,7 @@ struct RoamingSessionRecordTests {
     @Test func codableRoundTrip() throws {
         let now = Date()
         let original = RoamingSessionRecord(
-            version: 1,
+            version: RoamingSessionRecord.currentVersion,
             savedAt: now,
             ssid: "CorpWiFi",
             bssid: "aa:bb:cc:dd:ee:ff",
@@ -205,6 +237,159 @@ struct RoamingSessionRecordTests {
         #expect(decoded.ssid == original.ssid)
         #expect(decoded.segments.count == 1)
         #expect(decoded.transitions.count == 1)
-        #expect(decoded.version == RoamingSessionRecord.currentVersion)
+        #expect(decoded.version == 2)
     }
+
+    @Test func versionOneJSONWithRequiredNumericMetricsStillDecodes() throws {
+        let json = #"{"version":1,"savedAt":0,"ssid":"Legacy","bssid":"AP-1","phyMode":"ax","channel":36,"duration":5,"segments":[{"bssid":"AP-1","startTime":0,"samples":[{"timestamp":0,"rssi":-60,"channel":36,"txRate":400}]}],"transitions":[{"timestamp":1,"fromBSSID":"AP-1","toBSSID":"AP-2","rssiBefore":-60,"rssiAfter":-50,"channelBefore":36,"channelAfter":44}]}"#
+        let record = try JSONDecoder().decode(RoamingSessionRecord.self, from: Data(json.utf8))
+        #expect(record.version == 1)
+        #expect(record.channel == 36)
+        #expect(record.segments[0].samples[0].rssi == -60)
+        #expect(record.transitions[0].channelAfter == 44)
+    }
+
+    @Test func versionTwoJSONPreservesMissingMetrics() throws {
+        let now = Date(timeIntervalSince1970: 100)
+        let record = RoamingSessionRecord(
+            version: 2, savedAt: now, ssid: "Current", bssid: "AP-2", phyMode: nil,
+            channel: nil, duration: 2,
+            segments: [RoamingSegment(bssid: "AP-2", startTime: now, samples: [
+                RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil),
+            ])],
+            transitions: [APTransitionEvent(
+                timestamp: now, fromBSSID: "AP-1", toBSSID: "AP-2",
+                rssiBefore: -60, rssiAfter: nil, channelBefore: 36, channelAfter: nil
+            )]
+        )
+        let data = try JSONEncoder().encode(record)
+        let decoded = try JSONDecoder().decode(RoamingSessionRecord.self, from: data)
+        #expect(decoded.version == 2)
+        #expect(decoded.channel == nil)
+        #expect(decoded.segments[0].samples[0].rssi == nil)
+        #expect(decoded.segments[0].samples[0].channel == nil)
+        #expect(decoded.segments[0].samples[0].txRate == nil)
+        #expect(decoded.transitions[0].rssiBefore == -60)
+        #expect(decoded.transitions[0].rssiAfter == nil)
+        #expect(decoded.transitions[0].channelAfter == nil)
+    }
+}
+
+struct CurrentWiFiViewDataResolverTests {
+    @Test func interfaceDetailsRequireCurrentAssociationAndUseOnlyVerifiedMetrics() {
+        let status = resolverStatus(metricsAttribution: .verified)
+        let observation = resolverObservation(status: status)
+        let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
+
+        let resolved = InterfaceWiFiStatusResolver.resolve(
+            interface: wifi, observation: observation, currentStatusValidity: .current
+        )
+        #expect(resolved?.rssi == -55)
+        #expect(InterfaceWiFiStatusResolver.verifiedMetrics(for: resolved)?.channel == 36)
+    }
+
+    @Test func unverifiedOrInconsistentMetricsNeverFallBackToRawInterfaceValues() {
+        for attribution in [WiFiMetricsAttribution.unverified, .inconsistent] {
+            let status = resolverStatus(metricsAttribution: attribution, rssi: nil, channel: nil)
+            let observation = resolverObservation(status: status)
+            let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
+            let resolved = InterfaceWiFiStatusResolver.resolve(
+                interface: wifi, observation: observation, currentStatusValidity: .current
+            )
+            #expect(resolved?.linkAssessment?.state == VerifiedWiFiLinkState.associated)
+            #expect(InterfaceWiFiStatusResolver.verifiedMetrics(for: resolved) == nil)
+        }
+    }
+
+    @Test func expiredObservationAndNonWiFiInterfaceAreRejected() {
+        let status = resolverStatus(metricsAttribution: .verified)
+        let observation = resolverObservation(status: status)
+        let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true)
+        let mismatchedIndex = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 5, isWiFiInterface: true)
+        let ethernet = NetworkInterfaceInfo(interfaceName: "en1", isWiFiInterface: false)
+        let mismatchedCycle = WiFiObservation(timestamp: status.timestamp, sourceCycleID: UUID(), currentStatus: status)
+
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: wifi, observation: observation, currentStatusValidity: .expired) == nil)
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: ethernet, observation: observation, currentStatusValidity: .current) == nil)
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: mismatchedIndex, observation: observation, currentStatusValidity: .current) == nil)
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: wifi, observation: mismatchedCycle, currentStatusValidity: .current) == nil)
+    }
+
+    @Test func overviewUsesOnlyTheObservationStatusAndItsRecommendations() {
+        let status = resolverStatus(metricsAttribution: .verified)
+        let recommendation = ChannelRecommendation(from: ChannelQuality(
+            channel: 36, band: "5GHz", bandDisplay: "5 GHz", qualityScore: 80,
+            qualityLevel: .good, apCount: 1, coChannelCount: 0, adjacentCount: 0,
+            interferenceScore: 0, overlapLevel: .low, strongestNeighborRSSI: -80,
+            isCurrentChannel: true
+        ))
+        let observation = resolverObservation(status: status, recommendations: [recommendation])
+        let valid = resolverValidity(status: .current, recommendations: .current)
+
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: valid)?.ssid == "TestNet")
+        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: valid).map(\.channel) == [36])
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: resolverValidity(status: .expired, recommendations: .current)) == nil)
+        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: resolverValidity(status: .current, recommendations: .expired)).isEmpty)
+    }
+
+    @Test func overviewKeepsVerifiedAssociationWhenMetricsAreUnknown() {
+        let status = resolverStatus(metricsAttribution: .unverified, rssi: nil, channel: nil)
+        let observation = resolverObservation(status: status)
+        let validity = resolverValidity(status: .current, recommendations: .current)
+
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: validity)?.ssid == "TestNet")
+        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: validity).isEmpty)
+    }
+
+    @Test func overviewKeepsAssociationWhenSSIDIsUnavailable() {
+        let status = resolverStatus(metricsAttribution: .unverified, rssi: nil, channel: nil, ssid: nil)
+        let observation = resolverObservation(status: status)
+        let validity = resolverValidity(status: .current, recommendations: .notTested)
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: validity) != nil)
+    }
+}
+
+private func resolverStatus(
+    metricsAttribution: WiFiMetricsAttribution,
+    rssi: Int? = -55,
+    channel: Int? = 36,
+    ssid: String? = "TestNet"
+) -> WiFiCurrentStatus {
+    let timestamp = Date(timeIntervalSince1970: 1_800_000_000)
+    let cycleID = UUID()
+    let evidence = WiFiLinkRawEvidence(
+        snapshotCycleID: cycleID, capturedAt: timestamp, interfaceName: "en0",
+        mode: .station, radio: .reportedOn, linkActive: true,
+        ssid: ssid, bssid: "AP-1", interfaceIndex: 4
+    )
+    let assessment = WiFiLinkInterpreter.evaluate(evidence, expectedCycleID: cycleID, expectedCapturedAt: timestamp)
+    return WiFiCurrentStatus(
+        timestamp: timestamp, interfaceSnapshotCycleID: cycleID, interfaceName: "en0", interfaceIndex: 4,
+        ssid: ssid, bssid: "AP-1", channel: channel, rssi: rssi,
+        isConnected: true, isWiFiPowerOn: true, linkEvidence: evidence,
+        linkAssessment: assessment, metricsAttribution: metricsAttribution
+    )
+}
+
+private func resolverObservation(
+    status: WiFiCurrentStatus,
+    recommendations: [ChannelRecommendation]? = nil
+) -> WiFiObservation {
+    WiFiObservation(
+        timestamp: status.timestamp,
+        sourceCycleID: status.interfaceSnapshotCycleID,
+        currentStatus: status,
+        channelRecommendation: recommendations
+    )
+}
+
+private func resolverValidity(
+    status: WiFiObservationFieldValidity,
+    recommendations: WiFiObservationFieldValidity
+) -> WiFiObservationValidity {
+    WiFiObservationValidity(
+        currentStatus: status, gatewayLatency: .notTested, environment: .notTested,
+        channelAnalysis: .notTested, channelRecommendation: recommendations,
+        quality: .notTested, diagnosis: .notTested
+    )
 }
