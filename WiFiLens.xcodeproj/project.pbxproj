@@ -5,6 +5,8 @@
 	};
 	objectVersion = 77;
 	objects = {
+
+/* Begin PBXBuildFile section */
 		0206FD56F9C03DFD92AB235A /* DiagnosticEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46BD55DA189A6B70F00F8B47 /* DiagnosticEvaluator.swift */; };
 		03754AF823BD289ABDA6681D /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17B4E9AA061E147DD27084F3 /* ExportService.swift */; };
 		03C0BC3E1FB228136244EEB7 /* SpectrumHeatmapMetalBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCA7E4F5DD293F37A39C026F /* SpectrumHeatmapMetalBackend.swift */; };
@@ -124,8 +126,6 @@
 		741C5CBA03CA8E4B17214A59 /* SpectrumHeatmapComputeBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76B26ECD9862846300DFB24 /* SpectrumHeatmapComputeBackend.swift */; };
 		765054E53C38E20103382B57 /* InterfacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C52A90F9450D1D5B93BE65 /* InterfacesView.swift */; };
 		76B160CFCB6F7DA89A26E976 /* WiFiObservationRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24D6A37AE492D548AE6F5C88 /* WiFiObservationRuntime.swift */; };
-		A1B2C3D4E5F60718293A4B5C /* WiFiLinkStateCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */; };
-		A1B2C3D4E5F60718293A4B5E /* WiFiLinkStateCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */; };
 		76CA69A84F26B8C9724CD4DA /* WiFiCurrentConnectionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD6F389C547E6D3D7A76E8B4 /* WiFiCurrentConnectionProvider.swift */; };
 		779BC1247711A4383FE875AD /* GuidanceStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4329871EFADE8EC1AFAD0A /* GuidanceStateStore.swift */; };
 		78D81FC200E07928056CD0E1 /* NetworkDiagnosticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F78BEED3502A1E1E1FBA88 /* NetworkDiagnosticsViewModel.swift */; };
@@ -170,6 +170,8 @@
 		A10000000000000000000014 /* ChannelQualityViewModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* ChannelQualityViewModeTests.swift */; };
 		A10000000000000000000015 /* SecondaryToolbarDescriptorExpansionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000009 /* SecondaryToolbarDescriptorExpansionTests.swift */; };
 		A10000000000000000000016 /* App/MenuBarWindowBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* WiFiLinkStateCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */; };
+		A1B2C3D4E5F60718293A4B5E /* WiFiLinkStateCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */; };
 		A1C0DE0000000000000000F2 /* WiFi Lens.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1C0DE0000000000000000F1 /* WiFi Lens.icon */; };
 		A1C4E7BA2F0148D3B6E90A22 /* DetailPageMinimumHeightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C4E7B92F0148D3B6E90A21 /* DetailPageMinimumHeightTests.swift */; };
 		A1C4E7BC2F0148D3B6E90A24 /* MainWindowMinimumSizeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C4E7BB2F0148D3B6E90A23 /* MainWindowMinimumSizeTests.swift */; };
@@ -336,6 +338,9 @@
 		OB00000000000000000000B3 /* RoamingMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B2 /* RoamingMigrationTests.swift */; };
 		OB00000000000000000000B5 /* DiagnosticMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */; };
 		OB00000000000000000000D4 /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000D1 /* RuntimeTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
 		B3934361D41B2103307CC777 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 70C77BA3C6064FF4D1D77E59 /* Project object */;
@@ -371,6 +376,9 @@
 			remoteGlobalIDString = 4815C3B026D255EF85C56198;
 			remoteInfo = WiFiLens;
 		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
 		D2B37E2A23B23CFE79FB8B26 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -382,6 +390,9 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
 		007DA38B6651BBD8DB28A628 /* WhatsNewStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewStateStore.swift; sourceTree = "<group>"; };
 		020F3F5046F729E346C5A86E /* DNSResolutionCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSResolutionCheck.swift; sourceTree = "<group>"; };
 		036896D6C0DA6A9D20C91BFC /* APRadarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APRadarViewModelTests.swift; sourceTree = "<group>"; };
@@ -417,7 +428,6 @@
 		21FF1FB96DA89AF017B4B4FF /* BandChartViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandChartViewModel.swift; sourceTree = "<group>"; };
 		22F45B87A389F1B93C2033C8 /* GuidanceCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidanceCoordinator.swift; sourceTree = "<group>"; };
 		24D6A37AE492D548AE6F5C88 /* WiFiObservationRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiObservationRuntime.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenter.swift; sourceTree = "<group>"; };
 		253B59A9808A33EAEB5476EB /* ChannelSeriesDataBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelSeriesDataBuilder.swift; sourceTree = "<group>"; };
 		25CD19ED3078D5666BF6A32E /* WiFiOffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOffView.swift; sourceTree = "<group>"; };
 		27C8B9A6BC76F95DCAA2E208 /* APRadarSignalProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APRadarSignalProcessor.swift; sourceTree = "<group>"; };
@@ -548,6 +558,8 @@
 		A10000000000000000000006 /* ChannelQualityViewModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelQualityViewModeTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000009 /* SecondaryToolbarDescriptorExpansionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryToolbarDescriptorExpansionTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/MenuBarWindowBehaviorTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenter.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenterTests.swift; sourceTree = "<group>"; };
 		A1C0DE0000000000000000F1 /* WiFi Lens.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "WiFi Lens.icon"; sourceTree = "<group>"; };
 		A1C4E7B92F0148D3B6E90A21 /* DetailPageMinimumHeightTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailPageMinimumHeightTests.swift; sourceTree = "<group>"; };
 		A1C4E7BB2F0148D3B6E90A23 /* MainWindowMinimumSizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowMinimumSizeTests.swift; sourceTree = "<group>"; };
@@ -596,7 +608,6 @@
 		C367E9CF6E07A0388D2D525D /* NetworkDiagnosticAssessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticAssessment.swift; sourceTree = "<group>"; };
 		C3A983DCD0D9CAF8DB7B0C70 /* WiFiScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiScanner.swift; sourceTree = "<group>"; };
 		C4EA78FDC2EE0EA0F11159D6 /* ProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTests.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenterTests.swift; sourceTree = "<group>"; };
 		C70E4041B5972D72DD79BF56 /* RoamingTestViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingTestViewModelTests.swift; sourceTree = "<group>"; };
 		C8F78BEED3502A1E1E1FBA88 /* NetworkDiagnosticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsViewModel.swift; sourceTree = "<group>"; };
 		C8FF0F3B48F509D5D541650D /* NetworkSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSnapshot.swift; sourceTree = "<group>"; };
@@ -700,6 +711,9 @@
 		OB00000000000000000000B2 /* RoamingMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000D1 /* RuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
 		4371D048741550E4775FC8C7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -752,6 +766,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
 		04FFB88D86CBC8871502AE25 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
@@ -1533,6 +1550,9 @@
 			path = Observation;
 			sourceTree = "<group>";
 		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
 		30E5DBA89B11E877E38DAF73 /* WiFiLensCoreTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F08B3AD2DA0370609A31828A /* Build configuration list for PBXNativeTarget "WiFiLensCoreTests" */;
@@ -1647,6 +1667,9 @@
 			productReference = FBA000030000000000000003 /* WiFiLensUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
 		70C77BA3C6064FF4D1D77E59 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
@@ -1695,6 +1718,9 @@
 				FBA000070000000000000007 /* WiFiLensUITests */,
 			);
 		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
 		14530F3B1BEE4157098475BA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1729,6 +1755,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
 		5032AD37BED25ED8AB061AD7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2057,6 +2086,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
 		379F8686B1AA230052B4CC6E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3D8D574ACE4722CAA9E12584 /* WiFiLensCore */;
@@ -2082,6 +2114,9 @@
 			target = 4815C3B026D255EF85C56198 /* WiFiLens */;
 			targetProxy = FBA000080000000000000008 /* PBXContainerItemProxy */;
 		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
 		27D7C298956651919604E437 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2179,6 +2214,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -2444,6 +2480,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -2507,6 +2544,9 @@
 			};
 			name = Release;
 		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
 		48CC669075019465A0637978 /* Build configuration list for PBXNativeTarget "WiFiLensCore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -2561,6 +2601,9 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
 		C0A7A1B2C3D4E5F678900001 /* XCRemoteSwiftPackageReference "chart-lens" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ShiinaLabs/chart-lens.git";
@@ -2609,6 +2652,9 @@
 				minimumVersion = 2.10.0;
 			};
 		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
 		2898ABF002051CFA80848C96 /* MCP */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FB0573B22FBBEAE4005F8214 /* XCRemoteSwiftPackageReference "swift-sdk" */;
@@ -2689,7 +2735,7 @@
 			package = FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
-
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 70C77BA3C6064FF4D1D77E59 /* Project object */;
 }
