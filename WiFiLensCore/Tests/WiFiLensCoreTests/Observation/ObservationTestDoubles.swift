@@ -26,6 +26,16 @@ actor TestRecordingWiFiBoundGatewayMeasurer: GatewayLatencyProviding, WiFiBoundG
 
     func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult {
         measuredTargets.append(target)
+        if case .replied(let milliseconds) = result.probeOutcome,
+           let latencyMs = result.latencyMs,
+           latencyMs.isFinite, latencyMs >= 0,
+           latencyMs == milliseconds {
+            return GatewayLatencyResult(
+                timestamp: result.timestamp, routerIP: target.address, latencyMs: latencyMs,
+                probeOutcome: .replied(milliseconds: milliseconds), attemptID: result.attemptID ?? UUID(),
+                cycleID: target.snapshotCycleID, interfaceName: target.interfaceName, interfaceBound: true
+            )
+        }
         return result
     }
 }

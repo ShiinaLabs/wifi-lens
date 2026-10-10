@@ -47,7 +47,8 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         networks: [WiFiNetwork],
         context: WiFiObservationCycleContext
     ) async -> WiFiObservationCycleResult {
-        let status = await currentConnectionProvider.fetchCurrentStatus(from: context.interfaceSnapshot)
+        let capturedStatus = await currentConnectionProvider.fetchCurrentStatus(from: context.interfaceSnapshot)
+        let status = Self.sanitizingUnverifiedMetrics(in: capturedStatus)
         let confirmedLink = WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
         let latency: GatewayLatencyResult
         if confirmedLink,
@@ -66,7 +67,18 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
                     interfaceBound: true
                 )
             } else {
-                latency = measured
+                if WiFiGatewayProbeTarget.isValidWiFiGatewayResult(measured, for: target) ||
+                    (WiFiGatewayProbeTarget.isAttributedToWiFiTarget(measured, target) && measured.latencyMs == nil) {
+                    latency = measured
+                } else {
+                    latency = GatewayLatencyResult(
+                        timestamp: context.timestamp,
+                        routerIP: target.address,
+                        probeOutcome: .notTested,
+                        cycleID: target.snapshotCycleID,
+                        interfaceName: target.interfaceName
+                    )
+                }
             }
         } else {
             latency = GatewayLatencyResult(
@@ -163,5 +175,17 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
             gatewayLatencyError,
             environmentSnapshotError,
         ].compactMap { $0 }
+    }
+
+    private static func sanitizingUnverifiedMetrics(in status: WiFiCurrentStatus) -> WiFiCurrentStatus {
+        guard status.metricsAttribution != .verified else { return status }
+        var sanitized = status
+        sanitized.channel = nil
+        sanitized.band = nil
+        sanitized.rssi = nil
+        sanitized.txRate = nil
+        sanitized.phyMode = nil
+        sanitized.security = nil
+        return sanitized
     }
 }

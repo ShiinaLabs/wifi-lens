@@ -331,7 +331,8 @@ private func verifiedRoamingStatus(from original: WiFiCurrentStatus) -> WiFiCurr
         isConnected: true,
         isWiFiPowerOn: true,
         linkEvidence: evidence,
-        linkAssessment: assessment
+        linkAssessment: assessment,
+        metricsAttribution: .verified
     )
 }
 
@@ -362,8 +363,9 @@ private actor SequenceRoamingProbeProvider: RoamingProbeProviding {
     }
 }
 
-private actor CountingRoamingLatencyProvider: GatewayLatencyProviding {
+private actor CountingRoamingLatencyProvider: GatewayLatencyProviding, WiFiBoundGatewayMeasuring {
     private(set) var calls: [String] = []
+    private(set) var targets: [WiFiGatewayProbeTarget] = []
 
     func measure(routerIP: String?) async -> GatewayLatencyResult {
         if let routerIP { calls.append(routerIP) }
@@ -373,6 +375,16 @@ private actor CountingRoamingLatencyProvider: GatewayLatencyProviding {
             latencyMs: 9,
             probeOutcome: .replied(milliseconds: 9),
             attemptID: UUID()
+        )
+    }
+
+    func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult {
+        calls.append(target.address)
+        targets.append(target)
+        return GatewayLatencyResult(
+            timestamp: target.capturedAt, routerIP: target.address, latencyMs: 9,
+            probeOutcome: .replied(milliseconds: 9), attemptID: UUID(),
+            cycleID: target.snapshotCycleID, interfaceName: target.interfaceName, interfaceBound: true
         )
     }
 }

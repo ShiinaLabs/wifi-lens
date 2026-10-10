@@ -1,5 +1,4 @@
 import SwiftUI
-import CoreWLAN
 
 private let headerHeight: CGFloat = 28
 
@@ -24,7 +23,6 @@ public struct InterfacesView: View {
     @ObservedObject private var store: WiFiObservationStore
     let throughputMonitor: ThroughputMonitor
     let mode: InterfaceViewMode
-    @State private var gatewayLatency: Double?
 
     public init(
         interfaces: [NetworkInterfaceInfo],
@@ -52,8 +50,44 @@ public struct InterfacesView: View {
     private var verifiedLinkState: VerifiedWiFiLinkState {
         guard let status = store.currentStatus,
               status.error == nil,
-              store.validity(at: Date())?.currentStatus == .current else { return .unknown }
-        return status.linkAssessment?.state ?? .unknown
+              store.validity(at: Date())?.currentStatus == .current,
+              status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
+              let assessment = WiFiLinkEvidenceValidator.assessment(for: status) else { return .unknown }
+        return assessment.state
+    }
+
+    private var verifiedGatewayLatency: Double? {
+        let now = Date()
+        guard let observation = store.currentObservation,
+              store.validity(at: now)?.currentStatus == .current,
+              store.validity(at: now)?.gatewayLatency == .current,
+              let status = observation.currentStatus,
+              status.interfaceSnapshotCycleID == observation.sourceCycleID,
+              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
+              let cycleID = status.interfaceSnapshotCycleID,
+              let target = WiFiGatewayProbeTarget.make(from: status, cycleID: cycleID),
+              let result = observation.gatewayLatency,
+              WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target) else { return nil }
+        return result.latencyMs
+    }
+
+    private var verifiedCurrentStatus: WiFiCurrentStatus? {
+        guard let status = store.currentStatus,
+              store.validity(at: Date())?.currentStatus == .current,
+              status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
+              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else { return nil }
+        return status
+    }
+
+    private func hasVerifiedMetrics(_ wifi: NetworkInterfaceInfo) -> Bool {
+        guard let status = verifiedCurrentStatus,
+              status.metricsAttribution == .verified,
+              status.interfaceName == wifi.interfaceName,
+              status.bssid == wifi.bssid,
+              let statusIndex = status.interfaceIndex,
+              statusIndex != 0,
+              wifi.interfaceIndex == nil || wifi.interfaceIndex == statusIndex else { return false }
+        return true
     }
 
     private var linkStateLabel: String {
@@ -121,7 +155,7 @@ public struct InterfacesView: View {
                     .foregroundColor(.accentColor)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verifiedLinkState == .associated ? wifi.displaySSID : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
+                    Text(verifiedLinkState == .associated ? (verifiedCurrentStatus?.ssid ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")) : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
                         .font(.title3)
                         .fontWeight(.semibold)
                         // Same guardrail as OverviewView.connectionCard: a long SSID
@@ -129,7 +163,7 @@ public struct InterfacesView: View {
                         // detail column at the minimum window size.
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .help(verifiedLinkState == .associated ? wifi.displaySSID : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
+                        .help(verifiedLinkState == .associated ? (verifiedCurrentStatus?.ssid ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")) : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
                     HStack(spacing: 6) {
                         Circle().fill(verifiedLinkState == .associated ? Color.green : Color.secondary).frame(width: 6, height: 6).accessibilityHidden(true)
                         Text(linkStateLabel)
@@ -148,7 +182,7 @@ public struct InterfacesView: View {
                     Text(channelLabel(wifi))
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    if let latency = gatewayLatency {
+                    if let latency = verifiedGatewayLatency {
                         Text(String(format: String(localized: "interfaces.field.gateway_latency_fmt", comment: "Gateway latency value with milliseconds"), latency))
                             .font(.caption.monospacedDigit())
                             .foregroundColor(latencyColor(latency))
@@ -159,15 +193,6 @@ public struct InterfacesView: View {
         .padding(16)
         .frame(maxWidth: .infinity)
         .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
-        .task(id: "\(wifi.router ?? "")-\(verifiedLinkState.rawValue)") {
-            gatewayLatency = nil
-            guard verifiedLinkState == .associated, let router = wifi.router else { return }
-            let pinger = GatewayPinger()
-            while !Task.isCancelled {
-                gatewayLatency = await pinger.ping(host: router)
-                try? await Task.sleep(for: .seconds(2))
-            }
-        }
     }
 
     // MARK: - Health Indicators
@@ -177,18 +202,18 @@ public struct InterfacesView: View {
             // RSSI
             indicatorPill(
                 title: String(localized: "channels.table.col.rssi", comment: "RSSI column header"),
-                value: wifi.displayRSSI,
+                value: hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.rssi.map { "\($0) dBm" } ?? "—") : "—",
                 subtitle: nil,
-                color: rssiColor(wifi.rssi ?? -100),
-                bar: rssiBar(wifi.rssi ?? -100)
+                color: hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.rssi.map(rssiColor) ?? .secondary) : .secondary,
+                bar: hasVerifiedMetrics(wifi) ? verifiedCurrentStatus?.rssi.map(rssiBar) : nil
             )
             .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
 
             // PHY Mode
             indicatorPill(
                 title: String(localized: "interfaces.field.phy_mode", comment: "PHY mode field label"),
-                value: wifi.displayPhyMode,
-                subtitle: wifiModelabel(wifi),
+                value: hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.phyMode ?? "—") : "—",
+                subtitle: hasVerifiedMetrics(wifi) ? wifiModelabel(wifi) : nil,
                 color: .accentColor,
                 bar: nil
             )
@@ -241,11 +266,11 @@ public struct InterfacesView: View {
     private func linkDetails(_ wifi: NetworkInterfaceInfo) -> some View {
         HStack(alignment: .top, spacing: 24) {
             kvTable([
-                (String(localized: "interfaces.field.bssid", comment: "BSSID field label"), wifi.displayBSSID),
-                (String(localized: "overview.health.security_label", comment: "Security health indicator label"), wifi.displaySecurity),
-                (String(localized: "interfaces.field.mcs_nss", comment: "MCS/NSS field label"), mcsNssLabel(wifi)),
-                (String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), wifi.displayTxRate),
-                (String(localized: "interfaces.field.krv", comment: "802.11 k/r/v roaming support field label"), kvrLabel(wifi)),
+                (String(localized: "interfaces.field.bssid", comment: "BSSID field label"), verifiedCurrentStatus?.bssid ?? "—"),
+                (String(localized: "overview.health.security_label", comment: "Security health indicator label"), hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.security ?? "—") : "—"),
+                (String(localized: "interfaces.field.mcs_nss", comment: "MCS/NSS field label"), hasVerifiedMetrics(wifi) ? mcsNssLabel(wifi) : "—"),
+                (String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.txRate.map { "\(Int($0)) Mbps" } ?? "—") : "—"),
+                (String(localized: "interfaces.field.krv", comment: "802.11 k/r/v roaming support field label"), hasVerifiedMetrics(wifi) ? kvrLabel(wifi) : "—"),
             ])
             kvTable([
                 (String(localized: "interfaces.field.ipv4_address", comment: "IPv4 address field label"), wifi.displayIP),
@@ -528,6 +553,7 @@ public struct InterfacesView: View {
     }
 
     private func bandLabel(_ wifi: NetworkInterfaceInfo) -> String {
+        guard hasVerifiedMetrics(wifi) else { return "—" }
         guard let ch = wifi.channel else { return "—" }
         if ch <= 14 { return String(localized: "wifi.band.24ghz", comment: "2.4 GHz Wi-Fi band name") }
         if ch <= 170 { return String(localized: "wifi.band.5ghz", comment: "5 GHz Wi-Fi band name") }
@@ -535,6 +561,7 @@ public struct InterfacesView: View {
     }
 
     private func channelLabel(_ wifi: NetworkInterfaceInfo) -> String {
+        guard hasVerifiedMetrics(wifi) else { return "—" }
         guard let ch = wifi.channel else { return "—" }
         return String(format: String(localized: "interfaces.field.channel_fmt", comment: "Formatted channel label with number"), String(ch))
     }
@@ -578,7 +605,9 @@ public struct InterfacesView: View {
     }
 
     private func stability(_ wifi: NetworkInterfaceInfo) -> (score: Int, label: String, color: Color) {
-        let rssi = wifi.rssi ?? -100
+        guard hasVerifiedMetrics(wifi), let rssi = verifiedCurrentStatus?.rssi else {
+            return (0, String(localized: "common.label.unknown", comment: "Generic unknown value label"), .secondary)
+        }
         var score = 0
         if rssi >= -50 { score += 40 }
         else if rssi >= -70 { score += 30 }
@@ -605,13 +634,6 @@ public struct InterfacesView: View {
         let v = ie?.supports80211v ?? false
         let protoCount = [k, r, v].filter { $0 }.count
         score += [0, 7, 14, 20][protoCount]
-
-        // Width bonus
-        if let iface = CWWiFiClient.shared().interface() {
-            let width = iface.wlanChannel()?.channelWidth.rawValue ?? 20
-            if width >= 80 { score += 15 }
-            else if width >= 40 { score += 10 }
-        }
 
         score = min(100, score)
         let label: String = switch score {

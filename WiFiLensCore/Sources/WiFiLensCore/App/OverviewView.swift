@@ -19,18 +19,32 @@ public struct OverviewView: View {
     }
 
     private var wifi: NetworkInterfaceInfo? {
-        guard verifiedLinkState == .associated,
-              let interfaceName = store.currentStatus?.interfaceName else { return nil }
-        return viewModel.networkInfo.first {
-            $0.isWiFiInterface && $0.interfaceName == interfaceName
-        }
+        guard let status = store.currentStatus,
+              store.validity(at: Date())?.currentStatus == .current,
+              status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
+              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
+              let interfaceName = status.interfaceName,
+              let source = viewModel.networkInfo.first(where: {
+                  $0.isWiFiInterface && $0.interfaceName == interfaceName &&
+                  ($0.interfaceIndex == nil || status.interfaceIndex == nil || $0.interfaceIndex == status.interfaceIndex)
+              }) else { return nil }
+        return NetworkInterfaceInfo(
+            interfaceName: source.interfaceName, interfaceIndex: source.interfaceIndex,
+            hardwareMAC: source.hardwareMAC, isWiFiInterface: true,
+            wifiLinkEvidence: status.linkEvidence, metricsAttribution: status.metricsAttribution,
+            ipv4Addresses: source.ipv4Addresses, subnetMasks: source.subnetMasks,
+            router: source.router, dnsServers: source.dnsServers,
+            ssid: status.ssid, bssid: status.bssid, channel: status.channel,
+            band: status.band, rssi: status.rssi, txRate: status.txRate,
+            phyMode: status.phyMode, security: status.security ?? "—"
+        )
     }
 
     private var verifiedLinkState: VerifiedWiFiLinkState {
         guard let status = store.currentStatus,
               status.error == nil,
               store.validity(at: Date())?.currentStatus == .current else { return .unknown }
-        return status.linkAssessment?.state ?? .unknown
+        return WiFiLinkEvidenceValidator.assessment(for: status)?.state ?? .unknown
     }
 
     private var currentChannelQuality: ChannelRecommendation? {
@@ -180,11 +194,10 @@ public struct OverviewView: View {
                 Spacer(minLength: 12)
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(String(format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"), wifi.rssi ?? -100))
+                    Text(wifi.rssi.map { String(format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"), $0) } ?? "—")
                         .font(.caption.monospacedDigit())
-                        .foregroundColor(rssiColor(wifi.rssi ?? -100))
-                        .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), wifi.rssi ?? -100, signalLabel(wifi.rssi ?? -100)))
-                    signalBars(wifi.rssi ?? -100)
+                        .foregroundColor(wifi.rssi.map(rssiColor) ?? .secondary)
+                    if let rssi = wifi.rssi { signalBars(rssi) }
                 }
                 // Keep the RSSI cluster intact at its intrinsic width when the SSID
                 // compresses; all squeezing happens on the truncatable left side.
@@ -194,9 +207,11 @@ public struct OverviewView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(height: 6)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(rssiColor(wifi.rssi ?? -100))
-                        .frame(width: geo.size.width * rssiFraction(wifi.rssi ?? -100), height: 6)
+                    if let rssi = wifi.rssi {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(rssiColor(rssi))
+                            .frame(width: geo.size.width * rssiFraction(rssi), height: 6)
+                    }
                 }
             }
             .frame(height: 6)
@@ -212,8 +227,8 @@ public struct OverviewView: View {
             healthPill(
                 icon: "wave.3.right",
                 label: String(localized: "overview.health.signal_label", comment: "Signal strength health indicator label"),
-                value: signalLabel(wifi.rssi ?? -100),
-                color: rssiColor(wifi.rssi ?? -100)
+                value: wifi.rssi.map(signalLabel) ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
+                color: wifi.rssi.map(rssiColor) ?? .secondary
             )
 
             if currentChannelQuality != nil {
@@ -228,8 +243,8 @@ public struct OverviewView: View {
             healthPill(
                 icon: "lock.shield.fill",
                 label: String(localized: "overview.health.security_label", comment: "Security health indicator label"),
-                value: securityShort(wifi.security),
-                color: wifi.security.contains("WPA3") ? .green : .orange
+                value: wifi.security == "—" ? String(localized: "common.label.unknown", comment: "Generic unknown value label") : securityShort(wifi.security),
+                color: wifi.security == "—" ? .secondary : (wifi.security.contains("WPA3") ? .green : .orange)
             )
         }
     }

@@ -171,7 +171,8 @@ struct PipelineTests {
             radio: .reportedOn,
             linkActive: true,
             ssid: "Current",
-            bssid: "AA:BB:CC:DD:EE:FF"
+            bssid: "AA:BB:CC:DD:EE:FF",
+            interfaceIndex: 4
         )
         let status = WiFiCurrentStatus(
             timestamp: timestamp,
@@ -192,7 +193,8 @@ struct PipelineTests {
                 linkEvidence,
                 expectedCycleID: cycleID,
                 expectedCapturedAt: timestamp
-            )
+            ),
+            metricsAttribution: .verified
         )
         let latency = GatewayLatencyResult(
             timestamp: timestamp,
@@ -240,7 +242,8 @@ struct PipelineTests {
             rssi: -50,
             routerIP: "192.0.2.1",
             isConnected: true,
-            isWiFiPowerOn: true
+            isWiFiPowerOn: true,
+            metricsAttribution: .verified
         )
         let environmentError = WiFiObservationError.environmentScanFailed("scan failed")
         let pipeline = makeCyclePipeline(
@@ -420,7 +423,8 @@ struct PipelineTests {
                 evidence,
                 expectedCycleID: cycleID,
                 expectedCapturedAt: timestamp
-            )
+            ),
+            metricsAttribution: .verified
         )
     }
 

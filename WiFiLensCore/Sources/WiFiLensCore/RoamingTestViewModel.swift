@@ -253,15 +253,20 @@ public final class RoamingTestViewModel {
         gatewayLatency = nil
         recordProbe(status)
         guard state == .running, generation == sampleGeneration else { return }
-        if let router = status.routerIP, !router.isEmpty {
-            let result = await latencyProvider.measure(routerIP: router)
+        if let cycleID = status.interfaceSnapshotCycleID,
+           let target = WiFiGatewayProbeTarget.make(from: status, cycleID: cycleID),
+           let boundMeasurer = latencyProvider as? WiFiBoundGatewayMeasuring {
+            let result = await boundMeasurer.measure(target: target)
             guard state == .running, generation == sampleGeneration,
                   lastProcessedProbeTimestamp == status.timestamp else { return }
-            gatewayLatency = result.latencyMs
+            let latency = WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target)
+                ? result.latencyMs
+                : nil
+            gatewayLatency = latency
             if currentSegmentIndex >= 0,
                currentSegmentIndex < segments.count,
                let sampleIndex = segments[currentSegmentIndex].samples.indices.last {
-                segments[currentSegmentIndex].samples[sampleIndex].gatewayLatency = result.latencyMs
+                segments[currentSegmentIndex].samples[sampleIndex].gatewayLatency = latency
             }
         }
     }
@@ -399,7 +404,6 @@ public final class RoamingTestViewModel {
 
     private func appendSample(at timestamp: Date) {
         guard currentSegmentIndex >= 0, currentSegmentIndex < segments.count else { return }
-        let segment = segments[currentSegmentIndex]
         let sample = RoamingSample(
             timestamp: timestamp,
             rssi: currentRSSI,
