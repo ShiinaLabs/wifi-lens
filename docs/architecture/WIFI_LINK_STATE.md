@@ -53,6 +53,18 @@ or recovery events. Tests can inject the strict confirmation policy with
 synthetic evidence. The first observed association or non-association remains
 a baseline and does not create a transition event.
 
+The center retains two distinct association baselines: the latest verified
+association (even when identity is unreadable), and field-level last comparable
+SSID/BSSID values with the evidence and timestamp that supplied each value.
+Unknown association evidence and unreadable identity fields create separate
+gaps; neither is interpreted as a disconnect. An identity change event points
+to the older evidence actually used in its comparison and marks whether the
+observations were adjacent, separated by uncertain link evidence, or separated
+by unknown identity evidence. A BSSID-only change does not advance
+`linkEpoch`; a confirmed SSID switch advances it once unless the evidence gap
+already advanced the epoch. The event does not claim uninterrupted roaming.
+The current snapshot continues to expose only identity read in that snapshot.
+
 The public `WiFiLinkEvidenceValidator.assessment(for:)` is the shared consumer
 boundary for a current status. It checks cycle, timestamp, interface name,
 available interface indices, exact optional SSID/BSSID agreement, and then
@@ -84,7 +96,11 @@ The center increments `linkEpoch` after confirmed disconnect/reassociation,
 interface change, or continuity reset. A run session ID, interface identity,
 and epoch together identify one continuity segment. Sleep/wake samples on the
 far side establish a new baseline rather than being joined into a synthetic
-transition. Ordinary app activation only requests fresh evidence.
+transition. A trusted SSID switch starts a new logical network boundary, while
+a BSSID switch under the same SSID is an identity event without a continuity
+reset. `radioChanged` reports raw radio evidence changes only; it does not
+confirm that Wi-Fi is powered off. Ordinary app activation only requests fresh
+evidence.
 
 ## Listener ownership and lifecycle
 
@@ -94,12 +110,21 @@ return after stop, restart, sleep, or an interface change are discarded and
 logged; they cannot update the new session. A failed capture invalidates the
 current evidence but does not mean the radio or link is disconnected. Its
 trigger registers `SCDynamicStore` notifications for the current interface's
-Link key and service IPv4 changes, plus CoreWLAN power events when the shared
-delegate is available. Notifications only request a fresh sample. Registration
-errors are retained; SystemConfiguration and compensation sampling continue
-if CoreWLAN event registration fails. The trigger removes its registrations on
-stop. Repeated start/stop and multiple scanner consumers are idempotent; stopping
-one `WiFiPowerMonitor` subscription does not stop the center.
+Link key and service IPv4 changes, plus CoreWLAN power, link, SSID, BSSID, and
+mode events when the shared delegate is available. Each CoreWLAN event registers
+independently; failures are retained per event, and notifications only request
+a fresh sample. SystemConfiguration and compensation sampling continue if any
+CoreWLAN event registration fails. A temporary CoreWLAN interruption requests
+a sample while preserving the other triggers; permanent invalidation marks
+CoreWLAN unavailable without an unbounded retry. The trigger unregisters only
+events it registered and does not stop other shared-client listeners.
+
+Startup initializes the session, serializes listener registration, starts the
+compensation sampler, and then awaits the initial capture. A slow or failed
+first capture therefore does not delay those sources. Stop or restart still
+invalidates old registration and sampling work through the lifecycle generation.
+Repeated start/stop and multiple scanner consumers are idempotent; stopping one
+`WiFiPowerMonitor` subscription does not stop the center.
 
 The existing `NetworkInterfaceSnapshot` full scan remains unchanged in shape.
 Its Wi-Fi link fields now use the same field capture helper as the lightweight
@@ -184,6 +209,17 @@ between confirmed samples with matching interface and known logical-network
 identity and an uninterrupted sampling interval. Unknown samples reset its
 roaming baseline.
 
+Detailed Wi-Fi metrics are captured separately from link evidence.
+`WiFiMetricsAttribution` is verified only when the BSSID from the details read
+matches the link-evidence BSSID; missing comparison data is unverified and a
+mismatch is inconsistent. `WiFiCurrentStatus` removes channel, band, RSSI,
+transmit rate, PHY, and security unless attribution is verified, while keeping
+link assessment independent. Wi-Fi gateway probes require the shared status
+validator, a same-cycle router target, and interface-bound ping. Returned
+latency is accepted only when its cycle, interface, address, attempt, bound
+flag, and finite non-negative reply value match the target. The roaming model
+does not fall back to its generic address-only provider.
+
 AP Radar changes target presence only after a successful
 environment scan. On failure or scan lifecycle pause it stops pulse/audio,
 invalidates the live RSSI display, and waits for a new successful sample before
@@ -210,6 +246,12 @@ executions. During access-point loss it observed raw mode 0, radio on,
 validates the real app sampling and candidate path for that scenario; it does
 not establish the false-positive rate under negative controls or the release
 signing/runtime environment.
+
+That earlier run predates the current five-event registration and field-level
+metric attribution changes. It remains evidence for the captured sampler and
+candidate behavior, but does not verify the new callbacks, current signed
+entitlements, or Release capability. No live CoreWLAN callback or dual-interface
+gateway experiment was performed for this revision.
 
 The normal public Debug app starts the shared center at process startup, even
 when no window is open. Unit-test hosts, UI-test mode, and controlled demo
@@ -273,6 +315,14 @@ conditions are validated on the intended macOS environment.
 ## Known limits
 
 - The release signing/runtime environment has not been validated.
+- The repository entitlement file does not declare the CoreWLAN Wi-Fi events
+  entitlement. Entitlement inspection of the local Debug and Release products
+  emitted an invalid-entitlements-blob warning, so their effective signed
+  entitlements remain unverified and event registration remains best-effort.
+- The five-event callback set and two-read metric attribution have not been
+  exercised against live network transitions in this revision.
+- Dual-interface gateway attribution has deterministic code-path coverage, but
+  no real dual-interface machine was used for this validation.
 - CoreWLAN `none` and power-off values are intentionally treated as ambiguous.
 - Production disconnect confirmation remains off until negative-control
   evidence validates that the candidate signature is specific to lost

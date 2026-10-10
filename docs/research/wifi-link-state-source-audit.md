@@ -4,6 +4,15 @@
 
 This audit follows the live public-app implementation in `WiFiLensCore` and the WiFi Lens app target. It distinguishes raw observations from conclusions that callers or UI derive from them. File references below are repository-relative and include line numbers from the audited checkout.
 
+> Historical snapshot: this audit records the source state at the design baseline
+> `16e99e95a48bde205abf8a857e2f08da21acf96d` (before PR #115 implementation
+> changes). Findings about `WiFiPowerMonitor` owning a delegate, roaming using
+> an address-only gateway probe, and the interface page running its own pinger
+> describe that baseline and are superseded by the current architecture in
+> `docs/architecture/WIFI_LINK_STATE.md`. The audit's old line references are
+> not current source anchors. Its evidence-interpretation and independent path
+> monitoring observations remain historical source-analysis context.
+
 ## Source modules
 
 - `WiFiLensCore/Sources/WiFiLensCore/Interfaces/NetworkInfoService.swift:152-166,248-289` discovers interfaces through `getifaddrs()` and `CWWiFiClient.interfaceNames()`, reads CoreWLAN interface properties, and optionally captures point-in-time link evidence. For Wi-Fi interface evidence it reads `interfaceMode()`, `powerOn()`, SystemConfiguration `State:/Network/Interface/<name>/Link` and `kSCPropNetLinkActive`, plus SSID/BSSID. The evidence object records source/cycle/time; a failed or absent read can remain unavailable rather than being synthesized as a negative.
