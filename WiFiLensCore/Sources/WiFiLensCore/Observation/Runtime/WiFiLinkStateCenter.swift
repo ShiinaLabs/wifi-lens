@@ -394,6 +394,7 @@ public actor WiFiLinkStateCenter {
     private let collector: any WiFiLinkEvidenceCollecting
     private let allowsUnvalidatedDisconnectConfirmation: Bool
     private let pollingInterval: Duration
+    private let pollingClock: any WiFiLinkReviewClock
     private let reviewInterval: Duration
     private let reviewClock: any WiFiLinkReviewClock
     private var trigger: (any WiFiLinkChangeTriggering)?
@@ -405,6 +406,7 @@ public actor WiFiLinkStateCenter {
     private var activeSampleID: UUID?
     private var pendingSampleReasons: Set<WiFiLinkChangeReason> = []
     private var pollingTask: Task<Void, Never>?
+    private var triggerOperationTail: Task<Void, Never>?
     private var candidateReviewTask: Task<Void, Never>?
     private var candidateReviewID: UUID?
     private var currentSnapshot: WiFiLinkStateSnapshot
@@ -421,6 +423,7 @@ public actor WiFiLinkStateCenter {
         collector: any WiFiLinkEvidenceCollecting = SystemWiFiLinkEvidenceCollector(),
         trigger: (any WiFiLinkChangeTriggering)? = nil,
         pollingInterval: Duration = .seconds(5),
+        pollingClock: any WiFiLinkReviewClock = ContinuousWiFiLinkReviewClock(),
         reviewInterval: Duration = .seconds(1),
         reviewClock: any WiFiLinkReviewClock = ContinuousWiFiLinkReviewClock(),
         allowsUnvalidatedDisconnectConfirmation: Bool = false
@@ -428,6 +431,7 @@ public actor WiFiLinkStateCenter {
         self.collector = collector
         self.trigger = trigger
         self.pollingInterval = pollingInterval
+        self.pollingClock = pollingClock
         self.reviewInterval = min(max(reviewInterval, Self.minimumReviewInterval), Self.maximumReviewInterval)
         self.reviewClock = reviewClock
         self.allowsUnvalidatedDisconnectConfirmation = allowsUnvalidatedDisconnectConfirmation
@@ -534,15 +538,15 @@ public actor WiFiLinkStateCenter {
         ])
         #endif
         await requestSample(reason: .startup, sessionID: sessionID)
-        guard isCurrent(sessionID: sessionID, generation: generation) else { return }
+        // Evidence continuity may reset during startup without ending this run.
+        // Only stop/restart invalidates listener and polling initialization.
+        guard isRunning, runSessionID == sessionID else { return }
         await startTrigger(interfaceName: currentSnapshot.interfaceName, sessionID: sessionID)
-        guard isCurrent(sessionID: sessionID, generation: generation) else {
-            if !isRunning { await stopTrigger() }
-            return
-        }
-        pollingTask = Task { [weak self, pollingInterval] in
+        guard isRunning, runSessionID == sessionID else { return }
+        pollingTask = Task { [weak self, pollingInterval, pollingClock] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: pollingInterval)
+                do { try await pollingClock.sleep(for: pollingInterval) }
+                catch { break }
                 guard !Task.isCancelled else { break }
                 await self?.compensationTick(sessionID: sessionID)
             }
@@ -1112,15 +1116,31 @@ public actor WiFiLinkStateCenter {
         eventSubscribers.values.forEach { $0.yield(event) }
     }
 
+    /// Serialize listener registration and removal across reentrant start/stop
+    /// calls so a late registration cannot outlive a stop or replace a new run.
+    private func performTriggerOperation(
+        _ operation: @escaping @MainActor @Sendable () -> Void
+    ) async {
+        let previous = triggerOperationTail
+        let operationTask = Task { @MainActor in
+            await previous?.value
+            operation()
+        }
+        triggerOperationTail = operationTask
+        await operationTask.value
+    }
+
     private func startTrigger(interfaceName: String?, sessionID: UUID) async {
+        guard isRunning, runSessionID == sessionID else { return }
         let trigger: any WiFiLinkChangeTriggering
         if let existing = self.trigger {
             trigger = existing
         } else {
             trigger = await MainActor.run { WiFiLinkChangeTrigger() }
+            guard isRunning, runSessionID == sessionID else { return }
             self.trigger = trigger
         }
-        await MainActor.run { [weak self] in
+        await performTriggerOperation { [weak self] in
             trigger.start(interfaceName: interfaceName) { [weak self] reason in
                 Task { await self?.triggered(reason, sessionID: sessionID) }
             }
@@ -1129,7 +1149,7 @@ public actor WiFiLinkStateCenter {
 
     private func stopTrigger() async {
         guard let trigger else { return }
-        await MainActor.run { trigger.stop() }
+        await performTriggerOperation { trigger.stop() }
     }
 
     private func triggered(_ reason: WiFiLinkChangeReason, sessionID: UUID) async {
