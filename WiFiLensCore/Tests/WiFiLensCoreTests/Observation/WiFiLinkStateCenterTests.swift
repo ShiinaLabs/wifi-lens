@@ -123,6 +123,63 @@ struct WiFiLinkStateCenterTests {
         #expect(trigger.stopCount == 1)
     }
 
+    @Test("An initial capture failure still starts monitoring and the next scheduled sample recovers")
+    func failedStartupStillSchedulesCompensationSampling() async {
+        let collector = SequenceCollector([
+            nil,
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1)
+        ])
+        let trigger = FakeLinkTrigger()
+        let pollingClock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: trigger,
+            pollingInterval: .seconds(3_600), pollingClock: pollingClock
+        )
+
+        await center.start()
+        let failedSnapshot = await center.snapshot()
+        #expect(failedSnapshot.state == .unknown)
+        #expect((await center.listenerStatus()).isRunning)
+        #expect(trigger.startCount == 1)
+
+        // Advancing the injected clock proves that the periodic task actually
+        // exists; a true isRunning flag alone would not catch the regression.
+        await pollingClock.waitForPendingSleep()
+        await pollingClock.releaseNext()
+        await collector.waitForCaptureCount(2)
+        await waitForSnapshotSequence(center, after: failedSnapshot.sequence)
+
+        #expect((await center.snapshot()).state == .associated)
+        #expect(await collector.captureCount() == 2)
+        await center.stop()
+        #expect(trigger.stopCount == 1)
+    }
+
+    @Test("An unknown first sample does not prevent event listeners from recovering")
+    func unknownStartupStillRegistersNotificationHandler() async {
+        let collector = SequenceCollector([
+            evidence(mode: .station, radio: .reportedOn, linkActive: nil),
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1)
+        ])
+        let trigger = FakeLinkTrigger()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: trigger, pollingInterval: .seconds(3_600)
+        )
+
+        await center.start()
+        let initialSnapshot = await center.snapshot()
+        #expect(initialSnapshot.state == .unknown)
+        #expect(trigger.startCount == 1)
+
+        trigger.emit(.coreWLAN)
+        await collector.waitForCaptureCount(2)
+        await waitForSnapshotSequence(center, after: initialSnapshot.sequence)
+
+        #expect((await center.snapshot()).state == .associated)
+        await center.stop()
+        #expect(trigger.stopCount == 1)
+    }
+
     @Test("Observed AP-loss evidence enters candidate review without confirming disconnect")
     func observedAPLossStartsActiveReviewAndStaysUnknown() async {
         let baseline = evidence(mode: .station, radio: .reportedOn, linkActive: true)
