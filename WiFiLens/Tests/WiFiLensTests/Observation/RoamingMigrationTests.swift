@@ -46,7 +46,8 @@ struct RoamingMigrationTests {
             isConnected: true,
             isWiFiPowerOn: true,
             linkEvidence: evidence,
-            linkAssessment: assessment
+            linkAssessment: assessment,
+            metricsAttribution: .verified
         )
     }
 

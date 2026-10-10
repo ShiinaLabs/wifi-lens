@@ -186,12 +186,10 @@ public struct RoamingTestView: View {
 
             // Right: metrics
             HStack(spacing: 20) {
-                metricLabel(String(localized: "channels.table.col.rssi", comment: "RSSI column header"), "\(viewModel.currentRSSI) dBm", rssiColor(viewModel.currentRSSI))
-                    .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), viewModel.currentRSSI, rssiQualityDescription(viewModel.currentRSSI)))
-                metricLabel(String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), "\(viewModel.currentChannel)", .primary)
-                    .accessibilityLabel(String(format: String(localized: "common.accessibility.metric_fmt", comment: "Label: value format for VoiceOver metric"), String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), "\(viewModel.currentChannel)"))
-                metricLabel(String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), String(format: "%.0f Mbps", viewModel.currentTxRate), .primary)
-                    .accessibilityLabel(String(format: String(localized: "common.accessibility.metric_fmt", comment: "Label: value format for VoiceOver metric"), String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), String(format: "%.0f Mbps", viewModel.currentTxRate)))
+                let rssi = viewModel.currentRSSI
+                metricLabel(String(localized: "channels.table.col.rssi", comment: "RSSI column header"), rssi.map { "\($0) dBm" } ?? "—", rssi.map(rssiColor) ?? .secondary)
+                metricLabel(String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), viewModel.currentChannel.map(String.init) ?? "—", .primary)
+                metricLabel(String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), viewModel.currentTxRate.map { String(format: "%.0f Mbps", $0) } ?? "—", .primary)
                 if let latency = viewModel.gatewayLatency {
                     metricLabel(String(localized: "roaming.field.latency", comment: "Latency field label in roaming view"), String(format: "%.1f ms", latency), latencyColor(latency))
                         .accessibilityLabel(String(format: String(localized: "roaming.accessibility.latency_fmt", comment: "Latency accessibility label with value and quality"), String(format: "%.1f", latency), latencyQualityDescription(latency)))
@@ -364,12 +362,10 @@ public struct RoamingTestView: View {
                                     tableCell(tsLabel(t.timestamp))
                                     tableCell(t.fromBSSID, mono: true)
                                     tableCell(t.toBSSID, mono: true)
-                                    tableCell("\(t.rssiBefore) dBm", color: rssiColor(t.rssiBefore))
-                                        .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), t.rssiBefore, rssiQualityDescription(t.rssiBefore)))
-                                    tableCell("\(t.rssiAfter) dBm", color: rssiColor(t.rssiAfter))
-                                        .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), t.rssiAfter, rssiQualityDescription(t.rssiAfter)))
-                                    tableCell("\(t.channelBefore)")
-                                    tableCell("\(t.channelAfter)")
+                                    tableCell(t.rssiBefore.map { "\($0) dBm" } ?? "—", color: t.rssiBefore.map(rssiColor) ?? .secondary)
+                                    tableCell(t.rssiAfter.map { "\($0) dBm" } ?? "—", color: t.rssiAfter.map(rssiColor) ?? .secondary)
+                                    tableCell(t.channelBefore.map(String.init) ?? "—")
+                                    tableCell(t.channelAfter.map(String.init) ?? "—")
                                 }
                                 .background(idx.isMultiple(of: 2) ? .clear : Color.primary.opacity(0.04))
                             }
@@ -433,8 +429,9 @@ private struct ChartCanvas: View {
 
             guard plotWidth > 0, plotHeight > 0, !allSamples.isEmpty else { return }
 
-            let rssiMin = min(-100, allSamples.map(\.rssi).min() ?? -100)
-            let rssiMax = max(-30, allSamples.map(\.rssi).max() ?? -30)
+            let measuredRSSI = allSamples.compactMap(\.rssi)
+            let rssiMin = min(-100, measuredRSSI.min() ?? -100)
+            let rssiMax = max(-30, measuredRSSI.max() ?? -30)
             let rssiRange = Double(max(1, rssiMax - rssiMin))
 
             let totalSecs = max(1, elapsedTime)
@@ -500,26 +497,32 @@ private struct ChartCanvas: View {
             context.clip(to: clipRect)
 
             for (_, segment) in segments.enumerated() {
-                let samples = segment.samples.filter { sample in
-                    let t = sample.timestamp.timeIntervalSince(sessionStartDate) - timeOffset
-                    return t >= 0 && t <= elapsedTime
-                }
-                guard samples.count >= 2 else { continue }
                 let color = bssidColors[segment.bssid] ?? .blue
+                for run in segment.rssiRuns {
+                    let samples = run.filter { sample in
+                        let t = sample.timestamp.timeIntervalSince(sessionStartDate) - timeOffset
+                        return t >= 0 && t <= elapsedTime
+                    }
+                    let points = samples.compactMap { sample in
+                        sample.rssi.map { CGPoint(x: xPos(sample.timestamp), y: yPos($0)) }
+                    }
+                    guard let first = points.first else { continue }
+                    guard points.count >= 2 else {
+                        let dot = CGRect(x: first.x - 2, y: first.y - 2, width: 4, height: 4)
+                        context.fill(Path(ellipseIn: dot), with: .color(color))
+                        continue
+                    }
 
-                let points = samples.map { CGPoint(x: xPos($0.timestamp), y: yPos($0.rssi)) }
+                    var areaPath = Path()
+                    areaPath.move(to: CGPoint(x: points[0].x, y: plotBottom))
+                    areaPath.addLine(to: points[0])
+                    addCatmullRomSpline(to: &areaPath, points: points)
+                    areaPath.addLine(to: CGPoint(x: points[points.count - 1].x, y: plotBottom))
+                    areaPath.closeSubpath()
+                    context.fill(areaPath, with: .color(color.opacity(0.12)))
 
-                // Filled area
-                var areaPath = Path()
-                areaPath.move(to: CGPoint(x: points[0].x, y: plotBottom))
-                areaPath.addLine(to: points[0])
-                addCatmullRomSpline(to: &areaPath, points: points)
-                areaPath.addLine(to: CGPoint(x: points[points.count - 1].x, y: plotBottom))
-                areaPath.closeSubpath()
-                context.fill(areaPath, with: .color(color.opacity(0.12)))
-
-                let linePath = catmullRomSpline(points: points)
-                context.stroke(linePath, with: .color(color), lineWidth: 2)
+                    context.stroke(catmullRomSpline(points: points), with: .color(color), lineWidth: 2)
+                }
             }
 
             for transition in transitions {
@@ -539,9 +542,9 @@ private struct ChartCanvas: View {
                 context.stroke(hoverLine, with: .color(.primary.opacity(0.5)), style: .init(dash: [3, 3], dashPhase: 0))
             }
 
-            if let highlightedSample {
+            if let highlightedSample, let rssi = highlightedSample.rssi {
                 let x = xPos(highlightedSample.timestamp)
-                let y = yPos(highlightedSample.rssi)
+                let y = yPos(rssi)
                 let pointRect = CGRect(x: x - 4, y: y - 4, width: 8, height: 8)
                 context.fill(Path(ellipseIn: pointRect), with: .color(.white))
                 context.stroke(Path(ellipseIn: pointRect), with: .color(.accentColor), lineWidth: 2)
@@ -707,9 +710,9 @@ private struct RoamingTimelineChart: View {
         let timeText = timeFormatter.string(from: time) ?? "0:00"
         return HStack(spacing: 8) {
             Text(timeText)
-            Text(String(format: String(localized: "roaming.detail.rssi_fmt", comment: "Roaming detail RSSI badge"), sample.rssi))
-            Text(String(format: String(localized: "roaming.detail.channel_fmt", comment: "Roaming detail channel badge"), sample.channel))
-            Text(String(format: String(localized: "roaming.detail.tx_rate_fmt", comment: "Roaming detail Tx rate badge"), sample.txRate))
+            Text(sample.rssi.map { String(format: String(localized: "roaming.detail.rssi_fmt", comment: "Roaming detail RSSI badge"), $0) } ?? "—")
+            Text(sample.channel.map { String(format: String(localized: "roaming.detail.channel_fmt", comment: "Roaming detail channel badge"), $0) } ?? "—")
+            Text(sample.txRate.map { String(format: String(localized: "roaming.detail.tx_rate_fmt", comment: "Roaming detail Tx rate badge"), $0) } ?? "—")
             if let latency = sample.gatewayLatency {
                 Text(String(format: String(localized: "roaming.detail.rtt_fmt", comment: "Roaming detail RTT badge"), latency))
             }
@@ -738,7 +741,7 @@ private struct OverviewCanvas: View {
             guard !segments.isEmpty, elapsedTime > 0 else { return }
 
             var rssiVals: [Int] = []
-            for seg in segments { rssiVals.append(contentsOf: seg.samples.map(\.rssi)) }
+            for seg in segments { rssiVals.append(contentsOf: seg.samples.compactMap(\.rssi)) }
             let rssiMin = Double(min(-100, rssiVals.min() ?? -100))
             let rssiMax = Double(max(-30, rssiVals.max() ?? -30))
             let rssiRange = max(1, rssiMax - rssiMin)
@@ -753,16 +756,22 @@ private struct OverviewCanvas: View {
             }
 
             for segment in segments {
-                let samples = segment.samples
-                guard samples.count >= 2 else { continue }
                 let color = bssidColors[segment.bssid] ?? .blue
-
-                var path = Path()
-                path.move(to: CGPoint(x: xPos(samples[0].timestamp), y: yPos(samples[0].rssi)))
-                for i in 1..<samples.count {
-                    path.addLine(to: CGPoint(x: xPos(samples[i].timestamp), y: yPos(samples[i].rssi)))
+                for run in segment.rssiRuns {
+                    let points = run.compactMap { sample in
+                        sample.rssi.map { CGPoint(x: xPos(sample.timestamp), y: yPos($0)) }
+                    }
+                    guard let first = points.first else { continue }
+                    if points.count == 1 {
+                        let dot = CGRect(x: first.x - 1.5, y: first.y - 1.5, width: 3, height: 3)
+                        context.fill(Path(ellipseIn: dot), with: .color(color))
+                    } else {
+                        var path = Path()
+                        path.move(to: first)
+                        for point in points.dropFirst() { path.addLine(to: point) }
+                        context.stroke(path, with: .color(color), lineWidth: 1)
+                    }
                 }
-                context.stroke(path, with: .color(color), lineWidth: 1)
             }
 
             for t in transitions {

@@ -39,9 +39,9 @@ public final class RoamingTestViewModel {
 
     public var currentSSID: String?
     public var currentBSSID: String?
-    public var currentRSSI: Int = 0
-    public var currentChannel: Int = 0
-    public var currentTxRate: Double = 0
+    public var currentRSSI: Int?
+    public var currentChannel: Int?
+    public var currentTxRate: Double?
     public var currentPhyMode: String?
     public var routerIP: String?
     public var gatewayLatency: Double?
@@ -158,8 +158,8 @@ public final class RoamingTestViewModel {
 
             segments = []
             transitions = []
-            lastRSSI = status.rssi ?? -100
-            lastChannel = status.channel ?? 0
+            lastRSSI = status.metricsAttribution == .verified ? status.rssi : nil
+            lastChannel = status.metricsAttribution == .verified ? status.channel : nil
             startDate = Date()
             elapsedTime = 0
             errorMessage = nil
@@ -290,6 +290,8 @@ public final class RoamingTestViewModel {
         guard let bssid = status.bssid, !bssid.isEmpty else {
             terminateCurrentSegment()
             previousVerifiedProbe = nil
+            lastRSSI = nil
+            lastChannel = nil
             gatewayLatency = nil
             applyProbe(status)
             return
@@ -299,6 +301,9 @@ public final class RoamingTestViewModel {
         let continuous = previous.map { Self.isContinuousAssociation(from: $0, to: status) } ?? false
         if !continuous { gatewayLatency = nil }
 
+        let verifiedRSSI = status.metricsAttribution == .verified ? status.rssi : nil
+        let verifiedChannel = status.metricsAttribution == .verified ? status.channel : nil
+
         if continuous, let previous, let oldBSSID = previous.bssid, oldBSSID != bssid {
             if currentSegmentIndex >= 0, currentSegmentIndex < segments.count {
                 segments[currentSegmentIndex].endTime = status.timestamp
@@ -307,10 +312,10 @@ public final class RoamingTestViewModel {
                 timestamp: status.timestamp,
                 fromBSSID: oldBSSID,
                 toBSSID: bssid,
-                rssiBefore: lastRSSI ?? 0,
-                rssiAfter: status.rssi ?? 0,
-                channelBefore: lastChannel ?? 0,
-                channelAfter: status.channel ?? 0
+                rssiBefore: lastRSSI,
+                rssiAfter: verifiedRSSI,
+                channelBefore: lastChannel,
+                channelAfter: verifiedChannel
             ))
             segments.append(RoamingSegment(bssid: bssid, startTime: status.timestamp))
             currentSegmentIndex = segments.count - 1
@@ -324,8 +329,8 @@ public final class RoamingTestViewModel {
 
         applyProbe(status)
         previousVerifiedProbe = status
-        lastRSSI = status.rssi ?? -100
-        lastChannel = status.channel ?? 0
+        lastRSSI = verifiedRSSI
+        lastChannel = verifiedChannel
         appendSample(at: status.timestamp)
     }
 
@@ -374,9 +379,9 @@ public final class RoamingTestViewModel {
         guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else {
             currentSSID = nil
             currentBSSID = nil
-            currentRSSI = 0
-            currentChannel = 0
-            currentTxRate = 0
+            currentRSSI = nil
+            currentChannel = nil
+            currentTxRate = nil
             currentPhyMode = nil
             routerIP = nil
             gatewayLatency = nil
@@ -384,22 +389,24 @@ public final class RoamingTestViewModel {
         }
         currentSSID = status.ssid
         currentBSSID = status.bssid
-        currentRSSI = status.rssi ?? 0
-        currentChannel = status.channel ?? 0
-        currentTxRate = status.txRate ?? 0
-        currentPhyMode = status.phyMode
+        currentRSSI = status.metricsAttribution == .verified ? status.rssi : nil
+        currentChannel = status.metricsAttribution == .verified ? status.channel : nil
+        currentTxRate = status.metricsAttribution == .verified ? status.txRate : nil
+        currentPhyMode = status.metricsAttribution == .verified ? status.phyMode : nil
         routerIP = status.routerIP
     }
 
     private func clearCurrentConnection() {
         currentSSID = nil
         currentBSSID = nil
-        currentRSSI = 0
-        currentChannel = 0
-        currentTxRate = 0
+        currentRSSI = nil
+        currentChannel = nil
+        currentTxRate = nil
         currentPhyMode = nil
         routerIP = nil
         gatewayLatency = nil
+        lastRSSI = nil
+        lastChannel = nil
     }
 
     private func appendSample(at timestamp: Date) {
@@ -472,8 +479,8 @@ public final class RoamingTestViewModel {
             currentBSSID = record.bssid
             currentPhyMode = record.phyMode
             currentChannel = record.channel
-            currentRSSI = record.segments.last?.samples.last?.rssi ?? -100
-            currentTxRate = record.segments.last?.samples.last?.txRate ?? 0
+            currentRSSI = record.segments.last?.samples.last?.rssi
+            currentTxRate = record.segments.last?.samples.last?.txRate
             state = .stopped
             errorMessage = nil
         } catch {

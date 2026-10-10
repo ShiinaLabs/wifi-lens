@@ -3,12 +3,12 @@ import Foundation
 public struct RoamingSample: Identifiable, Codable {
     public let id = UUID()
     public let timestamp: Date
-    public let rssi: Int
-    public let channel: Int
-    public let txRate: Double
+    public let rssi: Int?
+    public let channel: Int?
+    public let txRate: Double?
     public var gatewayLatency: Double?
 
-    public init(timestamp: Date, rssi: Int, channel: Int, txRate: Double, gatewayLatency: Double? = nil) {
+    public init(timestamp: Date, rssi: Int?, channel: Int?, txRate: Double?, gatewayLatency: Double? = nil) {
         self.timestamp = timestamp
         self.rssi = rssi
         self.channel = channel
@@ -40,9 +40,26 @@ public struct RoamingSegment: Identifiable, Codable {
     }
 
     public var rssiRange: (min: Int, max: Int) {
-        guard !samples.isEmpty else { return (-100, -30) }
-        let values = samples.map(\.rssi)
+        let values = samples.compactMap(\.rssi)
+        guard !values.isEmpty else { return (-100, -30) }
         return (values.min() ?? -100, values.max() ?? -30)
+    }
+
+    /// Consecutive runs of samples with measured RSSI. Missing samples split
+    /// the signal line so charts never imply an unobserved measurement.
+    public var rssiRuns: [[RoamingSample]] {
+        var runs: [[RoamingSample]] = []
+        var current: [RoamingSample] = []
+        for sample in samples {
+            if sample.rssi != nil {
+                current.append(sample)
+            } else if !current.isEmpty {
+                runs.append(current)
+                current = []
+            }
+        }
+        if !current.isEmpty { runs.append(current) }
+        return runs
     }
 
     public var duration: TimeInterval {
@@ -56,19 +73,19 @@ public struct APTransitionEvent: Identifiable, Codable {
     public let timestamp: Date
     public let fromBSSID: String
     public let toBSSID: String
-    public let rssiBefore: Int
-    public let rssiAfter: Int
-    public let channelBefore: Int
-    public let channelAfter: Int
+    public let rssiBefore: Int?
+    public let rssiAfter: Int?
+    public let channelBefore: Int?
+    public let channelAfter: Int?
 
     public init(
         timestamp: Date,
         fromBSSID: String,
         toBSSID: String,
-        rssiBefore: Int,
-        rssiAfter: Int,
-        channelBefore: Int,
-        channelAfter: Int
+        rssiBefore: Int?,
+        rssiAfter: Int?,
+        channelBefore: Int?,
+        channelAfter: Int?
     ) {
         self.timestamp = timestamp
         self.fromBSSID = fromBSSID

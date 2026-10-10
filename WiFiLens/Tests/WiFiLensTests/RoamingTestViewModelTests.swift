@@ -160,8 +160,8 @@ import Testing
         #expect(vm.segments[0].endTime == nextValid.timestamp)
         #expect(vm.currentSSID == nil)
         #expect(vm.currentBSSID == nil)
-        #expect(vm.currentRSSI == 0)
-        #expect(vm.currentChannel == 0)
+        #expect(vm.currentRSSI == nil)
+        #expect(vm.currentChannel == nil)
         #expect(vm.routerIP == nil)
         #expect(vm.gatewayLatency == nil)
         #expect(vm.transitions.isEmpty)
@@ -199,6 +199,82 @@ import Testing
         #expect(vm.transitions.count == 1)
         #expect(vm.transitions[0].toBSSID == newer.bssid)
         vm.stopTest(userInitiated: false)
+    }
+
+    @Test("Unverified metrics remain absent while verified BSSID transitions are retained")
+    func missingMetricsDoNotBecomeNumbersOrCarryForward() async {
+        let start = Date(timeIntervalSince1970: 1_800_000_300)
+        let initial = verifiedStatus(at: start, bssid: "AA:00:00:00:00:01", rssi: -48, channel: 36)
+        let vm = RoamingTestViewModel(roamingProvider: MockRoamingProbeProvider(result: initial))
+        vm.checkReadiness()
+        await waitUntil { vm.state == .ready }
+        vm.startTest()
+        await waitUntil { vm.state == .running }
+
+        let unverified = verifiedStatus(
+            at: start.addingTimeInterval(1), bssid: "AA:00:00:00:00:02",
+            metricsAttribution: .unverified, rssi: nil, channel: nil, txRate: nil
+        )
+        vm.recordProbe(unverified)
+
+        #expect(vm.transitions.count == 1)
+        #expect(vm.transitions[0].rssiBefore == -48)
+        #expect(vm.transitions[0].rssiAfter == nil)
+        #expect(vm.transitions[0].channelBefore == 36)
+        #expect(vm.transitions[0].channelAfter == nil)
+        #expect(vm.currentRSSI == nil)
+        #expect(vm.currentChannel == nil)
+        #expect(vm.currentTxRate == nil)
+        #expect(vm.segments[1].samples.last?.rssi == nil)
+        #expect(vm.segments[1].samples.last?.channel == nil)
+        #expect(vm.segments[1].samples.last?.txRate == nil)
+
+        let recovered = verifiedStatus(at: start.addingTimeInterval(2), bssid: "AA:00:00:00:00:03", rssi: -60, channel: 44)
+        vm.recordProbe(recovered)
+        #expect(vm.transitions.count == 2)
+        #expect(vm.transitions[1].rssiBefore == nil)
+        #expect(vm.transitions[1].channelBefore == nil)
+        vm.stopTest(userInitiated: false)
+    }
+
+    @Test("Associated samples with no measured metrics are still recorded")
+    func associationSampleCanKeepNilMetrics() async {
+        let start = Date(timeIntervalSince1970: 1_800_000_350)
+        let status = verifiedStatus(
+            at: start, bssid: "AA:00:00:00:00:01",
+            metricsAttribution: .verified, rssi: nil, channel: nil, txRate: nil
+        )
+        let vm = RoamingTestViewModel(roamingProvider: MockRoamingProbeProvider(result: status))
+        vm.checkReadiness()
+        await waitUntil { vm.state == .ready }
+        vm.startTest()
+        await waitUntil { vm.state == .running }
+
+        #expect(vm.currentBSSID == status.bssid)
+        #expect(vm.currentRSSI == nil)
+        #expect(vm.currentChannel == nil)
+        #expect(vm.currentTxRate == nil)
+        #expect(vm.segments.first?.samples.first?.rssi == nil)
+        vm.stopTest(userInitiated: false)
+    }
+
+    @Test("A probe released after stopping cannot append a roaming sample")
+    func delayedProbeCannotMutateStoppedRun() async {
+        let provider = SuspendedRoamingProbeProvider(result: verifiedStatus(
+            at: Date(timeIntervalSince1970: 1_800_000_400), bssid: "AA:00:00:00:00:01"
+        ))
+        let vm = RoamingTestViewModel(roamingProvider: provider)
+        vm.state = .running
+
+        let pendingSample = Task { await vm.sampleOnce() }
+        await provider.waitForFirstRequest()
+        vm.stopTest(userInitiated: false)
+        await provider.releaseFirstRequest()
+        await pendingSample.value
+
+        #expect(vm.state == .stopped)
+        #expect(vm.segments.isEmpty)
+        #expect(vm.transitions.isEmpty)
     }
 
     @Test("Gateway probing occurs only after the current link evidence is verified")
@@ -301,7 +377,10 @@ private actor DelayedStartRoamingProvider: RoamingProbeProviding {
     }
 }
 
-private func verifiedRoamingStatus(from original: WiFiCurrentStatus) -> WiFiCurrentStatus {
+private func verifiedRoamingStatus(
+    from original: WiFiCurrentStatus,
+    metricsAttribution: WiFiMetricsAttribution = .verified
+) -> WiFiCurrentStatus {
     let cycleID = UUID()
     let evidence = WiFiLinkRawEvidence(
         snapshotCycleID: cycleID,
@@ -332,22 +411,30 @@ private func verifiedRoamingStatus(from original: WiFiCurrentStatus) -> WiFiCurr
         isWiFiPowerOn: true,
         linkEvidence: evidence,
         linkAssessment: assessment,
-        metricsAttribution: .verified
+        metricsAttribution: metricsAttribution
     )
 }
 
-private func verifiedStatus(at timestamp: Date, bssid: String, routerIP: String? = "192.0.2.1") -> WiFiCurrentStatus {
+private func verifiedStatus(
+    at timestamp: Date,
+    bssid: String,
+    routerIP: String? = "192.0.2.1",
+    metricsAttribution: WiFiMetricsAttribution = .verified,
+    rssi: Int? = -48,
+    channel: Int? = 6,
+    txRate: Double? = 200
+) -> WiFiCurrentStatus {
     verifiedRoamingStatus(from: WiFiCurrentStatus(
         timestamp: timestamp,
         ssid: "TestNet",
         bssid: bssid,
-        channel: 6,
-        rssi: -48,
-        txRate: 200,
+        channel: channel,
+        rssi: rssi,
+        txRate: txRate,
         routerIP: routerIP,
         isConnected: true,
         isWiFiPowerOn: true
-    ))
+    ), metricsAttribution: metricsAttribution)
 }
 
 private actor SequenceRoamingProbeProvider: RoamingProbeProviding {
@@ -360,6 +447,37 @@ private actor SequenceRoamingProbeProvider: RoamingProbeProviding {
     func fetchCurrentProbe() async -> WiFiCurrentStatus {
         guard !statuses.isEmpty else { return WiFiCurrentStatus(timestamp: Date(), isConnected: false, isWiFiPowerOn: false) }
         return statuses.removeFirst()
+    }
+}
+
+private actor SuspendedRoamingProbeProvider: RoamingProbeProviding {
+    private let result: WiFiCurrentStatus
+    private var calls = 0
+    private var pending: CheckedContinuation<WiFiCurrentStatus, Never>?
+    private var waiter: CheckedContinuation<Void, Never>?
+
+    init(result: WiFiCurrentStatus) { self.result = result }
+
+    func fetchCurrentProbe() async -> WiFiCurrentStatus {
+        calls += 1
+        guard calls == 1 else {
+            return WiFiCurrentStatus(timestamp: Date(), isConnected: false, isWiFiPowerOn: false)
+        }
+        return await withCheckedContinuation { continuation in
+            pending = continuation
+            waiter?.resume()
+            waiter = nil
+        }
+    }
+
+    func waitForFirstRequest() async {
+        if pending != nil { return }
+        await withCheckedContinuation { waiter = $0 }
+    }
+
+    func releaseFirstRequest() {
+        pending?.resume(returning: result)
+        pending = nil
     }
 }
 

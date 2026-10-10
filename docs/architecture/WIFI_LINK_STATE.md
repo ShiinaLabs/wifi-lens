@@ -219,6 +219,10 @@ validator, a same-cycle router target, and interface-bound ping. Returned
 latency is accepted only when its cycle, interface, address, attempt, bound
 flag, and finite non-negative reply value match the target. The roaming model
 does not fall back to its generic address-only provider.
+Saved roaming sessions use record version 2, where RSSI, channel, and transmit
+rate are optional measurements. Version 1 records with numeric measurements
+remain readable; missing version 2 measurements stay absent and are never
+replaced with sentinel values.
 
 AP Radar changes target presence only after a successful
 environment scan. On failure or scan lifecycle pause it stops pulse/audio,
