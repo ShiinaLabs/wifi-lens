@@ -6,6 +6,7 @@ enum WiFiQualityEvaluator {
         gatewayLatency: GatewayLatencyResult? = nil
     ) -> WiFiQualityResult {
         guard WiFiLinkEvidenceValidator.assessment(for: currentStatus)?.state == .associated,
+              currentStatus.metricsAttribution == .verified,
               let rssi = currentStatus.rssi else {
             return WiFiQualityResult(
                 level: .unknown,

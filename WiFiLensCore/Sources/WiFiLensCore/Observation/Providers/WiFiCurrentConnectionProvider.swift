@@ -42,6 +42,7 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
         from wifi: NetworkInterfaceInfo,
         snapshot: NetworkInterfaceSnapshot
     ) -> WiFiCurrentStatus {
+        let metricsVerified = wifi.metricsAttribution == .verified
         let interpreted = WiFiLinkInterpreter.evaluate(
             wifi.wifiLinkEvidence,
             expectedCycleID: snapshot.cycleID,
@@ -54,17 +55,18 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
             interfaceIndex: wifi.interfaceIndex,
             ssid: wifi.ssid,
             bssid: wifi.bssid,
-            channel: wifi.channel,
-            band: wifi.band,
-            rssi: wifi.rssi,
-            txRate: wifi.txRate,
-            phyMode: wifi.phyMode,
-            security: wifi.security,
+            channel: metricsVerified ? wifi.channel : nil,
+            band: metricsVerified ? wifi.band : nil,
+            rssi: metricsVerified ? wifi.rssi : nil,
+            txRate: metricsVerified ? wifi.txRate : nil,
+            phyMode: metricsVerified ? wifi.phyMode : nil,
+            security: metricsVerified ? wifi.security : nil,
             routerIP: wifi.router,
             isConnected: false,
             isWiFiPowerOn: wifi.wifiLinkEvidence?.radio == .reportedOn,
             linkEvidence: wifi.wifiLinkEvidence,
-            linkAssessment: interpreted
+            linkAssessment: interpreted,
+            metricsAttribution: wifi.metricsAttribution
         )
         let verified = WiFiLinkEvidenceValidator.assessment(for: provisional)
         var status = provisional

@@ -11,15 +11,16 @@ enum DiagnosticEvaluator {
         guard associated else {
             return .unknown
         }
-        let rssi = currentStatus.rssi
-        let chScore = channelAnalysis?
+        let metricsVerified = currentStatus.metricsAttribution == .verified
+        let rssi = metricsVerified ? currentStatus.rssi : nil
+        let chScore = metricsVerified ? channelAnalysis?
             .first(where: { $0.isCurrentChannel })?
-            .qualityScore
-        let apCount = channelAnalysis?
+            .qualityScore : nil
+        let apCount = metricsVerified ? channelAnalysis?
             .first(where: { $0.isCurrentChannel })?
-            .apCount ?? 0
-        let sec = currentStatus.security ?? ""
-        let phy = currentStatus.phyMode ?? ""
+            .apCount ?? 0 : 0
+        let sec = metricsVerified ? currentStatus.security ?? "" : ""
+        let phy = metricsVerified ? currentStatus.phyMode ?? "" : ""
 
         guard rssi != nil || chScore != nil else { return .unknown }
 
@@ -42,7 +43,7 @@ enum DiagnosticEvaluator {
         }
 
         if let chScore, chScore < 50 {
-            let channelNum = currentStatus.channel ?? 0
+            let channelNum = metricsVerified ? currentStatus.channel ?? 0 : 0
             let recList = channelRecommendations?.prefix(2).map { "\($0.channel)" }.joined(separator: " / ") ?? ""
             return DiagnosticResult(
                 icon: "antenna.radiowaves.left.and.right",

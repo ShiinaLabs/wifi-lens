@@ -230,16 +230,16 @@ public enum WiFiLinkInterpreter {
 }
 
 public struct WiFiCurrentStatus: Equatable, Sendable {
-    public init(timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil, interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil, band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil, security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool, linkEvidence: WiFiLinkRawEvidence? = nil, linkAssessment: WiFiLinkAssessment? = nil) {
-        self.init(timestamp: timestamp, interfaceSnapshotCycleID: interfaceSnapshotCycleID, interfaceName: interfaceName, interfaceIndex: interfaceIndex, ssid: ssid, bssid: bssid, channel: channel, band: band, rssi: rssi, noise: noise, txRate: txRate, phyMode: phyMode, security: security, routerIP: routerIP, isConnected: isConnected, isWiFiPowerOn: isWiFiPowerOn, error: nil, linkEvidence: linkEvidence, linkAssessment: linkAssessment)
+    public init(timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil, interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil, band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil, security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool, linkEvidence: WiFiLinkRawEvidence? = nil, linkAssessment: WiFiLinkAssessment? = nil, metricsAttribution: WiFiMetricsAttribution = .unverified) {
+        self.init(timestamp: timestamp, interfaceSnapshotCycleID: interfaceSnapshotCycleID, interfaceName: interfaceName, interfaceIndex: interfaceIndex, ssid: ssid, bssid: bssid, channel: channel, band: band, rssi: rssi, noise: noise, txRate: txRate, phyMode: phyMode, security: security, routerIP: routerIP, isConnected: isConnected, isWiFiPowerOn: isWiFiPowerOn, error: nil, linkEvidence: linkEvidence, linkAssessment: linkAssessment, metricsAttribution: metricsAttribution)
     }
 
-    init(timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil, interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil, band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil, security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool, error: WiFiObservationError?, linkEvidence: WiFiLinkRawEvidence? = nil, linkAssessment: WiFiLinkAssessment? = nil) {
+    init(timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil, interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil, band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil, security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool, error: WiFiObservationError?, linkEvidence: WiFiLinkRawEvidence? = nil, linkAssessment: WiFiLinkAssessment? = nil, metricsAttribution: WiFiMetricsAttribution = .unverified) {
         self.timestamp = timestamp; self.interfaceSnapshotCycleID = interfaceSnapshotCycleID; self.interfaceName = interfaceName; self.interfaceIndex = interfaceIndex
         self.ssid = ssid; self.bssid = bssid; self.channel = channel; self.band = band; self.rssi = rssi; self.noise = noise
         self.txRate = txRate; self.phyMode = phyMode; self.security = security; self.routerIP = routerIP
         self.isConnected = isConnected; self.isWiFiPowerOn = isWiFiPowerOn; self.error = error
-        self.linkEvidence = linkEvidence; self.linkAssessment = linkAssessment
+        self.linkEvidence = linkEvidence; self.linkAssessment = linkAssessment; self.metricsAttribution = metricsAttribution
     }
     public var timestamp: Date
     public var interfaceSnapshotCycleID: UUID? = nil
@@ -259,6 +259,7 @@ public struct WiFiCurrentStatus: Equatable, Sendable {
     public var isWiFiPowerOn: Bool
     public var linkEvidence: WiFiLinkRawEvidence?
     public var linkAssessment: WiFiLinkAssessment?
+    public var metricsAttribution: WiFiMetricsAttribution = .unverified
     var error: WiFiObservationError?
 }
 

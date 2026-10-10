@@ -39,7 +39,8 @@ private func verifiedAssociatedStatus(
         isConnected: true,
         isWiFiPowerOn: true,
         linkEvidence: evidence,
-        linkAssessment: assessment
+        linkAssessment: assessment,
+        metricsAttribution: .verified
     )
 }
 
@@ -147,6 +148,22 @@ struct AnalyzerTests {
             #expect(WiFiQualityEvaluator.evaluate(currentStatus: status).level == .unknown)
             #expect(DiagnosticEvaluator.evaluate(currentStatus: status).severity == .unknown)
         }
+    }
+
+    @Test("Verified association with unattributed metrics remains connected but has unknown health")
+    func unattributedMetricsDoNotProduceHealthConclusion() {
+        var status = verifiedAssociatedStatus(rssi: -90, security: "WPA2")
+        status.metricsAttribution = .unverified
+        let congested = ChannelQuality(
+            channel: 36, band: "5", bandDisplay: "5 GHz", qualityScore: 20,
+            qualityLevel: .congested, apCount: 12, coChannelCount: 8, adjacentCount: 4,
+            interferenceScore: 80, overlapLevel: .high, strongestNeighborRSSI: -45,
+            isCurrentChannel: true
+        )
+
+        #expect(WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated)
+        #expect(WiFiQualityEvaluator.evaluate(currentStatus: status).level == .unknown)
+        #expect(DiagnosticEvaluator.evaluate(currentStatus: status, channelAnalysis: [congested]).severity == .unknown)
     }
 
     @Test("Confirmed hidden SSID remains associated for quality evaluation")

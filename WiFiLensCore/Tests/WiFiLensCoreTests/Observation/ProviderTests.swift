@@ -27,6 +27,7 @@ struct ProviderTests {
         let interface = NetworkInterfaceInfo(
             interfaceName: "en0",
             hardwareMAC: "00:11:22:33:44:55",
+            metricsAttribution: .verified,
             ipv4Addresses: ["192.0.2.2"],
             subnetMasks: ["255.255.255.0"],
             router: "192.0.2.1",
@@ -53,6 +54,36 @@ struct ProviderTests {
 
         #expect(status.channel == 5)
         #expect(status.band == .band6GHz)
+    }
+
+    @Test("Unverified detail metrics are removed without downgrading link association")
+    func unverifiedMetricsAreSanitizedIndependently() {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_201)
+        let cycleID = UUID()
+        let evidence = WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID, capturedAt: timestamp, interfaceName: "en0",
+            mode: .station, radio: .reportedOn, linkActive: true,
+            ssid: "Lab", bssid: "AP-1", interfaceIndex: 4
+        )
+        let interface = NetworkInterfaceInfo(
+            interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true,
+            wifiLinkEvidence: evidence, metricsAttribution: .inconsistent,
+            ssid: "Lab", bssid: "AP-1", channel: 36, band: .band5GHz,
+            rssi: -42, txRate: 600, phyMode: "ax", security: "WPA3"
+        )
+        let status = WiFiCurrentConnectionProvider.makeStatus(
+            from: interface,
+            snapshot: NetworkInterfaceSnapshot(cycleID: cycleID, capturedAt: timestamp, interfaces: [interface])
+        )
+
+        #expect(WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated)
+        #expect(status.metricsAttribution == .inconsistent)
+        #expect(status.channel == nil)
+        #expect(status.band == nil)
+        #expect(status.rssi == nil)
+        #expect(status.txRate == nil)
+        #expect(status.phyMode == nil)
+        #expect(status.security == nil)
     }
 
     @Test("WiFiCurrentConnectionProvider deterministically projects a connected snapshot")

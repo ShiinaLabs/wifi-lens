@@ -2,6 +2,12 @@ import Foundation
 import CoreWLAN
 import SystemConfiguration
 
+public enum WiFiMetricsAttribution: Equatable, Sendable {
+    case verified
+    case unverified
+    case inconsistent
+}
+
 public struct NetworkInterfaceInfo: Sendable {
     enum InterfaceType: String, Sendable {
         case wifi
@@ -14,6 +20,7 @@ public struct NetworkInterfaceInfo: Sendable {
     public let hardwareMAC: String?
     public let isWiFiInterface: Bool
     public let wifiLinkEvidence: WiFiLinkRawEvidence?
+    public let metricsAttribution: WiFiMetricsAttribution
     public let ipv4Addresses: [String]
     public let subnetMasks: [String]
     public let router: String?
@@ -35,6 +42,7 @@ public struct NetworkInterfaceInfo: Sendable {
         hardwareMAC: String? = nil,
         isWiFiInterface: Bool = false,
         wifiLinkEvidence: WiFiLinkRawEvidence? = nil,
+        metricsAttribution: WiFiMetricsAttribution = .unverified,
         ipv4Addresses: [String] = [],
         subnetMasks: [String] = [],
         router: String? = nil,
@@ -53,6 +61,7 @@ public struct NetworkInterfaceInfo: Sendable {
         self.hardwareMAC = hardwareMAC
         self.isWiFiInterface = isWiFiInterface
         self.wifiLinkEvidence = wifiLinkEvidence
+        self.metricsAttribution = metricsAttribution
         self.ipv4Addresses = ipv4Addresses
         self.subnetMasks = subnetMasks
         self.router = router
@@ -350,6 +359,9 @@ public enum NetworkInfoService {
                     store: store
                 ) : nil
             }
+            let metricsAttribution = isWiFi
+                ? Self.evaluateMetricsAttribution(detailsBSSID: wiFiInfo?.bssid, evidenceBSSID: linkEvidence?.bssid)
+                : .unverified
 
             // Router lookup from SystemConfiguration (Interface path)
             var router: String?
@@ -371,6 +383,7 @@ public enum NetworkInfoService {
                 hardwareMAC: isWiFi ? (wiFiInfo?.hardwareMAC ?? entry.mac) : entry.mac,
                 isWiFiInterface: isWiFi,
                 wifiLinkEvidence: linkEvidence,
+                metricsAttribution: metricsAttribution,
                 ipv4Addresses: entry.ips,
                 subnetMasks: entry.subnets,
                 router: router,
@@ -565,6 +578,13 @@ public enum NetworkInfoService {
             phyModeLabel(iface),
             securityLabel(iface)
         )
+    }
+
+    private static func evaluateMetricsAttribution(
+        detailsBSSID: String?, evidenceBSSID: String?
+    ) -> WiFiMetricsAttribution {
+        guard let detailsBSSID, let evidenceBSSID else { return .unverified }
+        return detailsBSSID == evidenceBSSID ? .verified : .inconsistent
     }
 
 }
