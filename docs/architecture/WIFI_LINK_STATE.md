@@ -175,7 +175,16 @@ quality, and diagnosis are not produced from a failed environment scan. A fresh
 link status from that cycle remains independently available. Overview and
 Interfaces use a fresh `WiFiCurrentStatus.linkAssessment` to label association;
 SSID/BSSID are display identity only, and interface type comes from explicit
-interface discovery. AP Radar changes target presence only after a successful
+interface discovery. Connection quality, gateway latency in quality evaluation,
+and current-network/current-channel markers require the shared validator to
+confirm association for that exact status cycle. Missing RSSI remains unknown;
+environmental channel analysis still runs without an associated network. The
+public roaming test uses the same validator and records an AP transition only
+between confirmed samples with matching interface and known logical-network
+identity and an uninterrupted sampling interval. Unknown samples reset its
+roaming baseline.
+
+AP Radar changes target presence only after a successful
 environment scan. On failure or scan lifecycle pause it stops pulse/audio,
 invalidates the live RSSI display, and waits for a new successful sample before
 tracking resumes. A failed scan never means the tracked AP disappeared. A

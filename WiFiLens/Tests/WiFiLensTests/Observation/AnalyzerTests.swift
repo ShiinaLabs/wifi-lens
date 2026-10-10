@@ -2,14 +2,52 @@ import Foundation
 import Testing
 @testable import WiFiLensCore
 
+private func verifiedAssociatedStatus(
+    timestamp: Date = Date(),
+    ssid: String? = "Test",
+    bssid: String? = "AA:BB",
+    channel: Int? = 36,
+    rssi: Int? = -45,
+    security: String? = nil
+) -> WiFiCurrentStatus {
+    let cycleID = UUID()
+    let evidence = WiFiLinkRawEvidence(
+        snapshotCycleID: cycleID,
+        capturedAt: timestamp,
+        interfaceName: "en0",
+        mode: .station,
+        coreWLANModeRawValue: 1,
+        radio: .reportedOn,
+        linkActive: true,
+        ssid: ssid,
+        bssid: bssid,
+        interfaceIndex: 4,
+        radioPowerOnRaw: true
+    )
+    let assessment = WiFiLinkInterpreter.evaluate(evidence, expectedCycleID: cycleID, expectedCapturedAt: timestamp)
+    return WiFiCurrentStatus(
+        timestamp: timestamp,
+        interfaceSnapshotCycleID: cycleID,
+        interfaceName: "en0",
+        interfaceIndex: 4,
+        ssid: ssid,
+        bssid: bssid,
+        channel: channel,
+        band: channel.map { $0 <= 14 ? .band24GHz : .band5GHz },
+        rssi: rssi,
+        security: security,
+        isConnected: true,
+        isWiFiPowerOn: true,
+        linkEvidence: evidence,
+        linkAssessment: assessment
+    )
+}
+
 @Suite("Observation Analyzers")
 struct AnalyzerTests {
     @Test("WiFiQualityEvaluator: strong signal + low latency = good")
     func strongGood() {
-        let status = WiFiCurrentStatus(
-            timestamp: Date(), ssid: "Test", bssid: "AA:BB", channel: 36,
-            rssi: -45, isConnected: true, isWiFiPowerOn: true
-        )
+        let status = verifiedAssociatedStatus()
         let latency = GatewayLatencyResult(timestamp: Date(), latencyMs: 20)
         let result = WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: latency)
         #expect(result.level == .good)
@@ -17,20 +55,14 @@ struct AnalyzerTests {
 
     @Test("WiFiQualityEvaluator: weak signal = poor")
     func weakPoor() {
-        let status = WiFiCurrentStatus(
-            timestamp: Date(), ssid: "Test", bssid: "AA:BB", channel: 6,
-            rssi: -80, isConnected: true, isWiFiPowerOn: true
-        )
+        let status = verifiedAssociatedStatus(channel: 6, rssi: -80)
         let result = WiFiQualityEvaluator.evaluate(currentStatus: status)
         #expect(result.level == .poor)
     }
 
     @Test("DiagnosticEvaluator: excellent when strong + WPA3 + good channel")
     func excellentDiagnostic() {
-        let status = WiFiCurrentStatus(
-            timestamp: Date(), ssid: "Net", bssid: "AA:BB", channel: 36,
-            rssi: -45, security: "WPA3", isConnected: true, isWiFiPowerOn: true
-        )
+        let status = verifiedAssociatedStatus(security: "WPA3")
         let ch = ChannelQuality(
             channel: 36, band: "5", bandDisplay: "5 GHz",
             qualityScore: 85, qualityLevel: .good,
@@ -46,10 +78,7 @@ struct AnalyzerTests {
 
     @Test("DiagnosticEvaluator: congested message formats integer inputs")
     func congestedDiagnosticFormatsIntegers() {
-        let status = WiFiCurrentStatus(
-            timestamp: Date(), ssid: "Net", bssid: "AA:BB", channel: 6,
-            rssi: -60, security: "WPA3", isConnected: true, isWiFiPowerOn: true
-        )
+        let status = verifiedAssociatedStatus(channel: 6, rssi: -60, security: "WPA3")
         let ch = ChannelQuality(
             channel: 6, band: "24", bandDisplay: "2.4 GHz",
             qualityScore: 35, qualityLevel: .congested,
@@ -69,10 +98,7 @@ struct AnalyzerTests {
 
     @Test("DiagnosticEvaluator: congested message includes recommended channels")
     func congestedDiagnosticIncludesRecommendations() {
-        let status = WiFiCurrentStatus(
-            timestamp: Date(), ssid: "Net", bssid: "AA:BB", channel: 6,
-            rssi: -60, security: "WPA3", isConnected: true, isWiFiPowerOn: true
-        )
+        let status = verifiedAssociatedStatus(channel: 6, rssi: -60, security: "WPA3")
         let ch = ChannelQuality(
             channel: 6, band: "24", bandDisplay: "2.4 GHz",
             qualityScore: 35, qualityLevel: .congested,
@@ -109,6 +135,25 @@ struct AnalyzerTests {
 
         #expect(result.severity == .warning)
         #expect(result.message.contains("1 / 11"))
+    }
+
+    @Test("Unverified strong or weak RSSI cannot create a current connection quality or fault")
+    func unknownAssociationDoesNotBecomeConnectionQuality() {
+        for rssi in [-45, -90] {
+            let status = WiFiCurrentStatus(
+                timestamp: Date(), ssid: "Visible", bssid: "AA:BB", channel: 36,
+                rssi: rssi, isConnected: true, isWiFiPowerOn: true
+            )
+            #expect(WiFiQualityEvaluator.evaluate(currentStatus: status).level == .unknown)
+            #expect(DiagnosticEvaluator.evaluate(currentStatus: status).severity == .unknown)
+        }
+    }
+
+    @Test("Confirmed hidden SSID remains associated for quality evaluation")
+    func hiddenSSIDCanBeVerified() {
+        let status = verifiedAssociatedStatus(ssid: nil, bssid: nil, rssi: -50)
+        #expect(WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated)
+        #expect(WiFiQualityEvaluator.evaluate(currentStatus: status).level == .good)
     }
 }
 

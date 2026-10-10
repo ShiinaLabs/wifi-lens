@@ -133,17 +133,12 @@ import Testing
 
     private func makeConnectedViewModel(guidance: GuidanceCoordinator) -> RoamingTestViewModel {
         let status = WiFiCurrentStatus(
-            timestamp: Date(),
-            ssid: "TestNet",
-            bssid: "AA:BB:CC:DD:EE:FF",
-            channel: 6,
-            rssi: -45,
-            txRate: 300,
-            isConnected: true,
-            isWiFiPowerOn: true
+            timestamp: Date(), ssid: "TestNet", bssid: "AA:BB:CC:DD:EE:FF",
+            channel: 6, rssi: -45, txRate: 300, isConnected: true, isWiFiPowerOn: true
         )
+        let verified = verifiedRoamingStatus(from: status)
         return RoamingTestViewModel(
-            roamingProvider: MockRoamingProbeProvider(result: status),
+            roamingProvider: MockRoamingProbeProvider(result: verified),
             latencyProvider: MockGatewayLatencyProvider(result: .init(timestamp: Date(), latencyMs: 3)),
             onRoamingCompleted: {
                 guidance.record(.roamingCompleted)
@@ -189,7 +184,7 @@ private actor DelayedStartRoamingProvider: RoamingProbeProviding {
     }
 
     private func status(bssid: String) -> WiFiCurrentStatus {
-        WiFiCurrentStatus(
+        verifiedRoamingStatus(from: WiFiCurrentStatus(
             timestamp: Date(),
             ssid: "TestNet",
             bssid: bssid,
@@ -197,8 +192,41 @@ private actor DelayedStartRoamingProvider: RoamingProbeProviding {
             rssi: -50,
             isConnected: true,
             isWiFiPowerOn: true
-        )
+        ))
     }
+}
+
+private func verifiedRoamingStatus(from original: WiFiCurrentStatus) -> WiFiCurrentStatus {
+    let cycleID = UUID()
+    let evidence = WiFiLinkRawEvidence(
+        snapshotCycleID: cycleID,
+        capturedAt: original.timestamp,
+        interfaceName: "en0",
+        mode: .station,
+        coreWLANModeRawValue: 1,
+        radio: .reportedOn,
+        linkActive: true,
+        ssid: original.ssid,
+        bssid: original.bssid,
+        interfaceIndex: 4,
+        radioPowerOnRaw: true
+    )
+    let assessment = WiFiLinkInterpreter.evaluate(evidence, expectedCycleID: cycleID, expectedCapturedAt: original.timestamp)
+    return WiFiCurrentStatus(
+        timestamp: original.timestamp,
+        interfaceSnapshotCycleID: cycleID,
+        interfaceName: "en0",
+        interfaceIndex: 4,
+        ssid: original.ssid,
+        bssid: original.bssid,
+        channel: original.channel,
+        rssi: original.rssi,
+        txRate: original.txRate,
+        isConnected: true,
+        isWiFiPowerOn: true,
+        linkEvidence: evidence,
+        linkAssessment: assessment
+    )
 }
 
 /// Isolated guidance harness for roaming tests: in-memory store, fixed clock,

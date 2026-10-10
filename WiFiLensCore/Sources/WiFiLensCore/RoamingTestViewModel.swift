@@ -66,11 +66,13 @@ public final class RoamingTestViewModel {
 
     private var timer: Timer?
     private var startDate: Date?
-    private var lastBSSID: String?
     private var lastRSSI: Int?
     private var lastChannel: Int?
     private var currentSegmentIndex: Int = -1
-    private var previousProbe: WiFiCurrentStatus?
+    private var previousVerifiedProbe: WiFiCurrentStatus?
+    private var readinessGeneration = 0
+
+    private static let maximumProbeContinuityGap: TimeInterval = 3
 
     /// Generation of the current test run. Incremented whenever a run
     /// starts or stops so in-flight tick continuations can detect that the
@@ -95,22 +97,24 @@ public final class RoamingTestViewModel {
     // MARK: - Actions
 
     public func checkReadiness() {
+        readinessGeneration += 1
+        let requestGeneration = readinessGeneration
         state = .idle
         errorMessage = nil
 
         Task {
             let status = await roamingProvider.fetchCurrentProbe()
-            guard status.isConnected, let ssid = status.ssid else {
+            guard readinessGeneration == requestGeneration else { return }
+            guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else {
                 errorMessage = String(localized: "roaming.error.no_connection", comment: "Error when trying to start roaming test without Wi-Fi")
                 return
             }
-            currentSSID = ssid
+            currentSSID = status.ssid
             currentBSSID = status.bssid
             currentRSSI = status.rssi ?? -100
             currentChannel = status.channel ?? 0
             currentTxRate = status.txRate ?? 0
             currentPhyMode = status.phyMode
-            previousProbe = status
             state = .ready
         }
     }
@@ -143,11 +147,11 @@ public final class RoamingTestViewModel {
         Task {
             let status = await roamingProvider.fetchCurrentProbe()
             guard generation == startGeneration, canStart else { return }
-            guard let bssid = status.bssid else { return }
+            guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
+                  let bssid = status.bssid else { return }
 
             segments = []
             transitions = []
-            lastBSSID = bssid
             lastRSSI = status.rssi ?? -100
             lastChannel = status.channel ?? 0
             startDate = Date()
@@ -158,7 +162,7 @@ public final class RoamingTestViewModel {
             segments = [segment]
             currentSegmentIndex = 0
 
-            previousProbe = status
+            previousVerifiedProbe = status
             applyProbe(status)
             appendSample()
 
@@ -175,6 +179,7 @@ public final class RoamingTestViewModel {
         // Invalidate any tick still awaiting a probe fetch or latency
         // measurement; its continuation must not append samples after stop.
         generation += 1
+        readinessGeneration += 1
         let wasRunning = state == .running
         timer?.invalidate()
         timer = nil
@@ -184,7 +189,7 @@ public final class RoamingTestViewModel {
             segments[currentSegmentIndex].endTime = Date()
         }
 
-        refreshConnectionInfo()
+        refreshConnectionInfo(generation: generation)
         state = .stopped
 
         // A normal user-initiated stop of a live test is a useful roaming
@@ -221,73 +226,106 @@ public final class RoamingTestViewModel {
                 gatewayLatency = result.latencyMs
             }
 
-            let newBSSID = status.bssid
-            let newRSSI = status.rssi ?? -100
-            let newChannel = status.channel ?? 0
-
-            // Detect AP transition
-            if let newBSSID, let lastBSSID, newBSSID != lastBSSID {
-                let transitionTime = Date()
-
-                // Append final sample to old segment at the exact transition time
-                if currentSegmentIndex >= 0, currentSegmentIndex < segments.count {
-                    let finalSample = RoamingSample(
-                        timestamp: transitionTime,
-                        rssi: lastRSSI ?? 0,
-                        channel: lastChannel ?? 0,
-                        txRate: currentTxRate,
-                        gatewayLatency: gatewayLatency
-                    )
-                    segments[currentSegmentIndex].samples.append(finalSample)
-                    segments[currentSegmentIndex].endTime = transitionTime
-                }
-
-                // Record transition
-                let event = APTransitionEvent(
-                    timestamp: transitionTime,
-                    fromBSSID: lastBSSID,
-                    toBSSID: newBSSID,
-                    rssiBefore: lastRSSI ?? 0,
-                    rssiAfter: newRSSI,
-                    channelBefore: lastChannel ?? 0,
-                    channelAfter: newChannel
-                )
-                transitions.append(event)
-
-                // Start new segment at the same timestamp
-                let segment = RoamingSegment(bssid: newBSSID, startTime: transitionTime)
-                segments.append(segment)
-                currentSegmentIndex = segments.count - 1
-            }
-
-            self.lastBSSID = newBSSID
-            self.lastRSSI = newRSSI
-            self.lastChannel = newChannel
-
-            applyProbe(status)
-            appendSample()
+            recordProbe(status)
         }
+    }
+
+    /// Applies one probe only when its public raw evidence validates as an
+    /// associated link. Kept internal so deterministic tests exercise the same
+    /// transition path as the timer.
+    func recordProbe(_ status: WiFiCurrentStatus) {
+        guard state == .running,
+              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
+              let bssid = status.bssid,
+              !bssid.isEmpty else {
+            previousVerifiedProbe = nil
+            return
+        }
+
+        let previous = previousVerifiedProbe
+        let continuous = previous.map { Self.isContinuousAssociation(from: $0, to: status) } ?? false
+        applyProbe(status)
+
+        if continuous, let previous, let oldBSSID = previous.bssid, oldBSSID != bssid {
+            let transitionTime = status.timestamp
+            if currentSegmentIndex >= 0, currentSegmentIndex < segments.count {
+                let finalSample = RoamingSample(
+                    timestamp: transitionTime,
+                    rssi: lastRSSI ?? 0,
+                    channel: lastChannel ?? 0,
+                    txRate: currentTxRate,
+                    gatewayLatency: gatewayLatency
+                )
+                segments[currentSegmentIndex].samples.append(finalSample)
+                segments[currentSegmentIndex].endTime = transitionTime
+            }
+            transitions.append(APTransitionEvent(
+                timestamp: transitionTime,
+                fromBSSID: oldBSSID,
+                toBSSID: bssid,
+                rssiBefore: lastRSSI ?? 0,
+                rssiAfter: status.rssi ?? 0,
+                channelBefore: lastChannel ?? 0,
+                channelAfter: status.channel ?? 0
+            ))
+            segments.append(RoamingSegment(bssid: bssid, startTime: transitionTime))
+            currentSegmentIndex = segments.count - 1
+        } else if !continuous {
+            // A gap, unknown interval, interface change, or network boundary
+            // starts a fresh baseline without inventing an AP transition.
+            segments.append(RoamingSegment(bssid: bssid, startTime: status.timestamp))
+            currentSegmentIndex = segments.count - 1
+        }
+
+        previousVerifiedProbe = status
+        lastRSSI = status.rssi ?? -100
+        lastChannel = status.channel ?? 0
+        appendSample()
+    }
+
+    private static func isContinuousAssociation(from previous: WiFiCurrentStatus, to current: WiFiCurrentStatus) -> Bool {
+        guard WiFiLinkEvidenceValidator.assessment(for: previous)?.state == .associated,
+              WiFiLinkEvidenceValidator.assessment(for: current)?.state == .associated,
+              let oldInterface = previous.interfaceName, !oldInterface.isEmpty,
+              oldInterface == current.interfaceName,
+              let oldSSID = previous.ssid, !oldSSID.isEmpty,
+              oldSSID == current.ssid,
+              previous.bssid != nil, current.bssid != nil else { return false }
+        if let previousIndex = previous.interfaceIndex, previousIndex != 0,
+           let currentIndex = current.interfaceIndex, currentIndex != 0,
+           previousIndex != currentIndex { return false }
+        let gap = current.timestamp.timeIntervalSince(previous.timestamp)
+        return gap > 0 && gap <= maximumProbeContinuityGap
     }
 
     // MARK: - Helpers
 
-    private func refreshConnectionInfo() {
+    private func refreshConnectionInfo(generation expectedGeneration: Int) {
         Task {
             let status = await roamingProvider.fetchCurrentProbe()
+            guard generation == expectedGeneration else { return }
             applyProbe(status)
         }
     }
 
     private func applyProbe(_ status: WiFiCurrentStatus) {
+        guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else {
+            currentSSID = nil
+            currentBSSID = nil
+            currentRSSI = 0
+            currentChannel = 0
+            currentTxRate = 0
+            currentPhyMode = nil
+            gatewayLatency = nil
+            return
+        }
         currentSSID = status.ssid
         currentBSSID = status.bssid
-        currentRSSI = status.rssi ?? -100
+        currentRSSI = status.rssi ?? 0
         currentChannel = status.channel ?? 0
         currentTxRate = status.txRate ?? 0
         currentPhyMode = status.phyMode
-        if routerIP == nil {
-            routerIP = status.routerIP ?? NetworkInfoService.fetch()?.router
-        }
+        routerIP = status.routerIP ?? NetworkInfoService.fetch()?.router
     }
 
     private func appendSample() {

@@ -48,8 +48,10 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         context: WiFiObservationCycleContext
     ) async -> WiFiObservationCycleResult {
         let status = await currentConnectionProvider.fetchCurrentStatus(from: context.interfaceSnapshot)
+        let confirmedLink = WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
         let latency: GatewayLatencyResult
-        if context.environmentError == nil,
+        if confirmedLink,
+           context.environmentError == nil,
            let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
            let boundMeasurer = gatewayLatencyProvider as? WiFiBoundGatewayMeasuring {
             let measured = await boundMeasurer.measure(target: target)
@@ -77,7 +79,7 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         }
         let adaptedNetworks = NetworkObservationAdapter.adaptAll(
             networks,
-            currentBSSID: status.bssid
+            confirmedCurrentBSSID: confirmedLink ? status.bssid : nil
         )
         let snapshot = WiFiEnvironmentSnapshot(
             timestamp: context.timestamp,
@@ -87,15 +89,15 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
             sourceCycleID: context.interfaceSnapshot.cycleID
         )
         let targetAP = ChannelQualityCalculator.TargetAP(
-            bssid: status.bssid,
-            ssid: status.ssid,
-            channel: status.channel
+            bssid: confirmedLink ? status.bssid : nil,
+            ssid: confirmedLink ? status.ssid : nil,
+            channel: confirmedLink ? status.channel : nil
         )
         let channelAnalysis: [ChannelQuality]? = if context.environmentError == nil {
             ChannelOccupancyAnalyzer.analyze(
                 snapshot: snapshot,
-                currentChannel: status.channel,
-                currentBand: status.band,
+                currentChannel: confirmedLink ? status.channel : nil,
+                currentBand: confirmedLink ? status.band : nil,
                 supportedBands: Set(context.supportedBands.map(\.id)),
                 targetAP: targetAP
             )
@@ -116,7 +118,7 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
                 deviceCapabilities: context.deviceCapabilities
             )
         }
-        let quality: WiFiQualityResult? = context.environmentError == nil
+        let quality: WiFiQualityResult? = context.environmentError == nil && confirmedLink
             ? WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: latency)
             : nil
         let diagnosis: DiagnosticResult? = if let quality {

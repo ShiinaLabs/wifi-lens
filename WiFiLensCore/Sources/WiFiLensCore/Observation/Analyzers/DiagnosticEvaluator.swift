@@ -7,17 +7,23 @@ enum DiagnosticEvaluator {
         channelAnalysis: [ChannelQuality]? = nil,
         channelRecommendations: [ChannelRecommendation]? = nil
     ) -> DiagnosticResult {
-        let rssi = currentStatus.rssi ?? -100
+        let associated = WiFiLinkEvidenceValidator.assessment(for: currentStatus)?.state == .associated
+        guard associated else {
+            return .unknown
+        }
+        let rssi = currentStatus.rssi
         let chScore = channelAnalysis?
             .first(where: { $0.isCurrentChannel })?
-            .qualityScore ?? 50
+            .qualityScore
         let apCount = channelAnalysis?
             .first(where: { $0.isCurrentChannel })?
             .apCount ?? 0
         let sec = currentStatus.security ?? ""
         let phy = currentStatus.phyMode ?? ""
 
-        if rssi >= -55 && chScore >= 70 && sec.contains("WPA3") {
+        guard rssi != nil || chScore != nil else { return .unknown }
+
+        if let rssi, let chScore, rssi >= -55 && chScore >= 70 && sec.contains("WPA3") {
             return DiagnosticResult(
                 icon: "star.fill",
                 title: String(localized: "observation.diagnosis.excellent.title", comment: "Excellent connection"),
@@ -26,7 +32,7 @@ enum DiagnosticEvaluator {
             )
         }
 
-        if rssi < -75 {
+        if let rssi, rssi < -75 {
             return DiagnosticResult(
                 icon: "wifi.slash",
                 title: String(localized: "observation.diagnosis.weak_signal.title", comment: "Weak signal"),
@@ -35,7 +41,7 @@ enum DiagnosticEvaluator {
             )
         }
 
-        if chScore < 50 {
+        if let chScore, chScore < 50 {
             let channelNum = currentStatus.channel ?? 0
             let recList = channelRecommendations?.prefix(2).map { "\($0.channel)" }.joined(separator: " / ") ?? ""
             return DiagnosticResult(
@@ -46,7 +52,7 @@ enum DiagnosticEvaluator {
             )
         }
 
-        if chScore < 70 {
+        if let chScore, chScore < 70 {
             return DiagnosticResult(
                 icon: "antenna.radiowaves.left.and.right",
                 title: String(localized: "observation.diagnosis.mediocre.title", comment: "Mediocre channel"),

@@ -7,17 +7,17 @@ struct PipelineTests {
     @Test("produceCycle uses the current connection for snapshot and channel analysis")
     func productionCycleUsesCurrentConnection() async {
         let timestamp = Date(timeIntervalSince1970: 1_750_000_000)
-        let status = WiFiCurrentStatus(
+        let cycleID = UUID()
+        let context = cycleContext(timestamp: timestamp, cycleID: cycleID, supportedBands: [.band5GHz])
+        let status = associatedStatus(
             timestamp: timestamp,
-            interfaceName: "en0",
+            cycleID: cycleID,
             ssid: "Current",
             bssid: "AA:BB:CC:DD:EE:FF",
             channel: 36,
             band: .band5GHz,
             rssi: -48,
-            routerIP: "192.0.2.1",
-            isConnected: true,
-            isWiFiPowerOn: true
+            routerIP: "192.0.2.1"
         )
         let currentProvider = TestCountingCurrentConnectionProvider(result: status)
         let latencyProvider = TestRecordingGatewayLatencyProvider(result: GatewayLatencyResult(
@@ -36,7 +36,7 @@ struct PipelineTests {
                 network(ssid: "Nearby", bssid: "11:22:33:44:55:66", channel: 40, band: .band5GHz, rssi: -62),
                 network(ssid: "Other band", bssid: "77:88:99:AA:BB:CC", channel: 6, band: .band24GHz, rssi: -50),
             ],
-            context: cycleContext(timestamp: timestamp, supportedBands: [.band5GHz])
+            context: context
         )
 
         #expect(result.observation.environmentSnapshot?.networks.first(where: {
@@ -51,17 +51,17 @@ struct PipelineTests {
 
     @Test("produceCycle marks the current channel only in the connected band")
     func productionCycleScopesCurrentChannelToBand() async {
-        let status = WiFiCurrentStatus(
-            timestamp: Date(),
-            interfaceName: "en0",
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_050)
+        let cycleID = UUID()
+        let status = associatedStatus(
+            timestamp: timestamp,
+            cycleID: cycleID,
             ssid: "Current 6 GHz",
             bssid: "AA:BB:CC:DD:EE:FF",
             channel: 5,
             band: .band6GHz,
             rssi: -48,
-            routerIP: "192.0.2.1",
-            isConnected: true,
-            isWiFiPowerOn: true
+            routerIP: "192.0.2.1"
         )
         let pipeline = makeCyclePipeline(
             currentProvider: TestCountingCurrentConnectionProvider(result: status)
@@ -72,7 +72,11 @@ struct PipelineTests {
                 network(ssid: "Current 6 GHz", bssid: "AA:BB:CC:DD:EE:FF", channel: 5, band: .band6GHz, rssi: -48),
                 network(ssid: "Nearby 2.4 GHz", bssid: "11:22:33:44:55:66", channel: 5, band: .band24GHz, rssi: -62),
             ],
-            context: cycleContext(supportedBands: [.band24GHz, .band6GHz])
+            context: cycleContext(
+                timestamp: timestamp,
+                cycleID: cycleID,
+                supportedBands: [.band24GHz, .band6GHz]
+            )
         )
 
         #expect(result.observation.channelAnalysis?.first(where: {
@@ -374,6 +378,49 @@ struct PipelineTests {
         WiFiObservationPipeline(
             currentConnectionProvider: currentProvider,
             gatewayLatencyProvider: latencyProvider
+        )
+    }
+
+    private func associatedStatus(
+        timestamp: Date,
+        cycleID: UUID,
+        ssid: String,
+        bssid: String,
+        channel: Int,
+        band: ChannelBand,
+        rssi: Int,
+        routerIP: String
+    ) -> WiFiCurrentStatus {
+        let evidence = WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID,
+            capturedAt: timestamp,
+            interfaceName: "en0",
+            mode: .station,
+            radio: .reportedOn,
+            linkActive: true,
+            ssid: ssid,
+            bssid: bssid,
+            interfaceIndex: 4
+        )
+        return WiFiCurrentStatus(
+            timestamp: timestamp,
+            interfaceSnapshotCycleID: cycleID,
+            interfaceName: "en0",
+            interfaceIndex: 4,
+            ssid: ssid,
+            bssid: bssid,
+            channel: channel,
+            band: band,
+            rssi: rssi,
+            routerIP: routerIP,
+            isConnected: true,
+            isWiFiPowerOn: true,
+            linkEvidence: evidence,
+            linkAssessment: WiFiLinkInterpreter.evaluate(
+                evidence,
+                expectedCycleID: cycleID,
+                expectedCapturedAt: timestamp
+            )
         )
     }
 

@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 import Testing
-import WiFiLensCore
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @Suite("Roaming Migration")
@@ -13,10 +13,30 @@ struct RoamingMigrationTests {
         channel: Int = 36,
         rssi: Int = -50,
         txRate: Double = 130.0,
-        phyMode: String? = "802.11ac"
+        phyMode: String? = "802.11ac",
+        timestamp: Date = Date(),
+        interfaceName: String = "en0"
     ) -> WiFiCurrentStatus {
-        WiFiCurrentStatus(
-            timestamp: Date(),
+        let cycleID = UUID()
+        let evidence = WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID,
+            capturedAt: timestamp,
+            interfaceName: interfaceName,
+            mode: .station,
+            coreWLANModeRawValue: 1,
+            radio: .reportedOn,
+            linkActive: true,
+            ssid: ssid,
+            bssid: bssid,
+            interfaceIndex: 4,
+            radioPowerOnRaw: true
+        )
+        let assessment = WiFiLinkInterpreter.evaluate(evidence, expectedCycleID: cycleID, expectedCapturedAt: timestamp)
+        return WiFiCurrentStatus(
+            timestamp: timestamp,
+            interfaceSnapshotCycleID: cycleID,
+            interfaceName: interfaceName,
+            interfaceIndex: 4,
             ssid: ssid,
             bssid: bssid,
             channel: channel,
@@ -24,7 +44,9 @@ struct RoamingMigrationTests {
             txRate: txRate,
             phyMode: phyMode,
             isConnected: true,
-            isWiFiPowerOn: true
+            isWiFiPowerOn: true,
+            linkEvidence: evidence,
+            linkAssessment: assessment
         )
     }
 
@@ -83,6 +105,35 @@ struct RoamingMigrationTests {
         #expect(vm.segments.count == 1)
         #expect(vm.segments.first?.bssid == "11:22:33:44:55:66")
         vm.stopTest()
+    }
+
+    @Test("Only continuous confirmed same-network probes record an AP transition")
+    func roamingRequiresConfirmedContinuousSamples() async {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        let initial = connectedStatus(timestamp: start)
+        let vm = RoamingTestViewModel(roamingProvider: MockRoamingProbeProvider(result: initial))
+        let state = ObservationWatcher()
+        vm.checkReadiness()
+        await state.waitUntil { vm.state == .ready }
+        vm.startTest()
+        await state.waitUntil { vm.state == .running }
+
+        vm.recordProbe(connectedStatus(bssid: "AA:BB:CC:DD:EE:01", timestamp: start.addingTimeInterval(1)))
+        #expect(vm.transitions.count == 1)
+        #expect(vm.transitions[0].fromBSSID == "AA:BB:CC:DD:EE:FF")
+        #expect(vm.transitions[0].toBSSID == "AA:BB:CC:DD:EE:01")
+
+        let unverified = WiFiCurrentStatus(
+            timestamp: start.addingTimeInterval(2), ssid: "TestNet", bssid: "AA:BB:CC:DD:EE:02",
+            isConnected: true, isWiFiPowerOn: true
+        )
+        vm.recordProbe(unverified)
+        vm.recordProbe(connectedStatus(bssid: "AA:BB:CC:DD:EE:02", timestamp: start.addingTimeInterval(3)))
+        vm.recordProbe(connectedStatus(bssid: "AA:BB:CC:DD:EE:03", timestamp: start.addingTimeInterval(4), interfaceName: "en1"))
+        vm.recordProbe(connectedStatus(ssid: "OtherNet", bssid: "AA:BB:CC:DD:EE:04", timestamp: start.addingTimeInterval(5)))
+        vm.recordProbe(connectedStatus(bssid: "AA:BB:CC:DD:EE:05", timestamp: start.addingTimeInterval(9)))
+        #expect(vm.transitions.count == 1)
+        vm.stopTest(userInitiated: false)
     }
 
     @Test("tick uses latency provider for gateway ping")
