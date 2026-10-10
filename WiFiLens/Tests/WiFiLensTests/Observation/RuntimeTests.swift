@@ -1037,6 +1037,8 @@ struct ScannerRuntimeMigrationTests {
             interfaceSource: ImmediateInterfaceSnapshotSource()
         )
         let scanner = ScannerViewModel(observationRuntime: runtime, authorizationRefresh: { _ in })
+        scanner.locationManager = LocationPermissionManager(liveAuthorizationEnabled: false)
+        scanner.locationManager.authorizationStatus = .authorized
 
         await scanner.debugStartScanLoopForTesting()
         scanner.debugReconcileWiFiStateForTesting(.unknown)
@@ -1057,6 +1059,7 @@ struct ScannerRuntimeMigrationTests {
             interfaceSource: ImmediateInterfaceSnapshotSource()
         )
         let scanner = ScannerViewModel(observationRuntime: runtime, authorizationRefresh: { _ in })
+        scanner.locationManager = LocationPermissionManager(liveAuthorizationEnabled: false)
         scanner.locationManager.authorizationStatus = .authorized
 
         await scanner.debugStartScanLoopForTesting()
@@ -1107,6 +1110,7 @@ struct ScannerRuntimeMigrationTests {
             authorizationRefresh: { $0.authorizationStatus = .authorized },
             unknownWiFiProbeSleep: { duration in try await recoveryClock.sleep(for: duration) }
         )
+        scanner.locationManager = LocationPermissionManager(liveAuthorizationEnabled: false)
         scanner.locationManager.authorizationStatus = .authorized
 
         await scanner.debugStartScanLoopForTesting()
