@@ -100,3 +100,72 @@ public struct APTransitionEvent: Identifiable, Codable {
         case timestamp, fromBSSID, toBSSID, rssiBefore, rssiAfter, channelBefore, channelAfter
     }
 }
+
+/// A trusted access-point ownership interval used for chart background fills.
+/// It deliberately contains no RSSI data: measurement continuity is rendered
+/// independently from connection ownership.
+public struct RoamingRegionInterval: Equatable, Sendable {
+    public let bssid: String
+    public var startTime: Date
+    public var endTime: Date
+
+    public init(bssid: String, startTime: Date, endTime: Date) {
+        self.bssid = bssid
+        self.startTime = startTime
+        self.endTime = endTime
+    }
+}
+
+/// Computes chart fill intervals from trusted segment ownership and confirmed
+/// transitions. RSSI sample gaps do not shorten an ownership interval, while
+/// unconfirmed gaps between segments remain unfilled.
+public enum RoamingRegionLayout {
+    public static func intervals(
+        segments: [RoamingSegment],
+        transitions: [APTransitionEvent],
+        openSegmentEnd: Date? = nil
+    ) -> [RoamingRegionInterval] {
+        guard !segments.isEmpty else { return [] }
+
+        var intervals = segments.enumerated().map { index, segment in
+            let measuredEnd = segment.samples.map(\.timestamp).max() ?? segment.startTime
+            let proposedEnd: Date
+            if index == segments.count - 1, segment.endTime == nil, let openSegmentEnd {
+                proposedEnd = max(segment.startTime, openSegmentEnd)
+            } else {
+                proposedEnd = max(segment.startTime, segment.endTime ?? measuredEnd)
+            }
+            return RoamingRegionInterval(
+                bssid: segment.bssid,
+                startTime: segment.startTime,
+                endTime: proposedEnd
+            )
+        }
+
+        guard intervals.count > 1 else { return intervals }
+        for index in 0..<(intervals.count - 1) {
+            let previousSegment = segments[index]
+            let nextSegment = segments[index + 1]
+            let transition = transitions.first { event in
+                event.fromBSSID == previousSegment.bssid
+                    && event.toBSSID == nextSegment.bssid
+                    && event.timestamp >= previousSegment.startTime
+                    && event.timestamp <= intervals[index + 1].endTime
+            }
+
+            if let transition {
+                // The recorded event timestamp is the one shared boundary for
+                // both fills; the underlying segment/sample timestamps remain
+                // unchanged.
+                intervals[index].endTime = transition.timestamp
+                intervals[index + 1].startTime = transition.timestamp
+            } else if intervals[index].endTime > intervals[index + 1].startTime {
+                // Conflicting ranges without a confirmed transition cannot be
+                // painted as overlapping AP ownership.
+                intervals[index].endTime = intervals[index + 1].startTime
+            }
+        }
+
+        return intervals.filter { $0.endTime >= $0.startTime }
+    }
+}

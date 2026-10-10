@@ -310,13 +310,18 @@ public struct RoamingTestView: View {
     private var trendChart: some View {
         let allSamples = segments.flatMap { $0.samples }.sorted { $0.timestamp < $1.timestamp }
         let totalSeconds = max(1, viewModel.elapsedTime)
+        let sessionStart = segments.first?.startTime ?? allSamples.first?.timestamp ?? Date()
+        let openSegmentEnd = viewModel.state == .running
+            ? sessionStart.addingTimeInterval(totalSeconds)
+            : nil
         let bssidColors = buildBSSIDColorMap(from: viewModel.segments)
         return RoamingTimelineChart(
             segments: viewModel.segments,
             transitions: viewModel.transitions,
             allSamples: allSamples,
             bssidColors: bssidColors,
-            elapsedTime: totalSeconds
+            elapsedTime: totalSeconds,
+            openSegmentEnd: openSegmentEnd
         )
     }
 
@@ -414,6 +419,7 @@ private struct ChartCanvas: View {
     let chartWidth: CGFloat?
     let elapsedTime: TimeInterval
     let bssidColors: [String: Color]
+    var openSegmentEnd: Date?
     var timeOffset: TimeInterval = 0
     var sessionStartDate: Date = Date()
     var highlightedTime: TimeInterval?
@@ -427,7 +433,7 @@ private struct ChartCanvas: View {
             let plotBottom = size.height - bottomAxisHeight
             let plotHeight = plotBottom - plotTop
 
-            guard plotWidth > 0, plotHeight > 0, !allSamples.isEmpty else { return }
+            guard plotWidth > 0, plotHeight > 0, !segments.isEmpty else { return }
 
             let measuredRSSI = allSamples.compactMap(\.rssi)
             let rssiMin = min(-100, measuredRSSI.min() ?? -100)
@@ -496,6 +502,32 @@ private struct ChartCanvas: View {
             let clipRect = Path(CGRect(x: plotLeft, y: plotTop - 4, width: plotWidth, height: plotHeight + 8))
             context.clip(to: clipRect)
 
+            // AP ownership bands are driven by trusted intervals, independently
+            // of RSSI coverage and without implying a signal value.
+            let visibleStart = sessionStartDate.addingTimeInterval(timeOffset)
+            let visibleEnd = visibleStart.addingTimeInterval(elapsedTime)
+            for region in RoamingRegionLayout.intervals(
+                segments: segments,
+                transitions: transitions,
+                openSegmentEnd: openSegmentEnd
+            ) {
+                let start = max(region.startTime, visibleStart)
+                let end = min(region.endTime, visibleEnd)
+                guard end > start else { continue }
+                let x0 = max(plotLeft, xPos(start))
+                let x1 = min(plotLeft + plotWidth, xPos(end))
+                guard x1 > x0 else { continue }
+                let ownershipBandHeight: CGFloat = 4
+                let rect = CGRect(
+                    x: x0,
+                    y: plotBottom - ownershipBandHeight,
+                    width: x1 - x0,
+                    height: ownershipBandHeight
+                )
+                let color = bssidColors[region.bssid] ?? .blue
+                context.fill(Path(rect), with: .color(color.opacity(0.3)))
+            }
+
             for (_, segment) in segments.enumerated() {
                 let color = bssidColors[segment.bssid] ?? .blue
                 for run in segment.rssiRuns {
@@ -513,14 +545,13 @@ private struct ChartCanvas: View {
                         continue
                     }
 
-                    var areaPath = Path()
-                    areaPath.move(to: CGPoint(x: points[0].x, y: plotBottom))
-                    areaPath.addLine(to: points[0])
-                    addCatmullRomSpline(to: &areaPath, points: points)
-                    areaPath.addLine(to: CGPoint(x: points[points.count - 1].x, y: plotBottom))
-                    areaPath.closeSubpath()
-                    context.fill(areaPath, with: .color(color.opacity(0.12)))
-
+                    var signalArea = Path()
+                    signalArea.move(to: CGPoint(x: points[0].x, y: plotBottom))
+                    signalArea.addLine(to: points[0])
+                    addCatmullRomSpline(to: &signalArea, points: points)
+                    signalArea.addLine(to: CGPoint(x: points[points.count - 1].x, y: plotBottom))
+                    signalArea.closeSubpath()
+                    context.fill(signalArea, with: .color(color.opacity(0.12)))
                     context.stroke(catmullRomSpline(points: points), with: .color(color), lineWidth: 2)
                 }
             }
@@ -564,6 +595,7 @@ private struct RoamingTimelineChart: View {
     let allSamples: [RoamingSample]
     let bssidColors: [String: Color]
     let elapsedTime: TimeInterval
+    let openSegmentEnd: Date?
 
     @State private var visibleStart: TimeInterval = 0
     @State private var visibleEnd: TimeInterval = 30
@@ -573,7 +605,8 @@ private struct RoamingTimelineChart: View {
 
     private var activeHoverTime: TimeInterval? { hoveredDetailTime ?? overviewHoverTime }
     private var highlightedSample: RoamingSample? {
-        guard let hoverTime = activeHoverTime, let sessionStart = allSamples.first?.timestamp else { return nil }
+        guard let hoverTime = activeHoverTime,
+              let sessionStart = segments.first?.startTime ?? allSamples.first?.timestamp else { return nil }
         return allSamples.min { lhs, rhs in
             abs(lhs.timestamp.timeIntervalSince(sessionStart) - hoverTime) < abs(rhs.timestamp.timeIntervalSince(sessionStart) - hoverTime)
         }
@@ -594,6 +627,7 @@ private struct RoamingTimelineChart: View {
                             transitions: transitions,
                             bssidColors: bssidColors,
                             elapsedTime: elapsedTime,
+                            openSegmentEnd: openSegmentEnd,
                             highlightedTime: activeHoverTime
                         )
                     },
@@ -643,13 +677,16 @@ private struct RoamingTimelineChart: View {
     }
 
     private var detailChart: some View {
-        let sessionStart = allSamples.first?.timestamp ?? Date()
+        let sessionStart = segments.first?.startTime ?? allSamples.first?.timestamp ?? Date()
+        let chartDuration = max(0.1, elapsedTime)
+        let dataStart = min(max(0, visibleStart), chartDuration - 0.1)
+        let dataEnd = min(chartDuration, max(dataStart + 0.1, visibleEnd))
         let visibleSamples = allSamples.filter {
             let t = $0.timestamp.timeIntervalSince(sessionStart)
-            return t >= visibleStart && t <= visibleEnd
+            return t >= dataStart && t <= dataEnd
         }
 
-        guard let firstSample = visibleSamples.first, let lastSample = visibleSamples.last else {
+        guard !segments.isEmpty else {
             return AnyView(
                 VStack(spacing: 8) {
                     Spacer()
@@ -665,8 +702,6 @@ private struct RoamingTimelineChart: View {
                 .frame(height: detailChartHeight + topMargin + bottomAxisHeight)
             )
         }
-        let dataStart = firstSample.timestamp.timeIntervalSince(sessionStart)
-        let dataEnd = lastSample.timestamp.timeIntervalSince(sessionStart)
         let rangeSecs = max(0.1, dataEnd - dataStart)
 
         return AnyView(GeometryReader { geo in
@@ -679,6 +714,7 @@ private struct RoamingTimelineChart: View {
                     chartWidth: nil,
                     elapsedTime: rangeSecs,
                     bssidColors: bssidColors,
+                    openSegmentEnd: openSegmentEnd,
                     timeOffset: dataStart,
                     sessionStartDate: sessionStart,
                     highlightedTime: activeHoverTime,
@@ -734,6 +770,7 @@ private struct OverviewCanvas: View {
     let transitions: [APTransitionEvent]
     let bssidColors: [String: Color]
     let elapsedTime: TimeInterval
+    let openSegmentEnd: Date?
     let highlightedTime: TimeInterval?
 
     var body: some View {
@@ -746,13 +783,26 @@ private struct OverviewCanvas: View {
             let rssiMax = Double(max(-30, rssiVals.max() ?? -30))
             let rssiRange = max(1, rssiMax - rssiMin)
 
-            let startDate = segments.first?.samples.first?.timestamp ?? Date()
+            let startDate = segments.first?.startTime ?? Date()
 
             func xPos(_ ts: Date) -> CGFloat {
                 CGFloat(ts.timeIntervalSince(startDate) / elapsedTime) * size.width
             }
             func yPos(_ rssi: Int) -> CGFloat {
                 size.height - CGFloat(Double(rssi) - rssiMin) / CGFloat(rssiRange) * size.height
+            }
+
+            for region in RoamingRegionLayout.intervals(
+                segments: segments,
+                transitions: transitions,
+                openSegmentEnd: openSegmentEnd
+            ) {
+                let x0 = max(0, xPos(region.startTime))
+                let x1 = min(size.width, xPos(region.endTime))
+                guard x1 > x0 else { continue }
+                let rect = CGRect(x: x0, y: 0, width: x1 - x0, height: size.height)
+                let color = bssidColors[region.bssid] ?? .blue
+                context.fill(Path(rect), with: .color(color.opacity(0.06)))
             }
 
             for segment in segments {

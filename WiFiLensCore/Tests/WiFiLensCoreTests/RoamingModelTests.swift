@@ -273,6 +273,134 @@ struct RoamingSessionRecordTests {
         #expect(decoded.transitions[0].rssiAfter == nil)
         #expect(decoded.transitions[0].channelAfter == nil)
     }
+
+    @Test func importedSessionUsesConfirmedTransitionTimeForAdjacentRegionFills() throws {
+        let t0 = Date(timeIntervalSince1970: 0)
+        let t4 = t0.addingTimeInterval(4)
+        let t6 = t0.addingTimeInterval(6)
+        let t7 = t0.addingTimeInterval(7)
+        let t8 = t0.addingTimeInterval(8)
+        let t10 = t0.addingTimeInterval(10)
+        let record = RoamingSessionRecord(
+            version: 2, savedAt: t10, ssid: "Home", bssid: "AP-B", phyMode: nil,
+            channel: nil, duration: 10,
+            segments: [
+                RoamingSegment(bssid: "AP-A", startTime: t0, endTime: t4, samples: [
+                    RoamingSample(timestamp: t0, rssi: -55, channel: 36, txRate: 100),
+                    RoamingSample(timestamp: t4, rssi: -60, channel: 36, txRate: 100),
+                ]),
+                RoamingSegment(bssid: "AP-B", startTime: t7, endTime: t10, samples: [
+                    RoamingSample(timestamp: t8, rssi: -50, channel: 44, txRate: 100),
+                    RoamingSample(timestamp: t10, rssi: -53, channel: 44, txRate: 100),
+                ]),
+            ],
+            transitions: [APTransitionEvent(
+                timestamp: t6, fromBSSID: "AP-A", toBSSID: "AP-B",
+                rssiBefore: -60, rssiAfter: -50, channelBefore: 36, channelAfter: 44
+            )]
+        )
+        let imported = try JSONDecoder().decode(
+            RoamingSessionRecord.self,
+            from: JSONEncoder().encode(record)
+        )
+
+        let regions = RoamingRegionLayout.intervals(
+            segments: imported.segments,
+            transitions: imported.transitions
+        )
+
+        #expect(regions.map(\.startTime) == [t0, t6])
+        #expect(regions.map(\.endTime) == [t6, t10])
+        #expect(regions[0].endTime == regions[1].startTime)
+        #expect(imported.segments[0].endTime == t4)
+        #expect(imported.segments[1].startTime == t7)
+        #expect(imported.segments[0].rssiRuns.flatMap { $0.map(\.timestamp) } == [t0, t4])
+        #expect(imported.segments[1].rssiRuns.flatMap { $0.map(\.timestamp) } == [t8, t10])
+    }
+}
+
+struct RoamingRegionLayoutTests {
+
+    private func date(_ seconds: TimeInterval) -> Date {
+        Date(timeIntervalSince1970: seconds)
+    }
+
+    private func transition(_ time: TimeInterval, from: String, to: String) -> APTransitionEvent {
+        APTransitionEvent(
+            timestamp: date(time), fromBSSID: from, toBSSID: to,
+            rssiBefore: nil, rssiAfter: nil, channelBefore: nil, channelAfter: nil
+        )
+    }
+
+    @Test func missingRSSIDoesNotBreakTrustedOwnershipOrConnectSignalRuns() {
+        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(4), samples: [
+            RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+            RoamingSample(timestamp: date(2), rssi: nil, channel: nil, txRate: nil),
+            RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
+        ])
+
+        let regions = RoamingRegionLayout.intervals(segments: [segment], transitions: [])
+
+        #expect(regions.map(\.startTime) == [date(0)])
+        #expect(regions.map(\.endTime) == [date(4)])
+        #expect(segment.rssiRuns.map { $0.map(\.timestamp) } == [[date(0)], [date(4)]])
+    }
+
+    @Test func unconfirmedAssociationGapRemainsUnfilled() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(2), samples: [
+                RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(8), endTime: date(10), samples: [
+                RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100),
+            ]),
+        ]
+
+        let regions = RoamingRegionLayout.intervals(segments: segments, transitions: [])
+
+        #expect(regions.map(\.startTime) == [date(0), date(8)])
+        #expect(regions.map(\.endTime) == [date(2), date(10)])
+        #expect(regions[0].endTime < regions[1].startTime)
+    }
+
+    @Test func repeatedConfirmedTransitionsShareEveryBoundaryEvenWhenMiddleAPHasNoRSSI() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(3)),
+            RoamingSegment(bssid: "AP-B", startTime: date(4), endTime: date(8), samples: [
+                RoamingSample(timestamp: date(5), rssi: nil, channel: nil, txRate: nil),
+            ]),
+            RoamingSegment(bssid: "AP-C", startTime: date(8), endTime: date(10), samples: [
+                RoamingSample(timestamp: date(9), rssi: -48, channel: 149, txRate: 100),
+            ]),
+        ]
+
+        let regions = RoamingRegionLayout.intervals(
+            segments: segments,
+            transitions: [transition(4, from: "AP-A", to: "AP-B"), transition(8, from: "AP-B", to: "AP-C")]
+        )
+
+        #expect(regions.map(\.startTime) == [date(0), date(4), date(8)])
+        #expect(regions.map(\.endTime) == [date(4), date(8), date(10)])
+        #expect(regions[0].endTime == regions[1].startTime)
+        #expect(regions[1].endTime == regions[2].startTime)
+        #expect(segments[1].rssiRuns.isEmpty)
+    }
+
+    @Test func aSingleOpenSegmentCanUseOnlyTheSuppliedCurrentProgress() {
+        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), samples: [
+            RoamingSample(timestamp: date(1), rssi: nil, channel: nil, txRate: nil),
+        ])
+
+        let withoutProgress = RoamingRegionLayout.intervals(segments: [segment], transitions: [])
+        let withProgress = RoamingRegionLayout.intervals(
+            segments: [segment], transitions: [], openSegmentEnd: date(5)
+        )
+
+        #expect(withoutProgress.map(\.endTime) == [date(1)])
+        #expect(withProgress.map(\.startTime) == [date(0)])
+        #expect(withProgress.map(\.endTime) == [date(5)])
+        #expect(segment.rssiRuns.isEmpty)
+    }
 }
 
 struct CurrentWiFiViewDataResolverTests {
