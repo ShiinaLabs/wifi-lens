@@ -57,6 +57,21 @@ public final class WiFiObservationStore: ObservableObject {
         scanLifecycleStartedAt = nil
     }
 
+    /// Withdraws current projections as soon as radio evidence is no longer
+    /// trustworthy. Accepted observations remain available in history.
+    func invalidateCurrentValuesForWiFiStateChange() {
+        if let validity { self.validity = expired(validity) }
+        currentStatus = nil
+        gatewayLatency = nil
+        quality = nil
+        latestEnvironmentSnapshot = nil
+        channelAnalysis = nil
+        channelRecommendation = nil
+        diagnosis = nil
+        isRefreshingCurrent = false
+        isScanningEnvironment = false
+    }
+
     @discardableResult
     public func apply(_ observation: WiFiObservation) -> Bool {
         if let existing = history.first(where: { $0.sourceObservationID == observation.sourceObservationID }) {

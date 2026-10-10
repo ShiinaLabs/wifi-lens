@@ -99,6 +99,8 @@ final class WiFiPowerMonitor {
         switch snapshot.radio {
         case .reportedOn:
             next = .poweredOn
+        case .reportedOff:
+            next = .poweredOff
         case .reportedOffOrReadFailure:
             // CoreWLAN false can be a read failure; keep scanning in the ambiguous state.
             next = .unknown

@@ -128,6 +128,7 @@ public enum WiFiLinkChangeReason: String, Hashable, Sendable {
     case startup
     case systemConfiguration
     case coreWLAN
+    case coreWLANPowerStateChanged
     case compensationSample
     case candidateReview
     case appBecameActive
@@ -432,23 +433,23 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
     }
 
     nonisolated public func powerStateDidChangeForWiFiInterface(withName interfaceName: String) {
-        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .powerDidChange)
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .powerDidChange, reason: .coreWLANPowerStateChanged)
     }
 
     nonisolated public func linkDidChangeForWiFiInterface(withName interfaceName: String) {
-        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .linkDidChange)
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .linkDidChange, reason: .coreWLAN)
     }
 
     nonisolated public func ssidDidChangeForWiFiInterface(withName interfaceName: String) {
-        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .ssidDidChange)
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .ssidDidChange, reason: .coreWLAN)
     }
 
     nonisolated public func bssidDidChangeForWiFiInterface(withName interfaceName: String) {
-        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .bssidDidChange)
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .bssidDidChange, reason: .coreWLAN)
     }
 
     nonisolated public func modeDidChangeForWiFiInterface(withName interfaceName: String) {
-        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .modeDidChange)
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .modeDidChange, reason: .coreWLAN)
     }
 
     nonisolated public func clientConnectionInterrupted() {
@@ -476,7 +477,9 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
         }
     }
 
-    nonisolated private func handleCoreWLANEvent(interfaceName: String, eventType: CWEventType) {
+    nonisolated private func handleCoreWLANEvent(
+        interfaceName: String, eventType: CWEventType, reason: WiFiLinkChangeReason
+    ) {
         Task { @MainActor in
             guard handler != nil,
                   monitoredInterfaceName == nil || monitoredInterfaceName == interfaceName else { return }
@@ -491,7 +494,7 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
                 "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
             ])
             #endif
-            handler?(.coreWLAN)
+            handler?(reason)
         }
     }
 }
@@ -807,7 +810,10 @@ public actor WiFiLinkStateCenter {
             disconnectCandidates.removeAll()
             currentSnapshot = makeSnapshot(
                 state: .unknown, evidence: nil, reason: .interfaceDiscoveryUnavailable,
-                sources: [], identity: nil, radio: .unavailable
+                sources: [], identity: nil,
+                radio: currentSnapshot.radio == .reportedOff && reason != .coreWLANPowerStateChanged
+                    ? .reportedOff
+                    : .unavailable
             )
             publishCurrent()
             logSampleFailure(
@@ -965,9 +971,25 @@ public actor WiFiLinkStateCenter {
 
         let identity = state == .associated ? Self.trustedIdentity(evidence) : nil
         let oldRadio = currentSnapshot.radio
+        let sampleRadio: WiFiRadioEvidence
+        if Self.confirmsRadioOff(evidence, reason: reason) {
+            sampleRadio = .reportedOff
+        } else if evidence.radio == .reportedOn {
+            sampleRadio = .reportedOn
+        } else if reason == .coreWLANPowerStateChanged {
+            // A new power transition with incomplete evidence invalidates the
+            // prior radio conclusion; do not keep presenting Wi-Fi as off.
+            sampleRadio = evidence.radio
+        } else if oldRadio == .reportedOff {
+            // Keep the explicit power-off confirmation through ambiguous
+            // compensation samples until a fresh positive radio read arrives.
+            sampleRadio = .reportedOff
+        } else {
+            sampleRadio = evidence.radio
+        }
         currentSnapshot = makeSnapshot(
             state: state, evidence: evidence, reason: assessmentReason,
-            sources: [evidence.snapshotCycleID], identity: identity, radio: evidence.radio
+            sources: [evidence.snapshotCycleID], identity: identity, radio: sampleRadio
         )
         publishCurrent()
         #if DEBUG
@@ -975,7 +997,7 @@ public actor WiFiLinkStateCenter {
         case .startup: "startup"
         case .compensationSample: "timer"
         case .candidateReview: "notification"
-        case .systemConfiguration, .coreWLAN, .interfaceChanged: "notification"
+        case .systemConfiguration, .coreWLAN, .coreWLANPowerStateChanged, .interfaceChanged: "notification"
         case .appBecameActive, .didWake, .willSleep: "startup"
         case .compensationSampleFailed: "notification"
         }
@@ -1014,7 +1036,7 @@ public actor WiFiLinkStateCenter {
             )
             candidateReviewID = nil
         }
-        if oldRadio != evidence.radio, oldRadio != .unavailable {
+        if oldRadio != sampleRadio, oldRadio != .unavailable {
             publishEvent(.radioChanged, previous: previousEvidence, current: evidence, firstAt: evidence.capturedAt, previousAt: previousConfirmationTime)
         }
         if let eventType {
@@ -1062,6 +1084,16 @@ public actor WiFiLinkStateCenter {
         return true
     }
 
+    private static func confirmsRadioOff(_ evidence: WiFiLinkRawEvidence, reason: WiFiLinkChangeReason) -> Bool {
+        reason == .coreWLANPowerStateChanged
+            && evidence.radioPowerOnRaw == false
+            && evidence.radio == .reportedOffOrReadFailure
+            && evidence.linkActive == false
+            && evidence.linkSource == .systemConfiguration
+            && evidence.readFailures[.linkActive] == nil
+            && evidence.readFailures[.radio] == nil
+    }
+
     private func resetContinuity(reason: WiFiLinkChangeReason) async {
         resetContinuityWithoutAwaiting(reason: reason, previous: previousEvidence, current: nil)
     }
@@ -1104,7 +1136,7 @@ public actor WiFiLinkStateCenter {
 
     private func takePendingSampleReason() -> WiFiLinkChangeReason? {
         let priority: [WiFiLinkChangeReason] = [
-            .candidateReview, .appBecameActive, .systemConfiguration, .coreWLAN,
+            .candidateReview, .appBecameActive, .systemConfiguration, .coreWLANPowerStateChanged, .coreWLAN,
             .interfaceChanged, .didWake, .willSleep, .compensationSample, .startup
         ]
         guard let reason = priority.first(where: pendingSampleReasons.contains) else { return nil }

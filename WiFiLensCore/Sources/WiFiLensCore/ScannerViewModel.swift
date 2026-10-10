@@ -523,6 +523,9 @@ public final class ScannerViewModel {
         }
         wifiPowerState = state
         updateMCPDataProvider()
+        if state != .poweredOn {
+            store.invalidateCurrentValuesForWiFiStateChange()
+        }
         guard !isTerminating else { return }
 
         switch state {

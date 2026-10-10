@@ -12,6 +12,9 @@ public enum WiFiModeEvidence: Equatable, Sendable {
 
 public enum WiFiRadioEvidence: Equatable, Sendable {
     case reportedOn
+    /// Explicitly confirmed by a CoreWLAN power-change event and an independent
+    /// SystemConfiguration link-down read in the same sample.
+    case reportedOff
     case reportedOffOrReadFailure
     case unavailable
 }

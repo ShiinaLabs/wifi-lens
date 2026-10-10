@@ -1049,6 +1049,32 @@ struct ScannerRuntimeMigrationTests {
         await source.waitUntilStopCallCount(1)
     }
 
+    @Test("uncertain Wi-Fi transition immediately removes stale current connection data")
+    func uncertainWiFiTransitionClearsCurrentConnection() async {
+        let timestamp = Date()
+        let status = WiFiCurrentStatus(
+            timestamp: timestamp, ssid: "Home", bssid: "AA:BB",
+            rssi: -48, isConnected: true, isWiFiPowerOn: true
+        )
+        let store = WiFiObservationStore()
+        #expect(store.apply(WiFiObservation(timestamp: timestamp, currentStatus: status)))
+        #expect(store.currentStatus == status)
+        #expect(store.validity(at: timestamp)?.currentStatus == .current)
+
+        let scanner = ScannerViewModel(store: store, authorizationRefresh: { _ in })
+        scanner.locationManager = LocationPermissionManager(liveAuthorizationEnabled: false)
+        scanner.locationManager.authorizationStatus = .authorized
+        scanner.debugReconcileWiFiStateForTesting(.unknown)
+
+        #expect(scanner.wifiPowerState == .unknown)
+        #expect(store.currentStatus == nil)
+        #expect(store.validity(at: Date())?.currentStatus != .current)
+        #expect(OverviewWiFiDataResolver.currentStatus(
+            observation: store.currentObservation,
+            validity: store.validity(at: Date())
+        ) == nil)
+    }
+
     @Test("Persistent unknown evidence pauses scans and trusted radio evidence resumes one loop")
     func persistentUnknownUsesBoundedProbeAndRecovers() async {
         let source = ScriptedScanSource()

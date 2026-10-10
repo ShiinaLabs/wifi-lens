@@ -105,6 +105,15 @@ struct WiFiLinkStateCenterTests {
         #expect(firstDelivery?.sampleIdentity?.snapshotID == sampleID)
         monitor.debugApplySnapshotForTesting(sample)
         #expect(monitor.debugPublishedSampleCount == 1)
+
+        let poweredOff = WiFiLinkStateSnapshot(
+            runSessionID: UUID(), sequence: 2, linkEpoch: 0,
+            interfaceName: "en0", interfaceIndex: 4, radio: .reportedOff, state: .unknown,
+            networkIdentity: nil, reason: .radioUnavailable, evidenceSourceIDs: [UUID()],
+            sampledAt: Date(), publishedAt: Date()
+        )
+        monitor.debugApplySnapshotForTesting(poweredOff)
+        #expect(monitor.currentState == .poweredOff)
     }
 
     @Test("Startup association establishes a baseline and missing identity remains associated")
@@ -199,6 +208,60 @@ struct WiFiLinkStateCenterTests {
         #expect((await center.snapshot()).state == .associated)
         await center.stop()
         #expect(trigger.stopCount == 1)
+    }
+
+    @Test("power-change evidence confirms radio off immediately while CoreWLAN read failure stays unknown")
+    func powerChangeConfirmsOffOnlyWithIndependentLinkEvidence() async {
+        let baseline = evidence(mode: .station, radio: .reportedOn, linkActive: true, radioPowerOnRaw: true)
+        let ambiguous = evidence(
+            mode: .station, radio: .reportedOffOrReadFailure, linkActive: nil,
+            radioPowerOnRaw: false, offset: 1
+        )
+        let confirmed = WiFiLinkRawEvidence(
+            snapshotCycleID: UUID(), capturedAt: Date(timeIntervalSince1970: 1_800_000_002),
+            interfaceName: "en0", mode: .noneOrReadFailure, coreWLANModeRawValue: 0,
+            radio: .reportedOffOrReadFailure, linkActive: false,
+            linkSource: .systemConfiguration, interfaceIndex: 4,
+            radioPowerOnRaw: false, readFailures: [:]
+        )
+        let poweredOn = evidence(
+            mode: .station, radio: .reportedOn, linkActive: true,
+            radioPowerOnRaw: true, offset: 4
+        )
+        let uncertainAfterOff = evidence(
+            mode: .station, radio: .reportedOffOrReadFailure, linkActive: nil,
+            radioPowerOnRaw: false, offset: 3
+        )
+        let collector = SequenceCollector([baseline, ambiguous, confirmed, uncertainAfterOff, poweredOn])
+        let trigger = FakeLinkTrigger()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: trigger, pollingInterval: .seconds(3_600)
+        )
+
+        await center.start()
+        trigger.emit(.coreWLAN)
+        await collector.waitForCaptureCount(2)
+        await waitForSnapshotSequence(center, after: 1)
+        #expect((await center.snapshot()).radio == .reportedOffOrReadFailure)
+
+        trigger.emit(.coreWLANPowerStateChanged)
+        await collector.waitForCaptureCount(3)
+        await waitForSnapshotSequence(center, after: 2)
+        let offSnapshot = await center.snapshot()
+        #expect(offSnapshot.radio == .reportedOff)
+        #expect(offSnapshot.sampledAt == confirmed.capturedAt)
+
+        trigger.emit(.coreWLANPowerStateChanged)
+        await collector.waitForCaptureCount(4)
+        await waitForSnapshotSequence(center, after: offSnapshot.sequence)
+        #expect((await center.snapshot()).radio == .reportedOffOrReadFailure)
+
+        trigger.emit(.coreWLANPowerStateChanged)
+        await collector.waitForCaptureCount(5)
+        await waitForSnapshotSequence(center, after: offSnapshot.sequence + 1)
+        #expect((await center.snapshot()).radio == .reportedOn)
+        #expect((await center.snapshot()).state == .associated)
+        await center.stop()
     }
 
     @Test("Observed AP-loss evidence enters candidate review without confirming disconnect")
