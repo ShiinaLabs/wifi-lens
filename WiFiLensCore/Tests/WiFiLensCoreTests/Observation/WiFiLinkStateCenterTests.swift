@@ -155,6 +155,27 @@ struct WiFiLinkStateCenterTests {
         #expect(trigger.stopCount == 1)
     }
 
+    @Test("Listeners and compensation sampling start while the initial capture is still pending")
+    func listenerAndPollStartBeforeInitialCaptureCompletes() async {
+        let collector = PausingCollector()
+        let trigger = FakeLinkTrigger()
+        let pollingClock = ManualReviewClock()
+        let center = WiFiLinkStateCenter(
+            collector: collector, trigger: trigger, pollingInterval: .seconds(3_600), pollingClock: pollingClock
+        )
+        let start = Task { await center.start() }
+        await collector.waitForPendingCount(1)
+        await pollingClock.waitForPendingSleep()
+
+        #expect(trigger.startCount == 1)
+        #expect((await center.listenerStatus()).isRunning)
+        let requestID = await collector.pendingIDs()[0]
+        await collector.resolve(requestID, with: evidence(mode: .station, radio: .reportedOn, linkActive: true))
+        await start.value
+        await center.stop()
+        #expect(trigger.stopCount == 1)
+    }
+
     @Test("An unknown first sample does not prevent event listeners from recovering")
     func unknownStartupStillRegistersNotificationHandler() async {
         let collector = SequenceCollector([
@@ -537,7 +558,7 @@ struct WiFiLinkStateCenterTests {
         await secondStart.value
         #expect((await center.snapshot()).runSessionID == newSessionID)
         #expect((await center.snapshot()).state == .associated)
-        #expect(trigger.startCount == 1)
+        #expect(trigger.startCount == 2)
         await center.stop()
     }
 
@@ -574,6 +595,89 @@ struct WiFiLinkStateCenterTests {
 
         #expect(await iterator.next()?.type == .networkIdentityChanged)
         await center.stop()
+    }
+
+    @Test("Identity changes survive an uncertain link sample and retain their true prior evidence")
+    func identityChangeAcrossUnknownEvidence() async {
+        let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A")
+        let unknown = evidence(mode: .station, radio: .reportedOn, linkActive: nil, offset: 1)
+        let b = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "B", bssid: "AP-B", offset: 2)
+        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, unknown, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let stream = await center.events()
+        var iterator = stream.makeAsyncIterator()
+
+        await center.start()
+        await center.refresh()
+        await center.refresh()
+
+        #expect((await center.snapshot()).state == .associated)
+        let reset = await iterator.next()
+        let change = await iterator.next()
+        #expect(reset?.type == .continuityReset)
+        #expect(change?.type == .networkIdentityChanged)
+        #expect(change?.previousEvidence == a)
+        #expect(change?.currentEvidence == b)
+        #expect(change?.lastConfirmedPreviousAt == a.capturedAt)
+        #expect(change?.identityComparisonContinuity == .separatedByUncertainEvidence)
+        #expect((await center.snapshot()).linkEpoch == 1)
+        await center.stop()
+    }
+
+    @Test("An identity gap preserves per-field history without inventing a change")
+    func identityFieldGapPreservesBSSIDBaseline() async {
+        let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "AP-1")
+        let missing = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", offset: 1)
+        let b = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "AP-2", offset: 2)
+        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, missing, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let stream = await center.events()
+        var iterator = stream.makeAsyncIterator()
+        await center.start()
+        await center.refresh()
+        await center.refresh()
+
+        let change = await iterator.next()
+        #expect(change?.type == .networkIdentityChanged)
+        #expect(change?.previousEvidence == a)
+        #expect(change?.identityComparisonContinuity == .separatedByUnknownIdentity)
+        #expect((await center.snapshot()).linkEpoch == 0)
+        await center.stop()
+    }
+
+    @Test("An unknown interval returning to the same identity does not emit an identity change")
+    func sameIdentityAfterUnknownDoesNotEmitChange() async {
+        let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A")
+        let unknown = evidence(mode: .station, radio: .reportedOn, linkActive: nil, offset: 1)
+        let returned = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A", offset: 2)
+        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, unknown, returned]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let recorder = LinkEventRecorder()
+        let stream = await center.events()
+        let task = Task { for await event in stream { await recorder.append(event) } }
+        await center.start()
+        await center.refresh()
+        await center.refresh()
+        await center.stop()
+        task.cancel()
+        await task.value
+        #expect(await recorder.events().filter { $0.type == .networkIdentityChanged }.isEmpty)
+        #expect((await center.snapshot()).linkEpoch == 2)
+    }
+
+    @Test("An interface change after a failed sample cannot compare identities across interfaces")
+    func failedSampleThenNewInterfaceClearsIdentityBaseline() async {
+        let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A")
+        let b = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "B", bssid: "AP-B", interfaceName: "en1", offset: 2)
+        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, nil, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let recorder = LinkEventRecorder()
+        let stream = await center.events()
+        let task = Task { for await event in stream { await recorder.append(event) } }
+        await center.start()
+        await center.refresh()
+        await center.refresh()
+        #expect((await center.snapshot()).state == .associated)
+        await center.stop()
+        task.cancel()
+        await task.value
+        #expect(await recorder.events().filter { $0.type == .networkIdentityChanged }.isEmpty)
     }
 
     @Test("Default production policy does not promote unvalidated disconnect evidence")

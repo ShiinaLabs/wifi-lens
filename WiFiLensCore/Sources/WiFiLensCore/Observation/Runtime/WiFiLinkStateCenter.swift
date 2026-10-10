@@ -80,6 +80,12 @@ public enum WiFiLinkStateEventType: String, Equatable, Sendable {
     case continuityReset
 }
 
+public enum WiFiIdentityComparisonContinuity: String, Equatable, Sendable {
+    case adjacentVerifiedObservations
+    case separatedByUncertainEvidence
+    case separatedByUnknownIdentity
+}
+
 public struct WiFiLinkStateEvent: Equatable, Sendable, Identifiable {
     public let id: UUID
     public let type: WiFiLinkStateEventType
@@ -93,12 +99,14 @@ public struct WiFiLinkStateEvent: Equatable, Sendable, Identifiable {
     public let lastConfirmedPreviousAt: Date?
     public let firstConfirmedCurrentAt: Date?
     public let confirmedAt: Date
+    public let identityComparisonContinuity: WiFiIdentityComparisonContinuity?
 
     public init(
         id: UUID = UUID(), type: WiFiLinkStateEventType, runSessionID: UUID, sequence: UInt64,
         interfaceName: String?, interfaceIndex: UInt32?, linkEpoch: UInt64,
         previousEvidence: WiFiLinkRawEvidence?, currentEvidence: WiFiLinkRawEvidence?,
-        lastConfirmedPreviousAt: Date?, firstConfirmedCurrentAt: Date?, confirmedAt: Date
+        lastConfirmedPreviousAt: Date?, firstConfirmedCurrentAt: Date?, confirmedAt: Date,
+        identityComparisonContinuity: WiFiIdentityComparisonContinuity? = nil
     ) {
         self.id = id
         self.type = type
@@ -112,6 +120,7 @@ public struct WiFiLinkStateEvent: Equatable, Sendable, Identifiable {
         self.lastConfirmedPreviousAt = lastConfirmedPreviousAt
         self.firstConfirmedCurrentAt = firstConfirmedCurrentAt
         self.confirmedAt = confirmedAt
+        self.identityComparisonContinuity = identityComparisonContinuity
     }
 }
 
@@ -251,13 +260,19 @@ public protocol WiFiLinkChangeTriggering: AnyObject, Sendable {
 @MainActor
 public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkChangeTriggering {
     public private(set) var systemConfigurationRegistered = false
-    public private(set) var coreWLANRegistered = false
     public private(set) var coreWLANRegistrationError: String?
+    public var coreWLANRegistered: Bool { !registeredEvents.isEmpty && !isCoreWLANInterrupted }
 
     private var dynamicStore: SCDynamicStore?
     private var handler: (@Sendable (WiFiLinkChangeReason) -> Void)?
     private var sleepTokens: [NSObjectProtocol] = []
     private var monitoredInterfaceName: String?
+    private let desiredEvents: [CWEventType] = [
+        .powerDidChange, .linkDidChange, .ssidDidChange, .bssidDidChange, .modeDidChange
+    ]
+    private var registeredEvents = Set<CWEventType>()
+    private var eventRegistrationErrors: [CWEventType: String] = [:]
+    private var isCoreWLANInterrupted = false
 
     public func start(interfaceName: String?, handler: @escaping @Sendable (WiFiLinkChangeReason) -> Void) {
         guard self.handler == nil else { return }
@@ -308,13 +323,31 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
         sleepTokens.forEach(center.removeObserver)
         sleepTokens.removeAll()
         let client = CWWiFiClient.shared()
+        for event in registeredEvents {
+            do { try client.stopMonitoringEvent(with: event) }
+            catch {
+                let message = "stop: \(error)"
+                eventRegistrationErrors[event] = message
+                #if DEBUG
+                WiFiLinkDiagnosticsLogger.record("event", [
+                    "eventType": "coreWLANEventUnregisterFailure",
+                    "event": String(describing: event),
+                    "error": message,
+                    "source": "CoreWLAN"
+                ])
+                #endif
+            }
+        }
+        registeredEvents.removeAll()
         if client.delegate === self {
             client.delegate = nil
-            try? client.stopMonitoringEvent(with: .powerDidChange)
         }
         handler = nil
         monitoredInterfaceName = nil
-        coreWLANRegistered = false
+        coreWLANRegistrationError = eventRegistrationErrors.isEmpty
+            ? nil
+            : eventRegistrationErrors.map { "\($0.key): \($0.value)" }.sorted().joined(separator: "; ")
+        isCoreWLANInterrupted = false
     }
 
     private func registerSystemConfiguration(interfaceName: String?) {
@@ -365,21 +398,98 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
             return
         }
         client.delegate = self
-        do {
-            try client.startMonitoringEvent(with: .powerDidChange)
-            coreWLANRegistered = true
-            coreWLANRegistrationError = nil
-        } catch {
-            if client.delegate === self { client.delegate = nil }
-            coreWLANRegistered = false
-            coreWLANRegistrationError = String(describing: error)
+        eventRegistrationErrors.removeAll()
+        for event in desiredEvents where !registeredEvents.contains(event) {
+            do {
+                try client.startMonitoringEvent(with: event)
+                registeredEvents.insert(event)
+                eventRegistrationErrors.removeValue(forKey: event)
+                #if DEBUG
+                WiFiLinkDiagnosticsLogger.record("event", [
+                    "eventType": "coreWLANEventRegistration",
+                    "event": String(describing: event),
+                    "success": true,
+                    "source": "CoreWLAN"
+                ])
+                #endif
+            } catch {
+                eventRegistrationErrors[event] = String(describing: error)
+                #if DEBUG
+                WiFiLinkDiagnosticsLogger.record("event", [
+                    "eventType": "coreWLANEventRegistration",
+                    "event": String(describing: event),
+                    "success": false,
+                    "error": String(describing: error),
+                    "source": "CoreWLAN"
+                ])
+                #endif
+            }
         }
+        isCoreWLANInterrupted = false
+        coreWLANRegistrationError = eventRegistrationErrors.isEmpty
+            ? nil
+            : eventRegistrationErrors.map { "\($0.key): \($0.value)" }.sorted().joined(separator: "; ")
     }
 
     nonisolated public func powerStateDidChangeForWiFiInterface(withName interfaceName: String) {
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .powerDidChange)
+    }
+
+    nonisolated public func linkDidChangeForWiFiInterface(withName interfaceName: String) {
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .linkDidChange)
+    }
+
+    nonisolated public func ssidDidChangeForWiFiInterface(withName interfaceName: String) {
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .ssidDidChange)
+    }
+
+    nonisolated public func bssidDidChangeForWiFiInterface(withName interfaceName: String) {
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .bssidDidChange)
+    }
+
+    nonisolated public func modeDidChangeForWiFiInterface(withName interfaceName: String) {
+        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .modeDidChange)
+    }
+
+    nonisolated public func clientConnectionInterrupted() {
         Task { @MainActor in
+            guard handler != nil else { return }
+            isCoreWLANInterrupted = true
+            coreWLANRegistrationError = "CoreWLAN connection interrupted; automatic event recovery is pending."
             #if DEBUG
-            WiFiLinkDiagnosticsLogger.record("event", ["eventType": "powerDidChange", "source": "CoreWLAN", "success": true, "time": ISO8601DateFormatter().string(from: Date()), "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds])
+            WiFiLinkDiagnosticsLogger.record("event", ["eventType": "coreWLANConnectionInterrupted", "source": "CoreWLAN"])
+            #endif
+            handler?(.coreWLAN)
+        }
+    }
+
+    nonisolated public func clientConnectionInvalidated() {
+        Task { @MainActor in
+            guard handler != nil else { return }
+            registeredEvents.removeAll()
+            isCoreWLANInterrupted = false
+            coreWLANRegistrationError = "CoreWLAN client connection invalidated."
+            #if DEBUG
+            WiFiLinkDiagnosticsLogger.record("event", ["eventType": "coreWLANConnectionInvalidated", "source": "CoreWLAN"])
+            #endif
+            handler?(.coreWLAN)
+        }
+    }
+
+    nonisolated private func handleCoreWLANEvent(interfaceName: String, eventType: CWEventType) {
+        Task { @MainActor in
+            guard handler != nil,
+                  monitoredInterfaceName == nil || monitoredInterfaceName == interfaceName else { return }
+            isCoreWLANInterrupted = false
+            if eventRegistrationErrors.isEmpty { coreWLANRegistrationError = nil }
+            #if DEBUG
+            WiFiLinkDiagnosticsLogger.record("event", [
+                "eventType": String(describing: eventType), "interfaceName": interfaceName,
+                "source": "CoreWLAN", "success": true,
+                "listenerInterrupted": isCoreWLANInterrupted,
+                "time": ISO8601DateFormatter().string(from: Date()),
+                "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
+            ])
             #endif
             handler?(.coreWLAN)
         }
@@ -411,6 +521,29 @@ public actor WiFiLinkStateCenter {
     private var candidateReviewID: UUID?
     private var currentSnapshot: WiFiLinkStateSnapshot
     private var previousEvidence: WiFiLinkRawEvidence?
+    private struct TrustedAssociation: Sendable {
+        let evidence: WiFiLinkRawEvidence
+        let identity: WiFiNetworkIdentity?
+        let confirmedAt: Date
+    }
+    private struct TrustedIdentityField: Sendable {
+        let value: String
+        let evidence: WiFiLinkRawEvidence
+        let confirmedAt: Date
+    }
+    private enum TrustedIdentityDifference: Equatable {
+        case sameComparableFields
+        case ssidChanged
+        case bssidChanged
+        case insufficientEvidence
+    }
+    private var lastVerifiedAssociation: TrustedAssociation?
+    private var lastComparableIdentityAssociation: TrustedAssociation?
+    private var trustedSSID: TrustedIdentityField?
+    private var trustedBSSID: TrustedIdentityField?
+    private var hasAssociationEvidenceGap = false
+    private var hasIdentityEvidenceGap = false
+    private var identityBoundaryEpochAdvancedForGap = false
     private var confirmedState: VerifiedWiFiLinkState = .unknown
     private var disconnectTransitionEmitted = false
     private var lastConfirmedStateAt: Date?
@@ -515,6 +648,7 @@ public actor WiFiLinkStateCenter {
         sequence = 0
         linkEpoch = 0
         previousEvidence = nil
+        clearTrustedAssociations()
         confirmedState = .unknown
         disconnectTransitionEmitted = false
         lastConfirmedStateAt = nil
@@ -537,11 +671,7 @@ public actor WiFiLinkStateCenter {
             "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
         ])
         #endif
-        await requestSample(reason: .startup, sessionID: sessionID)
-        // Evidence continuity may reset during startup without ending this run.
-        // Only stop/restart invalidates listener and polling initialization.
-        guard isRunning, runSessionID == sessionID else { return }
-        await startTrigger(interfaceName: currentSnapshot.interfaceName, sessionID: sessionID)
+        await startTrigger(interfaceName: nil, sessionID: sessionID)
         guard isRunning, runSessionID == sessionID else { return }
         pollingTask = Task { [weak self, pollingInterval, pollingClock] in
             while !Task.isCancelled {
@@ -550,6 +680,13 @@ public actor WiFiLinkStateCenter {
                 guard !Task.isCancelled else { break }
                 await self?.compensationTick(sessionID: sessionID)
             }
+        }
+        // Listener registration and compensation sampling must not depend on
+        // the first evidence capture completing.
+        await requestSample(reason: .startup, sessionID: sessionID)
+        guard isRunning, runSessionID == sessionID else { return }
+        if let interfaceName = currentSnapshot.interfaceName {
+            await updateTriggerInterface(interfaceName, sessionID: sessionID)
         }
     }
 
@@ -566,6 +703,8 @@ public actor WiFiLinkStateCenter {
         activeSampleID = nil
         pendingSampleReasons.removeAll()
         linkEpoch &+= 1
+        hasAssociationEvidenceGap = true
+        identityBoundaryEpochAdvancedForGap = true
         currentContinuityValid = false
         confirmedState = .unknown
         disconnectTransitionEmitted = false
@@ -578,6 +717,7 @@ public actor WiFiLinkStateCenter {
         publishCurrent()
         publishEvent(.continuityReset, previous: previousEvidence, current: nil, firstAt: nil, previousAt: previousConfirmationTime)
         self.previousEvidence = nil
+        clearTrustedAssociations()
         #if DEBUG
         WiFiLinkDiagnosticsLogger.record("event", [
             "eventType": "centerStopped",
@@ -656,6 +796,7 @@ public actor WiFiLinkStateCenter {
     ) {
         guard let evidence else {
             cancelCandidateReview(reason: "sampleFailed")
+            hasAssociationEvidenceGap = true
             if currentContinuityValid || confirmedState != .unknown {
                 resetContinuityWithoutAwaiting(reason: .compensationSampleFailed, previous: previousEvidence, current: nil)
             }
@@ -684,6 +825,11 @@ public actor WiFiLinkStateCenter {
            previousEvidence.interfaceName != evidence.interfaceName || previousEvidence.interfaceIndex != evidence.interfaceIndex {
             cancelCandidateReview(reason: "interfaceChanged")
             resetContinuityWithoutAwaiting(reason: .interfaceChanged, previous: previousEvidence, current: evidence)
+            clearTrustedAssociations()
+        }
+        if let comparableEvidence = lastComparableIdentityAssociation?.evidence,
+           (comparableEvidence.interfaceName != evidence.interfaceName || comparableEvidence.interfaceIndex != evidence.interfaceIndex) {
+            clearTrustedAssociations()
         }
 
         let assessment = WiFiLinkInterpreter.evaluate(
@@ -701,12 +847,37 @@ public actor WiFiLinkStateCenter {
         var eventType: WiFiLinkStateEventType?
         var firstCurrentAt: Date?
         var continuityReset = false
+        var identityEventPrevious: WiFiLinkRawEvidence?
+        var identityEventPreviousAt: Date?
+        var identityContinuity: WiFiIdentityComparisonContinuity?
 
         if state == .associated {
             if reason != .candidateReview {
                 cancelCandidateReview(reason: "associationRestored")
             }
             disconnectCandidates.removeAll()
+            let associationGap = hasAssociationEvidenceGap
+            let identityGap = hasIdentityEvidenceGap
+            let newIdentity = Self.trustedIdentity(evidence)
+            let difference = Self.compareIdentity(
+                previous: WiFiNetworkIdentity(ssid: trustedSSID?.value, bssid: trustedBSSID?.value),
+                current: newIdentity
+            )
+            if difference == .ssidChanged || difference == .bssidChanged {
+                eventType = .networkIdentityChanged
+                firstCurrentAt = evidence.capturedAt
+                identityEventPrevious = difference == .ssidChanged ? trustedSSID?.evidence : trustedBSSID?.evidence
+                identityEventPreviousAt = difference == .ssidChanged ? trustedSSID?.confirmedAt : trustedBSSID?.confirmedAt
+                identityContinuity = associationGap
+                    ? .separatedByUncertainEvidence
+                    : (identityGap ? .separatedByUnknownIdentity : .adjacentVerifiedObservations)
+                if difference == .ssidChanged {
+                    if confirmedState != .disconnected, !identityBoundaryEpochAdvancedForGap { linkEpoch &+= 1 }
+                    // A different SSID starts a distinct logical network scope.
+                    trustedBSSID = nil
+                }
+                identityBoundaryEpochAdvancedForGap = false
+            }
             currentContinuityValid = true
             if confirmedState == .disconnected {
                 if disconnectTransitionEmitted {
@@ -714,16 +885,31 @@ public actor WiFiLinkStateCenter {
                     eventType = .associated
                     firstCurrentAt = evidence.capturedAt
                 }
-            } else if confirmedState == .associated,
-                      let previousEvidence,
-                      Self.didChangeTrustedIdentity(from: previousEvidence, to: evidence) {
-                eventType = .networkIdentityChanged
-                firstCurrentAt = evidence.capturedAt
             }
             if confirmedState != .associated, confirmedState == .unknown { lastConfirmedStateAt = evidence.capturedAt }
             confirmedState = .associated
             disconnectTransitionEmitted = false
+            lastVerifiedAssociation = TrustedAssociation(evidence: evidence, identity: newIdentity, confirmedAt: evidence.capturedAt)
+            if let ssid = evidence.ssid {
+                trustedSSID = TrustedIdentityField(value: ssid, evidence: evidence, confirmedAt: evidence.capturedAt)
+            } else {
+                hasIdentityEvidenceGap = true
+            }
+            if let bssid = evidence.bssid {
+                trustedBSSID = TrustedIdentityField(value: bssid, evidence: evidence, confirmedAt: evidence.capturedAt)
+            } else {
+                hasIdentityEvidenceGap = true
+            }
+            if newIdentity?.isKnown == true {
+                lastComparableIdentityAssociation = TrustedAssociation(evidence: evidence, identity: newIdentity, confirmedAt: evidence.capturedAt)
+            }
+            if difference != .insufficientEvidence {
+                hasAssociationEvidenceGap = false
+                hasIdentityEvidenceGap = evidence.ssid == nil || evidence.bssid == nil
+                if difference == .sameComparableFields { identityBoundaryEpochAdvancedForGap = false }
+            }
         } else if assessment.candidateState == .disconnected {
+            hasAssociationEvidenceGap = true
             if !currentContinuityValid {
                 disconnectCandidates.removeAll()
                 currentContinuityValid = true
@@ -763,10 +949,12 @@ public actor WiFiLinkStateCenter {
                 cancelCandidateReview(reason: "candidateInvalidated")
             }
             disconnectCandidates.removeAll()
+            hasAssociationEvidenceGap = true
             if state == .unknown {
                 if currentContinuityValid || confirmedState != .unknown {
                     linkEpoch &+= 1
                     continuityReset = true
+                    identityBoundaryEpochAdvancedForGap = true
                 }
                 currentContinuityValid = false
                 confirmedState = .unknown
@@ -830,7 +1018,14 @@ public actor WiFiLinkStateCenter {
             publishEvent(.radioChanged, previous: previousEvidence, current: evidence, firstAt: evidence.capturedAt, previousAt: previousConfirmationTime)
         }
         if let eventType {
-            publishEvent(eventType, previous: previousEvidence, current: evidence, firstAt: firstCurrentAt, previousAt: previousConfirmationTime)
+            publishEvent(
+                eventType,
+                previous: eventType == .networkIdentityChanged ? identityEventPrevious : previousEvidence,
+                current: evidence,
+                firstAt: firstCurrentAt,
+                previousAt: eventType == .networkIdentityChanged ? identityEventPreviousAt : previousConfirmationTime,
+                identityComparisonContinuity: identityContinuity
+            )
             lastConfirmedStateAt = evidence.capturedAt
         }
         if continuityReset {
@@ -882,7 +1077,9 @@ public actor WiFiLinkStateCenter {
         pendingSampleReasons.remove(.candidateReview)
         cancelCandidateReview(reason: reason.rawValue)
         linkEpoch &+= 1
-        currentContinuityValid = true
+        hasAssociationEvidenceGap = true
+        identityBoundaryEpochAdvancedForGap = true
+        currentContinuityValid = false
         disconnectCandidates.removeAll()
         confirmedState = .unknown
         disconnectTransitionEmitted = false
@@ -1089,7 +1286,8 @@ public actor WiFiLinkStateCenter {
 
     private func publishEvent(
         _ type: WiFiLinkStateEventType,
-        previous: WiFiLinkRawEvidence?, current: WiFiLinkRawEvidence?, firstAt: Date?, previousAt: Date? = nil
+        previous: WiFiLinkRawEvidence?, current: WiFiLinkRawEvidence?, firstAt: Date?, previousAt: Date? = nil,
+        identityComparisonContinuity: WiFiIdentityComparisonContinuity? = nil
     ) {
         sequence &+= 1
         let event = WiFiLinkStateEvent(
@@ -1098,7 +1296,7 @@ public actor WiFiLinkStateCenter {
             interfaceIndex: current?.interfaceIndex ?? previous?.interfaceIndex,
             linkEpoch: linkEpoch, previousEvidence: previous, currentEvidence: current,
             lastConfirmedPreviousAt: previousAt ?? lastConfirmedStateAt, firstConfirmedCurrentAt: firstAt,
-            confirmedAt: Date()
+            confirmedAt: Date(), identityComparisonContinuity: identityComparisonContinuity
         )
 #if DEBUG
         WiFiLinkDiagnosticsLogger.record("event", [
@@ -1109,6 +1307,7 @@ public actor WiFiLinkStateCenter {
             "linkEpoch": event.linkEpoch,
             "previousStateTime": event.lastConfirmedPreviousAt.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull() as Any,
             "currentStateTime": event.firstConfirmedCurrentAt.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull() as Any,
+            "identityComparisonContinuity": event.identityComparisonContinuity?.rawValue ?? NSNull() as Any,
             "time": ISO8601DateFormatter().string(from: event.confirmedAt),
             "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
         ])
@@ -1157,6 +1356,7 @@ public actor WiFiLinkStateCenter {
         switch reason {
         case .willSleep, .didWake, .interfaceChanged:
             await resetContinuity(reason: reason)
+            clearTrustedAssociations()
         default:
             break
         }
@@ -1176,14 +1376,25 @@ public actor WiFiLinkStateCenter {
         return identity.isKnown ? identity : nil
     }
 
-    private static func didChangeTrustedIdentity(from previous: WiFiLinkRawEvidence, to current: WiFiLinkRawEvidence) -> Bool {
-        if let previousSSID = previous.ssid, let currentSSID = current.ssid {
-            if previousSSID != currentSSID { return true }
-        }
-        if let previousBSSID = previous.bssid, let currentBSSID = current.bssid {
-            if previousBSSID != currentBSSID { return true }
-        }
-        return false
+    private static func compareIdentity(
+        previous: WiFiNetworkIdentity?, current: WiFiNetworkIdentity?
+    ) -> TrustedIdentityDifference {
+        guard let previous, let current else { return .insufficientEvidence }
+        if let old = previous.ssid, let new = current.ssid, old != new { return .ssidChanged }
+        if let old = previous.bssid, let new = current.bssid, old != new { return .bssidChanged }
+        guard previous.ssid != nil, current.ssid != nil,
+              previous.bssid != nil, current.bssid != nil else { return .insufficientEvidence }
+        return .sameComparableFields
+    }
+
+    private func clearTrustedAssociations() {
+        lastVerifiedAssociation = nil
+        lastComparableIdentityAssociation = nil
+        trustedSSID = nil
+        trustedBSSID = nil
+        hasAssociationEvidenceGap = false
+        hasIdentityEvidenceGap = false
+        identityBoundaryEpochAdvancedForGap = false
     }
 
     private static var isUnitTestHost: Bool {
