@@ -66,7 +66,9 @@ struct ProviderTests {
             interfaceName: "en0",
             mode: .station,
             radio: .reportedOn,
-            linkActive: true
+            linkActive: true,
+            ssid: "Deterministic",
+            bssid: "AA:BB:CC:DD:EE:FF"
         )
         let snapshot = NetworkInterfaceSnapshot(
             cycleID: cycleID,
@@ -127,6 +129,40 @@ struct ProviderTests {
         #expect(status.linkAssessment?.state == .associated)
         #expect(status.linkEvidence?.snapshotCycleID == cycleID)
         #expect(status.isConnected)
+    }
+
+    @Test("status generation rejects identity that changed during the interface snapshot")
+    func statusGenerationRejectsConflictingIdentity() {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_360)
+        let cycleID = UUID()
+        let evidence = WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID,
+            capturedAt: timestamp,
+            interfaceName: "en0",
+            mode: .station,
+            radio: .reportedOn,
+            linkActive: true,
+            ssid: "Network A",
+            bssid: "AA:BB:CC:DD:EE:01",
+            interfaceIndex: 4
+        )
+        let interface = NetworkInterfaceInfo(
+            interfaceName: "en0",
+            interfaceIndex: 4,
+            isWiFiInterface: true,
+            wifiLinkEvidence: evidence,
+            ssid: "Network B",
+            bssid: "AA:BB:CC:DD:EE:02"
+        )
+        let status = WiFiCurrentConnectionProvider.makeStatus(
+            from: interface,
+            snapshot: NetworkInterfaceSnapshot(cycleID: cycleID, capturedAt: timestamp, interfaces: [interface])
+        )
+
+        #expect(status.linkAssessment?.state == .unknown)
+        #expect(status.linkAssessment?.reason == .conflictingLinkEvidence)
+        #expect(!status.isConnected)
+        #expect(WiFiLinkEvidenceValidator.assessment(for: status) == nil)
     }
 
     @Test("RoamingProbeProvider does not treat a readable SSID as association evidence")

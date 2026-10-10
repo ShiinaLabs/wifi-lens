@@ -261,3 +261,35 @@ public struct WiFiCurrentStatus: Equatable, Sendable {
     public var linkAssessment: WiFiLinkAssessment?
     var error: WiFiObservationError?
 }
+
+/// Validates that a status and its raw link evidence describe the same
+/// interface snapshot before a consumer uses the interpreted link state.
+public enum WiFiLinkEvidenceValidator {
+    public static func assessment(for status: WiFiCurrentStatus) -> WiFiLinkAssessment? {
+        guard let cycleID = status.interfaceSnapshotCycleID,
+              let interfaceName = status.interfaceName,
+              let evidence = status.linkEvidence,
+              evidence.snapshotCycleID == cycleID,
+              evidence.capturedAt == status.timestamp,
+              evidence.interfaceName == interfaceName,
+              evidence.ssid == status.ssid,
+              evidence.bssid == status.bssid,
+              indexesMatch(evidence.interfaceIndex, status.interfaceIndex) else {
+            return nil
+        }
+
+        let interpreted = WiFiLinkInterpreter.evaluate(
+            evidence,
+            expectedCycleID: cycleID,
+            expectedCapturedAt: status.timestamp
+        )
+        guard interpreted == status.linkAssessment else { return nil }
+        return interpreted
+    }
+
+    private static func indexesMatch(_ evidenceIndex: UInt32?, _ statusIndex: UInt32?) -> Bool {
+        guard let evidenceIndex, evidenceIndex != 0,
+              let statusIndex, statusIndex != 0 else { return true }
+        return evidenceIndex == statusIndex
+    }
+}

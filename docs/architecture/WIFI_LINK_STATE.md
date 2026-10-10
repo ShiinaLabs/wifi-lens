@@ -53,6 +53,16 @@ or recovery events. Tests can inject the strict confirmation policy with
 synthetic evidence. The first observed association or non-association remains
 a baseline and does not create a transition event.
 
+The public `WiFiLinkEvidenceValidator.assessment(for:)` is the shared consumer
+boundary for a current status. It checks cycle, timestamp, interface name,
+available interface indices, exact optional SSID/BSSID agreement, and then
+re-evaluates the raw evidence with `WiFiLinkInterpreter`. Timeline and Pro
+analysis must use this result rather than maintaining separate trust checks.
+Both identity values may be absent while association is still verified; a
+one-sided or conflicting value invalidates the status. Status generation also
+derives `isConnected` from this verified assessment, so a mid-snapshot identity
+change cannot leave a contradictory connected flag.
+
 ## Snapshots, events, and continuity
 
 `WiFiLinkStateSnapshot` independently reports radio evidence, verified link
