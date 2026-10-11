@@ -13,12 +13,12 @@ public struct DiagnosticResult: Equatable, Sendable {
         icon: "questionmark.circle",
         title: String(localized: "observation.diagnosis.unknown.title", comment: "Unknown diagnosis title"),
         message: String(localized: "observation.diagnosis.unknown.message", comment: "Unknown diagnosis message"),
-        severity: .ok
+        severity: .unknown
     )
 }
 
 public enum DiagnosticSeverity: String, Sendable, CaseIterable {
-    case excellent, warning, critical, ok
+    case excellent, warning, critical, ok, unknown
 
     public var color: Color {
         switch self {
@@ -26,6 +26,7 @@ public enum DiagnosticSeverity: String, Sendable, CaseIterable {
         case .warning: return .orange
         case .critical: return .red
         case .ok: return .mint
+        case .unknown: return .secondary
         }
     }
 }

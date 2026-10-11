@@ -80,8 +80,9 @@ final class AppLaunchTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["sidebar-bleScanner"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.descendants(matching: .any)["sidebar-settings"].waitForExistence(timeout: 3))
 
-#if DEBUG
-        XCTAssertTrue(app.descendants(matching: .any)["sidebar-debugChart"].waitForExistence(timeout: 3))
-#endif
+        for id in ["sidebar-spectrumDebugChart", "sidebar-debugChart", "sidebar-debugTimeline"] {
+            XCTAssertFalse(app.descendants(matching: .any)[id].exists,
+                            "Debug sidebar item should not be present: \(id)")
+        }
     }
 }

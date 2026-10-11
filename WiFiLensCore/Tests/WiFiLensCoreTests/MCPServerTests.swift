@@ -364,8 +364,12 @@ import MCP
 
 @Suite("MCP snapshot projection") @MainActor struct MCPScannerViewModelTests {
     @Test func projectsAuthoritativeRuntimeContextWithoutAnalysis() {
-        let viewModel = ScannerViewModel()
-        let capturedAt = Date(timeIntervalSince1970: 100)
+        let store = WiFiObservationStore()
+        let runtime = WiFiObservationRuntime(store: store)
+        let viewModel = ScannerViewModel(observationRuntime: runtime)
+        let capturedAt = Date()
+        let cycleID = UUID()
+        store.beginScanLifecycle(at: capturedAt.addingTimeInterval(-1))
         let network = WiFiNetwork(
             ssid: "ProjectionNet",
             bssid: "aa:bb:cc:dd:ee:ff",
@@ -383,6 +387,15 @@ import MCP
             supportedBands: [.band24GHz, .band5GHz],
             timestamp: capturedAt
         )
+        store.apply(WiFiObservation(
+            timestamp: capturedAt,
+            sourceCycleID: cycleID,
+            environmentSnapshot: WiFiEnvironmentSnapshot(
+                timestamp: capturedAt,
+                networks: [],
+                sourceCycleID: cycleID
+            )
+        ))
 
         let snapshot = viewModel.makeMCPSnapshot()
         #expect(snapshot.networks.map(\.bssid) == ["aa:bb:cc:dd:ee:ff"])
@@ -393,6 +406,41 @@ import MCP
         #expect(snapshot.accessState == .scanning)
         #expect(snapshot.supportedBands == ["24", "5"])
         #expect(snapshot.scanIntervalSeconds == 5)
+
+        viewModel.isScanning = false
+        let stopped = viewModel.makeMCPSnapshot()
+        #expect(stopped.networks.isEmpty)
+        #expect(stopped.capturedAt == nil)
+
+        viewModel.isScanning = true
+        let failedAt = capturedAt.addingTimeInterval(1)
+        store.apply(WiFiObservation(
+            timestamp: failedAt,
+            sourceCycleID: UUID(),
+            environmentSnapshot: WiFiEnvironmentSnapshot(
+                timestamp: failedAt,
+                networks: [],
+                error: .environmentScanFailed("test failure")
+            )
+        ))
+        let failed = viewModel.makeMCPSnapshot()
+        #expect(failed.networks.isEmpty)
+        #expect(failed.capturedAt == nil)
+
+        let recoveredAt = failedAt.addingTimeInterval(1)
+        let recoveryCycleID = UUID()
+        store.beginScanLifecycle(at: recoveredAt)
+        viewModel.debugApplyNetworksForTesting([network], supportedBands: [.band5GHz], timestamp: recoveredAt)
+        store.apply(WiFiObservation(
+            timestamp: recoveredAt,
+            sourceCycleID: recoveryCycleID,
+            environmentSnapshot: WiFiEnvironmentSnapshot(timestamp: recoveredAt, networks: [], sourceCycleID: recoveryCycleID)
+        ))
+        #expect(viewModel.makeMCPSnapshot(at: recoveredAt).networks.count == 1)
+        #expect(viewModel.makeMCPSnapshot(at: recoveredAt.addingTimeInterval(16)).networks.isEmpty)
+
+        store.endScanLifecycle()
+        #expect(viewModel.makeMCPSnapshot(at: recoveredAt).networks.isEmpty)
 
         viewModel.wifiPowerState = .poweredOff
         let unavailable = viewModel.makeMCPSnapshot()

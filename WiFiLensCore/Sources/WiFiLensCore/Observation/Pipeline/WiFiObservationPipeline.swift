@@ -47,28 +47,69 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         networks: [WiFiNetwork],
         context: WiFiObservationCycleContext
     ) async -> WiFiObservationCycleResult {
-        let status = await currentConnectionProvider.fetchCurrentStatus(from: context.interfaceSnapshot)
-        let latency = await gatewayLatencyProvider.measure(routerIP: status.routerIP)
+        let capturedStatus = await currentConnectionProvider.fetchCurrentStatus(from: context.interfaceSnapshot)
+        let status = Self.sanitizingUnverifiedMetrics(in: capturedStatus)
+        let confirmedLink = WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
+        let latency: GatewayLatencyResult
+        if confirmedLink,
+           context.environmentError == nil,
+           let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
+           let boundMeasurer = gatewayLatencyProvider as? WiFiBoundGatewayMeasuring {
+            let measured = await boundMeasurer.measure(target: target)
+            if Task.isCancelled {
+                latency = GatewayLatencyResult(
+                    timestamp: context.timestamp,
+                    routerIP: target.address,
+                    probeOutcome: .cancelled,
+                    attemptID: measured.attemptID,
+                    cycleID: target.snapshotCycleID,
+                    interfaceName: target.interfaceName,
+                    interfaceBound: true
+                )
+            } else {
+                if WiFiGatewayProbeTarget.isValidWiFiGatewayResult(measured, for: target) ||
+                    (WiFiGatewayProbeTarget.isAttributedToWiFiTarget(measured, target) && measured.latencyMs == nil) {
+                    latency = measured
+                } else {
+                    latency = GatewayLatencyResult(
+                        timestamp: context.timestamp,
+                        routerIP: target.address,
+                        probeOutcome: .notTested,
+                        cycleID: target.snapshotCycleID,
+                        interfaceName: target.interfaceName
+                    )
+                }
+            }
+        } else {
+            latency = GatewayLatencyResult(
+                timestamp: context.timestamp,
+                routerIP: status.routerIP,
+                probeOutcome: .notTested,
+                cycleID: context.interfaceSnapshot.cycleID,
+                interfaceName: status.interfaceName
+            )
+        }
         let adaptedNetworks = NetworkObservationAdapter.adaptAll(
             networks,
-            currentBSSID: status.bssid
+            confirmedCurrentBSSID: confirmedLink ? status.bssid : nil
         )
         let snapshot = WiFiEnvironmentSnapshot(
             timestamp: context.timestamp,
             interfaceName: context.interfaceName,
             networks: adaptedNetworks,
-            error: context.environmentError
+            error: context.environmentError,
+            sourceCycleID: context.interfaceSnapshot.cycleID
         )
         let targetAP = ChannelQualityCalculator.TargetAP(
-            bssid: status.bssid,
-            ssid: status.ssid,
-            channel: status.channel
+            bssid: confirmedLink ? status.bssid : nil,
+            ssid: confirmedLink ? status.ssid : nil,
+            channel: confirmedLink ? status.channel : nil
         )
         let channelAnalysis: [ChannelQuality]? = if context.environmentError == nil {
             ChannelOccupancyAnalyzer.analyze(
                 snapshot: snapshot,
-                currentChannel: status.channel,
-                currentBand: status.band,
+                currentChannel: confirmedLink ? status.channel : nil,
+                currentBand: confirmedLink ? status.band : nil,
                 supportedBands: Set(context.supportedBands.map(\.id)),
                 targetAP: targetAP
             )
@@ -89,18 +130,22 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
                 deviceCapabilities: context.deviceCapabilities
             )
         }
-        let quality = WiFiQualityEvaluator.evaluate(
-            currentStatus: status,
-            gatewayLatency: latency
-        )
-        let diagnosis = DiagnosticEvaluator.evaluate(
-            currentStatus: status,
-            quality: quality,
-            channelAnalysis: channelAnalysis,
-            channelRecommendations: channelRecommendation
-        )
+        let quality: WiFiQualityResult? = context.environmentError == nil && confirmedLink
+            ? WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: latency)
+            : nil
+        let diagnosis: DiagnosticResult? = if let quality {
+            DiagnosticEvaluator.evaluate(
+                currentStatus: status,
+                quality: quality,
+                channelAnalysis: channelAnalysis,
+                channelRecommendations: channelRecommendation
+            )
+        } else {
+            nil
+        }
         let observation = WiFiObservation(
             timestamp: context.timestamp,
+            sourceCycleID: context.interfaceSnapshot.cycleID,
             currentStatus: status,
             environmentSnapshot: snapshot,
             gatewayLatency: latency,
@@ -130,5 +175,17 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
             gatewayLatencyError,
             environmentSnapshotError,
         ].compactMap { $0 }
+    }
+
+    private static func sanitizingUnverifiedMetrics(in status: WiFiCurrentStatus) -> WiFiCurrentStatus {
+        guard status.metricsAttribution != .verified else { return status }
+        var sanitized = status
+        sanitized.channel = nil
+        sanitized.band = nil
+        sanitized.rssi = nil
+        sanitized.txRate = nil
+        sanitized.phyMode = nil
+        sanitized.security = nil
+        return sanitized
     }
 }

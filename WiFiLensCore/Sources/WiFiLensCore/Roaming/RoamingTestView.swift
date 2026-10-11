@@ -8,7 +8,9 @@ private let pointSpacing: CGFloat = 4
 private let chartHeight: CGFloat = 180
 private let leftAxisWidth: CGFloat = 40
 private let bottomAxisHeight: CGFloat = 24
-private let topMargin: CGFloat = 40
+// Reserve a dedicated row for the hover badge and a second row for AP labels.
+// The chart height includes this margin, so the RSSI plot itself stays the same height.
+private let topMargin: CGFloat = 64
 
 private let segmentColors: [Color] = [
     .blue, .green, .orange, .purple, .teal, .pink, .mint, .indigo
@@ -53,6 +55,10 @@ public struct RoamingTestView: View {
 
     public init(viewModel: RoamingTestViewModel) {
         self.viewModel = viewModel
+    }
+
+    private var bssidColors: [String: Color] {
+        buildBSSIDColorMap(from: viewModel.segments)
     }
 
     public var body: some View {
@@ -135,8 +141,22 @@ public struct RoamingTestView: View {
 
     private var runningContent: some View {
         VStack(spacing: 0) {
-            signalInfoCard
-            statusBar
+            VStack(spacing: 0) {
+                signalInfoCard
+
+                Rectangle()
+                    .fill(.quaternary)
+                    .frame(height: 1)
+                    .padding(.horizontal, 16)
+
+                statusBar
+            }
+            .padding(.vertical, 4)
+            .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 6)
+
             trendChart
             transitionTable
         }
@@ -168,7 +188,7 @@ public struct RoamingTestView: View {
                     if let bssid = viewModel.currentBSSID {
                         Text(bssid)
                             .font(.caption.monospaced())
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(bssidColors[bssid] ?? .secondary)
                             .lineLimit(1)
                             .truncationMode(.tail)
                     }
@@ -186,12 +206,10 @@ public struct RoamingTestView: View {
 
             // Right: metrics
             HStack(spacing: 20) {
-                metricLabel(String(localized: "channels.table.col.rssi", comment: "RSSI column header"), "\(viewModel.currentRSSI) dBm", rssiColor(viewModel.currentRSSI))
-                    .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), viewModel.currentRSSI, rssiQualityDescription(viewModel.currentRSSI)))
-                metricLabel(String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), "\(viewModel.currentChannel)", .primary)
-                    .accessibilityLabel(String(format: String(localized: "common.accessibility.metric_fmt", comment: "Label: value format for VoiceOver metric"), String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), "\(viewModel.currentChannel)"))
-                metricLabel(String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), String(format: "%.0f Mbps", viewModel.currentTxRate), .primary)
-                    .accessibilityLabel(String(format: String(localized: "common.accessibility.metric_fmt", comment: "Label: value format for VoiceOver metric"), String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), String(format: "%.0f Mbps", viewModel.currentTxRate)))
+                let rssi = viewModel.currentRSSI
+                metricLabel(String(localized: "channels.table.col.rssi", comment: "RSSI column header"), rssi.map { "\($0) dBm" } ?? "—", rssi.map(rssiColor) ?? .secondary)
+                metricLabel(String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), viewModel.currentChannel.map(String.init) ?? "—", .primary)
+                metricLabel(String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), viewModel.currentTxRate.map { String(format: "%.0f Mbps", $0) } ?? "—", .primary)
                 if let latency = viewModel.gatewayLatency {
                     metricLabel(String(localized: "roaming.field.latency", comment: "Latency field label in roaming view"), String(format: "%.1f ms", latency), latencyColor(latency))
                         .accessibilityLabel(String(format: String(localized: "roaming.accessibility.latency_fmt", comment: "Latency accessibility label with value and quality"), String(format: "%.1f", latency), latencyQualityDescription(latency)))
@@ -205,11 +223,11 @@ public struct RoamingTestView: View {
     private func metricLabel(_ title: String, _ value: String, _ color: Color) -> some View {
         VStack(spacing: 2) {
             Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.subheadline.weight(.medium).monospacedDigit())
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .accessibilityElement(children: .combine)
     }
@@ -220,11 +238,11 @@ public struct RoamingTestView: View {
         HStack(spacing: 16) {
             HStack(spacing: 4) {
                 Image(systemName: "clock")
-                    .font(.caption)
+                    .font(.callout)
                     .foregroundColor(.secondary)
                     .accessibilityHidden(true)
                 Text(timeFormatter.string(from: viewModel.elapsedTime) ?? "0:00")
-                    .font(.subheadline.monospacedDigit())
+                    .font(.headline.monospacedDigit())
             }
 
             HStack(spacing: 4) {
@@ -232,8 +250,10 @@ public struct RoamingTestView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .accessibilityHidden(true)
-                Text("\(viewModel.totalSamples) \(String(localized: "common.label.samples", comment: "Sample count unit label"))")
-                    .font(.callout)
+                Text("\(viewModel.totalSamples)")
+                    .font(.callout.weight(.semibold).monospacedDigit())
+                Text(String(localized: "common.label.samples", comment: "Sample count unit label"))
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
 
@@ -242,12 +262,19 @@ public struct RoamingTestView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .accessibilityHidden(true)
-                Text("\(viewModel.transitions.count) \(String(localized: "common.label.transitions", comment: "AP transition count unit label"))")
-                    .font(.callout)
+                Text("\(viewModel.transitions.count)")
+                    .font(.callout.weight(.semibold).monospacedDigit())
+                Text(String(localized: "common.label.transitions", comment: "AP transition count unit label"))
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             Spacer()
+
+            Rectangle()
+                .fill(.quaternary)
+                .frame(width: 1, height: 20)
+                .accessibilityHidden(true)
 
             if viewModel.state == .stopped, viewModel.totalSamples > 0 {
                 Button {
@@ -304,21 +331,22 @@ public struct RoamingTestView: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
     }
 
     // MARK: - Trend chart
 
     private var trendChart: some View {
-        let allSamples = segments.flatMap { $0.samples }.sorted { $0.timestamp < $1.timestamp }
-        let totalSeconds = max(1, viewModel.elapsedTime)
-        let bssidColors = buildBSSIDColorMap(from: viewModel.segments)
-        return RoamingTimelineChart(
+        let scene = RoamingChartScene(
             segments: viewModel.segments,
             transitions: viewModel.transitions,
-            allSamples: allSamples,
+            duration: viewModel.elapsedTime,
+            origin: viewModel.chartStartDate
+        )
+        return RoamingTimelineChart(
+            scene: scene,
             bssidColors: bssidColors,
-            elapsedTime: totalSeconds
+            elapsedTime: max(1, scene.duration)
         )
     }
 
@@ -327,7 +355,8 @@ public struct RoamingTestView: View {
     // MARK: - Transition table
 
     private var transitionTable: some View {
-        Group {
+        let colors = bssidColors
+        return Group {
             if viewModel.transitions.isEmpty {
                 VStack(spacing: 8) {
                     Spacer()
@@ -362,14 +391,12 @@ public struct RoamingTestView: View {
                                 Divider()
                                 GridRow {
                                     tableCell(tsLabel(t.timestamp))
-                                    tableCell(t.fromBSSID, mono: true)
-                                    tableCell(t.toBSSID, mono: true)
-                                    tableCell("\(t.rssiBefore) dBm", color: rssiColor(t.rssiBefore))
-                                        .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), t.rssiBefore, rssiQualityDescription(t.rssiBefore)))
-                                    tableCell("\(t.rssiAfter) dBm", color: rssiColor(t.rssiAfter))
-                                        .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), t.rssiAfter, rssiQualityDescription(t.rssiAfter)))
-                                    tableCell("\(t.channelBefore)")
-                                    tableCell("\(t.channelAfter)")
+                                    tableCell(t.fromBSSID, mono: true, color: colors[t.fromBSSID] ?? .primary)
+                                    tableCell(t.toBSSID, mono: true, color: colors[t.toBSSID] ?? .primary)
+                                    tableCell(t.rssiBefore.map { "\($0) dBm" } ?? "—", color: t.rssiBefore.map(rssiColor) ?? .secondary)
+                                    tableCell(t.rssiAfter.map { "\($0) dBm" } ?? "—", color: t.rssiAfter.map(rssiColor) ?? .secondary)
+                                    tableCell(t.channelBefore.map(String.init) ?? "—")
+                                    tableCell(t.channelAfter.map(String.init) ?? "—")
                                 }
                                 .background(idx.isMultiple(of: 2) ? .clear : Color.primary.opacity(0.04))
                             }
@@ -391,7 +418,7 @@ public struct RoamingTestView: View {
 
     private func tableCell(_ text: String, mono: Bool = false, color: Color = .primary) -> some View {
         Text(text)
-            .font(mono ? .caption.monospacedDigit() : .caption)
+            .font(mono ? .caption.weight(.medium).monospacedDigit() : .caption)
             .foregroundColor(color)
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.vertical, 5)
@@ -412,18 +439,17 @@ public struct RoamingTestView: View {
 // MARK: - Chart Canvas
 
 private struct ChartCanvas: View {
-    let segments: [RoamingSegment]
-    let transitions: [APTransitionEvent]
-    let allSamples: [RoamingSample]
-    let chartWidth: CGFloat?
+    @Environment(\.displayScale) private var displayScale
+    let scene: RoamingChartScene
     let elapsedTime: TimeInterval
     let bssidColors: [String: Color]
     var timeOffset: TimeInterval = 0
-    var sessionStartDate: Date = Date()
     var highlightedTime: TimeInterval?
-    var highlightedSample: RoamingSample?
+    var highlightedSamples: [RoamingChartHoverSample]
 
     var body: some View {
+        let canvasDisplayScale = displayScale
+
         Canvas { context, size in
             let plotLeft = leftAxisWidth
             let plotTop = topMargin
@@ -431,17 +457,25 @@ private struct ChartCanvas: View {
             let plotBottom = size.height - bottomAxisHeight
             let plotHeight = plotBottom - plotTop
 
-            guard plotWidth > 0, plotHeight > 0, !allSamples.isEmpty else { return }
+            guard plotWidth > 0, plotHeight > 0, !scene.regions.isEmpty else { return }
 
-            let rssiMin = min(-100, allSamples.map(\.rssi).min() ?? -100)
-            let rssiMax = max(-30, allSamples.map(\.rssi).max() ?? -30)
+            let measuredRSSI = scene.signalRuns.flatMap { $0.points.compactMap { $0.sample.rssi } }
+            let rssiMin = min(-100, measuredRSSI.min() ?? -100)
+            let rssiMax = max(-30, measuredRSSI.max() ?? -30)
             let rssiRange = Double(max(1, rssiMax - rssiMin))
 
             let totalSecs = max(1, elapsedTime)
-            let scaleX = plotWidth / CGFloat(totalSecs)
+            let timeScale = RoamingChartTimeScale(origin: scene.origin)
 
-            func xPos(_ ts: Date) -> CGFloat {
-                plotLeft + CGFloat(ts.timeIntervalSince(sessionStartDate) - timeOffset) * scaleX
+            func xPos(_ elapsed: TimeInterval) -> CGFloat {
+                timeScale.xPosition(
+                    for: elapsed,
+                    visibleStart: timeOffset,
+                    visibleDuration: totalSecs,
+                    plotLeft: plotLeft,
+                    plotWidth: plotWidth,
+                    displayScale: canvasDisplayScale
+                )
             }
 
             func yPos(_ rssi: Int) -> CGFloat {
@@ -470,7 +504,7 @@ private struct ChartCanvas: View {
             let timeStep: TimeInterval = max(10, ceil(totalSecs / 6 / 10) * 10)
             var t: TimeInterval = 0
             while t <= totalSecs {
-                let x = plotLeft + CGFloat(t) * scaleX
+                let x = xPos(t + timeOffset)
                 let label = Text(timeFormatter.string(from: t + timeOffset) ?? "0")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -479,51 +513,47 @@ private struct ChartCanvas: View {
                 t += timeStep
             }
 
-            for (_, segment) in segments.enumerated() {
-                let visibleSamples = segment.samples.filter { sample in
-                    let t = sample.timestamp.timeIntervalSince(sessionStartDate) - timeOffset
-                    return t >= 0 && t <= elapsedTime
-                }
-                guard visibleSamples.count >= 2 else { continue }
-                let midIdx = visibleSamples.count / 2
-                let midX = xPos(visibleSamples[midIdx].timestamp)
-                let color = bssidColors[segment.bssid] ?? .blue
-                let label = Text(segment.bssid)
+            for region in scene.regions {
+                let midX = xPos((region.start + region.end) / 2)
+                let color = bssidColors[region.bssid] ?? .blue
+                let label = Text(region.bssid)
                     .font(.caption2.weight(.medium))
                     .foregroundColor(color)
                 let resolved = context.resolve(label)
                 let labelW = resolved.measure(in: CGSize(width: 200, height: 20)).width
-                context.draw(resolved, at: CGPoint(x: min(midX, plotLeft + plotWidth - labelW / 2), y: topMargin - 8))
+                if region.end - region.start > 2 {
+                    context.draw(resolved, at: CGPoint(x: min(max(midX, plotLeft + labelW / 2), plotLeft + plotWidth - labelW / 2), y: topMargin - 8))
+                }
             }
 
-            let clipRect = Path(CGRect(x: plotLeft, y: plotTop - 4, width: plotWidth, height: plotHeight + 8))
+            let clipRect = Path(CGRect(x: plotLeft, y: plotTop, width: plotWidth, height: plotHeight))
             context.clip(to: clipRect)
 
-            for (_, segment) in segments.enumerated() {
-                let samples = segment.samples.filter { sample in
-                    let t = sample.timestamp.timeIntervalSince(sessionStartDate) - timeOffset
-                    return t >= 0 && t <= elapsedTime
+            for run in scene.signalRuns {
+                let color = bssidColors[run.bssid] ?? .blue
+                let points = run.points.compactMap { point -> CGPoint? in
+                    guard let rssi = point.sample.rssi else { return nil }
+                    return CGPoint(x: xPos(point.elapsedTime), y: yPos(rssi))
                 }
-                guard samples.count >= 2 else { continue }
-                let color = bssidColors[segment.bssid] ?? .blue
+                guard let first = points.first else { continue }
+                guard points.count >= 2 else {
+                    let dot = CGRect(x: first.x - 2, y: first.y - 2, width: 4, height: 4)
+                    context.fill(Path(ellipseIn: dot), with: .color(color))
+                    continue
+                }
 
-                let points = samples.map { CGPoint(x: xPos($0.timestamp), y: yPos($0.rssi)) }
-
-                // Filled area
-                var areaPath = Path()
-                areaPath.move(to: CGPoint(x: points[0].x, y: plotBottom))
-                areaPath.addLine(to: points[0])
-                addCatmullRomSpline(to: &areaPath, points: points)
-                areaPath.addLine(to: CGPoint(x: points[points.count - 1].x, y: plotBottom))
-                areaPath.closeSubpath()
-                context.fill(areaPath, with: .color(color.opacity(0.12)))
-
-                let linePath = catmullRomSpline(points: points)
-                context.stroke(linePath, with: .color(color), lineWidth: 2)
+                var signalArea = Path()
+                signalArea.move(to: CGPoint(x: points[0].x, y: plotBottom))
+                signalArea.addLine(to: points[0])
+                addCatmullRomSpline(to: &signalArea, points: points)
+                signalArea.addLine(to: CGPoint(x: points[points.count - 1].x, y: plotBottom))
+                signalArea.closeSubpath()
+                context.fill(signalArea, with: .color(color.opacity(0.12)))
+                context.stroke(catmullRomSpline(points: points), with: .color(color), lineWidth: 2)
             }
 
-            for transition in transitions {
-                let x = xPos(transition.timestamp)
+            for transition in scene.transitions {
+                let x = xPos(transition.elapsedTime)
                 guard x >= plotLeft, x <= plotLeft + plotWidth else { continue }
                 var dash = Path()
                 dash.move(to: CGPoint(x: x, y: plotTop))
@@ -532,19 +562,22 @@ private struct ChartCanvas: View {
             }
 
             if let highlightedTime {
-                let x = plotLeft + CGFloat(max(0, min(totalSecs, highlightedTime - timeOffset))) * scaleX
+                let displayedTime = floor(highlightedTime + timeOffset) - timeOffset
+                let x = xPos(timeOffset + max(0, min(totalSecs, displayedTime)))
                 var hoverLine = Path()
                 hoverLine.move(to: CGPoint(x: x, y: plotTop))
                 hoverLine.addLine(to: CGPoint(x: x, y: plotBottom))
                 context.stroke(hoverLine, with: .color(.primary.opacity(0.5)), style: .init(dash: [3, 3], dashPhase: 0))
             }
 
-            if let highlightedSample {
-                let x = xPos(highlightedSample.timestamp)
-                let y = yPos(highlightedSample.rssi)
+            for highlightedSample in highlightedSamples {
+                guard let rssi = highlightedSample.point.sample.rssi else { continue }
+                let x = xPos(highlightedSample.point.elapsedTime)
+                let y = yPos(rssi)
                 let pointRect = CGRect(x: x - 4, y: y - 4, width: 8, height: 8)
+                let color = bssidColors[highlightedSample.bssid] ?? .blue
                 context.fill(Path(ellipseIn: pointRect), with: .color(.white))
-                context.stroke(Path(ellipseIn: pointRect), with: .color(.accentColor), lineWidth: 2)
+                context.stroke(Path(ellipseIn: pointRect), with: .color(color), lineWidth: 2)
             }
         }
     }
@@ -556,9 +589,7 @@ private let overviewHeight: CGFloat = 48
 private let detailChartHeight: CGFloat = 160
 
 private struct RoamingTimelineChart: View {
-    let segments: [RoamingSegment]
-    let transitions: [APTransitionEvent]
-    let allSamples: [RoamingSample]
+    let scene: RoamingChartScene
     let bssidColors: [String: Color]
     let elapsedTime: TimeInterval
 
@@ -569,11 +600,13 @@ private struct RoamingTimelineChart: View {
     @State private var overviewPlotWidth: CGFloat = 1
 
     private var activeHoverTime: TimeInterval? { hoveredDetailTime ?? overviewHoverTime }
-    private var highlightedSample: RoamingSample? {
-        guard let hoverTime = activeHoverTime, let sessionStart = allSamples.first?.timestamp else { return nil }
-        return allSamples.min { lhs, rhs in
-            abs(lhs.timestamp.timeIntervalSince(sessionStart) - hoverTime) < abs(rhs.timestamp.timeIntervalSince(sessionStart) - hoverTime)
-        }
+    private var highlightedSamples: [RoamingChartHoverSample] {
+        guard let hoverTime = activeHoverTime else { return [] }
+        return scene.hoverSamples(near: hoverTime)
+    }
+
+    private var highlightedSample: RoamingChartSamplePoint? {
+        highlightedSamples.first?.point
     }
 
     var body: some View {
@@ -587,11 +620,10 @@ private struct RoamingTimelineChart: View {
                     overviewHeight: overviewHeight,
                     overview: {
                         OverviewCanvas(
-                            segments: segments,
-                            transitions: transitions,
+                            scene: scene,
                             bssidColors: bssidColors,
                             elapsedTime: elapsedTime,
-                            highlightedTime: activeHoverTime
+                            highlightedTime: highlightedSample?.elapsedTime ?? activeHoverTime
                         )
                     },
                     edgeLabel: { timeFormatter.string(from: $0) ?? "0:00" },
@@ -640,13 +672,11 @@ private struct RoamingTimelineChart: View {
     }
 
     private var detailChart: some View {
-        let sessionStart = allSamples.first?.timestamp ?? Date()
-        let visibleSamples = allSamples.filter {
-            let t = $0.timestamp.timeIntervalSince(sessionStart)
-            return t >= visibleStart && t <= visibleEnd
-        }
+        let chartDuration = max(0.1, elapsedTime)
+        let dataStart = min(max(0, visibleStart), chartDuration - 0.1)
+        let dataEnd = min(chartDuration, max(dataStart + 0.1, visibleEnd))
 
-        guard let firstSample = visibleSamples.first, let lastSample = visibleSamples.last else {
+        guard !scene.regions.isEmpty else {
             return AnyView(
                 VStack(spacing: 8) {
                     Spacer()
@@ -662,28 +692,22 @@ private struct RoamingTimelineChart: View {
                 .frame(height: detailChartHeight + topMargin + bottomAxisHeight)
             )
         }
-        let dataStart = firstSample.timestamp.timeIntervalSince(sessionStart)
-        let dataEnd = lastSample.timestamp.timeIntervalSince(sessionStart)
         let rangeSecs = max(0.1, dataEnd - dataStart)
 
         return AnyView(GeometryReader { geo in
             let plotWidth = max(1, geo.size.width - leftAxisWidth - 8)
             ZStack(alignment: .topLeading) {
                 ChartCanvas(
-                    segments: segments,
-                    transitions: transitions,
-                    allSamples: visibleSamples,
-                    chartWidth: nil,
+                    scene: scene,
                     elapsedTime: rangeSecs,
                     bssidColors: bssidColors,
                     timeOffset: dataStart,
-                    sessionStartDate: sessionStart,
-                    highlightedTime: activeHoverTime,
-                    highlightedSample: highlightedSample
+                    highlightedTime: highlightedSample?.elapsedTime ?? activeHoverTime,
+                    highlightedSamples: highlightedSamples
                 )
 
-                if let highlightedSample, let hoverTime = activeHoverTime {
-                    detailValueBadge(sample: highlightedSample, time: hoverTime, plotWidth: plotWidth)
+                if !highlightedSamples.isEmpty {
+                    detailValueBadge(samples: highlightedSamples)
                 }
             }
             .contentShape(Rectangle())
@@ -703,21 +727,46 @@ private struct RoamingTimelineChart: View {
         .clipped())
     }
 
-    private func detailValueBadge(sample: RoamingSample, time: TimeInterval, plotWidth: CGFloat) -> some View {
-        let timeText = timeFormatter.string(from: time) ?? "0:00"
-        return HStack(spacing: 8) {
+    @ViewBuilder
+    private func detailValueBadge(samples: [RoamingChartHoverSample]) -> some View {
+        let timeText = timeFormatter.string(from: samples[0].point.elapsedTime) ?? "0:00"
+        HStack(alignment: .center, spacing: 10) {
             Text(timeText)
-            Text(String(format: String(localized: "roaming.detail.rssi_fmt", comment: "Roaming detail RSSI badge"), sample.rssi))
-            Text(String(format: String(localized: "roaming.detail.channel_fmt", comment: "Roaming detail channel badge"), sample.channel))
-            Text(String(format: String(localized: "roaming.detail.tx_rate_fmt", comment: "Roaming detail Tx rate badge"), sample.txRate))
-            if let latency = sample.gatewayLatency {
-                Text(String(format: String(localized: "roaming.detail.rtt_fmt", comment: "Roaming detail RTT badge"), latency))
+                .font(.caption.weight(.medium).monospacedDigit())
+                .foregroundStyle(.secondary)
+
+            ForEach(Array(samples.enumerated()), id: \.element.point.sample.id) { index, item in
+                if index > 0 {
+                    Rectangle()
+                        .fill(.quaternary)
+                        .frame(width: 1, height: 28)
+                        .accessibilityHidden(true)
+                }
+
+                let color = bssidColors[item.bssid] ?? .blue
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.bssid)
+                        .font(.caption.weight(.medium).monospacedDigit())
+                        .foregroundStyle(color)
+
+                    HStack(spacing: 8) {
+                        Text(item.point.sample.rssi.map { String(format: String(localized: "roaming.detail.rssi_fmt", comment: "Roaming detail RSSI badge"), $0) } ?? "—")
+                            .font(.caption.weight(.semibold).monospacedDigit())
+                            .foregroundStyle(color)
+                        Text(item.point.sample.channel.map { String(format: String(localized: "roaming.detail.channel_fmt", comment: "Roaming detail channel badge"), $0) } ?? "—")
+                        Text(item.point.sample.txRate.map { String(format: String(localized: "roaming.detail.tx_rate_fmt", comment: "Roaming detail Tx rate badge"), $0) } ?? "—")
+                        if let latency = item.point.sample.gatewayLatency {
+                            Text(String(format: String(localized: "roaming.detail.rtt_fmt", comment: "Roaming detail RTT badge"), latency))
+                        }
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
             }
         }
-        .font(.caption.weight(.medium).monospacedDigit())
-        .foregroundColor(.primary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .glassBackground(.regular, in: Capsule())
         .padding(.leading, 12)
         .padding(.top, 6)
@@ -727,46 +776,67 @@ private struct RoamingTimelineChart: View {
 // MARK: - Overview mini canvas
 
 private struct OverviewCanvas: View {
-    let segments: [RoamingSegment]
-    let transitions: [APTransitionEvent]
+    @Environment(\.displayScale) private var displayScale
+    let scene: RoamingChartScene
     let bssidColors: [String: Color]
     let elapsedTime: TimeInterval
     let highlightedTime: TimeInterval?
 
     var body: some View {
-        Canvas { context, size in
-            guard !segments.isEmpty, elapsedTime > 0 else { return }
+        let canvasDisplayScale = displayScale
 
-            var rssiVals: [Int] = []
-            for seg in segments { rssiVals.append(contentsOf: seg.samples.map(\.rssi)) }
+        Canvas { context, size in
+            guard !scene.regions.isEmpty, elapsedTime > 0 else { return }
+
+            let rssiVals = scene.signalRuns.flatMap { $0.points.compactMap { $0.sample.rssi } }
             let rssiMin = Double(min(-100, rssiVals.min() ?? -100))
             let rssiMax = Double(max(-30, rssiVals.max() ?? -30))
             let rssiRange = max(1, rssiMax - rssiMin)
 
-            let startDate = segments.first?.samples.first?.timestamp ?? Date()
-
-            func xPos(_ ts: Date) -> CGFloat {
-                CGFloat(ts.timeIntervalSince(startDate) / elapsedTime) * size.width
+            let timeScale = RoamingChartTimeScale(origin: scene.origin)
+            func xPos(_ time: TimeInterval) -> CGFloat {
+                timeScale.xPosition(
+                    for: time,
+                    visibleStart: 0,
+                    visibleDuration: elapsedTime,
+                    plotLeft: 0,
+                    plotWidth: size.width,
+                    displayScale: canvasDisplayScale
+                )
             }
             func yPos(_ rssi: Int) -> CGFloat {
                 size.height - CGFloat(Double(rssi) - rssiMin) / CGFloat(rssiRange) * size.height
             }
 
-            for segment in segments {
-                let samples = segment.samples
-                guard samples.count >= 2 else { continue }
-                let color = bssidColors[segment.bssid] ?? .blue
+            context.clip(to: Path(CGRect(origin: .zero, size: size)))
 
-                var path = Path()
-                path.move(to: CGPoint(x: xPos(samples[0].timestamp), y: yPos(samples[0].rssi)))
-                for i in 1..<samples.count {
-                    path.addLine(to: CGPoint(x: xPos(samples[i].timestamp), y: yPos(samples[i].rssi)))
+            for run in scene.signalRuns {
+                let color = bssidColors[run.bssid] ?? .blue
+                let points = run.points.compactMap { point in
+                    point.sample.rssi.map { CGPoint(x: xPos(point.elapsedTime), y: yPos($0)) }
                 }
-                context.stroke(path, with: .color(color), lineWidth: 1)
+                guard let first = points.first else { continue }
+                if points.count == 1 {
+                    let dot = CGRect(x: first.x - 1.5, y: first.y - 1.5, width: 3, height: 3)
+                    context.fill(Path(ellipseIn: dot), with: .color(color))
+                } else {
+                    var path = Path()
+                    path.move(to: CGPoint(x: points[0].x, y: size.height))
+                    path.addLine(to: points[0])
+                    for point in points.dropFirst() { path.addLine(to: point) }
+                    path.addLine(to: CGPoint(x: points[points.count - 1].x, y: size.height))
+                    path.closeSubpath()
+                    context.fill(path, with: .color(color.opacity(0.12)))
+
+                    var line = Path()
+                    line.move(to: first)
+                    for point in points.dropFirst() { line.addLine(to: point) }
+                    context.stroke(line, with: .color(color), lineWidth: 1)
+                }
             }
 
-            for t in transitions {
-                let x = xPos(t.timestamp)
+            for transition in scene.transitions {
+                let x = xPos(transition.elapsedTime)
                 var line = Path()
                 line.move(to: CGPoint(x: x, y: 0))
                 line.addLine(to: CGPoint(x: x, y: size.height))
@@ -774,7 +844,7 @@ private struct OverviewCanvas: View {
             }
 
             if let highlightedTime {
-                let x = CGFloat(highlightedTime / elapsedTime) * size.width
+                let x = xPos(floor(highlightedTime))
                 var hoverLine = Path()
                 hoverLine.move(to: CGPoint(x: x, y: 0))
                 hoverLine.addLine(to: CGPoint(x: x, y: size.height))

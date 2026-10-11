@@ -28,6 +28,13 @@ organized for on-demand loading by task type and are not duplicated here.
 | [architecture/product-modularization.md](architecture/product-modularization.md) | Human-maintainer record of public module ownership and edition-neutral composition |
 | [architecture/xcode-framework-migration.md](architecture/xcode-framework-migration.md) | Migration of repository-owned local packages to native Framework and test targets |
 | [architecture/public-project-boundary.md](architecture/public-project-boundary.md) | Public Xcode target, scheme, source, and package ownership policy |
+| [architecture/WIFI_LINK_STATE.md](architecture/WIFI_LINK_STATE.md) | Shared Wi-Fi link evidence, state, event, listener, and app-validation contracts |
+
+## Research
+
+| File | Purpose |
+|------|---------|
+| [research/wifi-link-state-source-audit.md](research/wifi-link-state-source-audit.md) | Source-level comparison of Wi-Fi link-state observations, consumers, authorization gates, and signing configuration |
 
 ## Contribution and policy documents
 

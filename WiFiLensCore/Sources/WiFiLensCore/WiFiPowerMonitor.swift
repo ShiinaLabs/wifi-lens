@@ -1,116 +1,134 @@
-import CoreWLAN
 import Foundation
 import Logging
 
 private let scannerLogger = Logger(label: "scanner")
 
-public enum WiFiPowerState: Sendable {
+/// Compatibility facade for existing scan lifecycle consumers. The process-wide
+/// link state center owns all system monitoring and shared notifications.
+public enum WiFiPowerState: Sendable, Equatable {
     case poweredOn
     case poweredOff
     case interfaceUnavailable
+    case unknown
+}
+
+struct WiFiPowerSampleIdentity: Equatable, Sendable {
+    let runSessionID: UUID
+    let sequence: UInt64
+    let snapshotID: UUID
+}
+
+struct WiFiPowerMonitorEvent: Sendable {
+    let state: WiFiPowerState
+    /// Nil denotes the cached initial value, not a new radio sample.
+    let sampleIdentity: WiFiPowerSampleIdentity?
 }
 
 @MainActor
-final class WiFiPowerMonitor: NSObject, CWEventDelegate {
-    private var continuation: AsyncStream<WiFiPowerState>.Continuation?
-    private var pollingTask: Task<Void, Never>?
+final class WiFiPowerMonitor {
+    private let center: WiFiLinkStateCenter
+    private var continuation: AsyncStream<WiFiPowerMonitorEvent>.Continuation?
+    private var stateTask: Task<Void, Never>?
     private var isMonitoring = false
-    private(set) var currentState: WiFiPowerState = .poweredOn
+    private var lastAppliedSnapshotID: UUID?
+    private var isReceivingInitialSnapshot = false
+#if DEBUG
+    private(set) var debugPublishedSampleCount = 0
+#endif
+    private(set) var currentState: WiFiPowerState = .unknown
 
-    override init() {
-        super.init()
+    init(center: WiFiLinkStateCenter = .shared) {
+        self.center = center
     }
 
-    var events: AsyncStream<WiFiPowerState> {
-        AsyncStream { continuation in
+    var events: AsyncStream<WiFiPowerMonitorEvent> {
+        AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            self.continuation?.finish()
             self.continuation = continuation
-            continuation.yield(currentState)
+            continuation.yield(WiFiPowerMonitorEvent(state: currentState, sampleIdentity: nil))
         }
     }
 
     deinit {
-        pollingTask?.cancel()
-        guard isMonitoring else { return }
-        CWWiFiClient.shared().delegate = nil
-        try? CWWiFiClient.shared().stopMonitoringEvent(with: .powerDidChange)
+        stateTask?.cancel()
     }
 
     func startMonitoring() {
         guard !isMonitoring else { return }
         isMonitoring = true
-        CWWiFiClient.shared().delegate = self
-        try? CWWiFiClient.shared().startMonitoringEvent(with: .powerDidChange)
-        refreshState()
-        startPolling()
-    }
-
-    func stopMonitoring() {
-        pollingTask?.cancel()
-        pollingTask = nil
-        continuation?.finish()
-        continuation = nil
-        guard isMonitoring else { return }
-        isMonitoring = false
-        CWWiFiClient.shared().delegate = nil
-        try? CWWiFiClient.shared().stopMonitoringEvent(with: .powerDidChange)
-    }
-
-    func refreshState() {
-        guard isMonitoring else { return }
-        let previous = currentState
-        if let iface = CWWiFiClient.shared().interface() {
-            currentState = iface.powerOn() ? .poweredOn : .poweredOff
-        } else {
-            currentState = .interfaceUnavailable
-        }
-        if currentState != previous {
-            scannerLogger.info("WiFi power state changed: \(previous.logLabel) -> \(currentState.logLabel)")
-            continuation?.yield(currentState)
-        }
-    }
-
-    /// Low-frequency polling as safety net — CoreWLAN callbacks can occasionally miss events
-    /// when the user toggles WiFi rapidly from the menu bar.
-    private func startPolling() {
-        guard pollingTask == nil else { return }
-
-        pollingTask = Task { [weak self] in
-            guard let self else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(5))
+        isReceivingInitialSnapshot = true
+        stateTask = Task { [weak self, center] in
+            await center.start()
+            let stream = await center.currentStates()
+            for await snapshot in stream {
                 guard !Task.isCancelled else { break }
-                await MainActor.run {
-                    self.refreshState()
+                guard let self else { break }
+                if isReceivingInitialSnapshot {
+                    isReceivingInitialSnapshot = false
+                    apply(snapshot, countsAsEvidence: false)
+                } else {
+                    apply(snapshot)
                 }
             }
         }
     }
 
-    // MARK: - CWEventDelegate
+    /// Stops only this compatibility subscription. Other center consumers keep running.
+    func stopMonitoring() {
+        guard isMonitoring else { return }
+        isMonitoring = false
+        stateTask?.cancel()
+        stateTask = nil
+        continuation?.finish()
+        continuation = nil
+    }
 
-    /// CWEventDelegate is deprecated since macOS 10.15, but Apple provides no replacement
-    /// for instant power‑state change notification. The delegate callback is still delivered
-    /// reliably on macOS 14+ and is safe to keep.
-
-    nonisolated func powerStateDidChangeForWiFiInterface(withName interfaceName: String) {
-        Task { @MainActor in
-            refreshState()
+    func refreshState() {
+        guard isMonitoring else { return }
+        Task { [weak self, center] in
+            await center.refresh()
+            let snapshot = await center.snapshot()
+            self?.apply(snapshot)
         }
+    }
+
+    private func apply(_ snapshot: WiFiLinkStateSnapshot, countsAsEvidence: Bool = true) {
+        guard lastAppliedSnapshotID != snapshot.id else { return }
+        lastAppliedSnapshotID = snapshot.id
+        let next: WiFiPowerState
+        switch snapshot.radio {
+        case .reportedOn:
+            next = .poweredOn
+        case .reportedOff:
+            next = .poweredOff
+        case .reportedOffOrReadFailure:
+            // CoreWLAN false can be a read failure; keep scanning in the ambiguous state.
+            next = .unknown
+        case .unavailable:
+            next = snapshot.reason == .interfaceUnavailable ? .interfaceUnavailable : .unknown
+        }
+        let previous = currentState
+        currentState = next
+        if previous != next {
+            scannerLogger.info("WiFi radio evidence changed: \(String(describing: previous)) → \(String(describing: next))")
+        }
+        // Repeated equal states are still fresh evidence samples. The scanner
+        // uses them to bound work while radio evidence remains unknown.
+        let identity = WiFiPowerSampleIdentity(
+            runSessionID: snapshot.runSessionID,
+            sequence: snapshot.sequence,
+            snapshotID: snapshot.id
+        )
+        continuation?.yield(WiFiPowerMonitorEvent(state: next, sampleIdentity: countsAsEvidence ? identity : nil))
+#if DEBUG
+        if countsAsEvidence { debugPublishedSampleCount += 1 }
+#endif
     }
 }
 
 #if DEBUG
 extension WiFiPowerMonitor {
     var debugIsMonitoringForTesting: Bool { isMonitoring }
+    func debugApplySnapshotForTesting(_ snapshot: WiFiLinkStateSnapshot) { apply(snapshot) }
 }
 #endif
-
-private extension WiFiPowerState {
-    var logLabel: String {
-        switch self {
-        case .poweredOn: return "poweredOn"
-        case .poweredOff: return "poweredOff"
-        case .interfaceUnavailable: return "interfaceUnavailable"
-        }
-    }
-}

@@ -16,6 +16,30 @@ actor TestCountingCurrentConnectionProvider: WiFiCurrentConnectionProviding {
     }
 }
 
+actor TestRecordingWiFiBoundGatewayMeasurer: GatewayLatencyProviding, WiFiBoundGatewayMeasuring {
+    let result: GatewayLatencyResult
+    private(set) var measuredTargets: [WiFiGatewayProbeTarget] = []
+
+    init(result: GatewayLatencyResult) { self.result = result }
+
+    func measure(routerIP: String?) async -> GatewayLatencyResult { result }
+
+    func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult {
+        measuredTargets.append(target)
+        if case .replied(let milliseconds) = result.probeOutcome,
+           let latencyMs = result.latencyMs,
+           latencyMs.isFinite, latencyMs >= 0,
+           latencyMs == milliseconds {
+            return GatewayLatencyResult(
+                timestamp: result.timestamp, routerIP: target.address, latencyMs: latencyMs,
+                probeOutcome: .replied(milliseconds: milliseconds), attemptID: result.attemptID ?? UUID(),
+                cycleID: target.snapshotCycleID, interfaceName: target.interfaceName, interfaceBound: true
+            )
+        }
+        return result
+    }
+}
+
 actor TestRecordingGatewayLatencyProvider: GatewayLatencyProviding {
     let result: GatewayLatencyResult
     private(set) var measuredRouterIPs: [String?] = []

@@ -15,23 +15,12 @@ public enum SidebarPage: String, CaseIterable, Sendable {
     case statistics
     case insights
     case settings
-#if DEBUG
-    case spectrumDebugChart
-    case debugChart
-#endif
-    case debugTimeline
 
     public var requiresLocationAuthorization: Bool {
         switch self {
         case .overview, .settings, .bleScanner, .timeline, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
-            true
-#if DEBUG
-        case .spectrumDebugChart, .debugChart:
-            true
-#endif
-        case .debugTimeline:
             true
         }
     }
@@ -42,12 +31,6 @@ public enum SidebarPage: String, CaseIterable, Sendable {
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
-#if DEBUG
-        case .spectrumDebugChart, .debugChart:
-            true
-#endif
-        case .debugTimeline:
-            false
         }
     }
 
@@ -66,11 +49,6 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .statistics: String(localized: "nav.statistics", comment: "Statistics sidebar navigation item")
         case .insights: String(localized: "nav.insights", comment: "Insights sidebar navigation item")
         case .settings: String(localized: "common.action.settings", comment: "Settings button or menu item")
-#if DEBUG
-        case .spectrumDebugChart: String(localized: "nav.spectrum_debug_chart", comment: "Spectrum Debug Chart sidebar navigation item (dev only)")
-        case .debugChart: String(localized: "nav.debug_chart", comment: "Debug Chart sidebar navigation item (dev only)")
-#endif
-        case .debugTimeline: "Debug Timeline"
         }
     }
 
@@ -89,11 +67,6 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .statistics: "chart.bar.xaxis"
         case .insights: "lightbulb"
         case .settings: "gearshape"
-#if DEBUG
-        case .spectrumDebugChart: "antenna.radiowaves.left.and.right"
-        case .debugChart: "ladybug"
-#endif
-        case .debugTimeline: "clock.arrow.circlepath"
         }
     }
 

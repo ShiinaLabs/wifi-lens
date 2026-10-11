@@ -18,13 +18,21 @@ protocol WiFiCurrentConnectionProviding: Sendable {
 struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
     public init() {}
     func fetchCurrentStatus(from snapshot: NetworkInterfaceSnapshot) async -> WiFiCurrentStatus {
-        guard let wifi = snapshot.interfaces.first(where: { $0.ssid != nil }) else {
+        guard let wifi = snapshot.interfaces.first(where: \.isWiFiInterface) else {
+            let reason: WiFiLinkEvidenceReason = if !snapshot.interfaceEnumerationSucceeded {
+                .interfaceEnumerationFailed
+            } else if !snapshot.wifiInterfaceDiscoverySucceeded {
+                .interfaceDiscoveryUnavailable
+            } else {
+                .interfaceUnavailable
+            }
             return WiFiCurrentStatus(
                 timestamp: snapshot.capturedAt,
                 interfaceSnapshotCycleID: snapshot.cycleID,
                 isConnected: false,
                 isWiFiPowerOn: true,
-                error: .noWiFiConnection
+                error: .noWiFiConnection,
+                linkAssessment: WiFiLinkAssessment(state: .unknown, reason: reason)
             )
         }
         return Self.makeStatus(from: wifi, snapshot: snapshot)
@@ -34,21 +42,39 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
         from wifi: NetworkInterfaceInfo,
         snapshot: NetworkInterfaceSnapshot
     ) -> WiFiCurrentStatus {
-        WiFiCurrentStatus(
+        let metricsVerified = wifi.metricsAttribution == .verified
+        let interpreted = WiFiLinkInterpreter.evaluate(
+            wifi.wifiLinkEvidence,
+            expectedCycleID: snapshot.cycleID,
+            expectedCapturedAt: snapshot.capturedAt
+        )
+        let provisional = WiFiCurrentStatus(
             timestamp: snapshot.capturedAt,
             interfaceSnapshotCycleID: snapshot.cycleID,
             interfaceName: wifi.interfaceName,
+            interfaceIndex: wifi.interfaceIndex,
             ssid: wifi.ssid,
             bssid: wifi.bssid,
-            channel: wifi.channel,
-            band: wifi.band,
-            rssi: wifi.rssi,
-            txRate: wifi.txRate,
-            phyMode: wifi.phyMode,
-            security: wifi.security,
+            channel: metricsVerified ? wifi.channel : nil,
+            band: metricsVerified ? wifi.band : nil,
+            rssi: metricsVerified ? wifi.rssi : nil,
+            txRate: metricsVerified ? wifi.txRate : nil,
+            phyMode: metricsVerified ? wifi.phyMode : nil,
+            security: metricsVerified ? wifi.security : nil,
             routerIP: wifi.router,
-            isConnected: true,
-            isWiFiPowerOn: true
+            isConnected: false,
+            isWiFiPowerOn: wifi.wifiLinkEvidence?.radio == .reportedOn,
+            linkEvidence: wifi.wifiLinkEvidence,
+            linkAssessment: interpreted,
+            metricsAttribution: wifi.metricsAttribution
         )
+        let verified = WiFiLinkEvidenceValidator.assessment(for: provisional)
+        var status = provisional
+        let finalAssessment: WiFiLinkAssessment = verified ?? (wifi.wifiLinkEvidence == nil
+            ? interpreted
+            : WiFiLinkAssessment(state: VerifiedWiFiLinkState.unknown, reason: WiFiLinkEvidenceReason.conflictingLinkEvidence))
+        status.linkAssessment = finalAssessment
+        status.isConnected = status.linkAssessment?.state == .associated
+        return status
     }
 }

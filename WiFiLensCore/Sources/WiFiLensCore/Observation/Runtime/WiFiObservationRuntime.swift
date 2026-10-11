@@ -87,6 +87,11 @@ public final class WiFiObservationRuntime {
     private var latestLifecycleRequestID: UInt64 = 0
     private var lifecycleCommandTail: Task<Void, Never>?
     private let now: @Sendable () -> Date
+    private let logger = Logger(subsystem: AppEnvironment.current.loggingSubsystem, category: "observation-runtime")
+    private var recentlyAcceptedObservations: [UUID: WiFiObservation] = [:]
+    private var recentlyAcceptedObservationIDs: [UUID] = []
+    private let recentObservationIdentityLimit = 256
+    private(set) var sourceIdentityConflictCount = 0
 #if DEBUG
     var onActiveScanStoppedForTesting: (@MainActor () -> Void)?
     var onConsumerDrainStartedForTesting: (@MainActor () -> Void)?
@@ -178,11 +183,13 @@ public final class WiFiObservationRuntime {
         workers.removeValue(forKey: identifier)
     }
 
-    func accept(_ observation: WiFiObservation) async {
-        store.apply(observation)
+    @discardableResult
+    func accept(_ observation: WiFiObservation) async -> Bool {
+        guard admit(observation) else { return false }
         for worker in workers.values {
             await worker.consume(observation)
         }
+        return true
     }
 
     func drainConsumers() async {
@@ -297,6 +304,7 @@ public final class WiFiObservationRuntime {
         let startedAt = now()
         activeLifecycleStartedAt = startedAt
         activeScanInterval = configuration.scanInterval
+        store.beginScanLifecycle(at: startedAt)
         for worker in workers.values {
             await worker.sessionStarted(at: startedAt, expectedInterval: configuration.scanInterval)
         }
@@ -363,6 +371,9 @@ public final class WiFiObservationRuntime {
         case .failure(let message):
             networks = []
             environmentError = .environmentScanFailed(message)
+        case .interfaceUnavailable(let message):
+            networks = []
+            environmentError = .environmentScanFailed(message)
         }
 
         let interfaceSnapshot = await interfaceSource.capture(cycleID: UUID())
@@ -390,7 +401,7 @@ public final class WiFiObservationRuntime {
             await finishLifecycleIfOwned(generation, at: now())
             return false
         }
-        store.apply(cycle.observation)
+        guard admit(cycle.observation) else { return true }
         outputProjection?(WiFiObservationScanOutput(
             rawNetworks: networks,
             cycle: cycle,
@@ -409,6 +420,37 @@ public final class WiFiObservationRuntime {
         requestedPublicationEligibility = nil
         outputProjection = nil
         publicationEligibility = nil
+    }
+
+    /// Admits one source identity only. Exact replays are ignored and identity
+    /// collisions with changed payload are rejected before Store or consumers
+    /// can observe them.
+    private func admit(_ observation: WiFiObservation) -> Bool {
+        if let existing = recentlyAcceptedObservations[observation.sourceObservationID] {
+            guard existing.hasSameContent(as: observation) else {
+                sourceIdentityConflictCount &+= 1
+                logger.error("Rejected observation with conflicting source identity")
+                return false
+            }
+            return false
+        }
+
+        let storeConflictCount = store.sourceIdentityConflictCount
+        guard store.apply(observation) else {
+            if store.sourceIdentityConflictCount > storeConflictCount {
+                sourceIdentityConflictCount &+= 1
+                logger.error("Rejected observation conflicting with Store source identity")
+            }
+            return false
+        }
+
+        recentlyAcceptedObservations[observation.sourceObservationID] = observation
+        recentlyAcceptedObservationIDs.append(observation.sourceObservationID)
+        if recentlyAcceptedObservationIDs.count > recentObservationIdentityLimit {
+            let expiredID = recentlyAcceptedObservationIDs.removeFirst()
+            recentlyAcceptedObservations.removeValue(forKey: expiredID)
+        }
+        return true
     }
 
     private func stopActiveScan(
@@ -443,6 +485,7 @@ public final class WiFiObservationRuntime {
         activeLifecycleStartedAt = nil
         activeScanInterval = nil
         lifecycleReplayTail = nil
+        store.endScanLifecycle()
         for worker in workers.values { await worker.sessionStopped(at: date) }
     }
 

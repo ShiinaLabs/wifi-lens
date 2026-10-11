@@ -3,15 +3,14 @@ import Foundation
 enum NetworkObservationAdapter {
     static func adapt(
         _ network: WiFiNetwork,
-        isCurrentNetwork: Bool = false,
-        currentBSSID: String? = nil
+        confirmedCurrentBSSID: String? = nil
     ) -> WiFiNetworkObservation {
         let ieData = network.ieData
         let capabilities = ieData.map { IEParser.parse(data: $0) }
             .map { parseCapabilities($0, fallbackWidth: network.channel.channelWidthMHz) }
             ?? WiFiNetworkCapabilities.emptyWithWidth(network.channel.channelWidthMHz)
 
-        let isCurrent = isCurrentNetwork || network.bssid == currentBSSID
+        let isCurrent = confirmedCurrentBSSID != nil && network.bssid == confirmedCurrentBSSID
 
         return WiFiNetworkObservation(
             ssid: network.ssid,
@@ -27,9 +26,9 @@ enum NetworkObservationAdapter {
 
     static func adaptAll(
         _ networks: [WiFiNetwork],
-        currentBSSID: String? = nil
+        confirmedCurrentBSSID: String? = nil
     ) -> [WiFiNetworkObservation] {
-        networks.map { adapt($0, currentBSSID: currentBSSID) }
+        networks.map { adapt($0, confirmedCurrentBSSID: confirmedCurrentBSSID) }
     }
 
     static func parseCapabilities(_ ie: IEData, fallbackWidth: Int = 20) -> WiFiNetworkCapabilities {

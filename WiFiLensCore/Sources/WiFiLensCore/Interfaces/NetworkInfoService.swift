@@ -2,6 +2,12 @@ import Foundation
 import CoreWLAN
 import SystemConfiguration
 
+public enum WiFiMetricsAttribution: Equatable, Sendable {
+    case verified
+    case unverified
+    case inconsistent
+}
+
 public struct NetworkInterfaceInfo: Sendable {
     enum InterfaceType: String, Sendable {
         case wifi
@@ -10,7 +16,11 @@ public struct NetworkInterfaceInfo: Sendable {
     }
 
     public let interfaceName: String
+    public let interfaceIndex: UInt32?
     public let hardwareMAC: String?
+    public let isWiFiInterface: Bool
+    public let wifiLinkEvidence: WiFiLinkRawEvidence?
+    public let metricsAttribution: WiFiMetricsAttribution
     public let ipv4Addresses: [String]
     public let subnetMasks: [String]
     public let router: String?
@@ -28,7 +38,11 @@ public struct NetworkInterfaceInfo: Sendable {
 
     public init(
         interfaceName: String,
+        interfaceIndex: UInt32? = nil,
         hardwareMAC: String? = nil,
+        isWiFiInterface: Bool = false,
+        wifiLinkEvidence: WiFiLinkRawEvidence? = nil,
+        metricsAttribution: WiFiMetricsAttribution = .unverified,
         ipv4Addresses: [String] = [],
         subnetMasks: [String] = [],
         router: String? = nil,
@@ -43,7 +57,11 @@ public struct NetworkInterfaceInfo: Sendable {
         security: String = "—"
     ) {
         self.interfaceName = interfaceName
+        self.interfaceIndex = interfaceIndex ?? (if_nametoindex(interfaceName) == 0 ? nil : if_nametoindex(interfaceName))
         self.hardwareMAC = hardwareMAC
+        self.isWiFiInterface = isWiFiInterface
+        self.wifiLinkEvidence = wifiLinkEvidence
+        self.metricsAttribution = metricsAttribution
         self.ipv4Addresses = ipv4Addresses
         self.subnetMasks = subnetMasks
         self.router = router
@@ -59,7 +77,7 @@ public struct NetworkInterfaceInfo: Sendable {
     }
 
     var interfaceType: InterfaceType {
-        if ssid != nil { return .wifi }
+        if isWiFiInterface { return .wifi }
         if hardwareMAC != nil { return .ethernet }
         return .virtual
     }
@@ -85,10 +103,21 @@ public struct NetworkInterfaceSnapshot: Sendable {
     public let cycleID: UUID
     public let capturedAt: Date
     public let interfaces: [NetworkInterfaceInfo]
-    public init(cycleID: UUID, capturedAt: Date, interfaces: [NetworkInterfaceInfo]) {
+    public let interfaceEnumerationSucceeded: Bool
+    public let wifiInterfaceDiscoverySucceeded: Bool
+
+    public init(
+        cycleID: UUID,
+        capturedAt: Date,
+        interfaces: [NetworkInterfaceInfo],
+        interfaceEnumerationSucceeded: Bool = true,
+        wifiInterfaceDiscoverySucceeded: Bool = true
+    ) {
         self.cycleID = cycleID
         self.capturedAt = capturedAt
         self.interfaces = interfaces
+        self.interfaceEnumerationSucceeded = interfaceEnumerationSucceeded
+        self.wifiInterfaceDiscoverySucceeded = wifiInterfaceDiscoverySucceeded
     }
 }
 
@@ -100,30 +129,147 @@ struct SystemNetworkInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcing {
     public init() {}
     @concurrent
     public func capture(cycleID: UUID) async -> NetworkInterfaceSnapshot {
-        NetworkInterfaceSnapshot(
-            cycleID: cycleID,
-            capturedAt: Date(),
-            interfaces: NetworkInfoService.fetchAll()
-        )
+        let capturedAt = Date()
+        return NetworkInfoService.captureSnapshot(cycleID: cycleID, capturedAt: capturedAt)
     }
 }
 
 public enum NetworkInfoService {
+    private struct InterfaceCaptureResult {
+        let interfaces: [NetworkInterfaceInfo]
+        let interfaceEnumerationSucceeded: Bool
+        let wifiInterfaceDiscoverySucceeded: Bool
+    }
+
+    static func captureSnapshot(cycleID: UUID, capturedAt: Date) -> NetworkInterfaceSnapshot {
+        let capture = fetchAll(cycleID: cycleID, capturedAt: capturedAt)
+        return NetworkInterfaceSnapshot(
+            cycleID: cycleID,
+            capturedAt: capturedAt,
+            interfaces: capture.interfaces,
+            interfaceEnumerationSucceeded: capture.interfaceEnumerationSucceeded,
+            wifiInterfaceDiscoverySucceeded: capture.wifiInterfaceDiscoverySucceeded
+        )
+    }
+
+    /// Captures only the fields required by the process-wide link state center.
+    /// This intentionally avoids interface, DNS, and gateway enumeration.
+    static func captureWiFiLinkEvidence(
+        cycleID: UUID,
+        capturedAt: Date,
+        interfaceName preferredName: String? = nil,
+        interface preferredInterface: CWInterface? = nil,
+        store preferredStore: SCDynamicStore? = nil
+    ) -> WiFiLinkRawEvidence? {
+        let captureStartedAt = capturedAt
+        let client = CWWiFiClient.shared()
+        let names = preferredName.map { [$0] } ?? client.interfaceNames() ?? []
+        guard !names.isEmpty else { return nil }
+        let name = preferredName ?? client.interface()?.interfaceName.flatMap { names.contains($0) ? $0 : nil } ?? names.sorted().first!
+        let interface = preferredInterface ?? client.interface(withName: name)
+        var failures: [WiFiLinkEvidenceField: WiFiLinkEvidenceReadFailure] = [:]
+        guard let interface else {
+            failures[.mode] = .interfaceNotFound
+            failures[.radio] = .interfaceNotFound
+            return WiFiLinkRawEvidence(
+                snapshotCycleID: cycleID,
+                capturedAt: capturedAt,
+                interfaceName: name,
+                mode: .unavailable,
+                radio: .unavailable,
+                interfaceIndex: interfaceIndex(name),
+                captureStartedAt: captureStartedAt,
+                captureEndedAt: Date(),
+                readFailures: failures
+            )
+        }
+
+        let coreWLANModeRawValue = interface.interfaceMode().rawValue
+        let mode: WiFiModeEvidence
+        switch coreWLANModeRawValue {
+        case 0:
+            mode = .noneOrReadFailure
+        case 1: mode = .station
+        case let rawValue: mode = .other(rawValue: rawValue)
+        }
+        let reportedPower = interface.powerOn()
+        let radio: WiFiRadioEvidence = reportedPower ? .reportedOn : .reportedOffOrReadFailure
+        let store = preferredStore ?? SCDynamicStoreCreate(nil, "WiFiLens.LinkEvidence" as CFString, nil, nil)
+        let linkKey = "State:/Network/Interface/\(name)/Link"
+        let linkDictionary = store.flatMap {
+            SCDynamicStoreCopyValue($0, linkKey as CFString) as? [String: Any]
+        }
+        let linkActive = linkDictionary?[kSCPropNetLinkActive as String] as? Bool
+        let linkDetaching = linkDictionary?["Detaching"] as? Bool
+        if linkDictionary == nil { failures[.linkActive] = .missingValue }
+        else if linkActive == nil { failures[.linkActive] = .missingValue }
+        if linkDetaching == nil { failures[.linkDetaching] = .missingValue }
+
+        let serviceActive = interface.serviceActive()
+        let flags = interfaceFlags(name)
+        if flags == nil { failures[.interfaceFlags] = .enumerationFailed }
+        let ssid = interface.ssid()
+        let bssid = interface.bssid()
+        if ssid == nil { failures[.ssid] = .apiReturnedNoValue }
+        if bssid == nil { failures[.bssid] = .apiReturnedNoValue }
+
+        return WiFiLinkRawEvidence(
+            snapshotCycleID: cycleID,
+            capturedAt: capturedAt,
+            interfaceName: name,
+            mode: mode,
+            coreWLANModeRawValue: coreWLANModeRawValue,
+            radio: radio,
+            linkActive: linkActive,
+            ssid: ssid,
+            bssid: bssid,
+            modeSource: .coreWLAN,
+            radioSource: .coreWLAN,
+            linkSource: linkDictionary == nil ? nil : .systemConfiguration,
+            serviceActiveSource: .coreWLAN,
+            linkDetachingSource: linkDictionary == nil ? nil : .systemConfiguration,
+            interfaceFlagsSource: flags == nil ? nil : .getifaddrs,
+            interfaceIndex: interfaceIndex(name),
+            radioPowerOnRaw: reportedPower,
+            serviceActive: serviceActive,
+            linkDetaching: linkDetaching,
+            interfaceFlagsUp: flags?.up,
+            interfaceFlagsRunning: flags?.running,
+            captureStartedAt: captureStartedAt,
+            captureEndedAt: Date(),
+            readFailures: failures
+        )
+    }
+
     /// All available network interfaces, including virtual ones.
     /// Uses `getifaddrs()` for discovery so VPN / VM / bridge adapters
     /// are visible even when they have no SystemConfiguration state.
     static func fetchAll() -> [NetworkInterfaceInfo] {
+        fetchAll(cycleID: nil, capturedAt: Date()).interfaces
+    }
+
+    private static func fetchAll(cycleID: UUID?, capturedAt: Date) -> InterfaceCaptureResult {
         let store = SCDynamicStoreCreate(nil, "WiFiLens" as CFString, nil, nil)
         let dns = fetchDNS(store)
-        let wifiMAC = fetchWiFiMAC()
-        let wifiIface = CWWiFiClient.shared().interface()
-        let wifiName = wifiIface?.interfaceName
+        let wifiClient = CWWiFiClient.shared()
+        let discoveredWiFiNames = wifiClient.interfaceNames()
+        let wifiNames = Set(discoveredWiFiNames ?? [])
 
         // Discover all interfaces via getifaddrs (includes virtual ones)
         var ifaces: [String: (ips: [String], subnets: [String], mac: String?)] = [:]
         var addrPtr: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&addrPtr) == 0, let first = addrPtr else { return [] }
+        guard getifaddrs(&addrPtr) == 0, let first = addrPtr else {
+            return InterfaceCaptureResult(
+                interfaces: [],
+                interfaceEnumerationSucceeded: false,
+                wifiInterfaceDiscoverySucceeded: discoveredWiFiNames != nil
+            )
+        }
         defer { freeifaddrs(first) }
+
+        for name in wifiNames {
+            ifaces[name] = ifaces[name] ?? (ips: [], subnets: [], mac: nil)
+        }
 
         for ptr in sequence(first: first, next: { $0.pointee.ifa_next }) {
             guard let namePtr = ptr.pointee.ifa_name,
@@ -198,14 +344,24 @@ public enum NetworkInfoService {
             }
         }
 
-        // Build result, enriching with Wi-Fi details where applicable
+        // Build result, enriching each Wi-Fi interface independently of SSID visibility.
         var result: [NetworkInterfaceInfo] = []
         for (name, entry) in ifaces {
-            let isWiFi = name == wifiName
-            let wiFiInfo: (ssid: String?, bssid: String?, channel: Int?, band: ChannelBand?, rssi: Int?, txRate: Double?, phyMode: String?, security: String)? = {
-                guard isWiFi, let iface = wifiIface else { return nil }
-                return fetchWiFiDetails(iface)
-            }()
+            let isWiFi = wifiNames.contains(name)
+            let wifiInterface = isWiFi ? wifiClient.interface(withName: name) : nil
+            let wiFiInfo = wifiInterface.flatMap(fetchWiFiDetails)
+            let linkEvidence = cycleID.flatMap { id in
+                isWiFi ? captureWiFiLinkEvidence(
+                    cycleID: id,
+                    capturedAt: capturedAt,
+                    interfaceName: name,
+                    interface: wifiInterface,
+                    store: store
+                ) : nil
+            }
+            let metricsAttribution = isWiFi
+                ? Self.evaluateMetricsAttribution(detailsBSSID: wiFiInfo?.bssid, evidenceBSSID: linkEvidence?.bssid)
+                : .unverified
 
             // Router lookup from SystemConfiguration (Interface path)
             var router: String?
@@ -224,13 +380,16 @@ public enum NetworkInfoService {
 
             result.append(NetworkInterfaceInfo(
                 interfaceName: name,
-                hardwareMAC: isWiFi ? wifiMAC : entry.mac,
+                hardwareMAC: isWiFi ? (wiFiInfo?.hardwareMAC ?? entry.mac) : entry.mac,
+                isWiFiInterface: isWiFi,
+                wifiLinkEvidence: linkEvidence,
+                metricsAttribution: metricsAttribution,
                 ipv4Addresses: entry.ips,
                 subnetMasks: entry.subnets,
                 router: router,
                 dnsServers: dns,
-                ssid: wiFiInfo?.ssid,
-                bssid: wiFiInfo?.bssid,
+                ssid: linkEvidence == nil ? wiFiInfo?.ssid : linkEvidence?.ssid,
+                bssid: linkEvidence == nil ? wiFiInfo?.bssid : linkEvidence?.bssid,
                 channel: wiFiInfo?.channel,
                 band: wiFiInfo?.band,
                 rssi: wiFiInfo?.rssi,
@@ -239,13 +398,33 @@ public enum NetworkInfoService {
                 security: wiFiInfo?.security ?? "—"
             ))
         }
-        return result.sorted { a, b in
-            let aWiFi = a.ssid != nil
-            let bWiFi = b.ssid != nil
-            if aWiFi != bWiFi { return aWiFi }
-            return a.interfaceName < b.interfaceName
-        }
+        return InterfaceCaptureResult(
+            interfaces: result.sorted { a, b in
+                if a.isWiFiInterface != b.isWiFiInterface { return a.isWiFiInterface }
+                return a.interfaceName < b.interfaceName
+            },
+            interfaceEnumerationSucceeded: true,
+            wifiInterfaceDiscoverySucceeded: discoveredWiFiNames != nil
+        )
     }
+
+    private static func interfaceIndex(_ name: String) -> UInt32? {
+        let index = if_nametoindex(name)
+        return index == 0 ? nil : index
+    }
+
+    private static func interfaceFlags(_ name: String) -> (up: Bool, running: Bool)? {
+        var addressList: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&addressList) == 0, let first = addressList else { return nil }
+        defer { freeifaddrs(first) }
+        for item in sequence(first: first, next: { $0.pointee.ifa_next }) {
+            guard let rawName = item.pointee.ifa_name, String(cString: rawName) == name else { continue }
+            let flags = Int32(item.pointee.ifa_flags)
+            return (flags & IFF_UP != 0, flags & IFF_RUNNING != 0)
+        }
+        return nil
+    }
+
 
     static func fetch() -> NetworkInterfaceInfo? {
         let client = CWWiFiClient.shared()
@@ -322,6 +501,7 @@ public enum NetworkInfoService {
         return NetworkInterfaceInfo(
             interfaceName: name,
             hardwareMAC: hwMAC,
+            isWiFiInterface: true,
             ipv4Addresses: ipv4s,
             subnetMasks: subnets,
             router: router,
@@ -344,10 +524,6 @@ public enum NetworkInfoService {
               let dict = SCDynamicStoreCopyValue(store, "State:/Network/Global/DNS" as CFString) as? [String: Any],
               let servers = dict["ServerAddresses"] as? [String] else { return [] }
         return servers
-    }
-
-    private static func fetchWiFiMAC() -> String? {
-        CWWiFiClient.shared().interface()?.hardwareAddress()
     }
 
     static func channelBand(coreWLANRawValue: Int) -> ChannelBand? {
@@ -389,9 +565,10 @@ public enum NetworkInfoService {
         }
     }
 
-    private static func fetchWiFiDetails(_ iface: CWInterface) -> (ssid: String?, bssid: String?, channel: Int?, band: ChannelBand?, rssi: Int?, txRate: Double?, phyMode: String?, security: String)? {
+    private static func fetchWiFiDetails(_ iface: CWInterface) -> (hardwareMAC: String?, ssid: String?, bssid: String?, channel: Int?, band: ChannelBand?, rssi: Int?, txRate: Double?, phyMode: String?, security: String)? {
         let wlanChannel = iface.wlanChannel()
         return (
+            iface.hardwareAddress(),
             iface.ssid(),
             iface.bssid(),
             wlanChannel?.channelNumber,
@@ -401,6 +578,13 @@ public enum NetworkInfoService {
             phyModeLabel(iface),
             securityLabel(iface)
         )
+    }
+
+    private static func evaluateMetricsAttribution(
+        detailsBSSID: String?, evidenceBSSID: String?
+    ) -> WiFiMetricsAttribution {
+        guard let detailsBSSID, let evidenceBSSID else { return .unverified }
+        return detailsBSSID == evidenceBSSID ? .verified : .inconsistent
     }
 
 }

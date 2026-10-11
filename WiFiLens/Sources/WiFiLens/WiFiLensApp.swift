@@ -274,24 +274,6 @@ private struct AppRootView: View {
                         .allowsHitTesting(selectedPage == .settings)
                         .accessibilityIdentifier("page-settings")
 
-    #if DEBUG
-                    SpectrumDebugContainerView()
-                        .opacity(selectedPage == .spectrumDebugChart ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .spectrumDebugChart)
-                        .accessibilityIdentifier("page-spectrumDebugChart")
-
-                    DebugContainerView()
-                        .opacity(selectedPage == .debugChart ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .debugChart)
-                        .accessibilityIdentifier("page-debugChart")
-
-    #if DEBUG && PRO
-                    EditionAppShell.debugTimelinePage()
-                        .opacity(selectedPage == .debugTimeline ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .debugTimeline)
-                        .accessibilityIdentifier("page-debugTimeline")
-    #endif
-    #endif
                 }
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: selectedPage)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -1137,7 +1119,17 @@ struct WiFiLensApp: App {
             && !EditionAppShell.isControlledDemoSession
             && !UITestMode.isActive
         _bleViewModel = State(initialValue: bleOn ? BLEViewModel() : nil)
+        terminationCoordinator.configure(
+            stopRuntime: { await scannerViewModel.stopForTermination() },
+            terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
+        )
         AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
+        if EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
+           !EditionAppShell.isControlledDemoSession,
+           !UITestMode.isActive,
+           !ProcessInfo.processInfo.isRunningUnderTestHost {
+            Task { await WiFiLinkStateCenter.shared.start() }
+        }
     }
 
     @State private var crashLogText: String = ""
@@ -1320,12 +1312,6 @@ struct WiFiLensApp: App {
             )
         }
         .preferredColorScheme(colorScheme)
-        .task {
-            terminationCoordinator.configure(
-                stopRuntime: { await viewModel.stopForTermination() },
-                terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
-            )
-        }
     }
 
     private var colorScheme: ColorScheme? {

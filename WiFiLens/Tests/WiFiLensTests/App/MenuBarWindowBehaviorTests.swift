@@ -142,7 +142,6 @@ struct MenuBarWindowBehaviorTests {
         #expect(SidebarSection.overview.localizationKey == "sidebar.section.overview")
         #expect(SidebarSection.tools.localizationKey == "sidebar.section.tools")
         #expect(SidebarSection.analysis.localizationKey == "sidebar.section.analysis")
-        #expect(SidebarSection.debug.localizationKey == "sidebar.section.debug")
         #expect(SidebarSection.settings.localizationKey == "sidebar.section.settings")
     }
 

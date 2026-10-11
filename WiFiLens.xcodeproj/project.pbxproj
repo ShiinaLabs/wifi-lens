@@ -5,6 +5,8 @@
 	};
 	objectVersion = 77;
 	objects = {
+
+/* Begin PBXBuildFile section */
 		0206FD56F9C03DFD92AB235A /* DiagnosticEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46BD55DA189A6B70F00F8B47 /* DiagnosticEvaluator.swift */; };
 		03754AF823BD289ABDA6681D /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17B4E9AA061E147DD27084F3 /* ExportService.swift */; };
 		03C0BC3E1FB228136244EEB7 /* SpectrumHeatmapMetalBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCA7E4F5DD293F37A39C026F /* SpectrumHeatmapMetalBackend.swift */; };
@@ -168,6 +170,8 @@
 		A10000000000000000000014 /* ChannelQualityViewModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* ChannelQualityViewModeTests.swift */; };
 		A10000000000000000000015 /* SecondaryToolbarDescriptorExpansionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000009 /* SecondaryToolbarDescriptorExpansionTests.swift */; };
 		A10000000000000000000016 /* App/MenuBarWindowBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* WiFiLinkStateCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */; };
+		A1B2C3D4E5F60718293A4B5E /* WiFiLinkStateCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */; };
 		A1C0DE0000000000000000F2 /* WiFi Lens.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1C0DE0000000000000000F1 /* WiFi Lens.icon */; };
 		A1C4E7BA2F0148D3B6E90A22 /* DetailPageMinimumHeightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C4E7B92F0148D3B6E90A21 /* DetailPageMinimumHeightTests.swift */; };
 		A1C4E7BC2F0148D3B6E90A24 /* MainWindowMinimumSizeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C4E7BB2F0148D3B6E90A23 /* MainWindowMinimumSizeTests.swift */; };
@@ -196,8 +200,6 @@
 		AD3512BDF1DF56B2101BFB63 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59593DC4F8361B2526A85B97 /* SettingsView.swift */; };
 		AD66698C941A72AB6774CE78 /* MACVendorDatabaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D560223B45D5C10948D2D085 /* MACVendorDatabaseStore.swift */; };
 		AD6B85315B7749C89CF49F65 /* SpectrumHeatmapActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F432AAE54AE9233BB586EA4 /* SpectrumHeatmapActivity.swift */; };
-		ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */; };
-		ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000003 /* DebugMultiAPScenario.swift */; };
 		B00FD511D0D2B2BFBDE9364F /* OnboardingStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7343A5D84BBD9A02C08690A6 /* OnboardingStateStore.swift */; };
 		B16BCC05977717FD1481A6C9 /* SpectrumPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96929658FAA130E1C0AE2755 /* SpectrumPanelView.swift */; };
 		B448DF99E07A37C4C173C8A5 /* LocationPermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572851610B059A31B56C981C /* LocationPermissionManager.swift */; };
@@ -284,10 +286,6 @@
 		FB7F34783071E43900FC37BC /* zh-Hant.md in Resources */ = {isa = PBXBuildFile; fileRef = FB7F34773071E42D00FC37BC /* zh-Hant.md */; };
 		FB85B8A92FE6526D00D2D391 /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FB85B8A82FE6526D00D2D391 /* ChartLens */; };
 		FB8FCB212FF6C5DF00BB2929 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FB8FCB202FF6C5DF00BB2929 /* Sparkle */; };
-		FB92F9212FBE208500BCEC67 /* DebugChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F91F2FBE208500BCEC67 /* DebugChartView.swift */; };
-		FB92F9232FBE208500BCEC67 /* DebugContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */; };
-		FB92F9252FBE208500BCEC67 /* DebugThroughputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */; };
-		FB92F9282FBE208500BCEC67 /* DebugRoamingChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */; };
 		FBA000010000000000000001 /* AppLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA000230000000000000023 /* AppLaunchTests.swift */; };
 		FBA000020000000000000002 /* WiFiLensUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA000050000000000000005 /* WiFiLensUITestsLaunchTests.swift */; };
 		FBA000200000000000000020 /* UITestHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA000210000000000000021 /* UITestHelpers.swift */; };
@@ -334,6 +332,9 @@
 		OB00000000000000000000B3 /* RoamingMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B2 /* RoamingMigrationTests.swift */; };
 		OB00000000000000000000B5 /* DiagnosticMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */; };
 		OB00000000000000000000D4 /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OB00000000000000000000D1 /* RuntimeTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
 		B3934361D41B2103307CC777 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 70C77BA3C6064FF4D1D77E59 /* Project object */;
@@ -369,6 +370,9 @@
 			remoteGlobalIDString = 4815C3B026D255EF85C56198;
 			remoteInfo = WiFiLens;
 		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
 		D2B37E2A23B23CFE79FB8B26 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -380,6 +384,9 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
 		007DA38B6651BBD8DB28A628 /* WhatsNewStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewStateStore.swift; sourceTree = "<group>"; };
 		020F3F5046F729E346C5A86E /* DNSResolutionCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSResolutionCheck.swift; sourceTree = "<group>"; };
 		036896D6C0DA6A9D20C91BFC /* APRadarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APRadarViewModelTests.swift; sourceTree = "<group>"; };
@@ -545,6 +552,8 @@
 		A10000000000000000000006 /* ChannelQualityViewModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelQualityViewModeTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000009 /* SecondaryToolbarDescriptorExpansionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryToolbarDescriptorExpansionTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/MenuBarWindowBehaviorTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenter.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenterTests.swift; sourceTree = "<group>"; };
 		A1C0DE0000000000000000F1 /* WiFi Lens.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "WiFi Lens.icon"; sourceTree = "<group>"; };
 		A1C4E7B92F0148D3B6E90A21 /* DetailPageMinimumHeightTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailPageMinimumHeightTests.swift; sourceTree = "<group>"; };
 		A1C4E7BB2F0148D3B6E90A23 /* MainWindowMinimumSizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowMinimumSizeTests.swift; sourceTree = "<group>"; };
@@ -570,8 +579,6 @@
 		AD3DEBF2363CBD3278EACB5B /* fr.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = fr.md; sourceTree = "<group>"; };
 		AD6A315A28F074BC5A7570D9 /* WiFiLensEditionConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLensEditionConfiguration.swift; sourceTree = "<group>"; };
 		AD6F389C547E6D3D7A76E8B4 /* WiFiCurrentConnectionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiCurrentConnectionProvider.swift; sourceTree = "<group>"; };
-		ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugMultiAPScenarioTests.swift; sourceTree = "<group>"; };
-		ADB001000000000000000003 /* DebugMultiAPScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugMultiAPScenario.swift; sourceTree = "<group>"; };
 		AF8994A026407DF070F8D0E2 /* APDisplayState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APDisplayState.swift; sourceTree = "<group>"; };
 		AFEC658553DB5272DFCD6E53 /* SpectrumHeatmapRenderCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapRenderCoordinatorTests.swift; sourceTree = "<group>"; };
 		B43379B9F528046AF8AEBB61 /* BandPanelSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandPanelSelectionTests.swift; sourceTree = "<group>"; };
@@ -645,10 +652,6 @@
 		FB7F34773071E42D00FC37BC /* zh-Hant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "zh-Hant.md"; sourceTree = "<group>"; };
 		FB80FA2C2FC0AC1900547708 /* OSS.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = OSS.xcconfig; sourceTree = "<group>"; };
 		FB80FA312FC0AC3800547708 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
-		FB92F91F2FBE208500BCEC67 /* DebugChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugChartView.swift; sourceTree = "<group>"; };
-		FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugContainerView.swift; sourceTree = "<group>"; };
-		FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugThroughputView.swift; sourceTree = "<group>"; };
-		FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugRoamingChartView.swift; sourceTree = "<group>"; };
 		FBA000030000000000000003 /* WiFiLensUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WiFiLensUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBA000050000000000000005 /* WiFiLensUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLensUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		FBA000210000000000000021 /* UITestHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestHelpers.swift; sourceTree = "<group>"; };
@@ -696,6 +699,9 @@
 		OB00000000000000000000B2 /* RoamingMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticMigrationTests.swift; sourceTree = "<group>"; };
 		OB00000000000000000000D1 /* RuntimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
 		4371D048741550E4775FC8C7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -748,6 +754,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
 		04FFB88D86CBC8871502AE25 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
@@ -958,20 +967,9 @@
 				5B4957CCF132DDCF4AC8CACB /* ObservationTestDoubles.swift */,
 				FA6C567C46EA7104BCFA0272 /* PipelineTests.swift */,
 				C4EA78FDC2EE0EA0F11159D6 /* ProviderTests.swift */,
+				A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */,
 			);
 			path = Observation;
-			sourceTree = "<group>";
-		};
-		49FEC4F42675BFAD1316DDEC /* Debug */ = {
-			isa = PBXGroup;
-			children = (
-				FB92F91F2FBE208500BCEC67 /* DebugChartView.swift */,
-				ADB001000000000000000003 /* DebugMultiAPScenario.swift */,
-				FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */,
-				FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */,
-				FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */,
-			);
-			path = Debug;
 			sourceTree = "<group>";
 		};
 		4D254635CE8C499AD20E2A20 /* WhatsNew */ = {
@@ -1179,6 +1177,7 @@
 			isa = PBXGroup;
 			children = (
 				24D6A37AE492D548AE6F5C88 /* WiFiObservationRuntime.swift */,
+				A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */,
 			);
 			path = Runtime;
 			sourceTree = "<group>";
@@ -1327,7 +1326,6 @@
 			children = (
 				831E90D5B9D07C478A35DD14 /* WiFiLensApp.swift */,
 				AD735352E4FE8FE0803C143C /* App */,
-				49FEC4F42675BFAD1316DDEC /* Debug */,
 				G900000000000000000000D0 /* Onboarding */,
 				FB8BB5FE2FBB039A00FD072E /* Resources */,
 			);
@@ -1426,7 +1424,6 @@
 				A10000000000000000000006 /* ChannelQualityViewModeTests.swift */,
 				E83547C1A36ADDD9E827B26A /* ChartUtilityTests.swift */,
 				8A7A45AB88716DC3AC18610B /* ChartViewTests.swift */,
-				ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */,
 				90CF4B22A68C668A58043392 /* ExternalLinksTests.swift */,
 				G900000000000000000000CB /* Guidance */,
 				G900000000000000000000F0 /* Onboarding */,
@@ -1527,6 +1524,9 @@
 			path = Observation;
 			sourceTree = "<group>";
 		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
 		30E5DBA89B11E877E38DAF73 /* WiFiLensCoreTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F08B3AD2DA0370609A31828A /* Build configuration list for PBXNativeTarget "WiFiLensCoreTests" */;
@@ -1641,6 +1641,9 @@
 			productReference = FBA000030000000000000003 /* WiFiLensUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
 		70C77BA3C6064FF4D1D77E59 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
@@ -1689,6 +1692,9 @@
 				FBA000070000000000000007 /* WiFiLensUITests */,
 			);
 		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
 		14530F3B1BEE4157098475BA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1723,6 +1729,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
 		5032AD37BED25ED8AB061AD7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1731,11 +1740,6 @@
 				FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */,
 				FB0573C22FBC47F1005F8214 /* CrashReporter.swift in Sources */,
 				FBD329502FC500000057B038 /* MetricKitManager.swift in Sources */,
-				FB92F9212FBE208500BCEC67 /* DebugChartView.swift in Sources */,
-				ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */,
-				FB92F9232FBE208500BCEC67 /* DebugContainerView.swift in Sources */,
-				FB92F9252FBE208500BCEC67 /* DebugThroughputView.swift in Sources */,
-				FB92F9282FBE208500BCEC67 /* DebugRoamingChartView.swift in Sources */,
 				EC10000000000000000000004 /* OSSEditionComposition.swift in Sources */,
 				9E2F89530D1114DBFAB705F3 /* WiFiLensApp.swift in Sources */,
 				FBB2CA8E2FC0E14000FC2D2C /* BuildConfig.swift in Sources */,
@@ -1764,6 +1768,7 @@
 				8DD2CED4A1CD19FC0B654C9E /* ObservationTestDoubles.swift in Sources */,
 				2A1FB06C166A6378E123C10A /* PipelineTests.swift in Sources */,
 				92998A876CB5F17E8EEF18A2 /* ProviderTests.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5E /* WiFiLinkStateCenterTests.swift in Sources */,
 				50D36C5BE8A7AC38CBF869C5 /* DeviceCompatibilityFilterTests.swift in Sources */,
 				A53348B9F65FA51048DF07F9 /* RegionInferenceEngineTests.swift in Sources */,
 				DF23E875DA33D4709C59D163 /* RegulatoryDatabaseTests.swift in Sources */,
@@ -1888,6 +1893,7 @@
 				40ED3574FC671BB5AC807FD2 /* RoamingProbeProvider.swift in Sources */,
 				76CA69A84F26B8C9724CD4DA /* WiFiCurrentConnectionProvider.swift in Sources */,
 				76B160CFCB6F7DA89A26E976 /* WiFiObservationRuntime.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* WiFiLinkStateCenter.swift in Sources */,
 				0C807378A9C2759E160D870B /* WiFiObservationStore.swift in Sources */,
 				043BFFBE858B6EFA1F107922 /* OnboardingConfiguration.swift in Sources */,
 				12412493B10D9A18F2B5E73A /* OnboardingCoordinator.swift in Sources */,
@@ -2005,7 +2011,6 @@
 				A10000000000000000000014 /* ChannelQualityViewModeTests.swift in Sources */,
 				19134AC983FA95FB8033EB8F /* ChartUtilityTests.swift in Sources */,
 				EEF6495F8D90DE97D0C86ADF /* ChartViewTests.swift in Sources */,
-				ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */,
 				90CF4B22A68C668A58043391 /* ExternalLinksTests.swift in Sources */,
 				2ED34E17AE03E25A409037BD /* NetworkTableRowTests.swift in Sources */,
 				869A4E799B9BF9BB3D1FBCF9 /* RoamingTestViewModelTests.swift in Sources */,
@@ -2049,6 +2054,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
 		379F8686B1AA230052B4CC6E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3D8D574ACE4722CAA9E12584 /* WiFiLensCore */;
@@ -2074,6 +2082,9 @@
 			target = 4815C3B026D255EF85C56198 /* WiFiLens */;
 			targetProxy = FBA000080000000000000008 /* PBXContainerItemProxy */;
 		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
 		27D7C298956651919604E437 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2171,6 +2182,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -2436,6 +2448,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -2499,6 +2512,9 @@
 			};
 			name = Release;
 		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
 		48CC669075019465A0637978 /* Build configuration list for PBXNativeTarget "WiFiLensCore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -2553,6 +2569,9 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
 		C0A7A1B2C3D4E5F678900001 /* XCRemoteSwiftPackageReference "chart-lens" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ShiinaLabs/chart-lens.git";
@@ -2601,6 +2620,9 @@
 				minimumVersion = 2.10.0;
 			};
 		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
 		2898ABF002051CFA80848C96 /* MCP */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FB0573B22FBBEAE4005F8214 /* XCRemoteSwiftPackageReference "swift-sdk" */;
@@ -2681,7 +2703,7 @@
 			package = FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
-
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 70C77BA3C6064FF4D1D77E59 /* Project object */;
 }
