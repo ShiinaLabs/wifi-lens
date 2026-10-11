@@ -170,6 +170,21 @@ public struct RoamingSignalAreaExtension: Equatable, Sendable {
     public let anchorRSSI: Int
 }
 
+/// Visual-only line segments that join measured RSSI endpoints across a
+/// confirmed AP transition. These values never become roaming samples.
+public struct RoamingSignalTransitionConnector: Equatable, Sendable {
+    public let eventIndex: Int
+    public let fromSegmentIndex: Int
+    public let toSegmentIndex: Int
+    public let fromBSSID: String
+    public let toBSSID: String
+    public let previousSampleTime: TimeInterval
+    public let transitionTime: TimeInterval
+    public let nextSampleTime: TimeInterval
+    public let previousRSSI: Int
+    public let nextRSSI: Int
+}
+
 public struct RoamingChartTransition {
     public let elapsedTime: TimeInterval
     public let eventIndex: Int
@@ -193,6 +208,7 @@ public struct RoamingChartScene {
     public let regions: [RoamingChartRegion]
     public let signalRuns: [RoamingSignalRun]
     public let signalAreaExtensions: [RoamingSignalAreaExtension]
+    public let signalConnectors: [RoamingSignalTransitionConnector]
     public let transitions: [RoamingChartTransition]
     public let gaps: [RoamingChartGap]
     public let samples: [RoamingChartSamplePoint]
@@ -335,6 +351,38 @@ public struct RoamingChartScene {
             if $0.start == $1.start { return $0.segmentIndex < $1.segmentIndex }
             return $0.start < $1.start
         }
+        self.signalConnectors = resolvedTransitions.compactMap { transition in
+            let previousPoint = signalRuns
+                .filter { $0.segmentIndex == transition.fromSegmentIndex }
+                .flatMap(\.points)
+                .filter { $0.sample.rssi != nil }
+                .max { $0.elapsedTime < $1.elapsedTime }
+            let nextPoint = signalRuns
+                .filter { $0.segmentIndex == transition.toSegmentIndex }
+                .flatMap(\.points)
+                .filter { $0.sample.rssi != nil }
+                .min { $0.elapsedTime < $1.elapsedTime }
+
+            guard let previousPoint, let previousRSSI = previousPoint.sample.rssi,
+                  let nextPoint, let nextRSSI = nextPoint.sample.rssi,
+                  previousPoint.elapsedTime <= transition.elapsedTime,
+                  nextPoint.elapsedTime >= transition.elapsedTime else {
+                return nil
+            }
+
+            return RoamingSignalTransitionConnector(
+                eventIndex: transition.eventIndex,
+                fromSegmentIndex: transition.fromSegmentIndex,
+                toSegmentIndex: transition.toSegmentIndex,
+                fromBSSID: transition.event.fromBSSID,
+                toBSSID: transition.event.toBSSID,
+                previousSampleTime: previousPoint.elapsedTime,
+                transitionTime: transition.elapsedTime,
+                nextSampleTime: nextPoint.elapsedTime,
+                previousRSSI: previousRSSI,
+                nextRSSI: nextRSSI
+            )
+        }.sorted { $0.transitionTime < $1.transitionTime }
         self.samples = segments.flatMap(\.samples).map { sample in
             RoamingChartSamplePoint(elapsedTime: elapsed(sample.timestamp), sample: sample)
         }.sorted { $0.elapsedTime < $1.elapsedTime }

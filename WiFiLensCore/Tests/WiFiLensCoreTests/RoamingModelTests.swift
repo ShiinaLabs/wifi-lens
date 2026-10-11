@@ -437,6 +437,20 @@ struct RoamingChartSceneTests {
             RoamingSignalAreaExtension(segmentIndex: 0, eventIndex: 0, bssid: "AP-A", start: 4, end: 6, anchorRSSI: -60),
             RoamingSignalAreaExtension(segmentIndex: 1, eventIndex: 0, bssid: "AP-B", start: 6, end: 8, anchorRSSI: -50),
         ])
+        #expect(scene.signalConnectors == [
+            RoamingSignalTransitionConnector(
+                eventIndex: 0,
+                fromSegmentIndex: 0,
+                toSegmentIndex: 1,
+                fromBSSID: "AP-A",
+                toBSSID: "AP-B",
+                previousSampleTime: 4,
+                transitionTime: 6,
+                nextSampleTime: 8,
+                previousRSSI: -60,
+                nextRSSI: -50
+            ),
+        ])
         #expect(segments[0].samples.map(\.timestamp) == [date(0), date(4)])
         #expect(segments[1].samples.map(\.timestamp) == [date(8), date(10)])
         #expect(scene.samples.map(\.elapsedTime) == [0, 4, 8, 10])
@@ -512,8 +526,78 @@ struct RoamingChartSceneTests {
             origin: date(0)
         )
         #expect(scene.transitions.isEmpty)
+        #expect(scene.signalConnectors.isEmpty)
         #expect(scene.regions.map(\.end) == [3, 10])
         #expect(scene.gaps.contains(RoamingChartGap(start: 3, end: 8, previousSegmentIndex: 0, nextSegmentIndex: 1)))
+    }
+
+    @Test func confirmedTransitionWithoutBothMeasuredEndpointsDoesNotCreateSignalConnector() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(4), samples: [
+                RoamingSample(timestamp: date(4), rssi: nil, channel: nil, txRate: nil),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(6), endTime: date(8), samples: [
+                RoamingSample(timestamp: date(6), rssi: -50, channel: 44, txRate: 100),
+            ]),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [transition(6, from: "AP-A", to: "AP-B")],
+            duration: 8,
+            origin: date(0)
+        )
+
+        #expect(scene.transitions.count == 1)
+        #expect(scene.signalConnectors.isEmpty)
+    }
+
+    @Test func realRecordBoundaryUsesOnePixelXForTransitionAndNewAPSample() {
+        let origin = date(813_340_264.007855)
+        let oldLastSample = date(813_340_324.136174)
+        let transitionTime = date(813_340_325.135256)
+        let segments = [
+            RoamingSegment(bssid: "50:88:11:ba:05:67", startTime: origin, endTime: transitionTime, samples: [
+                RoamingSample(timestamp: oldLastSample, rssi: -75, channel: 40, txRate: 162),
+            ]),
+            RoamingSegment(bssid: "f4:87:c5:1d:03:bc", startTime: transitionTime, endTime: transitionTime, samples: [
+                RoamingSample(timestamp: transitionTime, rssi: -55, channel: 40, txRate: 1152),
+            ]),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [transition(transitionTime.timeIntervalSince1970, from: "50:88:11:ba:05:67", to: "f4:87:c5:1d:03:bc")],
+            duration: transitionTime.timeIntervalSince(origin),
+            origin: origin
+        )
+        let connector = scene.signalConnectors.first
+
+        #expect(connector?.previousRSSI == -75)
+        #expect(connector?.nextRSSI == -55)
+        #expect(connector?.previousSampleTime == 60)
+        #expect(connector?.transitionTime == 61)
+        #expect(connector?.nextSampleTime == 61)
+        #expect(scene.transitions.first?.elapsedTime == connector?.transitionTime)
+
+        let scale = RoamingChartTimeScale(origin: origin)
+        let transitionX = scale.xPosition(
+            for: scene.transitions[0].elapsedTime,
+            visibleStart: 0,
+            visibleDuration: scene.duration,
+            plotLeft: 40,
+            plotWidth: 640,
+            displayScale: 2
+        )
+        let newSampleX = scale.xPosition(
+            for: scene.signalRuns[1].points[0].elapsedTime,
+            visibleStart: 0,
+            visibleDuration: scene.duration,
+            plotLeft: 40,
+            plotWidth: 640,
+            displayScale: 2
+        )
+        #expect(transitionX == newSampleX)
+        #expect(segments.flatMap(\.samples).count == 2)
+        #expect(scene.samples.count == 2)
     }
 }
 

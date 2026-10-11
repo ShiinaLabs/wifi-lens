@@ -35,6 +35,44 @@ private func buildBSSIDColorMap(from segments: [RoamingSegment]) -> [String: Col
     return map.mapping
 }
 
+private func drawSignalConnectors(
+    _ connectors: [RoamingSignalTransitionConnector],
+    context: inout GraphicsContext,
+    xPosition: (TimeInterval) -> CGFloat,
+    yPosition: (Int) -> CGFloat,
+    colorForBSSID: (String) -> Color,
+    lineWidth: CGFloat
+) {
+    for connector in connectors {
+        let transitionX = xPosition(connector.transitionTime)
+        let previousY = yPosition(connector.previousRSSI)
+        let nextY = yPosition(connector.nextRSSI)
+
+        let oldStartX = xPosition(connector.previousSampleTime)
+        if oldStartX != transitionX {
+            var oldExtension = Path()
+            oldExtension.move(to: CGPoint(x: oldStartX, y: previousY))
+            oldExtension.addLine(to: CGPoint(x: transitionX, y: previousY))
+            context.stroke(oldExtension, with: .color(colorForBSSID(connector.fromBSSID)), lineWidth: lineWidth)
+        }
+
+        let newEndX = xPosition(connector.nextSampleTime)
+        if transitionX != newEndX {
+            var newExtension = Path()
+            newExtension.move(to: CGPoint(x: transitionX, y: nextY))
+            newExtension.addLine(to: CGPoint(x: newEndX, y: nextY))
+            context.stroke(newExtension, with: .color(colorForBSSID(connector.toBSSID)), lineWidth: lineWidth)
+        }
+
+        if previousY != nextY {
+            var signalStep = Path()
+            signalStep.move(to: CGPoint(x: transitionX, y: previousY))
+            signalStep.addLine(to: CGPoint(x: transitionX, y: nextY))
+            context.stroke(signalStep, with: .color(.secondary.opacity(0.75)), lineWidth: max(1, lineWidth * 0.75))
+        }
+    }
+}
+
 // MARK: - Formatters
 
 private let timeFormatter: DateComponentsFormatter = {
@@ -547,6 +585,15 @@ private struct ChartCanvas: View {
                 context.stroke(dash, with: .color(.secondary.opacity(0.3)), style: .init(dash: [4, 4], dashPhase: 0))
             }
 
+            drawSignalConnectors(
+                scene.signalConnectors,
+                context: &context,
+                xPosition: xPos,
+                yPosition: yPos,
+                colorForBSSID: { bssidColors[$0] ?? .blue },
+                lineWidth: 2
+            )
+
             if let highlightedTime {
                 let displayedTime = floor(highlightedTime + timeOffset) - timeOffset
                 let x = xPos(timeOffset + max(0, min(totalSecs, displayedTime)))
@@ -812,6 +859,15 @@ private struct OverviewCanvas: View {
                 line.addLine(to: CGPoint(x: x, y: size.height))
                 context.stroke(line, with: .color(.primary.opacity(0.15)), lineWidth: 0.5)
             }
+
+            drawSignalConnectors(
+                scene.signalConnectors,
+                context: &context,
+                xPosition: xPos,
+                yPosition: yPos,
+                colorForBSSID: { bssidColors[$0] ?? .blue },
+                lineWidth: 1
+            )
 
             if let highlightedTime {
                 let x = xPos(floor(highlightedTime))
