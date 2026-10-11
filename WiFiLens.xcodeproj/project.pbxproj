@@ -200,8 +200,6 @@
 		AD3512BDF1DF56B2101BFB63 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59593DC4F8361B2526A85B97 /* SettingsView.swift */; };
 		AD66698C941A72AB6774CE78 /* MACVendorDatabaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D560223B45D5C10948D2D085 /* MACVendorDatabaseStore.swift */; };
 		AD6B85315B7749C89CF49F65 /* SpectrumHeatmapActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F432AAE54AE9233BB586EA4 /* SpectrumHeatmapActivity.swift */; };
-		ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */; };
-		ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB001000000000000000003 /* DebugMultiAPScenario.swift */; };
 		B00FD511D0D2B2BFBDE9364F /* OnboardingStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7343A5D84BBD9A02C08690A6 /* OnboardingStateStore.swift */; };
 		B16BCC05977717FD1481A6C9 /* SpectrumPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96929658FAA130E1C0AE2755 /* SpectrumPanelView.swift */; };
 		B448DF99E07A37C4C173C8A5 /* LocationPermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572851610B059A31B56C981C /* LocationPermissionManager.swift */; };
@@ -288,10 +286,6 @@
 		FB7F34783071E43900FC37BC /* zh-Hant.md in Resources */ = {isa = PBXBuildFile; fileRef = FB7F34773071E42D00FC37BC /* zh-Hant.md */; };
 		FB85B8A92FE6526D00D2D391 /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FB85B8A82FE6526D00D2D391 /* ChartLens */; };
 		FB8FCB212FF6C5DF00BB2929 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FB8FCB202FF6C5DF00BB2929 /* Sparkle */; };
-		FB92F9212FBE208500BCEC67 /* DebugChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F91F2FBE208500BCEC67 /* DebugChartView.swift */; };
-		FB92F9232FBE208500BCEC67 /* DebugContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */; };
-		FB92F9252FBE208500BCEC67 /* DebugThroughputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */; };
-		FB92F9282FBE208500BCEC67 /* DebugRoamingChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */; };
 		FBA000010000000000000001 /* AppLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA000230000000000000023 /* AppLaunchTests.swift */; };
 		FBA000020000000000000002 /* WiFiLensUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA000050000000000000005 /* WiFiLensUITestsLaunchTests.swift */; };
 		FBA000200000000000000020 /* UITestHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA000210000000000000021 /* UITestHelpers.swift */; };
@@ -585,8 +579,6 @@
 		AD3DEBF2363CBD3278EACB5B /* fr.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = fr.md; sourceTree = "<group>"; };
 		AD6A315A28F074BC5A7570D9 /* WiFiLensEditionConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLensEditionConfiguration.swift; sourceTree = "<group>"; };
 		AD6F389C547E6D3D7A76E8B4 /* WiFiCurrentConnectionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiCurrentConnectionProvider.swift; sourceTree = "<group>"; };
-		ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugMultiAPScenarioTests.swift; sourceTree = "<group>"; };
-		ADB001000000000000000003 /* DebugMultiAPScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugMultiAPScenario.swift; sourceTree = "<group>"; };
 		AF8994A026407DF070F8D0E2 /* APDisplayState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APDisplayState.swift; sourceTree = "<group>"; };
 		AFEC658553DB5272DFCD6E53 /* SpectrumHeatmapRenderCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapRenderCoordinatorTests.swift; sourceTree = "<group>"; };
 		B43379B9F528046AF8AEBB61 /* BandPanelSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandPanelSelectionTests.swift; sourceTree = "<group>"; };
@@ -660,10 +652,6 @@
 		FB7F34773071E42D00FC37BC /* zh-Hant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "zh-Hant.md"; sourceTree = "<group>"; };
 		FB80FA2C2FC0AC1900547708 /* OSS.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = OSS.xcconfig; sourceTree = "<group>"; };
 		FB80FA312FC0AC3800547708 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
-		FB92F91F2FBE208500BCEC67 /* DebugChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugChartView.swift; sourceTree = "<group>"; };
-		FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugContainerView.swift; sourceTree = "<group>"; };
-		FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugThroughputView.swift; sourceTree = "<group>"; };
-		FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugRoamingChartView.swift; sourceTree = "<group>"; };
 		FBA000030000000000000003 /* WiFiLensUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WiFiLensUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBA000050000000000000005 /* WiFiLensUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLensUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		FBA000210000000000000021 /* UITestHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestHelpers.swift; sourceTree = "<group>"; };
@@ -982,18 +970,6 @@
 				A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */,
 			);
 			path = Observation;
-			sourceTree = "<group>";
-		};
-		49FEC4F42675BFAD1316DDEC /* Debug */ = {
-			isa = PBXGroup;
-			children = (
-				FB92F91F2FBE208500BCEC67 /* DebugChartView.swift */,
-				ADB001000000000000000003 /* DebugMultiAPScenario.swift */,
-				FB92F9222FBE208500BCEC67 /* DebugContainerView.swift */,
-				FB92F9242FBE208500BCEC67 /* DebugThroughputView.swift */,
-				FB92F9262FBE208500BCEC67 /* DebugRoamingChartView.swift */,
-			);
-			path = Debug;
 			sourceTree = "<group>";
 		};
 		4D254635CE8C499AD20E2A20 /* WhatsNew */ = {
@@ -1350,7 +1326,6 @@
 			children = (
 				831E90D5B9D07C478A35DD14 /* WiFiLensApp.swift */,
 				AD735352E4FE8FE0803C143C /* App */,
-				49FEC4F42675BFAD1316DDEC /* Debug */,
 				G900000000000000000000D0 /* Onboarding */,
 				FB8BB5FE2FBB039A00FD072E /* Resources */,
 			);
@@ -1449,7 +1424,6 @@
 				A10000000000000000000006 /* ChannelQualityViewModeTests.swift */,
 				E83547C1A36ADDD9E827B26A /* ChartUtilityTests.swift */,
 				8A7A45AB88716DC3AC18610B /* ChartViewTests.swift */,
-				ADB001000000000000000001 /* DebugMultiAPScenarioTests.swift */,
 				90CF4B22A68C668A58043392 /* ExternalLinksTests.swift */,
 				G900000000000000000000CB /* Guidance */,
 				G900000000000000000000F0 /* Onboarding */,
@@ -1766,11 +1740,6 @@
 				FBD7B3492FBAED57002C8F5A /* SparkleUpdater.swift in Sources */,
 				FB0573C22FBC47F1005F8214 /* CrashReporter.swift in Sources */,
 				FBD329502FC500000057B038 /* MetricKitManager.swift in Sources */,
-				FB92F9212FBE208500BCEC67 /* DebugChartView.swift in Sources */,
-				ADB001000000000000000004 /* DebugMultiAPScenario.swift in Sources */,
-				FB92F9232FBE208500BCEC67 /* DebugContainerView.swift in Sources */,
-				FB92F9252FBE208500BCEC67 /* DebugThroughputView.swift in Sources */,
-				FB92F9282FBE208500BCEC67 /* DebugRoamingChartView.swift in Sources */,
 				EC10000000000000000000004 /* OSSEditionComposition.swift in Sources */,
 				9E2F89530D1114DBFAB705F3 /* WiFiLensApp.swift in Sources */,
 				FBB2CA8E2FC0E14000FC2D2C /* BuildConfig.swift in Sources */,
@@ -2042,7 +2011,6 @@
 				A10000000000000000000014 /* ChannelQualityViewModeTests.swift in Sources */,
 				19134AC983FA95FB8033EB8F /* ChartUtilityTests.swift in Sources */,
 				EEF6495F8D90DE97D0C86ADF /* ChartViewTests.swift in Sources */,
-				ADB001000000000000000002 /* DebugMultiAPScenarioTests.swift in Sources */,
 				90CF4B22A68C668A58043391 /* ExternalLinksTests.swift in Sources */,
 				2ED34E17AE03E25A409037BD /* NetworkTableRowTests.swift in Sources */,
 				869A4E799B9BF9BB3D1FBCF9 /* RoamingTestViewModelTests.swift in Sources */,

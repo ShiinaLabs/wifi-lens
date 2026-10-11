@@ -4,7 +4,6 @@ enum SidebarSection {
     case overview
     case tools
     case analysis
-    case debug
     case settings
 
     var localizationKey: String {
@@ -15,8 +14,6 @@ enum SidebarSection {
             "sidebar.section.tools"
         case .analysis:
             "sidebar.section.analysis"
-        case .debug:
-            "sidebar.section.debug"
         case .settings:
             "sidebar.section.settings"
         }
@@ -130,24 +127,6 @@ public struct SidebarView: View {
                         .accessibilityIdentifier("sidebar-\(page.rawValue)")
                 }
             }
-#if DEBUG
-            Section {
-                sidebarGroupTitle(.debug)
-                Label(SidebarPage.spectrumDebugChart.label, systemImage: SidebarPage.spectrumDebugChart.icon)
-                    .tag(SidebarPage.spectrumDebugChart)
-                    .accessibilityIdentifier("sidebar-spectrumDebugChart")
-
-                Label(SidebarPage.debugChart.label, systemImage: SidebarPage.debugChart.icon)
-                    .tag(SidebarPage.debugChart)
-                    .accessibilityIdentifier("sidebar-debugChart")
-
-                if configuration.capabilities.contains(.timeline) {
-                    Label(SidebarPage.debugTimeline.label, systemImage: SidebarPage.debugTimeline.icon)
-                        .tag(SidebarPage.debugTimeline)
-                        .accessibilityIdentifier("sidebar-debugTimeline")
-                }
-            }
-#endif
             Section {
                 sidebarGroupTitle(.settings)
                 Label(SidebarPage.settings.label, systemImage: SidebarPage.settings.icon)

@@ -274,24 +274,6 @@ private struct AppRootView: View {
                         .allowsHitTesting(selectedPage == .settings)
                         .accessibilityIdentifier("page-settings")
 
-    #if DEBUG
-                    SpectrumDebugContainerView()
-                        .opacity(selectedPage == .spectrumDebugChart ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .spectrumDebugChart)
-                        .accessibilityIdentifier("page-spectrumDebugChart")
-
-                    DebugContainerView()
-                        .opacity(selectedPage == .debugChart ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .debugChart)
-                        .accessibilityIdentifier("page-debugChart")
-
-    #if DEBUG && PRO
-                    EditionAppShell.debugTimelinePage()
-                        .opacity(selectedPage == .debugTimeline ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .debugTimeline)
-                        .accessibilityIdentifier("page-debugTimeline")
-    #endif
-    #endif
                 }
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: selectedPage)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

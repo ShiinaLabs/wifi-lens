@@ -365,12 +365,6 @@ enum EditionAppShell {
 
 #if DEBUG
     @MainActor
-    @ViewBuilder
-    static func debugTimelinePage() -> some View {
-        EmptyView()
-    }
-
-    @MainActor
     static func debugCommands(showMainWindow: @escaping (SidebarPage) -> Void) -> some Commands {
         OSSEditionAssembly.debugCommands(showMainWindow: showMainWindow)
     }
