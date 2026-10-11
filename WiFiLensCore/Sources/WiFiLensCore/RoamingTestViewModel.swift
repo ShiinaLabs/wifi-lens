@@ -52,6 +52,7 @@ public final class RoamingTestViewModel {
     public var transitions: [APTransitionEvent] = []
     public var elapsedTime: TimeInterval = 0
     public var totalSamples: Int { segments.reduce(0) { $0 + $1.samples.count } }
+    var chartStartDate: Date? { startDate }
 
     // MARK: - Providers
 
@@ -160,7 +161,7 @@ public final class RoamingTestViewModel {
             transitions = []
             lastRSSI = status.metricsAttribution == .verified ? status.rssi : nil
             lastChannel = status.metricsAttribution == .verified ? status.channel : nil
-            startDate = Date()
+            startDate = status.timestamp
             elapsedTime = 0
             errorMessage = nil
 
@@ -195,7 +196,7 @@ public final class RoamingTestViewModel {
         if currentSegmentIndex >= 0, currentSegmentIndex < segments.count {
             let lastSampleTime = segments[currentSegmentIndex].samples.last?.timestamp
                 ?? segments[currentSegmentIndex].startTime
-            segments[currentSegmentIndex].endTime = max(lastSampleTime, Date())
+            segments[currentSegmentIndex].endTime = lastSampleTime
         }
         currentSegmentIndex = -1
         previousVerifiedProbe = nil
@@ -475,6 +476,7 @@ public final class RoamingTestViewModel {
             segments = record.segments
             transitions = record.transitions
             elapsedTime = record.duration
+            startDate = nil
             currentSSID = record.ssid
             currentBSSID = record.bssid
             currentPhyMode = record.phyMode

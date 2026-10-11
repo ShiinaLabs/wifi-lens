@@ -247,6 +247,13 @@ struct RoamingSessionRecordTests {
         #expect(record.channel == 36)
         #expect(record.segments[0].samples[0].rssi == -60)
         #expect(record.transitions[0].channelAfter == 44)
+        let scene = RoamingChartScene(
+            segments: record.segments,
+            transitions: record.transitions,
+            duration: record.duration
+        )
+        #expect(scene.samples.first?.sample.rssi == -60)
+        #expect(scene.duration == 5)
     }
 
     @Test func versionTwoJSONPreservesMissingMetrics() throws {
@@ -272,6 +279,13 @@ struct RoamingSessionRecordTests {
         #expect(decoded.transitions[0].rssiBefore == -60)
         #expect(decoded.transitions[0].rssiAfter == nil)
         #expect(decoded.transitions[0].channelAfter == nil)
+        let scene = RoamingChartScene(
+            segments: decoded.segments,
+            transitions: decoded.transitions,
+            duration: decoded.duration
+        )
+        #expect(scene.signalRuns.isEmpty)
+        #expect(scene.regions.first?.bssid == "AP-2")
     }
 
     @Test func importedSessionUsesConfirmedTransitionTimeForAdjacentRegionFills() throws {
@@ -304,14 +318,17 @@ struct RoamingSessionRecordTests {
             from: JSONEncoder().encode(record)
         )
 
-        let regions = RoamingRegionLayout.intervals(
+        let scene = RoamingChartScene(
             segments: imported.segments,
-            transitions: imported.transitions
+            transitions: imported.transitions,
+            duration: imported.duration,
+            origin: t0
         )
 
-        #expect(regions.map(\.startTime) == [t0, t6])
-        #expect(regions.map(\.endTime) == [t6, t10])
-        #expect(regions[0].endTime == regions[1].startTime)
+        #expect(scene.regions.map(\.start) == [0, 6])
+        #expect(scene.regions.map(\.end) == [6, 10])
+        #expect(scene.regions[0].end == scene.regions[1].start)
+        #expect(scene.transitions.map(\.elapsedTime) == [6])
         #expect(imported.segments[0].endTime == t4)
         #expect(imported.segments[1].startTime == t7)
         #expect(imported.segments[0].rssiRuns.flatMap { $0.map(\.timestamp) } == [t0, t4])
@@ -319,7 +336,7 @@ struct RoamingSessionRecordTests {
     }
 }
 
-struct RoamingRegionLayoutTests {
+struct RoamingChartSceneTests {
 
     private func date(_ seconds: TimeInterval) -> Date {
         Date(timeIntervalSince1970: seconds)
@@ -339,11 +356,13 @@ struct RoamingRegionLayoutTests {
             RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
         ])
 
-        let regions = RoamingRegionLayout.intervals(segments: [segment], transitions: [])
+        let scene = RoamingChartScene(segments: [segment], transitions: [], duration: 4, origin: date(0))
 
-        #expect(regions.map(\.startTime) == [date(0)])
-        #expect(regions.map(\.endTime) == [date(4)])
+        #expect(scene.regions.map(\.start) == [0])
+        #expect(scene.regions.map(\.end) == [4])
+        #expect(scene.gaps.isEmpty)
         #expect(segment.rssiRuns.map { $0.map(\.timestamp) } == [[date(0)], [date(4)]])
+        #expect(scene.signalRuns.map { $0.points.map(\.elapsedTime) } == [[0], [4]])
     }
 
     @Test func unconfirmedAssociationGapRemainsUnfilled() {
@@ -356,50 +375,145 @@ struct RoamingRegionLayoutTests {
             ]),
         ]
 
-        let regions = RoamingRegionLayout.intervals(segments: segments, transitions: [])
+        let scene = RoamingChartScene(segments: segments, transitions: [], duration: 10, origin: date(0))
 
-        #expect(regions.map(\.startTime) == [date(0), date(8)])
-        #expect(regions.map(\.endTime) == [date(2), date(10)])
-        #expect(regions[0].endTime < regions[1].startTime)
+        #expect(scene.regions.map(\.start) == [0, 8])
+        #expect(scene.regions.map(\.end) == [2, 10])
+        #expect(scene.gaps == [RoamingChartGap(start: 2, end: 8, previousSegmentIndex: 0, nextSegmentIndex: 1)])
+        #expect(scene.transitions.isEmpty)
+        #expect(scene.signalAreaExtensions.isEmpty)
     }
 
-    @Test func repeatedConfirmedTransitionsShareEveryBoundaryEvenWhenMiddleAPHasNoRSSI() {
+    @Test func repeatedBSSIDTransitionsAreConsumedOnceAndMatchAdjacentSegments() {
         let segments = [
             RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(3)),
-            RoamingSegment(bssid: "AP-B", startTime: date(4), endTime: date(8), samples: [
-                RoamingSample(timestamp: date(5), rssi: nil, channel: nil, txRate: nil),
-            ]),
-            RoamingSegment(bssid: "AP-C", startTime: date(8), endTime: date(10), samples: [
-                RoamingSample(timestamp: date(9), rssi: -48, channel: 149, txRate: 100),
-            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(5), endTime: date(7)),
+            RoamingSegment(bssid: "AP-A", startTime: date(9), endTime: date(11)),
+            RoamingSegment(bssid: "AP-B", startTime: date(13), endTime: date(15)),
         ]
 
-        let regions = RoamingRegionLayout.intervals(
+        let scene = RoamingChartScene(
             segments: segments,
-            transitions: [transition(4, from: "AP-A", to: "AP-B"), transition(8, from: "AP-B", to: "AP-C")]
+            transitions: [
+                transition(4, from: "AP-A", to: "AP-B"),
+                transition(8, from: "AP-B", to: "AP-A"),
+                transition(12, from: "AP-A", to: "AP-B"),
+            ],
+            duration: 15,
+            origin: date(0)
         )
 
-        #expect(regions.map(\.startTime) == [date(0), date(4), date(8)])
-        #expect(regions.map(\.endTime) == [date(4), date(8), date(10)])
-        #expect(regions[0].endTime == regions[1].startTime)
-        #expect(regions[1].endTime == regions[2].startTime)
-        #expect(segments[1].rssiRuns.isEmpty)
+        #expect(scene.regions.map(\.start) == [0, 4, 8, 12])
+        #expect(scene.regions.map(\.end) == [4, 8, 12, 15])
+        #expect(scene.transitions.map(\.eventIndex) == [0, 1, 2])
+        #expect(scene.transitions.map(\.fromSegmentIndex) == [0, 1, 2])
+        #expect(scene.transitions.map(\.toSegmentIndex) == [1, 2, 3])
+        #expect(scene.gaps.isEmpty)
     }
 
-    @Test func aSingleOpenSegmentCanUseOnlyTheSuppliedCurrentProgress() {
-        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), samples: [
+    @Test func confirmedRoamingSharesBoundaryButKeepsRSSIRunsIndependent() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(4), samples: [
+                RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+                RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(7), endTime: date(10), samples: [
+                RoamingSample(timestamp: date(8), rssi: -50, channel: 44, txRate: 100),
+                RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100),
+            ]),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [transition(6, from: "AP-A", to: "AP-B")],
+            duration: 10,
+            origin: date(0)
+        )
+
+        #expect(scene.regions.map(\.start) == [0, 6])
+        #expect(scene.regions.map(\.end) == [6, 10])
+        #expect(scene.transitions.map(\.elapsedTime) == [6])
+        #expect(scene.signalRuns.map { $0.points.map(\.elapsedTime) } == [[0, 4], [8, 10]])
+        #expect(scene.signalAreaExtensions == [
+            RoamingSignalAreaExtension(segmentIndex: 0, eventIndex: 0, bssid: "AP-A", start: 4, end: 6, anchorRSSI: -60),
+            RoamingSignalAreaExtension(segmentIndex: 1, eventIndex: 0, bssid: "AP-B", start: 6, end: 8, anchorRSSI: -50),
+        ])
+        #expect(segments[0].samples.map(\.timestamp) == [date(0), date(4)])
+        #expect(segments[1].samples.map(\.timestamp) == [date(8), date(10)])
+        #expect(scene.samples.map(\.elapsedTime) == [0, 4, 8, 10])
+        #expect(scene.gaps.isEmpty)
+    }
+
+    @Test func noRSSIStillProducesOwnershipRegionWithoutSignalRuns() {
+        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(5), samples: [
             RoamingSample(timestamp: date(1), rssi: nil, channel: nil, txRate: nil),
         ])
 
-        let withoutProgress = RoamingRegionLayout.intervals(segments: [segment], transitions: [])
-        let withProgress = RoamingRegionLayout.intervals(
-            segments: [segment], transitions: [], openSegmentEnd: date(5)
-        )
+        let scene = RoamingChartScene(segments: [segment], transitions: [], duration: 5, origin: date(0))
 
-        #expect(withoutProgress.map(\.endTime) == [date(1)])
-        #expect(withProgress.map(\.startTime) == [date(0)])
-        #expect(withProgress.map(\.endTime) == [date(5)])
+        #expect(scene.regions.map(\.start) == [0])
+        #expect(scene.regions.map(\.end) == [5])
         #expect(segment.rssiRuns.isEmpty)
+        #expect(scene.signalRuns.isEmpty)
+        #expect(scene.signalAreaExtensions.isEmpty)
+    }
+
+    @Test func timestampsWithTheSameDisplayedSecondShareOneHorizontalTime() {
+        let sessionStart = Date(timeIntervalSince1970: 1_800_000_000.4)
+        let previousAPEnd = sessionStart.addingTimeInterval(5.1)
+        let nextAPStart = sessionStart.addingTimeInterval(5.9)
+        let scale = RoamingChartTimeScale(origin: sessionStart)
+
+        #expect(scale.elapsedTime(for: previousAPEnd) == 5)
+        #expect(scale.elapsedTime(for: nextAPStart) == 5)
+        for displayScale in [CGFloat(1), 2, 3] {
+            for width in [CGFloat(137), 311.5, 640] {
+                let leftX = scale.xPosition(
+                    for: scale.elapsedTime(for: previousAPEnd), visibleStart: 1.25,
+                    visibleDuration: 9.5, plotLeft: 40, plotWidth: width, displayScale: displayScale
+                )
+                let rightX = scale.xPosition(
+                    for: scale.elapsedTime(for: nextAPStart), visibleStart: 1.25,
+                    visibleDuration: 9.5, plotLeft: 40, plotWidth: width, displayScale: displayScale
+                )
+                #expect(leftX == rightX)
+            }
+        }
+    }
+
+    @Test func runtimeAndHistoricalProjectionUseIdenticalSceneSemantics() {
+        let origin = date(100)
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(100), endTime: date(104), samples: [
+                RoamingSample(timestamp: date(100), rssi: -55, channel: 36, txRate: 100),
+                RoamingSample(timestamp: date(104), rssi: -60, channel: 36, txRate: 100),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(107), endTime: date(110), samples: [
+                RoamingSample(timestamp: date(108), rssi: -50, channel: 44, txRate: 100),
+            ]),
+        ]
+        let events = [transition(106, from: "AP-A", to: "AP-B")]
+        let liveScene = RoamingChartScene(segments: segments, transitions: events, duration: 10, origin: origin)
+        let replayScene = RoamingChartScene(segments: segments, transitions: events, duration: 10, origin: origin)
+        #expect(liveScene.regions == replayScene.regions)
+        #expect(liveScene.signalRuns.map { $0.points.map(\.elapsedTime) } == replayScene.signalRuns.map { $0.points.map(\.elapsedTime) })
+        #expect(liveScene.transitions.map(\.elapsedTime) == replayScene.transitions.map(\.elapsedTime))
+        #expect(liveScene.gaps == replayScene.gaps)
+    }
+
+    @Test func ambiguousTransitionIsNotGuessedAndLeavesUnknownGap() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(3)),
+            RoamingSegment(bssid: "AP-B", startTime: date(8), endTime: date(10)),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [transition(4, from: "AP-A", to: "AP-B"), transition(5, from: "AP-A", to: "AP-B")],
+            duration: 10,
+            origin: date(0)
+        )
+        #expect(scene.transitions.isEmpty)
+        #expect(scene.regions.map(\.end) == [3, 10])
+        #expect(scene.gaps.contains(RoamingChartGap(start: 3, end: 8, previousSegmentIndex: 0, nextSegmentIndex: 1)))
     }
 }
 
