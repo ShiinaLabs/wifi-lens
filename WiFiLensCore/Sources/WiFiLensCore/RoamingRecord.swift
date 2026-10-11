@@ -293,6 +293,7 @@ public struct RoamingChartScene {
                 end: timeScale.elapsedTime(for: boundary)
             )
             guard interval.start < interval.end,
+                  interval.end - interval.start <= maximumHandoffCollapseSpan,
                   accepted.last.map({ start >= $0.rawEnd && interval.start >= $0.interval.end }) ?? true else {
                 continue
             }

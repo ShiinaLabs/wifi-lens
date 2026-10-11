@@ -523,6 +523,66 @@ struct RoamingChartSceneTests {
         #expect(realRecordScene.duration == 79)
     }
 
+    @Test func handoffCollapseAlsoBoundsTheDisplayedTimestampSpan() {
+        let cases: [(start: TimeInterval, boundary: TimeInterval, expectedTransitionTime: TimeInterval, expectedDuration: TimeInterval)] = [
+            (60.8, 62.2, 62, 80),
+            (60.0, 61.4, 60, 79),
+            (60.128, 61.127, 60, 79),
+            (60.2, 60.9, 60, 80),
+            (60.0, 61.5, 60, 79),
+            (60.8, 62.3, 62, 80),
+            (60.0, 61.6, 61, 80),
+        ]
+
+        for testCase in cases {
+            let scene = handoffScene(
+                previousSamples: [(time: testCase.start, rssi: -75)],
+                transitionTime: testCase.boundary,
+                nextSamples: [(time: testCase.boundary, rssi: -55)],
+                duration: 80
+            )
+
+            #expect(scene.duration == testCase.expectedDuration)
+            #expect(scene.transitions.count == 1)
+            #expect(scene.signalRuns[0].points.last?.elapsedTime == floor(testCase.start))
+            #expect(scene.transitions[0].elapsedTime == testCase.expectedTransitionTime)
+            #expect(scene.signalRuns[1].points.first?.elapsedTime == testCase.expectedTransitionTime)
+        }
+    }
+
+    @Test func multipleHandoffsAccumulateOnlyAcceptedDisplayedCollapseSpans() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(60), endTime: date(61.4), samples: [sample(60, rssi: -60)]),
+            RoamingSegment(bssid: "AP-B", startTime: date(61.4), endTime: date(64.2), samples: [
+                sample(61.4, rssi: -55),
+                sample(62.8, rssi: -54),
+            ]),
+            RoamingSegment(bssid: "AP-C", startTime: date(64.2), endTime: date(71.127), samples: [
+                sample(64.2, rssi: -50),
+                sample(70.128, rssi: -49),
+            ]),
+            RoamingSegment(bssid: "AP-D", startTime: date(71.127), endTime: date(90), samples: [sample(71.127, rssi: -45)]),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [
+                transition(61.4, from: "AP-A", to: "AP-B"),
+                transition(64.2, from: "AP-B", to: "AP-C"),
+                transition(71.127, from: "AP-C", to: "AP-D"),
+            ],
+            duration: 90,
+            origin: date(0)
+        )
+
+        #expect(scene.transitions.map(\.elapsedTime) == [60, 63, 69])
+        #expect(scene.duration == 88)
+        #expect(scene.samples.map(\.elapsedTime) == [60, 60, 61, 63, 69, 69])
+        #expect(zip(scene.samples, scene.samples.dropFirst()).allSatisfy { previous, next in
+            previous.elapsedTime <= next.elapsedTime
+        })
+        #expect(segments.flatMap(\.samples).count == scene.samples.count)
+    }
+
     @Test func handoffCollapseRejectsSpansAboveOnePointFiveSeconds() {
         for span: TimeInterval in [1.6, 3, 10, 30] {
             let scene = handoffScene(
