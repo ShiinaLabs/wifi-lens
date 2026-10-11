@@ -448,6 +448,8 @@ private struct ChartCanvas: View {
     var highlightedSamples: [RoamingChartHoverSample]
 
     var body: some View {
+        let canvasDisplayScale = displayScale
+
         Canvas { context, size in
             let plotLeft = leftAxisWidth
             let plotTop = topMargin
@@ -472,7 +474,7 @@ private struct ChartCanvas: View {
                     visibleDuration: totalSecs,
                     plotLeft: plotLeft,
                     plotWidth: plotWidth,
-                    displayScale: displayScale
+                    displayScale: canvasDisplayScale
                 )
             }
 
@@ -781,6 +783,8 @@ private struct OverviewCanvas: View {
     let highlightedTime: TimeInterval?
 
     var body: some View {
+        let canvasDisplayScale = displayScale
+
         Canvas { context, size in
             guard !scene.regions.isEmpty, elapsedTime > 0 else { return }
 
@@ -797,7 +801,7 @@ private struct OverviewCanvas: View {
                     visibleDuration: elapsedTime,
                     plotLeft: 0,
                     plotWidth: size.width,
-                    displayScale: displayScale
+                    displayScale: canvasDisplayScale
                 )
             }
             func yPos(_ rssi: Int) -> CGFloat {
