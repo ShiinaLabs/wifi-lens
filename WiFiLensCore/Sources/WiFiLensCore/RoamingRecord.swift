@@ -182,6 +182,8 @@ public struct RoamingChartGap: Equatable, Sendable {
 /// Immutable, persistence-independent rendering input for all roaming charts.
 /// It resolves timestamps and event-to-segment relationships before drawing.
 public struct RoamingChartScene {
+    private static let maximumHandoffCollapseSpan: TimeInterval = 1.5
+
     public let origin: Date
     public let duration: TimeInterval
     public let regions: [RoamingChartRegion]
@@ -189,6 +191,116 @@ public struct RoamingChartScene {
     public let transitions: [RoamingChartTransition]
     public let gaps: [RoamingChartGap]
     public let samples: [RoamingChartSamplePoint]
+
+    private struct CollapsedInterval {
+        let start: TimeInterval
+        let end: TimeInterval
+    }
+
+    private static func collapsedIntervals(
+        segments: [RoamingSegment],
+        transitions: [RoamingChartTransition],
+        timeScale: RoamingChartTimeScale
+    ) -> [CollapsedInterval] {
+        func isWithinSegment(_ timestamp: Date, _ segment: RoamingSegment) -> Bool {
+            guard timestamp >= segment.startTime else { return false }
+            if let endTime = segment.endTime, timestamp > endTime { return false }
+            return true
+        }
+
+        func samplesAreStrictlyIncreasing(_ samples: [RoamingSample]) -> Bool {
+            zip(samples, samples.dropFirst()).allSatisfy { previous, next in
+                previous.timestamp < next.timestamp
+            }
+        }
+
+        let orderedTransitions = transitions.sorted {
+            if $0.event.timestamp == $1.event.timestamp { return $0.eventIndex < $1.eventIndex }
+            return $0.event.timestamp < $1.event.timestamp
+        }
+        var consumedEventIndices = Set<Int>()
+        var accepted: [(eventIndex: Int, rawStart: Date, rawEnd: Date, interval: CollapsedInterval)] = []
+
+        for transition in orderedTransitions {
+            guard consumedEventIndices.insert(transition.eventIndex).inserted,
+                  segments.indices.contains(transition.fromSegmentIndex),
+                  segments.indices.contains(transition.toSegmentIndex) else {
+                continue
+            }
+
+            let previousSegment = segments[transition.fromSegmentIndex]
+            let nextSegment = segments[transition.toSegmentIndex]
+            let boundary = transition.event.timestamp
+
+            guard samplesAreStrictlyIncreasing(previousSegment.samples),
+                  samplesAreStrictlyIncreasing(nextSegment.samples),
+                  let previousSample = previousSegment.samples.last(where: {
+                      $0.timestamp <= boundary
+                          && $0.rssi != nil
+                          && isWithinSegment($0.timestamp, previousSegment)
+                  }),
+                  let nextSample = nextSegment.samples.first(where: {
+                      $0.timestamp >= boundary
+                          && $0.rssi != nil
+                          && isWithinSegment($0.timestamp, nextSegment)
+                  }) else {
+                continue
+            }
+
+            let start = previousSample.timestamp
+            let end = nextSample.timestamp
+            let beforeSpan = boundary.timeIntervalSince(start)
+            let afterSpan = end.timeIntervalSince(boundary)
+            let totalSpan = end.timeIntervalSince(start)
+            guard start < boundary,
+                  boundary <= end,
+                  beforeSpan <= maximumHandoffCollapseSpan,
+                  afterSpan <= maximumHandoffCollapseSpan,
+                  totalSpan <= maximumHandoffCollapseSpan else {
+                continue
+            }
+
+            let previousEvidence = previousSegment.samples.filter {
+                $0.timestamp >= start && $0.timestamp <= boundary
+            }
+            let nextEvidence = nextSegment.samples.filter {
+                $0.timestamp >= boundary && $0.timestamp <= end
+            }
+            guard !previousEvidence.isEmpty,
+                  !nextEvidence.isEmpty,
+                  previousEvidence.allSatisfy({
+                      $0.rssi != nil && isWithinSegment($0.timestamp, previousSegment)
+                  }),
+                  nextEvidence.allSatisfy({
+                      $0.rssi != nil && isWithinSegment($0.timestamp, nextSegment)
+                  }),
+                  !nextSegment.samples.contains(where: {
+                      $0.timestamp >= start && $0.timestamp < boundary
+                  }),
+                  !previousSegment.samples.contains(where: {
+                      $0.timestamp > boundary && $0.timestamp <= end
+                  }),
+                  !segments.enumerated().contains(where: { index, segment in
+                      index != transition.fromSegmentIndex
+                          && index != transition.toSegmentIndex
+                          && segment.samples.contains(where: { $0.timestamp >= start && $0.timestamp <= end })
+                  }) else {
+                continue
+            }
+
+            let interval = CollapsedInterval(
+                start: timeScale.elapsedTime(for: start),
+                end: timeScale.elapsedTime(for: boundary)
+            )
+            guard interval.start < interval.end,
+                  accepted.last.map({ start >= $0.rawEnd && interval.start >= $0.interval.end }) ?? true else {
+                continue
+            }
+            accepted.append((transition.eventIndex, start, boundary, interval))
+        }
+
+        return accepted.map(\.interval)
+    }
 
     /// Returns every real sample at the nearest displayed timestamp so hover
     /// can highlight both sides of a confirmed handoff when their X positions
@@ -303,25 +415,11 @@ public struct RoamingChartScene {
                 })
             }
         }
-        let collapsedIntervals = resolvedTransitions.compactMap { transition -> (start: TimeInterval, end: TimeInterval)? in
-            let previousPoint = signalRuns
-                .filter { $0.segmentIndex == transition.fromSegmentIndex }
-                .flatMap(\.points)
-                .max { $0.elapsedTime < $1.elapsedTime }
-            let nextPoint = signalRuns
-                .filter { $0.segmentIndex == transition.toSegmentIndex }
-                .flatMap(\.points)
-                .min { $0.elapsedTime < $1.elapsedTime }
-
-            guard let previousPoint, previousPoint.sample.rssi != nil,
-                  let nextPoint, nextPoint.sample.rssi != nil,
-                  previousPoint.elapsedTime <= transition.elapsedTime,
-                  nextPoint.elapsedTime >= transition.elapsedTime else {
-                return nil
-            }
-            guard previousPoint.elapsedTime < transition.elapsedTime else { return nil }
-            return (start: previousPoint.elapsedTime, end: transition.elapsedTime)
-        }.sorted { $0.start < $1.start }
+        let collapsedIntervals = Self.collapsedIntervals(
+            segments: segments,
+            transitions: resolvedTransitions,
+            timeScale: timeScale
+        )
 
         func displayedTime(_ elapsed: TimeInterval) -> TimeInterval {
             var removedDuration: TimeInterval = 0
@@ -350,7 +448,13 @@ public struct RoamingChartScene {
                 toSegmentIndex: transition.toSegmentIndex,
                 event: transition.event
             )
-        }.sorted { $0.elapsedTime < $1.elapsedTime }
+        }.sorted {
+            if $0.elapsedTime == $1.elapsedTime {
+                if $0.event.timestamp == $1.event.timestamp { return $0.eventIndex < $1.eventIndex }
+                return $0.event.timestamp < $1.event.timestamp
+            }
+            return $0.elapsedTime < $1.elapsedTime
+        }
         self.signalRuns = signalRuns.map { run in
             RoamingSignalRun(
                 segmentIndex: run.segmentIndex,
@@ -362,7 +466,10 @@ public struct RoamingChartScene {
         }
         self.samples = segments.flatMap(\.samples).map { sample in
             RoamingChartSamplePoint(elapsedTime: displayedTime(elapsed(sample.timestamp)), sample: sample)
-        }.sorted { $0.elapsedTime < $1.elapsedTime }
+        }.sorted {
+            if $0.elapsedTime == $1.elapsedTime { return $0.sample.timestamp < $1.sample.timestamp }
+            return $0.elapsedTime < $1.elapsedTime
+        }
 
         var gaps: [RoamingChartGap] = []
         var cursor: TimeInterval = 0
