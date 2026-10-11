@@ -38,6 +38,14 @@ struct RoamingSampleTests {
         #expect(decoded.gatewayLatency == original.gatewayLatency)
         #expect(decoded.timestamp == original.timestamp)
     }
+
+    @Test func missingMetricsRemainNilAfterCodableRoundTrip() throws {
+        let original = RoamingSample(timestamp: Date(), rssi: nil, channel: nil, txRate: nil)
+        let decoded = try JSONDecoder().decode(RoamingSample.self, from: JSONEncoder().encode(original))
+        #expect(decoded.rssi == nil)
+        #expect(decoded.channel == nil)
+        #expect(decoded.txRate == nil)
+    }
 }
 
 // MARK: - RoamingSegment
@@ -71,6 +79,30 @@ struct RoamingSegmentTests {
         let (min, max) = segment.rssiRange
         #expect(min == -100)
         #expect(max == -30)
+    }
+
+    @Test func missingRSSISamplesSplitRunsAndDoNotAffectMeasuredRange() {
+        let start = Date(timeIntervalSince1970: 100)
+        let segment = RoamingSegment(bssid: "AP", startTime: start, samples: [
+            RoamingSample(timestamp: start, rssi: -50, channel: 36, txRate: 100),
+            RoamingSample(timestamp: start.addingTimeInterval(1), rssi: nil, channel: nil, txRate: nil),
+            RoamingSample(timestamp: start.addingTimeInterval(2), rssi: -70, channel: 44, txRate: 200),
+            RoamingSample(timestamp: start.addingTimeInterval(3), rssi: nil, channel: nil, txRate: nil),
+        ])
+
+        #expect(segment.rssiRuns.map { $0.compactMap(\.rssi) } == [[-50], [-70]])
+        #expect(segment.rssiRange.min == -70)
+        #expect(segment.rssiRange.max == -50)
+    }
+
+    @Test func allMissingRSSIRangeUsesOnlyTheChartAxisFallback() {
+        let now = Date()
+        let segment = RoamingSegment(bssid: "AP", startTime: now, samples: [
+            RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil),
+        ])
+        #expect(segment.rssiRuns.isEmpty)
+        #expect(segment.rssiRange.min == -100)
+        #expect(segment.rssiRange.max == -30)
     }
 
     @Test func durationWithoutEndTimeUsesLastSample() {
@@ -184,7 +216,7 @@ struct RoamingSessionRecordTests {
     @Test func codableRoundTrip() throws {
         let now = Date()
         let original = RoamingSessionRecord(
-            version: 1,
+            version: RoamingSessionRecord.currentVersion,
             savedAt: now,
             ssid: "CorpWiFi",
             bssid: "aa:bb:cc:dd:ee:ff",
@@ -205,6 +237,401 @@ struct RoamingSessionRecordTests {
         #expect(decoded.ssid == original.ssid)
         #expect(decoded.segments.count == 1)
         #expect(decoded.transitions.count == 1)
-        #expect(decoded.version == RoamingSessionRecord.currentVersion)
+        #expect(decoded.version == 2)
     }
+
+    @Test func versionOneJSONWithRequiredNumericMetricsStillDecodes() throws {
+        let json = #"{"version":1,"savedAt":0,"ssid":"Legacy","bssid":"AP-1","phyMode":"ax","channel":36,"duration":5,"segments":[{"bssid":"AP-1","startTime":0,"samples":[{"timestamp":0,"rssi":-60,"channel":36,"txRate":400}]}],"transitions":[{"timestamp":1,"fromBSSID":"AP-1","toBSSID":"AP-2","rssiBefore":-60,"rssiAfter":-50,"channelBefore":36,"channelAfter":44}]}"#
+        let record = try JSONDecoder().decode(RoamingSessionRecord.self, from: Data(json.utf8))
+        #expect(record.version == 1)
+        #expect(record.channel == 36)
+        #expect(record.segments[0].samples[0].rssi == -60)
+        #expect(record.transitions[0].channelAfter == 44)
+        let scene = RoamingChartScene(
+            segments: record.segments,
+            transitions: record.transitions,
+            duration: record.duration
+        )
+        #expect(scene.samples.first?.sample.rssi == -60)
+        #expect(scene.duration == 5)
+    }
+
+    @Test func versionTwoJSONPreservesMissingMetrics() throws {
+        let now = Date(timeIntervalSince1970: 100)
+        let record = RoamingSessionRecord(
+            version: 2, savedAt: now, ssid: "Current", bssid: "AP-2", phyMode: nil,
+            channel: nil, duration: 2,
+            segments: [RoamingSegment(bssid: "AP-2", startTime: now, samples: [
+                RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil),
+            ])],
+            transitions: [APTransitionEvent(
+                timestamp: now, fromBSSID: "AP-1", toBSSID: "AP-2",
+                rssiBefore: -60, rssiAfter: nil, channelBefore: 36, channelAfter: nil
+            )]
+        )
+        let data = try JSONEncoder().encode(record)
+        let decoded = try JSONDecoder().decode(RoamingSessionRecord.self, from: data)
+        #expect(decoded.version == 2)
+        #expect(decoded.channel == nil)
+        #expect(decoded.segments[0].samples[0].rssi == nil)
+        #expect(decoded.segments[0].samples[0].channel == nil)
+        #expect(decoded.segments[0].samples[0].txRate == nil)
+        #expect(decoded.transitions[0].rssiBefore == -60)
+        #expect(decoded.transitions[0].rssiAfter == nil)
+        #expect(decoded.transitions[0].channelAfter == nil)
+        let scene = RoamingChartScene(
+            segments: decoded.segments,
+            transitions: decoded.transitions,
+            duration: decoded.duration
+        )
+        #expect(scene.signalRuns.isEmpty)
+        #expect(scene.regions.first?.bssid == "AP-2")
+    }
+
+    @Test func importedSessionUsesConfirmedTransitionTimeForAdjacentRegionFills() throws {
+        let t0 = Date(timeIntervalSince1970: 0)
+        let t4 = t0.addingTimeInterval(4)
+        let t6 = t0.addingTimeInterval(6)
+        let t7 = t0.addingTimeInterval(7)
+        let t8 = t0.addingTimeInterval(8)
+        let t10 = t0.addingTimeInterval(10)
+        let record = RoamingSessionRecord(
+            version: 2, savedAt: t10, ssid: "Home", bssid: "AP-B", phyMode: nil,
+            channel: nil, duration: 10,
+            segments: [
+                RoamingSegment(bssid: "AP-A", startTime: t0, endTime: t4, samples: [
+                    RoamingSample(timestamp: t0, rssi: -55, channel: 36, txRate: 100),
+                    RoamingSample(timestamp: t4, rssi: -60, channel: 36, txRate: 100),
+                ]),
+                RoamingSegment(bssid: "AP-B", startTime: t7, endTime: t10, samples: [
+                    RoamingSample(timestamp: t8, rssi: -50, channel: 44, txRate: 100),
+                    RoamingSample(timestamp: t10, rssi: -53, channel: 44, txRate: 100),
+                ]),
+            ],
+            transitions: [APTransitionEvent(
+                timestamp: t6, fromBSSID: "AP-A", toBSSID: "AP-B",
+                rssiBefore: -60, rssiAfter: -50, channelBefore: 36, channelAfter: 44
+            )]
+        )
+        let imported = try JSONDecoder().decode(
+            RoamingSessionRecord.self,
+            from: JSONEncoder().encode(record)
+        )
+
+        let scene = RoamingChartScene(
+            segments: imported.segments,
+            transitions: imported.transitions,
+            duration: imported.duration,
+            origin: t0
+        )
+
+        #expect(scene.regions.map(\.start) == [0, 6])
+        #expect(scene.regions.map(\.end) == [6, 10])
+        #expect(scene.regions[0].end == scene.regions[1].start)
+        #expect(scene.transitions.map(\.elapsedTime) == [6])
+        #expect(imported.segments[0].endTime == t4)
+        #expect(imported.segments[1].startTime == t7)
+        #expect(imported.segments[0].rssiRuns.flatMap { $0.map(\.timestamp) } == [t0, t4])
+        #expect(imported.segments[1].rssiRuns.flatMap { $0.map(\.timestamp) } == [t8, t10])
+    }
+}
+
+struct RoamingChartSceneTests {
+
+    private func date(_ seconds: TimeInterval) -> Date {
+        Date(timeIntervalSince1970: seconds)
+    }
+
+    private func transition(_ time: TimeInterval, from: String, to: String) -> APTransitionEvent {
+        APTransitionEvent(
+            timestamp: date(time), fromBSSID: from, toBSSID: to,
+            rssiBefore: nil, rssiAfter: nil, channelBefore: nil, channelAfter: nil
+        )
+    }
+
+    @Test func missingRSSIDoesNotBreakTrustedOwnershipOrConnectSignalRuns() {
+        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(4), samples: [
+            RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+            RoamingSample(timestamp: date(2), rssi: nil, channel: nil, txRate: nil),
+            RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
+        ])
+
+        let scene = RoamingChartScene(segments: [segment], transitions: [], duration: 4, origin: date(0))
+
+        #expect(scene.regions.map(\.start) == [0])
+        #expect(scene.regions.map(\.end) == [4])
+        #expect(scene.gaps.isEmpty)
+        #expect(segment.rssiRuns.map { $0.map(\.timestamp) } == [[date(0)], [date(4)]])
+        #expect(scene.signalRuns.map { $0.points.map(\.elapsedTime) } == [[0], [4]])
+    }
+
+    @Test func unconfirmedAssociationGapRemainsUnfilled() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(2), samples: [
+                RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(8), endTime: date(10), samples: [
+                RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100),
+            ]),
+        ]
+
+        let scene = RoamingChartScene(segments: segments, transitions: [], duration: 10, origin: date(0))
+
+        #expect(scene.regions.map(\.start) == [0, 8])
+        #expect(scene.regions.map(\.end) == [2, 10])
+        #expect(scene.gaps == [RoamingChartGap(start: 2, end: 8, previousSegmentIndex: 0, nextSegmentIndex: 1)])
+        #expect(scene.transitions.isEmpty)
+        #expect(scene.signalAreaExtensions.isEmpty)
+    }
+
+    @Test func repeatedBSSIDTransitionsAreConsumedOnceAndMatchAdjacentSegments() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(3)),
+            RoamingSegment(bssid: "AP-B", startTime: date(5), endTime: date(7)),
+            RoamingSegment(bssid: "AP-A", startTime: date(9), endTime: date(11)),
+            RoamingSegment(bssid: "AP-B", startTime: date(13), endTime: date(15)),
+        ]
+
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [
+                transition(4, from: "AP-A", to: "AP-B"),
+                transition(8, from: "AP-B", to: "AP-A"),
+                transition(12, from: "AP-A", to: "AP-B"),
+            ],
+            duration: 15,
+            origin: date(0)
+        )
+
+        #expect(scene.regions.map(\.start) == [0, 4, 8, 12])
+        #expect(scene.regions.map(\.end) == [4, 8, 12, 15])
+        #expect(scene.transitions.map(\.eventIndex) == [0, 1, 2])
+        #expect(scene.transitions.map(\.fromSegmentIndex) == [0, 1, 2])
+        #expect(scene.transitions.map(\.toSegmentIndex) == [1, 2, 3])
+        #expect(scene.gaps.isEmpty)
+    }
+
+    @Test func confirmedRoamingSharesBoundaryButKeepsRSSIRunsIndependent() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(4), samples: [
+                RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+                RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(7), endTime: date(10), samples: [
+                RoamingSample(timestamp: date(8), rssi: -50, channel: 44, txRate: 100),
+                RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100),
+            ]),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [transition(6, from: "AP-A", to: "AP-B")],
+            duration: 10,
+            origin: date(0)
+        )
+
+        #expect(scene.regions.map(\.start) == [0, 6])
+        #expect(scene.regions.map(\.end) == [6, 10])
+        #expect(scene.transitions.map(\.elapsedTime) == [6])
+        #expect(scene.signalRuns.map { $0.points.map(\.elapsedTime) } == [[0, 4], [8, 10]])
+        #expect(scene.signalAreaExtensions == [
+            RoamingSignalAreaExtension(segmentIndex: 0, eventIndex: 0, bssid: "AP-A", start: 4, end: 6, anchorRSSI: -60),
+            RoamingSignalAreaExtension(segmentIndex: 1, eventIndex: 0, bssid: "AP-B", start: 6, end: 8, anchorRSSI: -50),
+        ])
+        #expect(segments[0].samples.map(\.timestamp) == [date(0), date(4)])
+        #expect(segments[1].samples.map(\.timestamp) == [date(8), date(10)])
+        #expect(scene.samples.map(\.elapsedTime) == [0, 4, 8, 10])
+        #expect(scene.gaps.isEmpty)
+    }
+
+    @Test func noRSSIStillProducesOwnershipRegionWithoutSignalRuns() {
+        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(5), samples: [
+            RoamingSample(timestamp: date(1), rssi: nil, channel: nil, txRate: nil),
+        ])
+
+        let scene = RoamingChartScene(segments: [segment], transitions: [], duration: 5, origin: date(0))
+
+        #expect(scene.regions.map(\.start) == [0])
+        #expect(scene.regions.map(\.end) == [5])
+        #expect(segment.rssiRuns.isEmpty)
+        #expect(scene.signalRuns.isEmpty)
+        #expect(scene.signalAreaExtensions.isEmpty)
+    }
+
+    @Test func timestampsWithTheSameDisplayedSecondShareOneHorizontalTime() {
+        let sessionStart = Date(timeIntervalSince1970: 1_800_000_000.4)
+        let previousAPEnd = sessionStart.addingTimeInterval(5.1)
+        let nextAPStart = sessionStart.addingTimeInterval(5.9)
+        let scale = RoamingChartTimeScale(origin: sessionStart)
+
+        #expect(scale.elapsedTime(for: previousAPEnd) == 5)
+        #expect(scale.elapsedTime(for: nextAPStart) == 5)
+        for displayScale in [CGFloat(1), 2, 3] {
+            for width in [CGFloat(137), 311.5, 640] {
+                let leftX = scale.xPosition(
+                    for: scale.elapsedTime(for: previousAPEnd), visibleStart: 1.25,
+                    visibleDuration: 9.5, plotLeft: 40, plotWidth: width, displayScale: displayScale
+                )
+                let rightX = scale.xPosition(
+                    for: scale.elapsedTime(for: nextAPStart), visibleStart: 1.25,
+                    visibleDuration: 9.5, plotLeft: 40, plotWidth: width, displayScale: displayScale
+                )
+                #expect(leftX == rightX)
+            }
+        }
+    }
+
+    @Test func runtimeAndHistoricalProjectionUseIdenticalSceneSemantics() {
+        let origin = date(100)
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(100), endTime: date(104), samples: [
+                RoamingSample(timestamp: date(100), rssi: -55, channel: 36, txRate: 100),
+                RoamingSample(timestamp: date(104), rssi: -60, channel: 36, txRate: 100),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(107), endTime: date(110), samples: [
+                RoamingSample(timestamp: date(108), rssi: -50, channel: 44, txRate: 100),
+            ]),
+        ]
+        let events = [transition(106, from: "AP-A", to: "AP-B")]
+        let liveScene = RoamingChartScene(segments: segments, transitions: events, duration: 10, origin: origin)
+        let replayScene = RoamingChartScene(segments: segments, transitions: events, duration: 10, origin: origin)
+        #expect(liveScene.regions == replayScene.regions)
+        #expect(liveScene.signalRuns.map { $0.points.map(\.elapsedTime) } == replayScene.signalRuns.map { $0.points.map(\.elapsedTime) })
+        #expect(liveScene.transitions.map(\.elapsedTime) == replayScene.transitions.map(\.elapsedTime))
+        #expect(liveScene.gaps == replayScene.gaps)
+    }
+
+    @Test func ambiguousTransitionIsNotGuessedAndLeavesUnknownGap() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(3)),
+            RoamingSegment(bssid: "AP-B", startTime: date(8), endTime: date(10)),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [transition(4, from: "AP-A", to: "AP-B"), transition(5, from: "AP-A", to: "AP-B")],
+            duration: 10,
+            origin: date(0)
+        )
+        #expect(scene.transitions.isEmpty)
+        #expect(scene.regions.map(\.end) == [3, 10])
+        #expect(scene.gaps.contains(RoamingChartGap(start: 3, end: 8, previousSegmentIndex: 0, nextSegmentIndex: 1)))
+    }
+}
+
+struct CurrentWiFiViewDataResolverTests {
+    @Test func interfaceDetailsRequireCurrentAssociationAndUseOnlyVerifiedMetrics() {
+        let status = resolverStatus(metricsAttribution: .verified)
+        let observation = resolverObservation(status: status)
+        let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
+
+        let resolved = InterfaceWiFiStatusResolver.resolve(
+            interface: wifi, observation: observation, currentStatusValidity: .current
+        )
+        #expect(resolved?.rssi == -55)
+        #expect(InterfaceWiFiStatusResolver.verifiedMetrics(for: resolved)?.channel == 36)
+    }
+
+    @Test func unverifiedOrInconsistentMetricsNeverFallBackToRawInterfaceValues() {
+        for attribution in [WiFiMetricsAttribution.unverified, .inconsistent] {
+            let status = resolverStatus(metricsAttribution: attribution, rssi: nil, channel: nil)
+            let observation = resolverObservation(status: status)
+            let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
+            let resolved = InterfaceWiFiStatusResolver.resolve(
+                interface: wifi, observation: observation, currentStatusValidity: .current
+            )
+            #expect(resolved?.linkAssessment?.state == VerifiedWiFiLinkState.associated)
+            #expect(InterfaceWiFiStatusResolver.verifiedMetrics(for: resolved) == nil)
+        }
+    }
+
+    @Test func expiredObservationAndNonWiFiInterfaceAreRejected() {
+        let status = resolverStatus(metricsAttribution: .verified)
+        let observation = resolverObservation(status: status)
+        let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true)
+        let mismatchedIndex = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 5, isWiFiInterface: true)
+        let ethernet = NetworkInterfaceInfo(interfaceName: "en1", isWiFiInterface: false)
+        let mismatchedCycle = WiFiObservation(timestamp: status.timestamp, sourceCycleID: UUID(), currentStatus: status)
+
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: wifi, observation: observation, currentStatusValidity: .expired) == nil)
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: ethernet, observation: observation, currentStatusValidity: .current) == nil)
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: mismatchedIndex, observation: observation, currentStatusValidity: .current) == nil)
+        #expect(InterfaceWiFiStatusResolver.resolve(interface: wifi, observation: mismatchedCycle, currentStatusValidity: .current) == nil)
+    }
+
+    @Test func overviewUsesOnlyTheObservationStatusAndItsRecommendations() {
+        let status = resolverStatus(metricsAttribution: .verified)
+        let recommendation = ChannelRecommendation(from: ChannelQuality(
+            channel: 36, band: "5GHz", bandDisplay: "5 GHz", qualityScore: 80,
+            qualityLevel: .good, apCount: 1, coChannelCount: 0, adjacentCount: 0,
+            interferenceScore: 0, overlapLevel: .low, strongestNeighborRSSI: -80,
+            isCurrentChannel: true
+        ))
+        let observation = resolverObservation(status: status, recommendations: [recommendation])
+        let valid = resolverValidity(status: .current, recommendations: .current)
+
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: valid)?.ssid == "TestNet")
+        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: valid).map(\.channel) == [36])
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: resolverValidity(status: .expired, recommendations: .current)) == nil)
+        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: resolverValidity(status: .current, recommendations: .expired)).isEmpty)
+    }
+
+    @Test func overviewKeepsVerifiedAssociationWhenMetricsAreUnknown() {
+        let status = resolverStatus(metricsAttribution: .unverified, rssi: nil, channel: nil)
+        let observation = resolverObservation(status: status)
+        let validity = resolverValidity(status: .current, recommendations: .current)
+
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: validity)?.ssid == "TestNet")
+        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: validity).isEmpty)
+    }
+
+    @Test func overviewKeepsAssociationWhenSSIDIsUnavailable() {
+        let status = resolverStatus(metricsAttribution: .unverified, rssi: nil, channel: nil, ssid: nil)
+        let observation = resolverObservation(status: status)
+        let validity = resolverValidity(status: .current, recommendations: .notTested)
+        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: validity) != nil)
+    }
+}
+
+private func resolverStatus(
+    metricsAttribution: WiFiMetricsAttribution,
+    rssi: Int? = -55,
+    channel: Int? = 36,
+    ssid: String? = "TestNet"
+) -> WiFiCurrentStatus {
+    let timestamp = Date(timeIntervalSince1970: 1_800_000_000)
+    let cycleID = UUID()
+    let evidence = WiFiLinkRawEvidence(
+        snapshotCycleID: cycleID, capturedAt: timestamp, interfaceName: "en0",
+        mode: .station, radio: .reportedOn, linkActive: true,
+        ssid: ssid, bssid: "AP-1", interfaceIndex: 4
+    )
+    let assessment = WiFiLinkInterpreter.evaluate(evidence, expectedCycleID: cycleID, expectedCapturedAt: timestamp)
+    return WiFiCurrentStatus(
+        timestamp: timestamp, interfaceSnapshotCycleID: cycleID, interfaceName: "en0", interfaceIndex: 4,
+        ssid: ssid, bssid: "AP-1", channel: channel, rssi: rssi,
+        isConnected: true, isWiFiPowerOn: true, linkEvidence: evidence,
+        linkAssessment: assessment, metricsAttribution: metricsAttribution
+    )
+}
+
+private func resolverObservation(
+    status: WiFiCurrentStatus,
+    recommendations: [ChannelRecommendation]? = nil
+) -> WiFiObservation {
+    WiFiObservation(
+        timestamp: status.timestamp,
+        sourceCycleID: status.interfaceSnapshotCycleID,
+        currentStatus: status,
+        channelRecommendation: recommendations
+    )
+}
+
+private func resolverValidity(
+    status: WiFiObservationFieldValidity,
+    recommendations: WiFiObservationFieldValidity
+) -> WiFiObservationValidity {
+    WiFiObservationValidity(
+        currentStatus: status, gatewayLatency: .notTested, environment: .notTested,
+        channelAnalysis: .notTested, channelRecommendation: recommendations,
+        quality: .notTested, diagnosis: .notTested
+    )
 }

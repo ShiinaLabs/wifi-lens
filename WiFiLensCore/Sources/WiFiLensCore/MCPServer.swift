@@ -8,6 +8,7 @@ struct MCPSnapshot: Sendable {
         case poweredOn
         case poweredOff
         case interfaceUnavailable
+        case unknown
     }
 
     enum AccessState: String, Sendable, Equatable {

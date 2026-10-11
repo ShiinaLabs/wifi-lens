@@ -5,12 +5,38 @@ enum WiFiQualityEvaluator {
         currentStatus: WiFiCurrentStatus,
         gatewayLatency: GatewayLatencyResult? = nil
     ) -> WiFiQualityResult {
-        let rssi = currentStatus.rssi ?? -100
-        let level = evaluateLevel(rssi: rssi, latencyMs: gatewayLatency?.latencyMs)
+        guard WiFiLinkEvidenceValidator.assessment(for: currentStatus)?.state == .associated,
+              currentStatus.metricsAttribution == .verified,
+              let rssi = currentStatus.rssi else {
+            return WiFiQualityResult(
+                level: .unknown,
+                signalLabel: String(localized: "observation.quality.unknown", comment: "Unknown signal label"),
+                latencyLabel: String(localized: "observation.latency.unavailable", comment: "Latency unavailable"),
+                summary: Self.summary(level: .unknown, signalLabel: "", latencyLabel: "")
+            )
+        }
+        let validLatency = Self.validLatency(gatewayLatency, for: currentStatus)
+        let level = evaluateLevel(rssi: rssi, latencyMs: validLatency)
         let signalLabel = Self.signalLabel(rssi: rssi)
-        let latencyLabel = Self.latencyLabel(ms: gatewayLatency?.latencyMs)
+        let latencyLabel = Self.latencyLabel(ms: validLatency)
         let summary = Self.summary(level: level, signalLabel: signalLabel, latencyLabel: latencyLabel)
         return WiFiQualityResult(level: level, signalLabel: signalLabel, latencyLabel: latencyLabel, summary: summary)
+    }
+
+    private static func validLatency(_ result: GatewayLatencyResult?, for status: WiFiCurrentStatus) -> Double? {
+        guard let result,
+              case let .replied(reportedMilliseconds)? = result.probeOutcome,
+              let latency = result.latencyMs,
+              latency.isFinite, latency >= 0,
+              reportedMilliseconds.isFinite, reportedMilliseconds >= 0,
+              latency == reportedMilliseconds,
+              result.attemptID != nil,
+              result.interfaceBound,
+              result.cycleID == status.interfaceSnapshotCycleID,
+              result.interfaceName == status.interfaceName,
+              result.routerIP == status.routerIP,
+              result.timestamp >= status.timestamp else { return nil }
+        return latency
     }
 
     private static func evaluateLevel(rssi: Int, latencyMs: Double?) -> WiFiQualityLevel {

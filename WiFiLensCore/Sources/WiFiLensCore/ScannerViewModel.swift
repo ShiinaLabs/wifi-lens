@@ -80,6 +80,8 @@ public struct NetworkTableRow: Identifiable, Hashable {
 @Observable
 public final class ScannerViewModel {
     private static let logger = Logger(label: "scanner")
+    private static let unknownWiFiSampleLimit = 3
+    private static let unknownWiFiProbeDelay = Duration.seconds(30)
     public var locationManager: LocationPermissionManager
     let colorHasher = SSIDColorHasher()
     public let signalHistory = SignalHistoryStore()
@@ -102,7 +104,7 @@ public final class ScannerViewModel {
     private(set) var cachedBandSummary: String = ""
     private(set) var cachedCombinedTableRows: [NetworkTableRow] = []
     let wifiPowerMonitor = WiFiPowerMonitor()
-    public internal(set) var wifiPowerState: WiFiPowerState = .poweredOn
+    public internal(set) var wifiPowerState: WiFiPowerState = .unknown
 
     var band24 = BandChartViewModel(band: .band24GHz)
     var band5 = BandChartViewModel(band: .band5GHz)
@@ -116,7 +118,7 @@ public final class ScannerViewModel {
     public internal(set) var isScanning = false
     public internal(set) var interfaceName: String = ""
     public internal(set) var accessState: ScanAccessState = .waitingForAuthorization
-    public var isWiFiAvailable: Bool { wifiPowerState == .poweredOn }
+    public var isWiFiAvailable: Bool { wifiPowerState == .poweredOn || wifiPowerState == .unknown }
     public var hasWiFiDataAuthorization: Bool {
         !requiresLiveWiFiAuthorization || locationManager.isAuthorizedForSSID
     }
@@ -125,6 +127,14 @@ public final class ScannerViewModel {
     private var isStartingScan = false
     private var startupTask: Task<Void, Never>?
     private var wifiMonitoringTask: Task<Void, Never>?
+    private var unknownWiFiProbeTask: Task<Void, Never>?
+    private var consecutiveUnknownWiFiSamples = 0
+    private var lastReconciledWiFiSampleIdentity: WiFiPowerSampleIdentity?
+#if DEBUG
+    private var debugReconciliationRunSessionID = UUID()
+    private var debugReconciliationSequence: UInt64 = 0
+    private var debugReconciliationSampleSequences: [UUID: UInt64] = [:]
+#endif
     private var runtimeLifecycleTail: Task<Void, Never>?
     private var terminationStopTask: Task<Void, Never>?
     private var isTerminating = false
@@ -136,6 +146,7 @@ public final class ScannerViewModel {
     private let requiresLiveWiFiAuthorization: Bool
     private let userDefaults: UserDefaults
     private let vendorResolver: any MACVendorResolving
+    private let unknownWiFiProbeSleep: @Sendable (Duration) async throws -> Void
     private var userDefaultsRegionOverride: RegulatoryDomain?
 
     public init(
@@ -143,7 +154,8 @@ public final class ScannerViewModel {
         userDefaults: UserDefaults = .standard,
         vendorResolver: any MACVendorResolving = MACVendorResolver(),
         requiresLiveWiFiAuthorization: Bool = true,
-        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() }
+        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() },
+        unknownWiFiProbeSleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.store = store
         self.observationRuntime = WiFiObservationRuntime(store: store)
@@ -152,6 +164,7 @@ public final class ScannerViewModel {
         self.locationManager = LocationPermissionManager(liveAuthorizationEnabled: requiresLiveWiFiAuthorization)
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
+        self.unknownWiFiProbeSleep = unknownWiFiProbeSleep
         self.userDefaultsRegionOverride = Self.regionOverride(
             from: userDefaults.string(forKey: "regulatoryRegionOverride") ?? "auto"
         )
@@ -164,7 +177,8 @@ public final class ScannerViewModel {
         userDefaults: UserDefaults = .standard,
         vendorResolver: any MACVendorResolving = MACVendorResolver(),
         requiresLiveWiFiAuthorization: Bool = true,
-        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() }
+        authorizationRefresh: @escaping @MainActor (LocationPermissionManager) -> Void = { $0.refreshStatus() },
+        unknownWiFiProbeSleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.store = observationRuntime.store
         self.observationRuntime = observationRuntime
@@ -173,6 +187,7 @@ public final class ScannerViewModel {
         self.locationManager = LocationPermissionManager(liveAuthorizationEnabled: requiresLiveWiFiAuthorization)
         self.userDefaults = userDefaults
         self.vendorResolver = vendorResolver
+        self.unknownWiFiProbeSleep = unknownWiFiProbeSleep
         self.userDefaultsRegionOverride = Self.regionOverride(
             from: userDefaults.string(forKey: "regulatoryRegionOverride") ?? "auto"
         )
@@ -465,7 +480,10 @@ public final class ScannerViewModel {
         guard !isTerminating else { return }
         guard !isStartingScan else { return }
         guard !isScanning else { return }
-        guard wifiPowerState == .poweredOn else { return }
+        // Unknown at process startup is not a radio-off fact. Start one
+        // controlled scan loop; WiFiScanner reports interface failures and
+        // bounds subsequent probes with backoff.
+        guard wifiPowerState != .poweredOff else { return }
         isStartingScan = true
         defer { isStartingScan = false }
         let stored = userDefaults.integer(forKey: "scanIntervalSeconds")
@@ -477,9 +495,11 @@ public final class ScannerViewModel {
     public func handleSceneDidBecomeActive() async {
         guard !isTerminating else { return }
         guard requiresLiveWiFiAuthorization else { return }
+        // This callback may be delivered by more than one window. App focus is
+        // not a link-continuity boundary; the center only refreshes evidence.
+        await WiFiLinkStateCenter.shared.applicationBecameActive()
         locationManager.refreshStatus()
         wifiPowerMonitor.refreshState()
-        reconcileWiFiState(wifiPowerMonitor.currentState)
     }
 
     private func startWiFiMonitoring() {
@@ -489,13 +509,13 @@ public final class ScannerViewModel {
         wifiMonitoringTask = Task { [weak self] in
             guard let self else { return }
             let stream = self.wifiPowerMonitor.events
-            for await state in stream {
-                self.reconcileWiFiState(state)
+            for await event in stream {
+                self.reconcileWiFiState(event.state, sampleIdentity: event.sampleIdentity)
             }
         }
     }
 
-    private func reconcileWiFiState(_ state: WiFiPowerState) {
+    private func reconcileWiFiState(_ state: WiFiPowerState, sampleIdentity: WiFiPowerSampleIdentity? = nil) {
         guard requiresLiveWiFiAuthorization else {
             wifiPowerState = .poweredOn
             updateMCPDataProvider()
@@ -503,10 +523,15 @@ public final class ScannerViewModel {
         }
         wifiPowerState = state
         updateMCPDataProvider()
+        if state != .poweredOn {
+            store.invalidateCurrentValuesForWiFiStateChange()
+        }
         guard !isTerminating else { return }
 
         switch state {
         case .poweredOn:
+            consecutiveUnknownWiFiSamples = 0
+            cancelUnknownWiFiProbe()
             if locationManager.isAuthorizedForSSID {
                 Task { await startScanningAfterAuth() }
             } else if locationManager.authorizationStatus == .notDetermined {
@@ -518,9 +543,84 @@ public final class ScannerViewModel {
                 stop()
             }
 
-        case .poweredOff, .interfaceUnavailable:
+        case .poweredOff:
+            consecutiveUnknownWiFiSamples = 0
+            cancelUnknownWiFiProbe()
             stop()
+
+        case .interfaceUnavailable:
+            consecutiveUnknownWiFiSamples = 0
+            cancelUnknownWiFiProbe()
+            // Keep one scanner loop alive as a bounded recovery probe. The
+            // scan source reports the missing interface and backs off; it is
+            // not converted into link-state evidence.
+            guard locationManager.isAuthorizedForSSID else {
+                if locationManager.authorizationStatus == .notDetermined {
+                    accessState = .waitingForAuthorization
+                } else {
+                    accessState = .denied
+                    stop()
+                }
+                return
+            }
+            if !isScanning {
+                Task { await startScanningAfterAuth() }
+            }
+
+        case .unknown:
+            // One or two samples can be transient CoreWLAN read failures.
+            // Persistent ambiguity pauses frequent scans and leaves a bounded
+            // retry scheduled so later evidence can recover automatically.
+            guard locationManager.isAuthorizedForSSID else {
+                if locationManager.authorizationStatus == .notDetermined {
+                    accessState = .waitingForAuthorization
+                } else {
+                    accessState = .denied
+                    stop()
+                }
+                return
+            }
+            if let sampleIdentity, isNewWiFiSample(sampleIdentity) {
+                lastReconciledWiFiSampleIdentity = sampleIdentity
+                consecutiveUnknownWiFiSamples += 1
+            }
+            if isScanning, consecutiveUnknownWiFiSamples >= Self.unknownWiFiSampleLimit {
+                stop()
+                accessState = .scanFailed("Wi-Fi status is unknown; scanning is paused temporarily.")
+                scheduleUnknownWiFiProbe()
+            } else if !isScanning, !hasStarted, unknownWiFiProbeTask == nil {
+                Task { await startScanningAfterAuth() }
+            }
         }
+    }
+
+    private func isNewWiFiSample(_ identity: WiFiPowerSampleIdentity) -> Bool {
+        guard let previous = lastReconciledWiFiSampleIdentity else { return true }
+        guard identity.runSessionID == previous.runSessionID else { return true }
+        return identity.sequence > previous.sequence
+    }
+
+    private func scheduleUnknownWiFiProbe() {
+        guard unknownWiFiProbeTask == nil, !isTerminating else { return }
+        let sleep = unknownWiFiProbeSleep
+        unknownWiFiProbeTask = Task { @MainActor [weak self] in
+            do {
+                try await sleep(Self.unknownWiFiProbeDelay)
+            } catch {
+                return
+            }
+            guard let self else { return }
+            unknownWiFiProbeTask = nil
+            guard !isTerminating, wifiPowerState == .unknown,
+                  locationManager.isAuthorizedForSSID else { return }
+            consecutiveUnknownWiFiSamples = 0
+            await startScanningAfterAuth()
+        }
+    }
+
+    private func cancelUnknownWiFiProbe() {
+        unknownWiFiProbeTask?.cancel()
+        unknownWiFiProbeTask = nil
     }
 
     private func updateMCPDataProvider() {
@@ -538,14 +638,19 @@ public final class ScannerViewModel {
         try await mcpServer.start()
     }
 
-    func makeMCPSnapshot() -> MCPSnapshot {
-        let scanContextIsCurrent = isWiFiAvailable
+    func makeMCPSnapshot(at date: Date = Date()) -> MCPSnapshot {
+        let scanContextIsCurrent = isScanning
+            && isWiFiAvailable
+            && store.validity(at: date)?.environment == .current
+            && lastObservationTimestamp != .distantPast
+            && date.timeIntervalSince(lastObservationTimestamp) <= WiFiObservationStore.currentValueMaximumAge
         let capturedAt = lastObservationTimestamp == .distantPast ? nil : lastObservationTimestamp
         let powerState: MCPSnapshot.PowerState
         switch wifiPowerState {
         case .poweredOn: powerState = .poweredOn
         case .poweredOff: powerState = .poweredOff
         case .interfaceUnavailable: powerState = .interfaceUnavailable
+        case .unknown: powerState = .unknown
         }
 
         let accessState: MCPSnapshot.AccessState
@@ -647,12 +752,21 @@ public final class ScannerViewModel {
 
         if let error = output.cycle.observation.environmentSnapshot?.error {
             Self.logger.error("scan failure: \(String(describing: error))")
-            accessState = .scanning
-            // supportedBands may have changed even though no networks were
-            // applied; refresh the caches so band/count reads stay consistent.
+            accessState = .scanFailed(String(describing: error))
+            // Keep the prior samples in SignalHistoryStore for history views,
+            // but remove them from every projection that claims to represent
+            // the current successful environment scan.
+            lastNetworks = []
+            deduplicatedNetworks = []
+            channelQualities = []
+            channelRecommendations = []
+            regulatoryPipeline.inferredRegion = nil
+            rebuildProjection()
             rebuildCachedDerivedData()
             return
         }
+
+        accessState = .scanning
 
         channelQualities = output.cycle.observation.channelAnalysis ?? []
         channelRecommendations = output.cycle.observation.channelRecommendation ?? []
@@ -1021,6 +1135,7 @@ public final class ScannerViewModel {
     }
 
     public func stop() {
+        cancelUnknownWiFiProbe()
         activeProjectionGeneration = nil
         transitionToStoppedState()
         guard !isTerminating else { return }
@@ -1040,7 +1155,9 @@ public final class ScannerViewModel {
         startupTask = nil
         wifiMonitoringTask?.cancel()
         wifiMonitoringTask = nil
+        cancelUnknownWiFiProbe()
         wifiPowerMonitor.stopMonitoring()
+        await WiFiLinkStateCenter.shared.stop()
         runtimeLifecycleTail?.cancel()
         activeProjectionGeneration = nil
         transitionToStoppedState()
@@ -1061,7 +1178,7 @@ public final class ScannerViewModel {
 
         wifiPowerMonitor.refreshState()
         let currentPowerState = wifiPowerMonitor.currentState
-        if currentPowerState != .poweredOn {
+        if currentPowerState == .poweredOff {
             wifiPowerState = currentPowerState
             updateMCPDataProvider()
             transitionToStoppedState()
@@ -1127,9 +1244,38 @@ extension ScannerViewModel {
         await startScanLoop()
     }
 
-    func debugReconcileWiFiStateForTesting(_ state: WiFiPowerState) {
-        reconcileWiFiState(state)
+    func debugStartAfterAuthorizationForTesting() async {
+        await startScanningAfterAuth()
     }
+
+    func debugReconcileWiFiStateForTesting(_ state: WiFiPowerState, sampleID: UUID? = nil) {
+        let identity: WiFiPowerSampleIdentity?
+        if state == .unknown {
+            let resolvedID = sampleID ?? UUID()
+            let sequence: UInt64
+            if let existing = debugReconciliationSampleSequences[resolvedID] {
+                sequence = existing
+            } else {
+                debugReconciliationSequence &+= 1
+                sequence = debugReconciliationSequence
+                debugReconciliationSampleSequences[resolvedID] = sequence
+            }
+            identity = WiFiPowerSampleIdentity(
+                runSessionID: debugReconciliationRunSessionID,
+                sequence: sequence,
+                snapshotID: resolvedID
+            )
+        } else {
+            identity = nil
+        }
+        reconcileWiFiState(state, sampleIdentity: identity)
+    }
+
+    func debugReconcileWiFiSampleForTesting(_ state: WiFiPowerState, identity: WiFiPowerSampleIdentity) {
+        reconcileWiFiState(state, sampleIdentity: identity)
+    }
+
+    var debugConsecutiveUnknownSamplesForTesting: Int { consecutiveUnknownWiFiSamples }
 
     func debugDrainRuntimeLifecycleForTesting() async {
         await runtimeLifecycleTail?.value

@@ -186,8 +186,8 @@ extension NetworkDiagnosticsTests {
         ])
     }
 
-    @Test("overlapping gateway pings preserve the latest cancellation owner")
-    func overlappingGatewayPingsPreserveCancellationOwnership() async {
+    @Test("overlapping gateway pings cancel only their own attempts")
+    func overlappingGatewayPingsCancelOnlyTheirOwnAttempts() async {
         let runner = ControlledGatewayPingProcessRunner()
         let pinger = GatewayPinger(processRunner: runner)
 
@@ -200,13 +200,17 @@ extension NetworkDiagnosticsTests {
             await pinger.ping(host: "second.example")
         }
         await runner.waitUntilInvocationCount(2)
+        let invocationIDs = await runner.invocationIDs
 
-        await runner.cancel()
-
+        first.cancel()
         #expect(await first.value == nil)
+        #expect(await runner.cancelledInvocationIDs == [invocationIDs[0]])
+
+        second.cancel()
         #expect(await second.value == nil)
-        #expect(await runner.invocationCount == 2)
-        #expect(await runner.cancelledInvocationIDs == [1, 2])
+        #expect(await runner.invocationIDs.count == 2)
+        #expect(await runner.cancelledInvocationIDs == invocationIDs)
+        #expect(Set(invocationIDs).count == 2)
     }
 
     @Test("contextual path and gateway checks use one selected interface")
@@ -380,43 +384,204 @@ extension NetworkDiagnosticsTests {
         #expect(await NetworkConnectivityCheck(pathSource: StubPathSource(nil)).run().status == .indeterminate)
     }
 
-    @Test("gateway reachability outcomes preserve latency, nonresponse, and missing-router semantics")
+    @Test("gateway probe interpretation keeps address-only nonresponse unverified")
     func gatewayReachabilityOutcomeMatrix() async {
-        let result = await GatewayReachabilityCheck(
+        let replied = await GatewayReachabilityCheck(
             interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: "192.0.2.1")),
             gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
                 timestamp: Date(),
                 routerIP: "192.0.2.1",
-                latencyMs: 2.5
+                latencyMs: 2.5,
+                probeOutcome: .replied(milliseconds: 2.5)
             ))
         ).run()
 
-        #expect(result.id == .gatewayReachability)
-        #expect(result.status == .normal)
-        #expect(result.evidence.contains(.init(code: "gateway.latency-ms", value: "2.5")))
+        #expect(replied.id == .gatewayReachability)
+        #expect(replied.status == .normal)
+        #expect(replied.detail == nil)
+        #expect(replied.evidence.contains(.init(code: "gateway.latency-ms", value: "2.5")))
 
-        let nonresponse = await GatewayReachabilityCheck(
+        let unverifiedNoReply = await GatewayReachabilityCheck(
             interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: "192.0.2.1")),
             gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
                 timestamp: Date(),
                 routerIP: "192.0.2.1",
-                error: .gatewayPingFailed("192.0.2.1")
+                error: .gatewayPingFailed("192.0.2.1"),
+                probeOutcome: .noReply
             ))
         ).run()
 
-        #expect(nonresponse.status == .indeterminate)
-        #expect(nonresponse.evidence.contains(.init(code: "gateway.no-response", value: "192.0.2.1")))
+        #expect(unverifiedNoReply.status == .indeterminate)
+        #expect(unverifiedNoReply.detail == nil)
+        #expect(unverifiedNoReply.evidence.contains(.init(code: "gateway.probe.unverified", value: nil)))
+        #expect(!unverifiedNoReply.evidence.contains { $0.code == "gateway.no-response" })
 
         let missingRouter = await GatewayReachabilityCheck(
             interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: nil)),
             gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
                 timestamp: Date(),
-                error: .missingRouterIP
+                error: .missingRouterIP,
+                probeOutcome: .notTested
             ))
         ).run()
 
         #expect(missingRouter.status == .indeterminate)
-        #expect(missingRouter.evidence.contains(.init(code: "gateway.unavailable", value: nil)))
+        #expect(missingRouter.detail == nil)
+        #expect(missingRouter.evidence.contains(.init(code: "gateway.probe.not-tested", value: nil)))
+    }
+
+    @Test("typed gateway outcomes map to diagnostic status, detail, and evidence")
+    func contextualGatewayOutcomeMapping() async {
+        let cases: [(GatewayProbeOutcome?, Double?, String, NetworkDiagnosticStatus, String?)] = [
+            (.replied(milliseconds: 12.5), 12.5, "gateway.latency-ms", .normal, nil),
+            (.noReply, nil, "gateway.no-response", .indeterminate, "network_diagnostics.gateway.no_response"),
+            (.executionFailed, nil, "gateway.probe.execution-failed", .indeterminate, nil),
+            (.cancelled, nil, "gateway.probe.cancelled", .indeterminate, nil),
+            (.localTimeout, nil, "gateway.probe.local-timeout", .indeterminate, nil),
+            (.notTested, nil, "gateway.probe.not-tested", .indeterminate, nil),
+            (nil, nil, "gateway.probe.unverified", .indeterminate, nil),
+        ]
+
+        for (outcome, latency, code, expectedStatus, detailKey) in cases {
+            let result = await makeContextualGatewayCheck(
+                outcome: outcome,
+                latencyMs: latency
+            ).run()
+            #expect(result.status == expectedStatus)
+            if detailKey != nil {
+                #expect(result.detail == String(
+                    localized: "network_diagnostics.gateway.no_response",
+                    comment: "Expected explicit no-response detail"
+                ))
+            } else {
+                #expect(result.detail == nil)
+            }
+            #expect(result.evidence.contains { $0.code == code })
+            #expect(!result.evidence.contains { $0.code == "gateway.unreachable" })
+        }
+    }
+
+    @Test("inconsistent gateway probe outcomes remain unverified")
+    func inconsistentGatewayProbeResultsAreUnverified() async {
+        let target = DiagnosticGatewayTarget(interfaceName: "en0", interfaceIndex: 4, address: "192.0.2.1")
+        let cases: [FixedDiagnosticGatewayMeasurer] = [
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .replied(milliseconds: 12.5), latencyMs: 12.6,
+                interfaceName: nil, routerIP: nil, interfaceBound: true, attemptID: UUID()
+            ),
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: 1.0,
+                interfaceName: nil, routerIP: nil, interfaceBound: true, attemptID: UUID()
+            ),
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .executionFailed, latencyMs: 12.5,
+                interfaceName: nil, routerIP: nil, interfaceBound: true, attemptID: UUID()
+            ),
+        ]
+
+        for measurer in cases {
+            let result = await GatewayReachabilityCheck(
+                context: makeDiagnosticContext(pathState: .satisfied, route: .selected(target)),
+                gatewayMeasuring: measurer,
+                routeSource: nil
+            ).run()
+            #expect(result.status == .indeterminate)
+            #expect(result.detail == nil)
+            #expect(result.evidence.contains(.init(code: "gateway.probe.unverified", value: nil)))
+            #expect(!result.evidence.contains { $0.code == "gateway.no-response" })
+        }
+    }
+
+    @Test("gateway noresponse requires the exact selected interface and target")
+    func contextualNoReplyRequiresMatchingTargetProvenance() async {
+        let target = DiagnosticGatewayTarget(interfaceName: "en0", interfaceIndex: 4, address: "192.0.2.1")
+        let cases: [FixedDiagnosticGatewayMeasurer] = [
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: nil, interfaceName: "en7",
+                routerIP: nil, interfaceBound: true, attemptID: UUID()
+            ),
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: nil, interfaceName: nil,
+                routerIP: "192.0.2.254", interfaceBound: true, attemptID: UUID()
+            ),
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: nil, interfaceName: nil,
+                routerIP: nil, interfaceBound: true, attemptID: UUID(), usesTargetInterface: false
+            ),
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: nil, interfaceName: nil,
+                routerIP: nil, interfaceBound: true, attemptID: UUID(), usesTargetAddress: false
+            ),
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: nil, interfaceName: nil,
+                routerIP: nil, interfaceBound: false, attemptID: UUID()
+            ),
+            FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: nil, interfaceName: nil,
+                routerIP: nil, interfaceBound: true, attemptID: nil
+            ),
+        ]
+
+        for measurer in cases {
+            let result = await GatewayReachabilityCheck(
+                context: makeDiagnosticContext(pathState: .satisfied, route: .selected(target)),
+                gatewayMeasuring: measurer,
+                routeSource: nil
+            ).run()
+            #expect(result.status == .indeterminate)
+            #expect(result.detail == nil)
+            #expect(result.evidence.contains(.init(code: "gateway.probe.unverified", value: nil)))
+            #expect(!result.evidence.contains { $0.code == "gateway.no-response" })
+        }
+
+        let confirmed = await GatewayReachabilityCheck(
+            context: makeDiagnosticContext(pathState: .satisfied, route: .selected(target)),
+            gatewayMeasuring: FixedDiagnosticGatewayMeasurer(
+                outcome: .noReply, latencyMs: nil, interfaceName: "en0",
+                routerIP: "192.0.2.1", interfaceBound: true, attemptID: UUID()
+            ),
+            routeSource: nil
+        ).run()
+        #expect(confirmed.status == .indeterminate)
+        #expect(confirmed.detail == String(
+            localized: "network_diagnostics.gateway.no_response",
+            comment: "Expected explicit no-response detail"
+        ))
+        #expect(confirmed.evidence.contains(.init(code: "gateway.no-response", value: "192.0.2.1")))
+    }
+
+    @Test("legacy gateway error does not override a typed local execution failure")
+    func typedExecutionFailureOverridesLegacyGatewayError() async {
+        let result = await GatewayReachabilityCheck(
+            interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: "192.0.2.1")),
+            gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
+                timestamp: Date(),
+                routerIP: "192.0.2.1",
+                error: .gatewayPingFailed("192.0.2.1"),
+                probeOutcome: .executionFailed
+            ))
+        ).run()
+
+        #expect(result.status == .indeterminate)
+        #expect(result.detail == nil)
+        #expect(result.evidence.contains(.init(code: "gateway.probe.execution-failed", value: nil)))
+        #expect(!result.evidence.contains { $0.code == "gateway.no-response" })
+        #expect(!result.evidence.contains { $0.code == "gateway.unreachable" })
+    }
+
+    func makeContextualGatewayCheck(
+        outcome: GatewayProbeOutcome?,
+        latencyMs: Double?
+    ) -> GatewayReachabilityCheck {
+        let target = DiagnosticGatewayTarget(interfaceName: "en0", interfaceIndex: 4, address: "192.0.2.1")
+        return GatewayReachabilityCheck(
+            context: makeDiagnosticContext(pathState: .satisfied, route: .selected(target)),
+            gatewayMeasuring: FixedDiagnosticGatewayMeasurer(
+                outcome: outcome, latencyMs: latencyMs, interfaceName: nil,
+                routerIP: nil, interfaceBound: true, attemptID: UUID()
+            ),
+            routeSource: nil
+        )
     }
 
     @Test("successful HTTPS access neutralizes gateway ICMP nonresponse")

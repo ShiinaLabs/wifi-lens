@@ -56,6 +56,43 @@ private final class FakePulseScheduler: APRadarPulseScheduling {
     }
 }
 
+private final class ControlledAPRadarClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var current: Date
+    private var sleepContinuation: CheckedContinuation<Void, Error>?
+
+    init(now: Date) { current = now }
+
+    func now() -> Date {
+        lock.lock()
+        defer { lock.unlock() }
+        return current
+    }
+
+    func sleep(for _: Duration) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            lock.lock()
+            sleepContinuation = continuation
+            lock.unlock()
+        }
+    }
+
+    func advance(by duration: TimeInterval) {
+        lock.lock()
+        current.addTimeInterval(duration)
+        let continuation = sleepContinuation
+        sleepContinuation = nil
+        lock.unlock()
+        continuation?.resume()
+    }
+
+    func hasPendingSleep() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return sleepContinuation != nil
+    }
+}
+
 @Suite("APRadarViewModel")
 @MainActor
 struct APRadarViewModelTests {
@@ -94,15 +131,22 @@ struct APRadarViewModelTests {
     private func makeHarness(
         audio: FakeAudioPlayer = FakeAudioPlayer(),
         scheduler: FakePulseScheduler = FakePulseScheduler(),
-        defaults: UserDefaults? = nil
+        defaults: UserDefaults? = nil,
+        clock: ControlledAPRadarClock? = nil
     ) -> (viewModel: APRadarViewModel, runtime: WiFiObservationRuntime, audio: FakeAudioPlayer, scheduler: FakePulseScheduler, defaults: UserDefaults) {
         let runtime = WiFiObservationRuntime(store: WiFiObservationStore())
         let resolvedDefaults = defaults ?? makeDefaults()
+        let resolvedClock = clock
         let vm = APRadarViewModel(
             observationRuntime: runtime,
             audioPlayer: audio,
             scheduler: scheduler,
-            userDefaults: resolvedDefaults
+            userDefaults: resolvedDefaults,
+            now: { resolvedClock?.now() ?? Date(timeIntervalSince1970: 0) },
+            sleep: { duration in
+                guard let resolvedClock else { throw CancellationError() }
+                try await resolvedClock.sleep(for: duration)
+            }
         )
         return (vm, runtime, audio, scheduler, resolvedDefaults)
     }
@@ -182,6 +226,43 @@ struct APRadarViewModelTests {
         let updated = trackingSnapshot(harness.viewModel)
         #expect(updated?.rawRSSI == -54)
         #expect(updated?.smoothedRSSI == -54)
+    }
+
+    @Test("failed environment samples do not count as target loss or reuse RSSI")
+    func failedScanInvalidatesLiveRadarSignalWithoutDeclaringLoss() async throws {
+        let harness = makeHarness()
+        activateAndSelect(harness.viewModel)
+        let t0 = Date(timeIntervalSince1970: 200)
+        try await harness.viewModel.consume(
+            makeObservation(timestamp: t0, networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -51)])
+        )
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -51)
+
+        try await harness.viewModel.consume(
+            makeObservation(
+                timestamp: t0.addingTimeInterval(60),
+                networks: [],
+                error: .environmentScanFailed("interface unavailable")
+            )
+        )
+
+        #expect(harness.viewModel.scanFailed)
+        #expect(harness.viewModel.isAwaitingFreshScan)
+        #expect(harness.viewModel.latestNetworks.isEmpty)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == nil)
+        #expect(lostSnapshot(harness.viewModel) == nil)
+        #expect(harness.scheduler.cancelCount > 0)
+
+        try await harness.viewModel.consume(
+            makeObservation(
+                timestamp: t0.addingTimeInterval(61),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -47)]
+            )
+        )
+        #expect(!harness.viewModel.scanFailed)
+        #expect(!harness.viewModel.isAwaitingFreshScan)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -47)
+        #expect(lostSnapshot(harness.viewModel) == nil)
     }
 
     @Test("matching is BSSID-based and case/whitespace insensitive")
@@ -275,6 +356,32 @@ struct APRadarViewModelTests {
         #expect(harness.scheduler.cancelCount > cancelsBefore)
         #expect(harness.audio.stopCallCount >= 1)
         #expect(harness.viewModel.state.isTracking == false)
+    }
+
+    @Test("A stalled scan expires live RSSI without claiming the target disappeared")
+    func stalledScanExpiresSignalWithoutSignalLost() async throws {
+        let t0 = Date(timeIntervalSince1970: 100)
+        let clock = ControlledAPRadarClock(now: t0)
+        let harness = makeHarness(clock: clock)
+        activateAndSelect(harness.viewModel)
+        try await harness.viewModel.consume(
+            makeObservation(timestamp: t0, networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -58)])
+        )
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -58)
+        for _ in 0..<100 where !clock.hasPendingSleep() { await Task.yield() }
+        #expect(clock.hasPendingSleep())
+        clock.advance(by: 8)
+        for _ in 0..<100 where !harness.viewModel.isAwaitingFreshScan { await Task.yield() }
+        #expect(harness.viewModel.isAwaitingFreshScan)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == nil)
+        #expect(lostSnapshot(harness.viewModel) == nil)
+
+        try await harness.viewModel.consume(
+            makeObservation(timestamp: t0.addingTimeInterval(9), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -49)])
+        )
+        #expect(!harness.viewModel.isAwaitingFreshScan)
+        #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -49)
+        #expect(lostSnapshot(harness.viewModel) == nil)
     }
 
     @Test("lifecycle scan interval extends the loss timeout to max(8s, 2.5x)")

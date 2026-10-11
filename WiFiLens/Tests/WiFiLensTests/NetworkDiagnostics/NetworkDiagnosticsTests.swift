@@ -1425,47 +1425,46 @@ actor RecordingGatewayPingProcessRunner: GatewayPingProcessRunning {
         self.latency = latency
     }
 
-    func run(executablePath: String, arguments: [String]) async -> Double? {
+    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
         self.executablePath = executablePath
         self.arguments = arguments
-        return latency
+        guard let latency else {
+            return .exited(status: 2, output: "1 packets transmitted, 0 packets received, 100.0% packet loss")
+        }
+        return .exited(status: 0, output: "64 bytes from target: time=\(latency) ms")
     }
 
-    func cancel() async {}
+    func cancel(attemptID: UUID) async {}
 }
 
 actor ControlledGatewayPingProcessRunner: GatewayPingProcessRunning {
-    private var activeContinuations: [Int: CheckedContinuation<Double?, Never>] = [:]
+    private var activeContinuations: [UUID: CheckedContinuation<GatewayPingProcessOutcome, Never>] = [:]
     private var invocationWaiters: [(target: Int, continuation: CheckedContinuation<Void, Never>)] = []
-    private(set) var invocationCount = 0
-    private(set) var cancelledInvocationIDs: [Int] = []
+    private(set) var invocationIDs: [UUID] = []
+    private(set) var cancelledInvocationIDs: [UUID] = []
 
-    func run(executablePath: String, arguments: [String]) async -> Double? {
-        invocationCount += 1
-        let invocationID = invocationCount
+    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
+        invocationIDs.append(attemptID)
         resumeInvocationWaiters()
         return await withCheckedContinuation { continuation in
-            activeContinuations[invocationID] = continuation
+            activeContinuations[attemptID] = continuation
         }
     }
 
-    func cancel() {
-        guard let invocationID = activeContinuations.keys.max(),
-              let continuation = activeContinuations.removeValue(forKey: invocationID) else {
-            return
-        }
-        cancelledInvocationIDs.append(invocationID)
-        continuation.resume(returning: nil)
+    func cancel(attemptID: UUID) {
+        guard let continuation = activeContinuations.removeValue(forKey: attemptID) else { return }
+        cancelledInvocationIDs.append(attemptID)
+        continuation.resume(returning: .cancelled)
     }
 
     func waitUntilInvocationCount(_ target: Int) async {
-        if invocationCount >= target { return }
+        if invocationIDs.count >= target { return }
         await withCheckedContinuation { invocationWaiters.append((target, $0)) }
     }
 
     private func resumeInvocationWaiters() {
-        let ready = invocationWaiters.filter { invocationCount >= $0.target }
-        invocationWaiters.removeAll { invocationCount >= $0.target }
+        let ready = invocationWaiters.filter { invocationIDs.count >= $0.target }
+        invocationWaiters.removeAll { invocationIDs.count >= $0.target }
         ready.forEach { $0.continuation.resume() }
     }
 }
@@ -1475,10 +1474,40 @@ actor RecordingDiagnosticGatewayMeasurer: DiagnosticGatewayMeasuring {
 
     func measure(target: DiagnosticGatewayTarget) async -> GatewayLatencyResult {
         targets.append(target)
+        let attemptID = UUID()
         return GatewayLatencyResult(
             timestamp: Date(),
             routerIP: target.address,
-            latencyMs: 2.5
+            latencyMs: 2.5,
+            probeOutcome: .replied(milliseconds: 2.5),
+            attemptID: attemptID,
+            interfaceName: target.interfaceName,
+            interfaceBound: true
+        )
+    }
+}
+
+struct FixedDiagnosticGatewayMeasurer: DiagnosticGatewayMeasuring {
+    let outcome: GatewayProbeOutcome?
+    let latencyMs: Double?
+    let interfaceName: String?
+    let routerIP: String?
+    let interfaceBound: Bool
+    let attemptID: UUID?
+    var usesTargetInterface = true
+    var usesTargetAddress = true
+    let error: WiFiObservationError? = nil
+
+    func measure(target: DiagnosticGatewayTarget) async -> GatewayLatencyResult {
+        GatewayLatencyResult(
+            timestamp: Date(),
+            routerIP: usesTargetAddress ? (routerIP ?? target.address) : routerIP,
+            latencyMs: latencyMs,
+            error: error,
+            probeOutcome: outcome,
+            attemptID: attemptID,
+            interfaceName: usesTargetInterface ? (interfaceName ?? target.interfaceName) : interfaceName,
+            interfaceBound: interfaceBound
         )
     }
 }
