@@ -8,7 +8,9 @@ private let pointSpacing: CGFloat = 4
 private let chartHeight: CGFloat = 180
 private let leftAxisWidth: CGFloat = 40
 private let bottomAxisHeight: CGFloat = 24
-private let topMargin: CGFloat = 40
+// Reserve a dedicated row for the hover badge and a second row for AP labels.
+// The chart height includes this margin, so the RSSI plot itself stays the same height.
+private let topMargin: CGFloat = 64
 
 private let segmentColors: [Color] = [
     .blue, .green, .orange, .purple, .teal, .pink, .mint, .indigo
@@ -35,44 +37,6 @@ private func buildBSSIDColorMap(from segments: [RoamingSegment]) -> [String: Col
     return map.mapping
 }
 
-private func drawSignalConnectors(
-    _ connectors: [RoamingSignalTransitionConnector],
-    context: inout GraphicsContext,
-    xPosition: (TimeInterval) -> CGFloat,
-    yPosition: (Int) -> CGFloat,
-    colorForBSSID: (String) -> Color,
-    lineWidth: CGFloat
-) {
-    for connector in connectors {
-        let transitionX = xPosition(connector.transitionTime)
-        let previousY = yPosition(connector.previousRSSI)
-        let nextY = yPosition(connector.nextRSSI)
-
-        let oldStartX = xPosition(connector.previousSampleTime)
-        if oldStartX != transitionX {
-            var oldExtension = Path()
-            oldExtension.move(to: CGPoint(x: oldStartX, y: previousY))
-            oldExtension.addLine(to: CGPoint(x: transitionX, y: previousY))
-            context.stroke(oldExtension, with: .color(colorForBSSID(connector.fromBSSID)), lineWidth: lineWidth)
-        }
-
-        let newEndX = xPosition(connector.nextSampleTime)
-        if transitionX != newEndX {
-            var newExtension = Path()
-            newExtension.move(to: CGPoint(x: transitionX, y: nextY))
-            newExtension.addLine(to: CGPoint(x: newEndX, y: nextY))
-            context.stroke(newExtension, with: .color(colorForBSSID(connector.toBSSID)), lineWidth: lineWidth)
-        }
-
-        if previousY != nextY {
-            var signalStep = Path()
-            signalStep.move(to: CGPoint(x: transitionX, y: previousY))
-            signalStep.addLine(to: CGPoint(x: transitionX, y: nextY))
-            context.stroke(signalStep, with: .color(.secondary.opacity(0.75)), lineWidth: max(1, lineWidth * 0.75))
-        }
-    }
-}
-
 // MARK: - Formatters
 
 private let timeFormatter: DateComponentsFormatter = {
@@ -91,6 +55,10 @@ public struct RoamingTestView: View {
 
     public init(viewModel: RoamingTestViewModel) {
         self.viewModel = viewModel
+    }
+
+    private var bssidColors: [String: Color] {
+        buildBSSIDColorMap(from: viewModel.segments)
     }
 
     public var body: some View {
@@ -173,8 +141,22 @@ public struct RoamingTestView: View {
 
     private var runningContent: some View {
         VStack(spacing: 0) {
-            signalInfoCard
-            statusBar
+            VStack(spacing: 0) {
+                signalInfoCard
+
+                Rectangle()
+                    .fill(.quaternary)
+                    .frame(height: 1)
+                    .padding(.horizontal, 16)
+
+                statusBar
+            }
+            .padding(.vertical, 4)
+            .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 6)
+
             trendChart
             transitionTable
         }
@@ -206,7 +188,7 @@ public struct RoamingTestView: View {
                     if let bssid = viewModel.currentBSSID {
                         Text(bssid)
                             .font(.caption.monospaced())
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(bssidColors[bssid] ?? .secondary)
                             .lineLimit(1)
                             .truncationMode(.tail)
                     }
@@ -241,11 +223,11 @@ public struct RoamingTestView: View {
     private func metricLabel(_ title: String, _ value: String, _ color: Color) -> some View {
         VStack(spacing: 2) {
             Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.subheadline.weight(.medium).monospacedDigit())
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .accessibilityElement(children: .combine)
     }
@@ -256,11 +238,11 @@ public struct RoamingTestView: View {
         HStack(spacing: 16) {
             HStack(spacing: 4) {
                 Image(systemName: "clock")
-                    .font(.caption)
+                    .font(.callout)
                     .foregroundColor(.secondary)
                     .accessibilityHidden(true)
                 Text(timeFormatter.string(from: viewModel.elapsedTime) ?? "0:00")
-                    .font(.subheadline.monospacedDigit())
+                    .font(.headline.monospacedDigit())
             }
 
             HStack(spacing: 4) {
@@ -268,8 +250,10 @@ public struct RoamingTestView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .accessibilityHidden(true)
-                Text("\(viewModel.totalSamples) \(String(localized: "common.label.samples", comment: "Sample count unit label"))")
-                    .font(.callout)
+                Text("\(viewModel.totalSamples)")
+                    .font(.callout.weight(.semibold).monospacedDigit())
+                Text(String(localized: "common.label.samples", comment: "Sample count unit label"))
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
 
@@ -278,12 +262,19 @@ public struct RoamingTestView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .accessibilityHidden(true)
-                Text("\(viewModel.transitions.count) \(String(localized: "common.label.transitions", comment: "AP transition count unit label"))")
-                    .font(.callout)
+                Text("\(viewModel.transitions.count)")
+                    .font(.callout.weight(.semibold).monospacedDigit())
+                Text(String(localized: "common.label.transitions", comment: "AP transition count unit label"))
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             Spacer()
+
+            Rectangle()
+                .fill(.quaternary)
+                .frame(width: 1, height: 20)
+                .accessibilityHidden(true)
 
             if viewModel.state == .stopped, viewModel.totalSamples > 0 {
                 Button {
@@ -340,7 +331,7 @@ public struct RoamingTestView: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
     }
 
     // MARK: - Trend chart
@@ -352,7 +343,6 @@ public struct RoamingTestView: View {
             duration: viewModel.elapsedTime,
             origin: viewModel.chartStartDate
         )
-        let bssidColors = buildBSSIDColorMap(from: viewModel.segments)
         return RoamingTimelineChart(
             scene: scene,
             bssidColors: bssidColors,
@@ -365,7 +355,8 @@ public struct RoamingTestView: View {
     // MARK: - Transition table
 
     private var transitionTable: some View {
-        Group {
+        let colors = bssidColors
+        return Group {
             if viewModel.transitions.isEmpty {
                 VStack(spacing: 8) {
                     Spacer()
@@ -400,8 +391,8 @@ public struct RoamingTestView: View {
                                 Divider()
                                 GridRow {
                                     tableCell(tsLabel(t.timestamp))
-                                    tableCell(t.fromBSSID, mono: true)
-                                    tableCell(t.toBSSID, mono: true)
+                                    tableCell(t.fromBSSID, mono: true, color: colors[t.fromBSSID] ?? .primary)
+                                    tableCell(t.toBSSID, mono: true, color: colors[t.toBSSID] ?? .primary)
                                     tableCell(t.rssiBefore.map { "\($0) dBm" } ?? "—", color: t.rssiBefore.map(rssiColor) ?? .secondary)
                                     tableCell(t.rssiAfter.map { "\($0) dBm" } ?? "—", color: t.rssiAfter.map(rssiColor) ?? .secondary)
                                     tableCell(t.channelBefore.map(String.init) ?? "—")
@@ -427,7 +418,7 @@ public struct RoamingTestView: View {
 
     private func tableCell(_ text: String, mono: Bool = false, color: Color = .primary) -> some View {
         Text(text)
-            .font(mono ? .caption.monospacedDigit() : .caption)
+            .font(mono ? .caption.weight(.medium).monospacedDigit() : .caption)
             .foregroundColor(color)
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.vertical, 5)
@@ -454,7 +445,7 @@ private struct ChartCanvas: View {
     let bssidColors: [String: Color]
     var timeOffset: TimeInterval = 0
     var highlightedTime: TimeInterval?
-    var highlightedSample: RoamingChartSamplePoint?
+    var highlightedSamples: [RoamingChartHoverSample]
 
     var body: some View {
         Canvas { context, size in
@@ -536,23 +527,6 @@ private struct ChartCanvas: View {
             let clipRect = Path(CGRect(x: plotLeft, y: plotTop, width: plotWidth, height: plotHeight))
             context.clip(to: clipRect)
 
-            // Weak, visual-only area bridges are restricted to confirmed
-            // transition edges. Their flat height comes from a real sample.
-            for extensionArea in scene.signalAreaExtensions {
-                let x0 = xPos(extensionArea.start)
-                let x1 = xPos(extensionArea.end)
-                guard x1 > x0 else { continue }
-                let y = yPos(extensionArea.anchorRSSI)
-                var path = Path()
-                path.move(to: CGPoint(x: x0, y: y))
-                path.addLine(to: CGPoint(x: x1, y: y))
-                path.addLine(to: CGPoint(x: x1, y: plotBottom))
-                path.addLine(to: CGPoint(x: x0, y: plotBottom))
-                path.closeSubpath()
-                let color = bssidColors[extensionArea.bssid] ?? .blue
-                context.fill(path, with: .color(color.opacity(0.045)))
-            }
-
             for run in scene.signalRuns {
                 let color = bssidColors[run.bssid] ?? .blue
                 let points = run.points.compactMap { point -> CGPoint? in
@@ -585,15 +559,6 @@ private struct ChartCanvas: View {
                 context.stroke(dash, with: .color(.secondary.opacity(0.3)), style: .init(dash: [4, 4], dashPhase: 0))
             }
 
-            drawSignalConnectors(
-                scene.signalConnectors,
-                context: &context,
-                xPosition: xPos,
-                yPosition: yPos,
-                colorForBSSID: { bssidColors[$0] ?? .blue },
-                lineWidth: 2
-            )
-
             if let highlightedTime {
                 let displayedTime = floor(highlightedTime + timeOffset) - timeOffset
                 let x = xPos(timeOffset + max(0, min(totalSecs, displayedTime)))
@@ -603,12 +568,14 @@ private struct ChartCanvas: View {
                 context.stroke(hoverLine, with: .color(.primary.opacity(0.5)), style: .init(dash: [3, 3], dashPhase: 0))
             }
 
-            if let highlightedSample, let rssi = highlightedSample.sample.rssi {
-                let x = xPos(highlightedSample.elapsedTime)
+            for highlightedSample in highlightedSamples {
+                guard let rssi = highlightedSample.point.sample.rssi else { continue }
+                let x = xPos(highlightedSample.point.elapsedTime)
                 let y = yPos(rssi)
                 let pointRect = CGRect(x: x - 4, y: y - 4, width: 8, height: 8)
+                let color = bssidColors[highlightedSample.bssid] ?? .blue
                 context.fill(Path(ellipseIn: pointRect), with: .color(.white))
-                context.stroke(Path(ellipseIn: pointRect), with: .color(.accentColor), lineWidth: 2)
+                context.stroke(Path(ellipseIn: pointRect), with: .color(color), lineWidth: 2)
             }
         }
     }
@@ -631,11 +598,13 @@ private struct RoamingTimelineChart: View {
     @State private var overviewPlotWidth: CGFloat = 1
 
     private var activeHoverTime: TimeInterval? { hoveredDetailTime ?? overviewHoverTime }
+    private var highlightedSamples: [RoamingChartHoverSample] {
+        guard let hoverTime = activeHoverTime else { return [] }
+        return scene.hoverSamples(near: hoverTime)
+    }
+
     private var highlightedSample: RoamingChartSamplePoint? {
-        guard let hoverTime = activeHoverTime else { return nil }
-        return scene.samples.min { lhs, rhs in
-            abs(lhs.elapsedTime - hoverTime) < abs(rhs.elapsedTime - hoverTime)
-        }
+        highlightedSamples.first?.point
     }
 
     var body: some View {
@@ -732,11 +701,11 @@ private struct RoamingTimelineChart: View {
                     bssidColors: bssidColors,
                     timeOffset: dataStart,
                     highlightedTime: highlightedSample?.elapsedTime ?? activeHoverTime,
-                    highlightedSample: highlightedSample
+                    highlightedSamples: highlightedSamples
                 )
 
-                if let highlightedSample {
-                    detailValueBadge(sample: highlightedSample, plotWidth: plotWidth)
+                if !highlightedSamples.isEmpty {
+                    detailValueBadge(samples: highlightedSamples)
                 }
             }
             .contentShape(Rectangle())
@@ -756,21 +725,46 @@ private struct RoamingTimelineChart: View {
         .clipped())
     }
 
-    private func detailValueBadge(sample: RoamingChartSamplePoint, plotWidth: CGFloat) -> some View {
-        let timeText = timeFormatter.string(from: sample.elapsedTime) ?? "0:00"
-        return HStack(spacing: 8) {
+    @ViewBuilder
+    private func detailValueBadge(samples: [RoamingChartHoverSample]) -> some View {
+        let timeText = timeFormatter.string(from: samples[0].point.elapsedTime) ?? "0:00"
+        HStack(alignment: .center, spacing: 10) {
             Text(timeText)
-            Text(sample.sample.rssi.map { String(format: String(localized: "roaming.detail.rssi_fmt", comment: "Roaming detail RSSI badge"), $0) } ?? "—")
-            Text(sample.sample.channel.map { String(format: String(localized: "roaming.detail.channel_fmt", comment: "Roaming detail channel badge"), $0) } ?? "—")
-            Text(sample.sample.txRate.map { String(format: String(localized: "roaming.detail.tx_rate_fmt", comment: "Roaming detail Tx rate badge"), $0) } ?? "—")
-            if let latency = sample.sample.gatewayLatency {
-                Text(String(format: String(localized: "roaming.detail.rtt_fmt", comment: "Roaming detail RTT badge"), latency))
+                .font(.caption.weight(.medium).monospacedDigit())
+                .foregroundStyle(.secondary)
+
+            ForEach(Array(samples.enumerated()), id: \.element.point.sample.id) { index, item in
+                if index > 0 {
+                    Rectangle()
+                        .fill(.quaternary)
+                        .frame(width: 1, height: 28)
+                        .accessibilityHidden(true)
+                }
+
+                let color = bssidColors[item.bssid] ?? .blue
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.bssid)
+                        .font(.caption.weight(.medium).monospacedDigit())
+                        .foregroundStyle(color)
+
+                    HStack(spacing: 8) {
+                        Text(item.point.sample.rssi.map { String(format: String(localized: "roaming.detail.rssi_fmt", comment: "Roaming detail RSSI badge"), $0) } ?? "—")
+                            .font(.caption.weight(.semibold).monospacedDigit())
+                            .foregroundStyle(color)
+                        Text(item.point.sample.channel.map { String(format: String(localized: "roaming.detail.channel_fmt", comment: "Roaming detail channel badge"), $0) } ?? "—")
+                        Text(item.point.sample.txRate.map { String(format: String(localized: "roaming.detail.tx_rate_fmt", comment: "Roaming detail Tx rate badge"), $0) } ?? "—")
+                        if let latency = item.point.sample.gatewayLatency {
+                            Text(String(format: String(localized: "roaming.detail.rtt_fmt", comment: "Roaming detail RTT badge"), latency))
+                        }
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
             }
         }
-        .font(.caption.weight(.medium).monospacedDigit())
-        .foregroundColor(.primary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .glassBackground(.regular, in: Capsule())
         .padding(.leading, 12)
         .padding(.top, 6)
@@ -812,21 +806,6 @@ private struct OverviewCanvas: View {
 
             context.clip(to: Path(CGRect(origin: .zero, size: size)))
 
-            for extensionArea in scene.signalAreaExtensions {
-                let x0 = xPos(extensionArea.start)
-                let x1 = xPos(extensionArea.end)
-                guard x1 > x0 else { continue }
-                let y = yPos(extensionArea.anchorRSSI)
-                var path = Path()
-                path.move(to: CGPoint(x: x0, y: y))
-                path.addLine(to: CGPoint(x: x1, y: y))
-                path.addLine(to: CGPoint(x: x1, y: size.height))
-                path.addLine(to: CGPoint(x: x0, y: size.height))
-                path.closeSubpath()
-                let color = bssidColors[extensionArea.bssid] ?? .blue
-                context.fill(path, with: .color(color.opacity(0.045)))
-            }
-
             for run in scene.signalRuns {
                 let color = bssidColors[run.bssid] ?? .blue
                 let points = run.points.compactMap { point in
@@ -859,15 +838,6 @@ private struct OverviewCanvas: View {
                 line.addLine(to: CGPoint(x: x, y: size.height))
                 context.stroke(line, with: .color(.primary.opacity(0.15)), lineWidth: 0.5)
             }
-
-            drawSignalConnectors(
-                scene.signalConnectors,
-                context: &context,
-                xPosition: xPos,
-                yPosition: yPos,
-                colorForBSSID: { bssidColors[$0] ?? .blue },
-                lineWidth: 1
-            )
 
             if let highlightedTime {
                 let x = xPos(floor(highlightedTime))

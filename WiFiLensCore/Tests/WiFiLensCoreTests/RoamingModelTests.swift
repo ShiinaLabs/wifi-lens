@@ -288,7 +288,7 @@ struct RoamingSessionRecordTests {
         #expect(scene.regions.first?.bssid == "AP-2")
     }
 
-    @Test func importedSessionUsesConfirmedTransitionTimeForAdjacentRegionFills() throws {
+    @Test func importedSessionCollapsesConfirmedHandoffIntervalOnChartTimeline() throws {
         let t0 = Date(timeIntervalSince1970: 0)
         let t4 = t0.addingTimeInterval(4)
         let t6 = t0.addingTimeInterval(6)
@@ -325,10 +325,12 @@ struct RoamingSessionRecordTests {
             origin: t0
         )
 
-        #expect(scene.regions.map(\.start) == [0, 6])
-        #expect(scene.regions.map(\.end) == [6, 10])
+        #expect(scene.regions.map(\.start) == [0, 4])
+        #expect(scene.regions.map(\.end) == [4, 8])
         #expect(scene.regions[0].end == scene.regions[1].start)
-        #expect(scene.transitions.map(\.elapsedTime) == [6])
+        #expect(scene.transitions.map(\.elapsedTime) == [4])
+        #expect(scene.signalRuns.map { $0.points.map(\.elapsedTime) } == [[0, 4], [6, 8]])
+        #expect(scene.samples.count == 4)
         #expect(imported.segments[0].endTime == t4)
         #expect(imported.segments[1].startTime == t7)
         #expect(imported.segments[0].rssiRuns.flatMap { $0.map(\.timestamp) } == [t0, t4])
@@ -381,7 +383,6 @@ struct RoamingChartSceneTests {
         #expect(scene.regions.map(\.end) == [2, 10])
         #expect(scene.gaps == [RoamingChartGap(start: 2, end: 8, previousSegmentIndex: 0, nextSegmentIndex: 1)])
         #expect(scene.transitions.isEmpty)
-        #expect(scene.signalAreaExtensions.isEmpty)
     }
 
     @Test func repeatedBSSIDTransitionsAreConsumedOnceAndMatchAdjacentSegments() {
@@ -429,32 +430,45 @@ struct RoamingChartSceneTests {
             origin: date(0)
         )
 
-        #expect(scene.regions.map(\.start) == [0, 6])
-        #expect(scene.regions.map(\.end) == [6, 10])
-        #expect(scene.transitions.map(\.elapsedTime) == [6])
-        #expect(scene.signalRuns.map { $0.points.map(\.elapsedTime) } == [[0, 4], [8, 10]])
-        #expect(scene.signalAreaExtensions == [
-            RoamingSignalAreaExtension(segmentIndex: 0, eventIndex: 0, bssid: "AP-A", start: 4, end: 6, anchorRSSI: -60),
-            RoamingSignalAreaExtension(segmentIndex: 1, eventIndex: 0, bssid: "AP-B", start: 6, end: 8, anchorRSSI: -50),
-        ])
-        #expect(scene.signalConnectors == [
-            RoamingSignalTransitionConnector(
-                eventIndex: 0,
-                fromSegmentIndex: 0,
-                toSegmentIndex: 1,
-                fromBSSID: "AP-A",
-                toBSSID: "AP-B",
-                previousSampleTime: 4,
-                transitionTime: 6,
-                nextSampleTime: 8,
-                previousRSSI: -60,
-                nextRSSI: -50
-            ),
-        ])
+        #expect(scene.regions.map(\.start) == [0, 4])
+        #expect(scene.regions.map(\.end) == [4, 8])
+        #expect(scene.transitions.map(\.elapsedTime) == [4])
+        #expect(scene.signalRuns.map { $0.points.map(\.elapsedTime) } == [[0, 4], [6, 8]])
+        #expect(scene.signalRuns[0].points.last?.elapsedTime == 4)
+        #expect(scene.signalRuns[1].points.first?.elapsedTime == 6)
+        #expect(scene.transitions.first?.elapsedTime == 4)
+        #expect(scene.regions[0].end == scene.regions[1].start)
+        #expect(scene.duration == 8)
         #expect(segments[0].samples.map(\.timestamp) == [date(0), date(4)])
         #expect(segments[1].samples.map(\.timestamp) == [date(8), date(10)])
-        #expect(scene.samples.map(\.elapsedTime) == [0, 4, 8, 10])
+        #expect(scene.samples.map(\.elapsedTime) == [0, 4, 6, 8])
+        #expect(scene.samples.count == 4)
         #expect(scene.gaps.isEmpty)
+    }
+
+    @Test func hoverAtCollapsedHandoffHighlightsBothRealRSSIPoints() {
+        let segments = [
+            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(6), samples: [
+                RoamingSample(timestamp: date(4), rssi: -75, channel: 40, txRate: 204),
+            ]),
+            RoamingSegment(bssid: "AP-B", startTime: date(6), endTime: date(8), samples: [
+                RoamingSample(timestamp: date(6), rssi: -55, channel: 40, txRate: 1441),
+            ]),
+        ]
+        let scene = RoamingChartScene(
+            segments: segments,
+            transitions: [transition(6, from: "AP-A", to: "AP-B")],
+            duration: 8,
+            origin: date(0)
+        )
+
+        let handoffSamples = scene.hoverSamples(near: scene.transitions[0].elapsedTime)
+
+        #expect(handoffSamples.count == 2)
+        #expect(handoffSamples.map(\.point.elapsedTime) == [4, 4])
+        #expect(Set(handoffSamples.compactMap(\.point.sample.rssi)) == Set([-75, -55]))
+        #expect(Set(handoffSamples.map(\.bssid)) == Set(["AP-A", "AP-B"]))
+        #expect(handoffSamples.allSatisfy { $0.point.sample.channel == 40 })
     }
 
     @Test func noRSSIStillProducesOwnershipRegionWithoutSignalRuns() {
@@ -468,7 +482,6 @@ struct RoamingChartSceneTests {
         #expect(scene.regions.map(\.end) == [5])
         #expect(segment.rssiRuns.isEmpty)
         #expect(scene.signalRuns.isEmpty)
-        #expect(scene.signalAreaExtensions.isEmpty)
     }
 
     @Test func timestampsWithTheSameDisplayedSecondShareOneHorizontalTime() {
@@ -526,7 +539,7 @@ struct RoamingChartSceneTests {
             origin: date(0)
         )
         #expect(scene.transitions.isEmpty)
-        #expect(scene.signalConnectors.isEmpty)
+        #expect(scene.regions.map(\.start) == [0, 8])
         #expect(scene.regions.map(\.end) == [3, 10])
         #expect(scene.gaps.contains(RoamingChartGap(start: 3, end: 8, previousSegmentIndex: 0, nextSegmentIndex: 1)))
     }
@@ -548,7 +561,7 @@ struct RoamingChartSceneTests {
         )
 
         #expect(scene.transitions.count == 1)
-        #expect(scene.signalConnectors.isEmpty)
+        #expect(scene.regions[0].end == scene.regions[1].start)
     }
 
     @Test func realRecordBoundaryUsesOnePixelXForTransitionAndNewAPSample() {
@@ -569,14 +582,14 @@ struct RoamingChartSceneTests {
             duration: transitionTime.timeIntervalSince(origin),
             origin: origin
         )
-        let connector = scene.signalConnectors.first
+        let oldEndpoint = scene.signalRuns[0].points.last
+        let newEndpoint = scene.signalRuns[1].points.first
 
-        #expect(connector?.previousRSSI == -75)
-        #expect(connector?.nextRSSI == -55)
-        #expect(connector?.previousSampleTime == 60)
-        #expect(connector?.transitionTime == 61)
-        #expect(connector?.nextSampleTime == 61)
-        #expect(scene.transitions.first?.elapsedTime == connector?.transitionTime)
+        #expect(oldEndpoint?.sample.rssi == -75)
+        #expect(newEndpoint?.sample.rssi == -55)
+        #expect(oldEndpoint?.elapsedTime == 60)
+        #expect(scene.transitions.first?.elapsedTime == 60)
+        #expect(newEndpoint?.elapsedTime == 60)
 
         let scale = RoamingChartTimeScale(origin: origin)
         let transitionX = scale.xPosition(
