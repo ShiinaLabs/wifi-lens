@@ -31,6 +31,28 @@ extension NetworkDiagnosticsTests {
         #expect(viewModel.executionPhases.values.allSatisfy { $0 == .completed })
     }
 
+    @Test("diagnostics completion carries only its current window owner")
+    @MainActor
+    func diagnosticsCompletionCarriesWindowOwner() async {
+        var owners: [UUID?] = []
+        let owner = UUID()
+        let viewModel = NetworkDiagnosticsViewModel(
+            checks: makeStubChecks(recorder: DiagnosticTestRecorder()),
+            fingerprintMonitor: DisabledNetworkFingerprintMonitor(),
+            onDiagnosticsCompletedWithOwner: { owners.append($0) }
+        )
+        viewModel.setGuidanceOwnerWindowID(owner)
+
+        #expect(viewModel.start())
+        await viewModel.waitForCompletion()
+        #expect(owners == [owner])
+
+        viewModel.setGuidanceOwnerWindowID(nil)
+        #expect(viewModel.start())
+        await viewModel.waitForCompletion()
+        #expect(owners == [owner, nil])
+    }
+
     @Test("fingerprint observation timeout does not wait for a cancellation-ignoring monitor")
     @MainActor
     func fingerprintObservationTimeoutIsBounded() async {

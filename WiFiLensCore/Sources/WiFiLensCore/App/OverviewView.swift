@@ -32,19 +32,22 @@ public struct OverviewView: View {
     private let guidance: GuidanceCoordinator?
     private let isInvitationHostActive: Bool
     private let hostWindow: NSWindow?
+    private let invitationOwnerWindowID: UUID?
 
     public init(
         viewModel: ScannerViewModel,
         store: WiFiObservationStore = .shared,
         guidance: GuidanceCoordinator? = nil,
         isInvitationHostActive: Bool = true,
-        hostWindow: NSWindow? = nil
+        hostWindow: NSWindow? = nil,
+        invitationOwnerWindowID: UUID? = nil
     ) {
         self.viewModel = viewModel
         _store = ObservedObject(wrappedValue: store)
         self.guidance = guidance
         self.isInvitationHostActive = isInvitationHostActive
         self.hostWindow = hostWindow
+        self.invitationOwnerWindowID = invitationOwnerWindowID
     }
 
     private var verifiedWiFiStatus: WiFiCurrentStatus? {
@@ -143,13 +146,17 @@ public struct OverviewView: View {
                                     guidance: guidance,
                                     isHostVisible: isInvitationHostActive,
                                     isInVisibleArea: invitationInVisibleArea,
-                                    hostWindow: hostWindow
+                                    hostWindow: hostWindow,
+                                    ownerWindowID: invitationOwnerWindowID
                                 )
                                 .onAppear { renderedInvitationID = invitation.id }
                                 .onDisappear {
                                     if let id = renderedInvitationID {
                                         renderedInvitationID = nil
-                                        guidance.endInvitationPresentation(id: id)
+                                        guidance.endInvitationPresentation(
+                                            id: id,
+                                            ownerWindowID: invitationOwnerWindowID
+                                        )
                                     }
                                 }
                                 .background {

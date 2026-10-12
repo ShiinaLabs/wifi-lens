@@ -158,6 +158,8 @@ public final class NetworkDiagnosticsViewModel {
     @ObservationIgnored private let clock: any DiagnosticClock
     @ObservationIgnored private let usesProductionChecks: Bool
     @ObservationIgnored private let onDiagnosticsCompleted: @MainActor () -> Void
+    @ObservationIgnored private let onDiagnosticsCompletedWithOwner: (@MainActor (UUID?) -> Void)?
+    @ObservationIgnored private var guidanceOwnerWindowID: UUID?
     @ObservationIgnored private var activeTask: Task<Void, Never>?
     @ObservationIgnored private var runGeneration: UInt64 = 0
     @ObservationIgnored private var logSessionID: UUID?
@@ -176,7 +178,24 @@ public final class NetworkDiagnosticsViewModel {
             contextSource: SystemDiagnosticNetworkContextSource(),
             diagnosticGatewayMeasuring: GatewayLatencyProvider(),
             clock: ContinuousDiagnosticClock(),
-            onDiagnosticsCompleted: onDiagnosticsCompleted
+            onDiagnosticsCompleted: onDiagnosticsCompleted,
+            onDiagnosticsCompletedWithOwner: nil
+        )
+    }
+
+    public convenience init(
+        onDiagnosticsCompletedWithOwner: @escaping @MainActor (UUID?) -> Void
+    ) {
+        self.init(
+            checks: nil,
+            fingerprintMonitor: SystemNetworkFingerprintMonitor(
+                routeStateSource: SystemNetworkFingerprintRouteStateSource()
+            ),
+            contextSource: SystemDiagnosticNetworkContextSource(),
+            diagnosticGatewayMeasuring: GatewayLatencyProvider(),
+            clock: ContinuousDiagnosticClock(),
+            onDiagnosticsCompleted: {},
+            onDiagnosticsCompletedWithOwner: onDiagnosticsCompletedWithOwner
         )
     }
 
@@ -188,7 +207,8 @@ public final class NetworkDiagnosticsViewModel {
     contextSource: any DiagnosticNetworkContextSourcing = SystemDiagnosticNetworkContextSource(),
     diagnosticGatewayMeasuring: any DiagnosticGatewayMeasuring = GatewayLatencyProvider(),
     clock: any DiagnosticClock = ContinuousDiagnosticClock(),
-    onDiagnosticsCompleted: @escaping @MainActor () -> Void = {}
+    onDiagnosticsCompleted: @escaping @MainActor () -> Void = {},
+    onDiagnosticsCompletedWithOwner: (@MainActor (UUID?) -> Void)? = nil
     ) {
         let productionChecks = checks == nil
         let configuredChecks = checks ?? Self.defaultChecks()
@@ -199,10 +219,15 @@ public final class NetworkDiagnosticsViewModel {
         self.clock = clock
         self.usesProductionChecks = productionChecks
         self.onDiagnosticsCompleted = onDiagnosticsCompleted
+        self.onDiagnosticsCompletedWithOwner = onDiagnosticsCompletedWithOwner
         self.checkIDs = configuredChecks.map(\.id)
         self.executionPhases = Dictionary(
             uniqueKeysWithValues: configuredChecks.map { ($0.id, .waiting) }
         )
+    }
+
+    public func setGuidanceOwnerWindowID(_ ownerWindowID: UUID?) {
+        guidanceOwnerWindowID = ownerWindowID
     }
 
     private static func defaultChecks() -> [any DiagnosticCheck] {
@@ -657,7 +682,11 @@ public final class NetworkDiagnosticsViewModel {
             pendingIDs: outcome.pendingIDs
         )
         if outcome.endReason == .completed, conclusion != nil {
-            onDiagnosticsCompleted()
+            if let onDiagnosticsCompletedWithOwner {
+                onDiagnosticsCompletedWithOwner(guidanceOwnerWindowID)
+            } else {
+                onDiagnosticsCompleted()
+            }
         }
     }
 }

@@ -9,7 +9,11 @@ public enum ExportService {
 
     // MARK: - Image Export
 
-    public static func exportImage(viewModel: ScannerViewModel, configuration: WiFiLensEditionConfiguration) {
+    public static func exportImage(
+        viewModel: ScannerViewModel,
+        configuration: WiFiLensEditionConfiguration,
+        invitationOwnerWindowID: UUID? = nil
+    ) {
         let bands = viewModel.bandViewModels.filter { !viewModel.hiddenBands.contains($0.band.id) }
         guard !bands.isEmpty else {
             showError(String(localized: "export.error.no_visible_bands", comment: "No visible bands to export"))
@@ -81,9 +85,14 @@ public enum ExportService {
                         // eligibility only.
                         switch configuration.exportSuccessPresentation {
                         case .banner:
-                            configuration.guidanceCoordinator.handleExportSucceeded()
+                            configuration.guidanceCoordinator.handleExportSucceeded(
+                                ownerWindowID: invitationOwnerWindowID
+                            )
                         case .preserveExisting:
-                            configuration.guidanceCoordinator.record(.exportSucceeded)
+                            configuration.guidanceCoordinator.record(
+                                .exportSucceeded,
+                                ownerWindowID: invitationOwnerWindowID
+                            )
                             showSuccess(String(localized: "export.image_saved_message", comment: "Chart image exported successfully"))
                         }
                     }

@@ -64,9 +64,15 @@ private struct AppRootView: View {
     @State private var hostWindow: NSWindow?
     @State private var sidebarVisibility = NavigationSplitViewVisibility.automatic
     @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
-    @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel {
-        EditionAssemblyProvider.configuration.guidanceCoordinator.record(.diagnosticsCompleted)
-    }
+    @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel(
+        onDiagnosticsCompletedWithOwner: { ownerWindowID in
+            EditionAssemblyProvider.configuration.guidanceCoordinator.record(
+                .diagnosticsCompleted,
+                ownerWindowID: ownerWindowID,
+                invitationHostEligible: ownerWindowID != nil
+            )
+        }
+    )
 
     private var selectedPage: SidebarPage { sceneState.selectedPage }
 
@@ -120,10 +126,10 @@ private struct AppRootView: View {
     }
 
     private func handleSelectedPageChange(_ newPage: SidebarPage) {
-        if newPage != .overview {
-            EditionAssemblyProvider.configuration.guidanceCoordinator
-                .cancelUnpresentedReturnInvitation(hostID: sceneState.id)
-        }
+        networkDiagnosticsViewModel.setGuidanceOwnerWindowID(
+            newPage == .networkDiagnostics ? sceneState.id : nil
+        )
+        EditionAssemblyProvider.configuration.guidanceCoordinator.endInvitation(forHostID: sceneState.id)
         updateMainWindowRoute(sceneState.id, newPage)
     }
 
@@ -189,7 +195,8 @@ private struct AppRootView: View {
                         guidance: EditionAssemblyProvider.configuration.guidanceConfiguration.localMarketingPolicyEnabled
                             ? EditionAssemblyProvider.configuration.guidanceCoordinator : nil,
                         isInvitationHostActive: selectedPage == .overview && hostWindow?.isKeyWindow == true,
-                        hostWindow: hostWindow
+                        hostWindow: hostWindow,
+                        invitationOwnerWindowID: sceneState.id
                     )
                         .opacity(selectedPage == .overview ? 1 : 0)
                         .allowsHitTesting(selectedPage == .overview)
@@ -235,7 +242,8 @@ private struct AppRootView: View {
                         viewModel: networkDiagnosticsViewModel,
                         guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
                         isInvitationHostActive: selectedPage == .networkDiagnostics && hostWindow?.isKeyWindow == true,
-                        hostWindow: hostWindow
+                        hostWindow: hostWindow,
+                        ownerWindowID: sceneState.id
                     )
                         .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
                         .allowsHitTesting(selectedPage == .networkDiagnostics)
@@ -305,7 +313,8 @@ private struct AppRootView: View {
                         ExportSuccessBanner(
                             guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
                             isInvitationHostActive: hostWindow?.isKeyWindow == true,
-                            hostWindow: hostWindow
+                            hostWindow: hostWindow,
+                            ownerWindowID: sceneState.id
                         )
                     }
                 }
@@ -1467,9 +1476,12 @@ struct WiFiLensApp: App {
                 )
             },
             onActivate: { windowID in
+                EditionAssemblyProvider.configuration.guidanceCoordinator
+                    .endInvitationOwnedByOtherHost(activeHostID: windowID)
                 EditionAssemblyProvider.configuration.shellHooks.mainWindowDidBecomeActive(windowID)
             },
             onClose: { windowID in
+                EditionAssemblyProvider.configuration.guidanceCoordinator.closeInvitationHost(forHostID: windowID)
                 routeResources.release(windowID: windowID)
                 EditionAssemblyProvider.configuration.shellHooks.mainWindowWillClose(windowID)
                 handleMainWindowWillClose()
@@ -1539,7 +1551,14 @@ struct WiFiLensApp: App {
 
     @MainActor
     private func exportSnapshotImage() {
-        ExportService.exportImage(viewModel: viewModel, configuration: EditionAssemblyProvider.configuration)
+        let ownerWindowID = mainWindowLifecycle.activeWindow.flatMap {
+            mainWindowLifecycle.sceneState(for: $0)?.id
+        }
+        ExportService.exportImage(
+            viewModel: viewModel,
+            configuration: EditionAssemblyProvider.configuration,
+            invitationOwnerWindowID: ownerWindowID
+        )
     }
 
     @MainActor

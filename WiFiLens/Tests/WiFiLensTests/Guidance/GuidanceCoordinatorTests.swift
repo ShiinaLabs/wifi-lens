@@ -182,6 +182,167 @@ final class GuidanceCoordinatorTests {
         #expect(events(named: "guidance.invitation.cancelled").isEmpty)
     }
 
+    @Test func endingPresentedInvitationForOwningWindowRecordsLaterOnce() {
+        let owner = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+        let invitation = coordinator.pendingInvitation!
+        coordinator.invitationPresented(id: invitation.id, ownerWindowID: owner)
+
+        coordinator.endInvitation(forHostID: owner)
+        coordinator.endInvitation(forHostID: owner)
+
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationPresentationCount == 1)
+        #expect(store.load().invitationDismissalCount == 1)
+        #expect(store.load().lastInvitationDate == now)
+        #expect(store.load().lastInvitationLaterDate == now)
+        #expect(events(named: "guidance.invitation.dismissed").count == 1)
+    }
+
+    @Test(arguments: [false, true])
+    func hostEndAfterUserChoiceDoesNotApplyChoiceTwice(openedPro: Bool) {
+        let owner = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+        let invitation = coordinator.pendingInvitation!
+
+        if openedPro {
+            coordinator.openInvitation(id: invitation.id, ownerWindowID: owner)
+        } else {
+            coordinator.dismissInvitation(id: invitation.id, ownerWindowID: owner)
+        }
+        coordinator.endInvitation(forHostID: owner)
+
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationDismissalCount == (openedPro ? 0 : 1))
+        #expect(events(named: "guidance.invitation.dismissed").count == (openedPro ? 0 : 1))
+        #expect(events(named: "guidance.invitation.view_selected").count == (openedPro ? 1 : 0))
+    }
+
+    @Test func endingUnseenInvitationForOwningWindowDoesNotRecordShowOrCooldown() {
+        let owner = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse, ownerWindowID: owner)
+        let invitation = coordinator.pendingInvitation!
+
+        coordinator.endInvitation(forHostID: owner)
+
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationPresentationCount == 0)
+        #expect(store.load().invitationDismissalCount == 0)
+        #expect(store.load().lastInvitationDate == nil)
+        #expect(store.load().lastInvitationLaterDate == nil)
+        #expect(events(named: "guidance.invitation.cancelled").map(\.tokenID) == [invitation.id])
+    }
+
+    @Test func nonOwningWindowCannotConfirmDismissOpenOrEndInvitation() {
+        let owner = UUID()
+        let otherWindow = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+        let invitation = coordinator.pendingInvitation!
+
+        coordinator.invitationPresented(id: invitation.id, ownerWindowID: otherWindow)
+        coordinator.dismissInvitation(id: invitation.id, ownerWindowID: otherWindow)
+        coordinator.openInvitation(id: invitation.id, ownerWindowID: otherWindow)
+        coordinator.endInvitationPresentation(id: invitation.id, ownerWindowID: otherWindow)
+        coordinator.endInvitation(forHostID: otherWindow)
+
+        #expect(coordinator.pendingInvitation?.id == invitation.id)
+        #expect(store.load().invitationPresentationCount == 0)
+        #expect(store.load().invitationDismissalCount == 0)
+        #expect(store.load().lastPurchaseExplorationDate == nil)
+
+        coordinator.endInvitation(forHostID: owner)
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationDismissalCount == 0)
+    }
+
+    @Test func activatingDifferentWindowEndsOldOwnerInvitationWithoutStaleSlot() {
+        let owner = UUID()
+        let activeWindow = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+        let invitation = coordinator.pendingInvitation!
+        coordinator.invitationPresented(id: invitation.id, ownerWindowID: owner)
+
+        coordinator.endInvitationOwnedByOtherHost(activeHostID: activeWindow)
+
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationDismissalCount == 1)
+        #expect(events(named: "guidance.invitation.dismissed").count == 1)
+        coordinator.endInvitationOwnedByOtherHost(activeHostID: activeWindow)
+        #expect(store.load().invitationDismissalCount == 1)
+    }
+
+    @Test func closingOwnerWindowClearsInvitationAndExportFeedback() {
+        let owner = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        coordinator.handleExportSucceeded(ownerWindowID: owner)
+        let invitation = coordinator.pendingInvitation!
+        coordinator.invitationPresented(id: invitation.id, ownerWindowID: owner)
+
+        coordinator.closeInvitationHost(forHostID: owner)
+
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(coordinator.exportFeedback == nil)
+        #expect(store.load().invitationDismissalCount == 1)
+        coordinator.closeInvitationHost(forHostID: owner)
+        #expect(store.load().invitationDismissalCount == 1)
+    }
+
+    @Test func inactiveOrClosedWindowCannotScheduleLateInvitation() {
+        let owner = UUID()
+        let otherWindow = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+
+        coordinator.endInvitationOwnedByOtherHost(activeHostID: otherWindow)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+                == .none(.invitationHostInactive))
+        #expect(coordinator.pendingInvitation == nil)
+
+        coordinator.closeInvitationHost(forHostID: owner)
+        #expect(coordinator.recordAndReturnDecision(.exportSucceeded, ownerWindowID: owner)
+                == .none(.invitationHostInactive))
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(coordinator.exportFeedback == nil)
+    }
+
+    @Test(arguments: [GuidanceValueMoment.diagnosticsCompleted, .exportSucceeded])
+    func endedReturnInvitationDoesNotBlockOwnedDiagnosticOrExportInvitation(_ moment: GuidanceValueMoment) {
+        let owner = UUID()
+        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse, ownerWindowID: owner)
+        coordinator.endInvitation(forHostID: owner)
+
+        #expect(coordinator.recordAndReturnDecision(moment, ownerWindowID: owner) == .showProInvitation)
+        #expect(coordinator.pendingInvitation?.moment == moment)
+        #expect(coordinator.pendingInvitation?.ownerWindowID == owner)
+    }
+
+    @Test func historicalPermanentInvitationDisableStillBlocksLifecycleScheduling() {
+        let owner = UUID()
+        let coordinator = makeCoordinator(state: invitationState(invitationsDisabled: true))
+
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+                == .none(.invitationsDisabledByUser))
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationsDisabled)
+    }
+
+    @Test func disabledMarketingConfigurationKeepsSharedLifecycleInvitationInert() {
+        var configuration = invitationConfig()
+        configuration.localMarketingPolicyEnabled = false
+        configuration.invitationEnabled = false
+        let coordinator = makeCoordinator(configuration: configuration, state: invitationState())
+
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: UUID())
+                == .none(.editionInvitationDisabled))
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationPresentationCount == 0)
+    }
+
     // MARK: - Pending gates
 
     @Test func pendingInvitationBlocksNewInvitationScheduling() {
@@ -580,14 +741,14 @@ final class GuidanceCoordinatorTests {
             coordinator.recordForegroundUsageTick(isEligible: true)
         }
         let first = coordinator.pendingInvitation!
-        coordinator.cancelUnpresentedReturnInvitation()
+        coordinator.endInvitationPresentation(id: first.id)
         #expect(store.load().invitationPresentationCount == 0)
         #expect(store.load().lastInvitationDate == nil)
 
         coordinator.recordForegroundUsageTick(isEligible: true)
         let retry = coordinator.pendingInvitation!
         #expect(retry.id != first.id)
-        coordinator.cancelUnpresentedReturnInvitation()
+        coordinator.endInvitationPresentation(id: retry.id)
         coordinator.recordForegroundUsageTick(isEligible: true)
 
         #expect(coordinator.pendingInvitation == nil)
@@ -610,19 +771,20 @@ final class GuidanceCoordinatorTests {
         }
         let invitationID = coordinator.pendingInvitation?.id
 
-        coordinator.cancelUnpresentedReturnInvitation(hostID: UUID())
+        coordinator.endInvitation(forHostID: UUID())
         #expect(coordinator.pendingInvitation?.id == invitationID)
-        coordinator.cancelUnpresentedReturnInvitation(hostID: owner)
+        coordinator.endInvitation(forHostID: owner)
         #expect(coordinator.pendingInvitation == nil)
     }
 
     @Test func leavingOverviewReleasesUnpresentedReturnInvitationSlot() {
         let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
-        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse)
+        let owner = UUID()
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse, ownerWindowID: owner)
         let returnID = coordinator.pendingInvitation!.id
-        coordinator.cancelUnpresentedReturnInvitation()
+        coordinator.endInvitation(forHostID: owner)
         #expect(coordinator.pendingInvitation == nil)
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner) == .showProInvitation)
         coordinator.invitationPresented(id: returnID)
         #expect(store.load().invitationPresentationCount == 0)
     }
@@ -630,10 +792,11 @@ final class GuidanceCoordinatorTests {
     @Test(arguments: [GuidanceValueMoment.diagnosticsCompleted, .exportSucceeded])
     func unseenReturnInvitationDoesNotBlockHigherPriorityEntry(_ moment: GuidanceValueMoment) {
         let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
-        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse)
+        let owner = UUID()
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse, ownerWindowID: owner)
         let returnID = coordinator.pendingInvitation!.id
 
-        #expect(coordinator.recordAndReturnDecision(moment) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(moment, ownerWindowID: owner) == .showProInvitation)
         #expect(coordinator.pendingInvitation?.moment == moment)
         coordinator.invitationPresented(id: returnID)
         #expect(store.load().invitationPresentationCount == 0)

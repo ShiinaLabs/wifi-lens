@@ -11,19 +11,22 @@ struct ProInvitationCard: View {
     var isHostVisible = true
     var isInVisibleArea = true
     var hostWindow: NSWindow?
+    var ownerWindowID: UUID?
 
     public init(
         invitation: GuidanceCoordinator.InvitationPresentation,
         guidance: GuidanceCoordinator,
         isHostVisible: Bool = true,
         isInVisibleArea: Bool = true,
-        hostWindow: NSWindow? = nil
+        hostWindow: NSWindow? = nil,
+        ownerWindowID: UUID? = nil
     ) {
         self.invitation = invitation
         self.guidance = guidance
         self.isHostVisible = isHostVisible
         self.isInVisibleArea = isInVisibleArea
         self.hostWindow = hostWindow
+        self.ownerWindowID = ownerWindowID ?? invitation.ownerWindowID
     }
 
     public var body: some View {
@@ -50,13 +53,15 @@ struct ProInvitationCard: View {
                     Text(String(localized: "guidance.invitation.view_pro", comment: "Open the Pro product page in the App Store"))
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(!isOwnerWindow)
                 .accessibilityIdentifier("guidance-invitation-view-pro")
 
                 Button {
-                    guidance.dismissInvitation(id: invitation.id)
+                    guidance.dismissInvitation(id: invitation.id, ownerWindowID: ownerWindowID)
                 } label: {
                     Text(String(localized: "guidance.invitation.later", comment: "Dismiss the invitation for now"))
                 }
+                .disabled(!isOwnerWindow)
                 .accessibilityIdentifier("guidance-invitation-later")
 
             }
@@ -67,7 +72,7 @@ struct ProInvitationCard: View {
         .task(id: isHostVisible && isInVisibleArea) {
             while !Task.isCancelled {
                 if isActuallyVisible && isInVisibleArea {
-                    guidance.invitationPresented(id: invitation.id)
+                    guidance.invitationPresented(id: invitation.id, ownerWindowID: ownerWindowID)
                     return
                 }
                 try? await Task.sleep(for: .seconds(1))
@@ -80,7 +85,7 @@ struct ProInvitationCard: View {
               NSWorkspace.shared.open(url) else {
             return
         }
-        guidance.openInvitation(id: invitation.id)
+        guidance.openInvitation(id: invitation.id, ownerWindowID: ownerWindowID)
     }
 
     /// Testable copy selection. The card renders copy for whatever moment it is
@@ -98,7 +103,8 @@ struct ProInvitationCard: View {
     }
 
     private var isActuallyVisible: Bool {
-        guard isHostVisible,
+        guard isOwnerWindow,
+              isHostVisible,
               NSApp.isActive,
               let hostWindow,
               hostWindow.isKeyWindow,
@@ -106,6 +112,10 @@ struct ProInvitationCard: View {
               !hostWindow.isMiniaturized,
               hostWindow.attachedSheet == nil else { return false }
         return true
+    }
+
+    private var isOwnerWindow: Bool {
+        invitation.ownerWindowID == ownerWindowID
     }
 }
 

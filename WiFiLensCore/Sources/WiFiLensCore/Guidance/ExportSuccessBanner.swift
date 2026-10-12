@@ -10,15 +10,18 @@ public struct ExportSuccessBanner: View {
     let guidance: GuidanceCoordinator
     let isInvitationHostActive: Bool
     let hostWindow: NSWindow?
+    let ownerWindowID: UUID?
 
     public init(
         guidance: GuidanceCoordinator,
         isInvitationHostActive: Bool = true,
-        hostWindow: NSWindow? = nil
+        hostWindow: NSWindow? = nil,
+        ownerWindowID: UUID? = nil
     ) {
         self.guidance = guidance
         self.isInvitationHostActive = isInvitationHostActive
         self.hostWindow = hostWindow
+        self.ownerWindowID = ownerWindowID
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -26,7 +29,7 @@ public struct ExportSuccessBanner: View {
     @State private var renderedInvitationID: UUID?
 
     public var body: some View {
-        if guidance.exportFeedback != nil {
+        if guidance.exportFeedback?.ownerWindowID == ownerWindowID {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Label {
@@ -38,7 +41,7 @@ public struct ExportSuccessBanner: View {
                     }
                     Spacer()
                     Button {
-                        guidance.dismissExportFeedback()
+                        guidance.dismissExportFeedback(ownerWindowID: ownerWindowID)
                     } label: {
                         Image(systemName: "xmark")
                             .font(.body.weight(.semibold))
@@ -52,7 +55,8 @@ public struct ExportSuccessBanner: View {
                         invitation: invitation,
                         guidance: guidance,
                         isHostVisible: isInvitationHostActive,
-                        hostWindow: hostWindow
+                        hostWindow: hostWindow,
+                        ownerWindowID: ownerWindowID
                     )
                         .onAppear { renderedInvitationID = invitation.id }
                 }
@@ -71,7 +75,7 @@ public struct ExportSuccessBanner: View {
             .onDisappear {
                 if let id = renderedInvitationID {
                     renderedInvitationID = nil
-                    guidance.endInvitationPresentation(id: id)
+                    guidance.endInvitationPresentation(id: id, ownerWindowID: ownerWindowID)
                 }
             }
             .accessibilityIdentifier("export-success-banner")

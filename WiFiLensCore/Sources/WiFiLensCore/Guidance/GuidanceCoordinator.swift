@@ -24,6 +24,7 @@ public final class GuidanceCoordinator {
         public let moment: GuidanceValueMoment
         public let scheduledAt: Date
         let acceleratedFollowUpExplorationDate: Date?
+        let ownerWindowID: UUID?
     }
 
     public struct ReviewRequestPresentation: Equatable, Identifiable, Sendable {
@@ -34,6 +35,7 @@ public final class GuidanceCoordinator {
 
     struct ExportFeedback: Equatable {
         public let occurredAt: Date
+        let ownerWindowID: UUID?
     }
 
     private(set) var pendingInvitation: InvitationPresentation?
@@ -59,9 +61,10 @@ public final class GuidanceCoordinator {
     private var lastPresentedInvitationUsageDay: Date?
     private var lastReturnEvaluationDate: Date?
     private var lastReturnCancellationRetryDate: Date?
-    private var returnInvitationHostID: UUID?
     private var lastEligibleForegroundTick: Date?
     private var eligibleForegroundSeconds: TimeInterval = 0
+    private var activeHostWindowID: UUID?
+    private var closedHostWindowIDs: Set<UUID> = []
 
     public convenience init(
         configuration: GuidanceConfiguration,
@@ -115,23 +118,35 @@ public final class GuidanceCoordinator {
 
     // MARK: - Recording
 
-    public func record(_ moment: GuidanceValueMoment) {
-        _ = recordAndReturnDecision(moment)
+    public func record(
+        _ moment: GuidanceValueMoment,
+        ownerWindowID: UUID? = nil,
+        invitationHostEligible: Bool = true
+    ) {
+        _ = recordAndReturnDecision(
+            moment,
+            ownerWindowID: ownerWindowID,
+            invitationHostEligible: invitationHostEligible
+        )
     }
 
     @discardableResult
-    func recordAndReturnDecision(_ moment: GuidanceValueMoment) -> GuidanceDecision {
+    func recordAndReturnDecision(
+        _ moment: GuidanceValueMoment,
+        ownerWindowID: UUID? = nil,
+        invitationHostEligible: Bool = true
+    ) -> GuidanceDecision {
         var state = stateStore.load()
 
         if moment == .diagnosticsCompleted || moment == .exportSucceeded,
            let invitation = pendingInvitation,
            invitation.moment == .appReturnedAfterUse,
+           invitation.ownerWindowID == ownerWindowID,
            !confirmedPresentedInvitationIDs.contains(invitation.id) {
             // A passive return prompt may wait below the Overview viewport. A
             // completed diagnostic/export has higher priority and must not be
             // blocked by a prompt the user has not actually seen.
             pendingInvitation = nil
-            returnInvitationHostID = nil
         }
 
         switch moment {
@@ -154,7 +169,7 @@ public final class GuidanceCoordinator {
         } else if canReview, pendingReviewRequest != nil {
             decision = .none(.reviewRequestPending)
         } else {
-            decision = GuidancePolicy.decide(
+            let policyDecision = GuidancePolicy.decide(
                 for: moment,
                 state: state,
                 config: configuration,
@@ -163,6 +178,17 @@ public final class GuidanceCoordinator {
                 appVersion: appVersion(),
                 isProAppInstalled: canInvite && configuration.invitationEnabled ? isProAppInstalled() : false
             )
+            let ownerIsCurrent = ownerWindowID.map { ownerWindowID in
+                !closedHostWindowIDs.contains(ownerWindowID)
+                    && (activeHostWindowID.map { $0 == ownerWindowID } ?? true)
+            } ?? true
+            if case .showProInvitation = policyDecision,
+               configuration.localMarketingPolicyEnabled,
+               (!invitationHostEligible || !ownerIsCurrent) {
+                decision = .none(.invitationHostInactive)
+            } else {
+                decision = policyDecision
+            }
         }
 
         switch decision {
@@ -175,7 +201,8 @@ public final class GuidanceCoordinator {
                     state: state,
                     now: now(),
                     calendar: calendar
-                ) ? state.lastPurchaseExplorationDate : nil
+                ) ? state.lastPurchaseExplorationDate : nil,
+                ownerWindowID: ownerWindowID
             )
             pendingInvitation = invitation
             emit("guidance.invitation.scheduled", moment: moment, tokenID: invitation.id)
@@ -232,6 +259,7 @@ public final class GuidanceCoordinator {
             lastEligibleForegroundTick = nil
             return
         }
+        if let hostID { activeHostWindowID = hostID }
         let current = now()
         if let lastEligibleForegroundTick {
             eligibleForegroundSeconds += min(max(current.timeIntervalSince(lastEligibleForegroundTick), 0), 1.5)
@@ -241,23 +269,43 @@ public final class GuidanceCoordinator {
         let today = calendar.startOfDay(for: current)
         guard lastReturnEvaluationDate.map({ calendar.startOfDay(for: $0) != today }) ?? true else { return }
         lastReturnEvaluationDate = current
-        _ = recordAndReturnDecision(.appReturnedAfterUse)
-        if pendingInvitation?.moment == .appReturnedAfterUse {
-            returnInvitationHostID = hostID
+        _ = recordAndReturnDecision(.appReturnedAfterUse, ownerWindowID: hostID)
+    }
+
+    /// Ends the invitation owned by a window when that window leaves its host
+    /// lifecycle. Unseen invitations are cancelled without consuming a show;
+    /// confirmed invitations are recorded as Later exactly once.
+    public func endInvitation(forHostID hostID: UUID) {
+        guard let invitation = pendingInvitation,
+              invitation.ownerWindowID == hostID else { return }
+        endInvitationPresentation(id: invitation.id, ownerWindowID: hostID)
+    }
+
+    /// A single global slot cannot remain attached to an inactive window after
+    /// another main window becomes active. Only the new active host may trigger
+    /// this cleanup; the old window cannot end another host's invitation.
+    public func endInvitationOwnedByOtherHost(activeHostID: UUID) {
+        self.activeHostWindowID = activeHostID
+        if let invitation = pendingInvitation,
+           let ownerWindowID = invitation.ownerWindowID,
+           ownerWindowID != activeHostID {
+            endInvitationPresentation(id: invitation.id, ownerWindowID: ownerWindowID)
+        }
+        if let ownerWindowID = exportFeedback?.ownerWindowID,
+           ownerWindowID != activeHostID {
+            exportFeedback = nil
         }
     }
 
-    /// Discards a return invitation that was queued on Overview but never became
-    /// visible before the user navigated elsewhere. It must not reserve the
-    /// shared invitation slot needed by diagnostic/export completion.
-    public func cancelUnpresentedReturnInvitation(hostID: UUID? = nil) {
-        guard let invitation = pendingInvitation,
-              invitation.moment == .appReturnedAfterUse,
-              returnInvitationHostID == hostID,
-              !confirmedPresentedInvitationIDs.contains(invitation.id) else { return }
-        pendingInvitation = nil
-        returnInvitationHostID = nil
-        allowOneReturnRetryAfterCancellation(at: now())
+    public func closeInvitationHost(forHostID hostID: UUID) {
+        endInvitation(forHostID: hostID)
+        if exportFeedback?.ownerWindowID == hostID {
+            exportFeedback = nil
+        }
+        if activeHostWindowID == hostID {
+            activeHostWindowID = nil
+        }
+        closedHostWindowIDs.insert(hostID)
     }
 
     private func allowOneReturnRetryAfterCancellation(at date: Date) {
@@ -299,22 +347,27 @@ public final class GuidanceCoordinator {
 
     // MARK: - Export feedback
 
-    func handleExportSucceeded() {
-        record(.exportSucceeded)
-        exportFeedback = ExportFeedback(occurredAt: now())
+    func handleExportSucceeded(ownerWindowID: UUID? = nil) {
+        record(.exportSucceeded, ownerWindowID: ownerWindowID)
+        exportFeedback = ExportFeedback(occurredAt: now(), ownerWindowID: ownerWindowID)
     }
 
-    func dismissExportFeedback() {
+    func dismissExportFeedback(ownerWindowID: UUID? = nil) {
+        guard exportFeedback?.ownerWindowID == ownerWindowID else { return }
         exportFeedback = nil
-        if let invitation = pendingInvitation, invitation.moment == .exportSucceeded {
-            endInvitationPresentation(id: invitation.id)
+        if let invitation = pendingInvitation,
+           invitation.moment == .exportSucceeded,
+           invitation.ownerWindowID == ownerWindowID {
+            endInvitationPresentation(id: invitation.id, ownerWindowID: ownerWindowID)
         }
     }
 
     // MARK: - Invitation consumption (token-gated)
 
-    func invitationPresented(id: UUID) {
-        guard let invitation = pendingInvitation, invitation.id == id else { return }
+    func invitationPresented(id: UUID, ownerWindowID: UUID? = nil) {
+        guard let invitation = pendingInvitation,
+              invitation.id == id,
+              invitation.ownerWindowID == ownerWindowID else { return }
         guard !confirmedPresentedInvitationIDs.contains(id) else { return }
         confirmedPresentedInvitationIDs.insert(id)
         var state = stateStore.load()
@@ -331,11 +384,11 @@ public final class GuidanceCoordinator {
         emit("guidance.invitation.presented", moment: invitation.moment, tokenID: id)
     }
 
-    func dismissInvitation(id: UUID) {
-        guard let invitation = pendingInvitation, invitation.id == id else { return }
+    func dismissInvitation(id: UUID, ownerWindowID: UUID? = nil) {
+        guard let invitation = pendingInvitation,
+              invitation.id == id,
+              invitation.ownerWindowID == ownerWindowID else { return }
         pendingInvitation = nil
-        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
-        returnInvitationHostID = nil
         var state = stateStore.load()
         state.invitationDismissalCount += 1
         state.lastInvitationLaterDate = now()
@@ -343,34 +396,36 @@ public final class GuidanceCoordinator {
         emit("guidance.invitation.dismissed", moment: invitation.moment, tokenID: id)
     }
 
-    func disableInvitations(id: UUID) {
-        guard let invitation = pendingInvitation, invitation.id == id else { return }
+    func disableInvitations(id: UUID, ownerWindowID: UUID? = nil) {
+        guard let invitation = pendingInvitation,
+              invitation.id == id,
+              invitation.ownerWindowID == ownerWindowID else { return }
         pendingInvitation = nil
-        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
         var state = stateStore.load()
         state.invitationsDisabled = true
         stateStore.save(state)
         emit("guidance.invitation.disabled", moment: invitation.moment, tokenID: id)
     }
 
-    func openInvitation(id: UUID) {
-        guard let invitation = pendingInvitation, invitation.id == id else { return }
+    func openInvitation(id: UUID, ownerWindowID: UUID? = nil) {
+        guard let invitation = pendingInvitation,
+              invitation.id == id,
+              invitation.ownerWindowID == ownerWindowID else { return }
         pendingInvitation = nil
-        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
         var state = stateStore.load()
         state.lastPurchaseExplorationDate = now()
         stateStore.save(state)
         emit("guidance.invitation.view_selected", moment: invitation.moment, tokenID: id)
     }
 
-    /// Host-lifecycle end, called from the host view's `onDisappear` with the
-    /// exact token the host rendered. An unpresented invitation is cancelled
-    /// without any count or cooldown; a presented one without a user choice is
-    /// consumed as Later.
-    func endInvitationPresentation(id: UUID) {
-        guard let invitation = pendingInvitation, invitation.id == id else { return }
+    /// Host-lifecycle end. An unpresented invitation is cancelled without any
+    /// count or cooldown; a presented one without a user choice is consumed as
+    /// Later. Both token and owner must match, so another window cannot act on it.
+    func endInvitationPresentation(id: UUID, ownerWindowID: UUID? = nil) {
+        guard let invitation = pendingInvitation,
+              invitation.id == id,
+              invitation.ownerWindowID == ownerWindowID else { return }
         pendingInvitation = nil
-        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
         if confirmedPresentedInvitationIDs.contains(id) {
             var state = stateStore.load()
             state.invitationDismissalCount += 1
@@ -512,7 +567,7 @@ extension GuidanceCoordinator {
 
     /// Force-schedules an invitation for a supported moment, bypassing the
     /// policy but keeping the pending gate and token lifecycle intact.
-    public func debugScheduleInvitation(for moment: GuidanceValueMoment) {
+    public func debugScheduleInvitation(for moment: GuidanceValueMoment, ownerWindowID: UUID? = nil) {
         guard moment == .diagnosticsCompleted || moment == .exportSucceeded else {
             emit("guidance.debug.refused", metadata: ["reason": "unsupported_moment"])
             return
@@ -521,11 +576,13 @@ extension GuidanceCoordinator {
             emit("guidance.debug.refused", metadata: ["reason": "pending_invitation"])
             return
         }
+        let resolvedOwnerWindowID = ownerWindowID ?? activeHostWindowID
         let invitation = InvitationPresentation(
             id: UUID(),
             moment: moment,
             scheduledAt: now(),
-            acceleratedFollowUpExplorationDate: nil
+            acceleratedFollowUpExplorationDate: nil,
+            ownerWindowID: resolvedOwnerWindowID
         )
         pendingInvitation = invitation
         emit("guidance.invitation.scheduled", moment: moment, tokenID: invitation.id)
@@ -552,8 +609,9 @@ extension GuidanceCoordinator {
 
     /// Publishes export feedback so the real OSS banner host renders, without
     /// running a real file save.
-    public func debugPublishExportFeedback() {
-        exportFeedback = ExportFeedback(occurredAt: now())
+    public func debugPublishExportFeedback(ownerWindowID: UUID? = nil) {
+        let resolvedOwnerWindowID = ownerWindowID ?? pendingInvitation?.ownerWindowID ?? activeHostWindowID
+        exportFeedback = ExportFeedback(occurredAt: now(), ownerWindowID: resolvedOwnerWindowID)
         emit("guidance.debug.export_feedback_published")
     }
 

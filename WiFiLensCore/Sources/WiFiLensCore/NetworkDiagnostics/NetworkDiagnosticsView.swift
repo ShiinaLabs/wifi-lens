@@ -7,6 +7,7 @@ public struct NetworkDiagnosticsView: View {
     let guidance: GuidanceCoordinator
     let isInvitationHostActive: Bool
     let hostWindow: NSWindow?
+    let ownerWindowID: UUID?
     @State private var expandedGroupOverride: [String: Bool] = [:]
     @State private var renderedInvitationID: UUID?
     @State private var consolePanelController = ConsolePanelController(
@@ -20,12 +21,15 @@ public struct NetworkDiagnosticsView: View {
         viewModel: NetworkDiagnosticsViewModel,
         guidance: GuidanceCoordinator,
         isInvitationHostActive: Bool = true,
-        hostWindow: NSWindow? = nil
+        hostWindow: NSWindow? = nil,
+        ownerWindowID: UUID? = nil
     ) {
         self.viewModel = viewModel
         self.guidance = guidance
         self.isInvitationHostActive = isInvitationHostActive
         self.hostWindow = hostWindow
+        self.ownerWindowID = ownerWindowID
+        viewModel.setGuidanceOwnerWindowID(isInvitationHostActive ? ownerWindowID : nil)
     }
 
     public var body: some View {
@@ -53,7 +57,7 @@ public struct NetworkDiagnosticsView: View {
         .onDisappear {
             viewModel.cancel()
             if let id = renderedInvitationID {
-                guidance.endInvitationPresentation(id: id)
+                guidance.endInvitationPresentation(id: id, ownerWindowID: ownerWindowID)
                 renderedInvitationID = nil
             }
         }
@@ -77,7 +81,8 @@ public struct NetworkDiagnosticsView: View {
                         invitation: invitation,
                         guidance: guidance,
                         isHostVisible: isInvitationHostActive,
-                        hostWindow: hostWindow
+                        hostWindow: hostWindow,
+                        ownerWindowID: ownerWindowID
                     )
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)

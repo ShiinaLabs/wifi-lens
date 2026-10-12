@@ -43,6 +43,7 @@ enum GuidanceSuppressionReason: String, Equatable, Sendable {
     case invitationWeeklyLimit
     case invitationAlreadyShownThisSession
     case invitationRecentlyDeferred
+    case invitationHostInactive
     case acceleratedFollowUpUnavailable
     case firstLaunchAgeNotMet
     case reviewCooldown
