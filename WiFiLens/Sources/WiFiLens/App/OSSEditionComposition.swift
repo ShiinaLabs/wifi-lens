@@ -79,6 +79,8 @@ enum OSSEditionAssembly {
                 ExternalLinks.url(for: .appStoreCampaignDiagnosis)
             case .exportSucceeded:
                 ExternalLinks.url(for: .appStoreCampaignExport)
+            case .appReturnedAfterUse:
+                ExternalLinks.url(for: .appStoreCampaignDiagnosis)
             }
         }
     )
@@ -86,6 +88,11 @@ enum OSSEditionAssembly {
     static var guidanceConfiguration: GuidanceConfiguration {
         var config = GuidanceConfiguration()
         config.invitationEnabled = true
+        config.minimumInvitationCompletions = 0
+        config.minimumInvitationActiveDays = 2
+        config.invitationCooldownDays = 7
+        config.maxAutomaticInvitations = .max
+        config.localMarketingPolicyEnabled = true
         return config
     }
 
@@ -172,7 +179,8 @@ enum OSSEditionAssembly {
             OSSSpectrumCompositionView(
                 scannerViewModel: context.scannerViewModel,
                 isVendorColumnAvailable: context.isMACVendorDatabaseAvailable,
-                selection: context.secondaryToolbarSelections.wrappedValue.spectrum
+                selection: context.secondaryToolbarSelections.wrappedValue.spectrum,
+                hostWindow: context.mainWindow
             )
             .accessibilityIdentifier("page-spectrum")
             .accessibilityElement(children: .contain)
@@ -182,6 +190,8 @@ enum OSSEditionAssembly {
                 featureDescription: String(localized: "pro.timeline.description", comment: "Pro timeline feature description"),
                 featureIcon: SidebarPage.timeline.icon,
                 campaign: .appStoreCampaignPreviewTimeline,
+                interestCategory: .longTermMonitoring,
+                hostWindow: context.mainWindow,
                 customSkeleton: { TimelineSkeletonView() }
             )
             .accessibilityIdentifier("page-timeline")
@@ -191,6 +201,8 @@ enum OSSEditionAssembly {
                 featureDescription: String(localized: "pro.statistics.description", comment: "Pro Statistics feature description"),
                 featureIcon: SidebarPage.statistics.icon,
                 campaign: .appStoreCampaignPreviewStatistics,
+                interestCategory: .advancedDiagnostics,
+                hostWindow: context.mainWindow,
                 customSkeleton: { StatisticsSkeletonView() }
             )
             .accessibilityIdentifier("page-statistics")
@@ -200,6 +212,8 @@ enum OSSEditionAssembly {
                 featureDescription: String(localized: "pro.insights.description", comment: "Pro Insights feature description"),
                 featureIcon: SidebarPage.insights.icon,
                 campaign: .appStoreCampaignPreviewInsights,
+                interestCategory: .advancedDiagnostics,
+                hostWindow: context.mainWindow,
                 customSkeleton: { InsightsSkeletonView() }
             )
             .accessibilityIdentifier("page-insights")
@@ -209,6 +223,8 @@ enum OSSEditionAssembly {
                 featureDescription: String(localized: "pro.wifi_calling_test.description", comment: "Pro Wi-Fi Calling Test feature description"),
                 featureIcon: "wifi",
                 campaign: .appStoreCampaignPreviewLock,
+                interestCategory: .advancedDiagnostics,
+                hostWindow: context.mainWindow,
                 customSkeleton: { WiFiCallingSkeletonView() }
             )
             .accessibilityIdentifier("page-wifiCallingTest")
@@ -315,6 +331,7 @@ private struct OSSSpectrumCompositionView: View {
     @Bindable var scannerViewModel: ScannerViewModel
     let isVendorColumnAvailable: Bool
     let selection: SecondaryToolbarItemID
+    let hostWindow: NSWindow?
 
     var body: some View {
         if selection == .spectrumRecording {
@@ -322,6 +339,8 @@ private struct OSSSpectrumCompositionView: View {
                 featureName: String(localized: "pro.recording.title", comment: "Pro recording feature title"),
                 featureDescription: String(localized: "pro.recording.description", comment: "Pro recording feature description"),
                 featureIcon: "record.circle",
+                interestCategory: .spectrumRecording,
+                hostWindow: hostWindow,
                 customSkeleton: { RecordingSkeletonView() }
             )
         } else {

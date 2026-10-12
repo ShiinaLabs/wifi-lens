@@ -21,6 +21,12 @@ struct GuidanceStateStoreTests {
         #expect(state.invitationsDisabled == false)
         #expect(state.lastReviewRequestDate == nil)
         #expect(state.lastReviewRequestVersion == nil)
+        #expect(state.invitationPresentationDates.isEmpty)
+        #expect(state.lastInvitationLaterDate == nil)
+        #expect(state.lastPurchaseExplorationDate == nil)
+        #expect(state.lastAcceleratedFollowUpDate == nil)
+        #expect(state.lastAcceleratedFollowUpExplorationDate == nil)
+        #expect(state.proInterestVisits.isEmpty)
     }
 
     @Test func fullRoundTripOfEveryField() {
@@ -35,7 +41,16 @@ struct GuidanceStateStoreTests {
             invitationDismissalCount: 1,
             invitationsDisabled: true,
             lastReviewRequestDate: date(2026, 8, 1, hour: 9, calendar: utcCalendar),
-            lastReviewRequestVersion: "2.1.0"
+            lastReviewRequestVersion: "2.1.0",
+            invitationPresentationDates: [date(2026, 8, 1, hour: 9, calendar: utcCalendar)],
+            lastInvitationLaterDate: date(2026, 8, 2, hour: 9, calendar: utcCalendar),
+            lastPurchaseExplorationDate: date(2026, 8, 3, hour: 9, calendar: utcCalendar),
+            lastAcceleratedFollowUpDate: date(2026, 8, 6, hour: 9, calendar: utcCalendar),
+            lastAcceleratedFollowUpExplorationDate: date(2026, 8, 3, hour: 9, calendar: utcCalendar),
+            proInterestVisits: [
+                ProInterestVisit(category: .longTermMonitoring, day: "2026-08-01"),
+                ProInterestVisit(category: .longTermMonitoring, day: "2026-08-03"),
+            ]
         )
 
         store.save(original)

@@ -61,6 +61,79 @@ struct GuidancePolicyTests {
         #expect(decision == .none(.invitationsDisabledByUser))
     }
 
+    @Test func laterChoiceTakesPriorityOverPurchaseFollowUp() {
+        let state = invitationState(
+            lastInvitationDate: daysAgo(3),
+            lastInvitationLaterDate: daysAgo(2),
+            lastPurchaseExplorationDate: daysAgo(10)
+        )
+        #expect(decide(for: .appReturnedAfterUse, state: state, config: invitationConfig()) == .none(.invitationRecentlyDeferred))
+    }
+
+    @Test func purchaseExplorationEnablesOnlyTheThreeDayAcceleratedFollowUp() {
+        let due = invitationState(lastInvitationDate: daysAgo(3), lastPurchaseExplorationDate: daysAgo(3))
+        let tooEarly = invitationState(lastInvitationDate: daysAgo(2), lastPurchaseExplorationDate: daysAgo(2))
+        let alreadyUsed = invitationState(
+            lastInvitationDate: daysAgo(3),
+            lastPurchaseExplorationDate: daysAgo(3),
+            lastAcceleratedFollowUpExplorationDate: daysAgo(3)
+        )
+        #expect(decide(for: .appReturnedAfterUse, state: due, config: invitationConfig()) == .showProInvitation)
+        #expect(decide(for: .appReturnedAfterUse, state: tooEarly, config: invitationConfig()) == .none(.invitationCooldown))
+        #expect(decide(for: .appReturnedAfterUse, state: alreadyUsed, config: invitationConfig()) == .none(.invitationCooldown))
+    }
+
+    @Test func acceleratedFollowUpIsLimitedToOncePerFourteenDays() {
+        let state = invitationState(
+            lastInvitationDate: daysAgo(3),
+            lastPurchaseExplorationDate: daysAgo(3),
+            lastAcceleratedFollowUpDate: daysAgo(13),
+            lastAcceleratedFollowUpExplorationDate: daysAgo(20)
+        )
+        #expect(decide(for: .appReturnedAfterUse, state: state, config: invitationConfig()) == .none(.invitationCooldown))
+    }
+
+    @Test func noMoreThanTwoInvitationsInAnySevenLocalDays() {
+        let capped = invitationState(presentationDates: [daysAgo(0), daysAgo(4)])
+        let eligible = invitationState(presentationDates: [daysAgo(0)])
+        #expect(decide(for: .diagnosticsCompleted, state: capped, config: invitationConfig()) == .none(.invitationWeeklyLimit))
+        #expect(decide(for: .diagnosticsCompleted, state: eligible, config: invitationConfig()) == .showProInvitation)
+    }
+
+    @Test func interestRequiresTwoDistinctDatesWithinFourteenDays() {
+        let today = GuidanceState.dayKey(for: now, calendar: calendar)
+        let yesterday = GuidanceState.dayKey(for: daysAgo(1), calendar: calendar)
+        let expired = GuidanceState.dayKey(for: daysAgo(14), calendar: calendar)
+        let oneVisit = [ProInterestVisit(category: .spectrumRecording, day: today)]
+        let repeatedVisit = [
+            ProInterestVisit(category: .spectrumRecording, day: today),
+            ProInterestVisit(category: .spectrumRecording, day: yesterday),
+        ]
+        let oldVisit = [
+            ProInterestVisit(category: .spectrumRecording, day: today),
+            ProInterestVisit(category: .spectrumRecording, day: expired),
+        ]
+        #expect(!GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: oneVisit, now: now, calendar: calendar))
+        #expect(GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: repeatedVisit, now: now, calendar: calendar))
+        #expect(!GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: oldVisit, now: now, calendar: calendar))
+    }
+
+    @Test func contentUsesOnlyQualifiedInterestAfterRealUseMoments() {
+        let today = GuidanceState.dayKey(for: now, calendar: calendar)
+        let yesterday = GuidanceState.dayKey(for: daysAgo(1), calendar: calendar)
+        let qualified = GuidanceState(proInterestVisits: [
+            ProInterestVisit(category: .spectrumRecording, day: today),
+            ProInterestVisit(category: .spectrumRecording, day: yesterday),
+        ])
+        let oneVisit = GuidanceState(proInterestVisits: [
+            ProInterestVisit(category: .spectrumRecording, day: today),
+        ])
+
+        #expect(GuidanceContentSelector.messageKey(for: .appReturnedAfterUse, state: qualified, now: now, calendar: calendar) == "guidance.invitation.message.recording")
+        #expect(GuidanceContentSelector.messageKey(for: .appReturnedAfterUse, state: oneVisit, now: now, calendar: calendar) == "guidance.invitation.message.general")
+        #expect(GuidanceContentSelector.messageKey(for: .diagnosticsCompleted, state: qualified, now: now, calendar: calendar) == "guidance.invitation.message.diagnostics")
+    }
+
     @Test func proAppInstalledSuppressesInvitation() {
         let decision = decide(
             for: .diagnosticsCompleted,
@@ -72,19 +145,19 @@ struct GuidancePolicyTests {
         #expect(decision == .none(.proAppInstalled))
     }
 
-    @Test func invitationCompletionThresholdBoundary() {
+    @Test func invitationNoLongerDependsOnCompletionCount() {
         let below = decide(
             for: .diagnosticsCompleted,
-            state: invitationState(completionCount: 2),
+            state: invitationState(completionCount: 0),
             config: invitationConfig()
         )
         let at = decide(
             for: .diagnosticsCompleted,
-            state: invitationState(completionCount: 3),
+            state: invitationState(completionCount: 1),
             config: invitationConfig()
         )
 
-        #expect(below == .none(.completionThresholdNotMet))
+        #expect(below == .showProInvitation)
         #expect(at == .showProInvitation)
     }
 
@@ -104,7 +177,7 @@ struct GuidancePolicyTests {
         #expect(at == .showProInvitation)
     }
 
-    @Test func invitationPresentationLimitBoundary() {
+    @Test func lifetimeInvitationLimitIsRemoved() {
         let atLimit = decide(
             for: .diagnosticsCompleted,
             state: invitationState(presentationCount: 3),
@@ -116,19 +189,19 @@ struct GuidancePolicyTests {
             config: invitationConfig()
         )
 
-        #expect(atLimit == .none(.invitationPresentationLimit))
+        #expect(atLimit == .showProInvitation)
         #expect(underLimit == .showProInvitation)
     }
 
-    @Test func invitationCooldownBoundary() {
+    @Test func sevenDayInvitationCooldownBoundary() {
         let inCooldown = decide(
             for: .diagnosticsCompleted,
-            state: invitationState(lastInvitationDate: daysAgo(29)),
+            state: invitationState(lastInvitationDate: daysAgo(6)),
             config: invitationConfig()
         )
         let atBoundary = decide(
             for: .diagnosticsCompleted,
-            state: invitationState(lastInvitationDate: daysAgo(30)),
+            state: invitationState(lastInvitationDate: daysAgo(7)),
             config: invitationConfig()
         )
 
@@ -342,6 +415,11 @@ struct GuidancePolicyTests {
     private func invitationConfig() -> GuidanceConfiguration {
         var config = GuidanceConfiguration()
         config.invitationEnabled = true
+        config.minimumInvitationCompletions = 0
+        config.minimumInvitationActiveDays = 2
+        config.invitationCooldownDays = 7
+        config.maxAutomaticInvitations = .max
+        config.localMarketingPolicyEnabled = true
         return config
     }
 
@@ -356,7 +434,12 @@ struct GuidancePolicyTests {
         activeDays: [String] = ["2026-07-01", "2026-07-02"],
         invitationsDisabled: Bool = false,
         presentationCount: Int = 0,
-        lastInvitationDate: Date? = nil
+        lastInvitationDate: Date? = nil,
+        lastInvitationLaterDate: Date? = nil,
+        lastPurchaseExplorationDate: Date? = nil,
+        lastAcceleratedFollowUpDate: Date? = nil,
+        lastAcceleratedFollowUpExplorationDate: Date? = nil,
+        presentationDates: [Date] = []
     ) -> GuidanceState {
         GuidanceState(
             activeDays: activeDays,
@@ -364,7 +447,12 @@ struct GuidancePolicyTests {
             lastInvitationDate: lastInvitationDate,
             invitationPresentationCount: presentationCount,
             invitationDismissalCount: 0,
-            invitationsDisabled: invitationsDisabled
+            invitationsDisabled: invitationsDisabled,
+            invitationPresentationDates: presentationDates,
+            lastInvitationLaterDate: lastInvitationLaterDate,
+            lastPurchaseExplorationDate: lastPurchaseExplorationDate,
+            lastAcceleratedFollowUpDate: lastAcceleratedFollowUpDate,
+            lastAcceleratedFollowUpExplorationDate: lastAcceleratedFollowUpExplorationDate
         )
     }
 

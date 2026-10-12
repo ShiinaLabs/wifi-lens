@@ -19,6 +19,12 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
         static let invitationPresentationCount = "guidance.invitationPresentationCount"
         static let invitationDismissalCount = "guidance.invitationDismissalCount"
         static let invitationsDisabled = "guidance.invitationsDisabled"
+        static let invitationPresentationDates = "guidance.invitationPresentationDates"
+        static let lastInvitationLaterDate = "guidance.lastInvitationLaterDate"
+        static let lastPurchaseExplorationDate = "guidance.lastPurchaseExplorationDate"
+        static let lastAcceleratedFollowUpDate = "guidance.lastAcceleratedFollowUpDate"
+        static let lastAcceleratedFollowUpExplorationDate = "guidance.lastAcceleratedFollowUpExplorationDate"
+        static let proInterestVisits = "guidance.proInterestVisits"
         static let lastReviewRequestDate = "guidance.lastReviewRequestDate"
         static let lastReviewRequestVersion = "guidance.lastReviewRequestVersion"
     }
@@ -39,7 +45,13 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
             invitationDismissalCount: defaults.integer(forKey: Key.invitationDismissalCount),
             invitationsDisabled: defaults.bool(forKey: Key.invitationsDisabled),
             lastReviewRequestDate: defaults.object(forKey: Key.lastReviewRequestDate) as? Date,
-            lastReviewRequestVersion: defaults.string(forKey: Key.lastReviewRequestVersion)
+            lastReviewRequestVersion: defaults.string(forKey: Key.lastReviewRequestVersion),
+            invitationPresentationDates: defaults.array(forKey: Key.invitationPresentationDates) as? [Date] ?? [],
+            lastInvitationLaterDate: defaults.object(forKey: Key.lastInvitationLaterDate) as? Date,
+            lastPurchaseExplorationDate: defaults.object(forKey: Key.lastPurchaseExplorationDate) as? Date,
+            lastAcceleratedFollowUpDate: defaults.object(forKey: Key.lastAcceleratedFollowUpDate) as? Date,
+            lastAcceleratedFollowUpExplorationDate: defaults.object(forKey: Key.lastAcceleratedFollowUpExplorationDate) as? Date,
+            proInterestVisits: (defaults.data(forKey: Key.proInterestVisits).flatMap { try? JSONDecoder().decode([ProInterestVisit].self, from: $0) }) ?? []
         )
     }
 
@@ -51,6 +63,14 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
         defaults.set(state.invitationPresentationCount, forKey: Key.invitationPresentationCount)
         defaults.set(state.invitationDismissalCount, forKey: Key.invitationDismissalCount)
         defaults.set(state.invitationsDisabled, forKey: Key.invitationsDisabled)
+        defaults.set(state.invitationPresentationDates, forKey: Key.invitationPresentationDates)
+        defaults.set(state.lastInvitationLaterDate, forKey: Key.lastInvitationLaterDate)
+        defaults.set(state.lastPurchaseExplorationDate, forKey: Key.lastPurchaseExplorationDate)
+        defaults.set(state.lastAcceleratedFollowUpDate, forKey: Key.lastAcceleratedFollowUpDate)
+        defaults.set(state.lastAcceleratedFollowUpExplorationDate, forKey: Key.lastAcceleratedFollowUpExplorationDate)
+        if let visits = try? JSONEncoder().encode(state.proInterestVisits) {
+            defaults.set(visits, forKey: Key.proInterestVisits)
+        }
         defaults.set(state.lastReviewRequestDate, forKey: Key.lastReviewRequestDate)
         defaults.set(state.lastReviewRequestVersion, forKey: Key.lastReviewRequestVersion)
     }

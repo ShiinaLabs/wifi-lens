@@ -23,6 +23,7 @@ public final class GuidanceCoordinator {
         public let id: UUID
         public let moment: GuidanceValueMoment
         public let scheduledAt: Date
+        let acceleratedFollowUpExplorationDate: Date?
     }
 
     public struct ReviewRequestPresentation: Equatable, Identifiable, Sendable {
@@ -55,6 +56,10 @@ public final class GuidanceCoordinator {
     /// idempotent per token and to distinguish "cancelled unpresented" from
     /// "dismissed as Later".
     private var confirmedPresentedInvitationIDs: Set<UUID> = []
+    private var didPresentInvitationThisUsageSession = false
+    private var didEvaluateReturnThisUsageSession = false
+    private var lastEligibleForegroundTick: Date?
+    private var eligibleForegroundSeconds: TimeInterval = 0
 
     public convenience init(
         configuration: GuidanceConfiguration,
@@ -119,16 +124,19 @@ public final class GuidanceCoordinator {
         switch moment {
         case .diagnosticsCompleted, .exportSucceeded, .analysisLoaded:
             state.meaningfulCompletionCount += 1
-        case .roamingCompleted:
+        case .roamingCompleted, .appReturnedAfterUse:
             break
         }
 
-        let canInvite = moment == .diagnosticsCompleted || moment == .exportSucceeded
+        state.pruneProInterestVisits(now: now(), calendar: calendar)
+        let canInvite = moment == .diagnosticsCompleted || moment == .exportSucceeded || moment == .appReturnedAfterUse
         let canReview = moment == .diagnosticsCompleted || moment == .exportSucceeded || moment == .analysisLoaded
 
         let decision: GuidanceDecision
         if canInvite, pendingInvitation != nil {
             decision = .none(.invitationAlreadyPending)
+        } else if canInvite, configuration.localMarketingPolicyEnabled, didPresentInvitationThisUsageSession {
+            decision = .none(.invitationAlreadyShownThisSession)
         } else if canReview, pendingReviewRequest != nil {
             decision = .none(.reviewRequestPending)
         } else {
@@ -145,7 +153,16 @@ public final class GuidanceCoordinator {
 
         switch decision {
         case .showProInvitation:
-            let invitation = InvitationPresentation(id: UUID(), moment: moment, scheduledAt: now())
+            let invitation = InvitationPresentation(
+                id: UUID(),
+                moment: moment,
+                scheduledAt: now(),
+                acceleratedFollowUpExplorationDate: configuration.localMarketingPolicyEnabled && GuidanceInterestPolicy.canScheduleAcceleratedFollowUp(
+                    state: state,
+                    now: now(),
+                    calendar: calendar
+                ) ? state.lastPurchaseExplorationDate : nil
+            )
             pendingInvitation = invitation
             emit("guidance.invitation.scheduled", moment: moment, tokenID: invitation.id)
         case .requestReview:
@@ -184,7 +201,49 @@ public final class GuidanceCoordinator {
             state.firstLaunchDate = now()
         }
         state.recordActiveDay(at: now(), calendar: calendar)
+        if configuration.localMarketingPolicyEnabled {
+            state.pruneProInterestVisits(now: now(), calendar: calendar)
+        }
         stateStore.save(state)
+    }
+
+    /// Receives one-second eligibility ticks from the OSS main-window host.
+    /// Only time with an active, visible, uncovered main window is accumulated.
+    public func recordForegroundUsageTick(isEligible: Bool) {
+        guard isEligible else {
+            lastEligibleForegroundTick = nil
+            return
+        }
+        let current = now()
+        if let lastEligibleForegroundTick {
+            eligibleForegroundSeconds += min(max(current.timeIntervalSince(lastEligibleForegroundTick), 0), 1.5)
+        }
+        lastEligibleForegroundTick = current
+        guard eligibleForegroundSeconds >= 30, !didEvaluateReturnThisUsageSession else { return }
+        didEvaluateReturnThisUsageSession = true
+        _ = recordAndReturnDecision(.appReturnedAfterUse)
+    }
+
+    /// Records only a feature category and local calendar date after a preview
+    /// has remained visible long enough to count as an intentional visit.
+    public func recordProPreviewVisit(_ category: ProInterestCategory) {
+        var state = stateStore.load()
+        state.pruneProInterestVisits(now: now(), calendar: calendar)
+        state.recordProInterest(category, at: now(), calendar: calendar)
+        stateStore.save(state)
+    }
+
+    /// Called only after the operating system accepts a Store request.
+    public func recordSuccessfulStoreOpen() {
+        var state = stateStore.load()
+        state.lastPurchaseExplorationDate = now()
+        stateStore.save(state)
+    }
+
+    func invitationMessageKey(for moment: GuidanceValueMoment) -> String {
+        var state = stateStore.load()
+        state.pruneProInterestVisits(now: now(), calendar: calendar)
+        return GuidanceContentSelector.messageKey(for: moment, state: state, now: now(), calendar: calendar)
     }
 
     // MARK: - Export feedback
@@ -210,6 +269,12 @@ public final class GuidanceCoordinator {
         var state = stateStore.load()
         state.invitationPresentationCount += 1
         state.lastInvitationDate = now()
+        state.recordInvitationPresentation(at: now())
+        didPresentInvitationThisUsageSession = true
+        if let explorationDate = invitation.acceleratedFollowUpExplorationDate {
+            state.lastAcceleratedFollowUpDate = now()
+            state.lastAcceleratedFollowUpExplorationDate = explorationDate
+        }
         stateStore.save(state)
         emit("guidance.invitation.presented", moment: invitation.moment, tokenID: id)
     }
@@ -219,6 +284,7 @@ public final class GuidanceCoordinator {
         pendingInvitation = nil
         var state = stateStore.load()
         state.invitationDismissalCount += 1
+        state.lastInvitationLaterDate = now()
         stateStore.save(state)
         emit("guidance.invitation.dismissed", moment: invitation.moment, tokenID: id)
     }
@@ -235,6 +301,9 @@ public final class GuidanceCoordinator {
     func openInvitation(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
+        var state = stateStore.load()
+        state.lastPurchaseExplorationDate = now()
+        stateStore.save(state)
         emit("guidance.invitation.view_selected", moment: invitation.moment, tokenID: id)
     }
 
@@ -248,6 +317,7 @@ public final class GuidanceCoordinator {
         if confirmedPresentedInvitationIDs.contains(id) {
             var state = stateStore.load()
             state.invitationDismissalCount += 1
+            state.lastInvitationLaterDate = now()
             stateStore.save(state)
             emit("guidance.invitation.dismissed", moment: invitation.moment, tokenID: id)
         } else {
@@ -391,7 +461,12 @@ extension GuidanceCoordinator {
             emit("guidance.debug.refused", metadata: ["reason": "pending_invitation"])
             return
         }
-        let invitation = InvitationPresentation(id: UUID(), moment: moment, scheduledAt: now())
+        let invitation = InvitationPresentation(
+            id: UUID(),
+            moment: moment,
+            scheduledAt: now(),
+            acceleratedFollowUpExplorationDate: nil
+        )
         pendingInvitation = invitation
         emit("guidance.invitation.scheduled", moment: moment, tokenID: invitation.id)
         emit("guidance.debug.invitation_triggered", moment: moment, tokenID: invitation.id)

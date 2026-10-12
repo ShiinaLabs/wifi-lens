@@ -27,6 +27,7 @@ public enum MarkdownExportCommandContribution {
 
 public struct EditionCompositionContext {
     public let mainWindowID: UUID
+    public let mainWindow: NSWindow?
     public let mainWindowState: AnyObject
     public let scannerViewModel: ScannerViewModel
     public let macVendorDatabaseManager: MACVendorDatabaseManager
@@ -38,6 +39,7 @@ public struct EditionCompositionContext {
 
     public init(
         mainWindowID: UUID,
+        mainWindow: NSWindow? = nil,
         mainWindowState: AnyObject,
         scannerViewModel: ScannerViewModel,
         macVendorDatabaseManager: MACVendorDatabaseManager,
@@ -48,6 +50,7 @@ public struct EditionCompositionContext {
         openMainWindow: @escaping (SidebarPage?) -> Void
     ) {
         self.mainWindowID = mainWindowID
+        self.mainWindow = mainWindow
         self.mainWindowState = mainWindowState
         self.scannerViewModel = scannerViewModel
         self.macVendorDatabaseManager = macVendorDatabaseManager

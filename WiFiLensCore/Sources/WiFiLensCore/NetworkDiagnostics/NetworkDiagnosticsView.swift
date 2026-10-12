@@ -1,9 +1,12 @@
+import AppKit
 import SwiftUI
 
 public struct NetworkDiagnosticsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Bindable var viewModel: NetworkDiagnosticsViewModel
     let guidance: GuidanceCoordinator
+    let isInvitationHostActive: Bool
+    let hostWindow: NSWindow?
     @State private var expandedGroupOverride: [String: Bool] = [:]
     @State private var renderedInvitationID: UUID?
     @State private var consolePanelController = ConsolePanelController(
@@ -13,9 +16,16 @@ public struct NetworkDiagnosticsView: View {
     )
     @State private var logExpanded = false
 
-    public init(viewModel: NetworkDiagnosticsViewModel, guidance: GuidanceCoordinator) {
+    public init(
+        viewModel: NetworkDiagnosticsViewModel,
+        guidance: GuidanceCoordinator,
+        isInvitationHostActive: Bool = true,
+        hostWindow: NSWindow? = nil
+    ) {
         self.viewModel = viewModel
         self.guidance = guidance
+        self.isInvitationHostActive = isInvitationHostActive
+        self.hostWindow = hostWindow
     }
 
     public var body: some View {
@@ -63,7 +73,12 @@ public struct NetworkDiagnosticsView: View {
                 Divider()
                 if let invitation = guidance.pendingInvitation,
                    invitation.moment == .diagnosticsCompleted {
-                    ProInvitationCard(invitation: invitation, guidance: guidance)
+                    ProInvitationCard(
+                        invitation: invitation,
+                        guidance: guidance,
+                        isHostVisible: isInvitationHostActive,
+                        hostWindow: hostWindow
+                    )
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                         .onAppear { renderedInvitationID = invitation.id }

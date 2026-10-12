@@ -61,6 +61,7 @@ private struct AppRootView: View {
     @AppStorage("hideTitleBadge") private var hideTitleBadge = true
     @AppStorage("bleEnabled") private var bleEnabled: Bool = false
     @State private var sceneState = MainWindowSceneState()
+    @State private var hostWindow: NSWindow?
     @State private var sidebarVisibility = NavigationSplitViewVisibility.automatic
     @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
     @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel {
@@ -178,13 +179,21 @@ private struct AppRootView: View {
             // page into an NSHostingView.minHeight constraint on the NSWindow itself.
             GeometryReader { _ in
                 ZStack {
-                    OverviewView(viewModel: viewModel, store: viewModel.store)
+                    OverviewView(
+                        viewModel: viewModel,
+                        store: viewModel.store,
+                        guidance: EditionAssemblyProvider.configuration.guidanceConfiguration.localMarketingPolicyEnabled
+                            ? EditionAssemblyProvider.configuration.guidanceCoordinator : nil,
+                        isInvitationHostActive: selectedPage == .overview && hostWindow?.isKeyWindow == true,
+                        hostWindow: hostWindow
+                    )
                         .opacity(selectedPage == .overview ? 1 : 0)
                         .allowsHitTesting(selectedPage == .overview)
                         .accessibilityIdentifier("page-overview")
 
                     EditionAssemblyProvider.configuration.detailContribution(EditionCompositionContext(
                         mainWindowID: sceneState.id,
+                        mainWindow: hostWindow,
                         mainWindowState: sceneState.editionWindowState,
                         scannerViewModel: viewModel,
                         macVendorDatabaseManager: macVendorDatabaseManager,
@@ -220,7 +229,9 @@ private struct AppRootView: View {
 
                     NetworkDiagnosticsView(
                         viewModel: networkDiagnosticsViewModel,
-                        guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
+                        guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
+                        isInvitationHostActive: selectedPage == .networkDiagnostics && hostWindow?.isKeyWindow == true,
+                        hostWindow: hostWindow
                     )
                         .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
                         .allowsHitTesting(selectedPage == .networkDiagnostics)
@@ -273,6 +284,7 @@ private struct AppRootView: View {
                         .opacity(selectedPage == .settings ? 1 : 0)
                         .allowsHitTesting(selectedPage == .settings)
                         .accessibilityIdentifier("page-settings")
+                        .environment(\.guidanceHostWindow, selectedPage == .settings ? hostWindow : nil)
 
                 }
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: selectedPage)
@@ -282,7 +294,11 @@ private struct AppRootView: View {
                     // coordinator publishes export feedback; no-op in Pro
                     // (`.preserveExisting` never publishes feedback).
                     if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
-                        ExportSuccessBanner(guidance: EditionAssemblyProvider.configuration.guidanceCoordinator)
+                        ExportSuccessBanner(
+                            guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
+                            isInvitationHostActive: hostWindow?.isKeyWindow == true,
+                            hostWindow: hostWindow
+                        )
                     }
                 }
             }
@@ -346,6 +362,7 @@ private struct AppRootView: View {
             WindowAccessor(
                 defaultSize: MainWindowSizing.defaultSize,
                 onResolveWindow: { window in
+                    hostWindow = window
                     registerMainWindow(window, sceneState)
                 }
             )
@@ -379,6 +396,23 @@ private struct AppRootView: View {
             }
             if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
                 updateMCPServer()
+            }
+        }
+        .task(id: scenePhase) {
+            let configuration = EditionAssemblyProvider.configuration
+            guard configuration.guidanceConfiguration.localMarketingPolicyEnabled else { return }
+            while !Task.isCancelled {
+                if let hostWindow, hostWindow.isKeyWindow {
+                    let eligible = scenePhase == .active
+                        && NSApp.isActive
+                        && hostWindow.isVisible
+                        && !hostWindow.isMiniaturized
+                        && hostWindow.attachedSheet == nil
+                    configuration.guidanceCoordinator.recordForegroundUsageTick(isEligible: eligible)
+                } else if !NSApp.isActive {
+                    configuration.guidanceCoordinator.recordForegroundUsageTick(isEligible: false)
+                }
+                try? await Task.sleep(for: .seconds(1))
             }
         }
         .sheet(isPresented: Binding(

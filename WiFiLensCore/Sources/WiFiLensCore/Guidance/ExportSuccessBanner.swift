@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Bottom-anchored, non-modal export success banner (OSS `.banner` strategy
@@ -7,9 +8,17 @@ import SwiftUI
 /// never re-queries `pendingInvitation` later to guess which token it showed.
 public struct ExportSuccessBanner: View {
     let guidance: GuidanceCoordinator
+    let isInvitationHostActive: Bool
+    let hostWindow: NSWindow?
 
-    public init(guidance: GuidanceCoordinator) {
+    public init(
+        guidance: GuidanceCoordinator,
+        isInvitationHostActive: Bool = true,
+        hostWindow: NSWindow? = nil
+    ) {
         self.guidance = guidance
+        self.isInvitationHostActive = isInvitationHostActive
+        self.hostWindow = hostWindow
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -39,7 +48,12 @@ public struct ExportSuccessBanner: View {
                 }
 
                 if let invitation = guidance.pendingInvitation, invitation.moment == .exportSucceeded {
-                    ProInvitationCard(invitation: invitation, guidance: guidance)
+                    ProInvitationCard(
+                        invitation: invitation,
+                        guidance: guidance,
+                        isHostVisible: isInvitationHostActive,
+                        hostWindow: hostWindow
+                    )
                         .onAppear { renderedInvitationID = invitation.id }
                 }
             }

@@ -62771,6 +62771,218 @@
           }
         }
       }
+    },
+    "guidance.invitation.message.general": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore more Wi-Fi tools in WiFi Lens Pro."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entdecke weitere Wi-Fi-Werkzeuge in WiFi Lens Pro."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descubre más herramientas Wi-Fi en WiFi Lens Pro."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découvre d’autres outils Wi-Fi dans WiFi Lens Pro."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens Pro でさらに多くの Wi-Fi ツールを確認できます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Откройте дополнительные инструменты Wi-Fi в WiFi Lens Pro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 WiFi Lens Pro 中了解更多 Wi-Fi 工具。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 WiFi Lens Pro 中了解更多 Wi-Fi 工具。"
+          }
+        }
+      }
+    },
+    "guidance.invitation.message.monitoring": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review your network timeline with WiFi Lens Pro."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sieh dir den Netzwerkverlauf mit WiFi Lens Pro an."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulta el historial de la red con WiFi Lens Pro."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulte l’historique du réseau avec WiFi Lens Pro."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens Pro でネットワークのタイムラインを確認できます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Просматривайте хронологию сети в WiFi Lens Pro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 WiFi Lens Pro 查看网络时间线。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 WiFi Lens Pro 查看網路時間軸。"
+          }
+        }
+      }
+    },
+    "guidance.invitation.message.recording": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record Spectrum activity and review it later with WiFi Lens Pro."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeichne Spectrum-Aktivitäten auf und sieh sie dir später mit WiFi Lens Pro an."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graba la actividad de Spectrum y revísala más tarde con WiFi Lens Pro."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistre l’activité Spectrum et consulte-la plus tard avec WiFi Lens Pro."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens Pro で Spectrum の動作を記録し、後から確認できます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записывайте работу Spectrum и просматривайте её позже в WiFi Lens Pro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 WiFi Lens Pro 录制 Spectrum 活动并稍后查看。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 WiFi Lens Pro 錄製 Spectrum 活動並稍後查看。"
+          }
+        }
+      }
+    },
+    "guidance.invitation.message.advanced_diagnostics": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore additional Wi-Fi diagnostic tools in WiFi Lens Pro."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entdecke weitere Wi-Fi-Diagnosewerkzeuge in WiFi Lens Pro."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descubre más herramientas de diagnóstico Wi-Fi en WiFi Lens Pro."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découvre d’autres outils de diagnostic Wi-Fi dans WiFi Lens Pro."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WiFi Lens Pro でさらに多くの Wi-Fi 診断ツールを確認できます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Откройте дополнительные средства диагностики Wi-Fi в WiFi Lens Pro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 WiFi Lens Pro 中了解更多 Wi-Fi 诊断工具。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 WiFi Lens Pro 中了解更多 Wi-Fi 診斷工具。"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

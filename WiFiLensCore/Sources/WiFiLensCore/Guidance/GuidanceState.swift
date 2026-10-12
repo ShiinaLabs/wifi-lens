@@ -1,5 +1,17 @@
 import Foundation
 
+public enum ProInterestCategory: String, CaseIterable, Codable, Equatable, Sendable {
+    case longTermMonitoring
+    case spectrumRecording
+    case advancedDiagnostics
+    case generalPro
+}
+
+struct ProInterestVisit: Codable, Hashable, Sendable {
+    let category: ProInterestCategory
+    let day: String
+}
+
 /// Persisted lifecycle-guidance state. The struct owns its invariants both on live
 /// mutation (`recordActiveDay`) and on restore (the normalized initializer),
 /// so corrupted storage can never violate them.
@@ -13,6 +25,12 @@ struct GuidanceState: Equatable, Sendable {
     var invitationPresentationCount: Int
     var invitationDismissalCount: Int
     var invitationsDisabled: Bool
+    var invitationPresentationDates: [Date]
+    var lastInvitationLaterDate: Date?
+    var lastPurchaseExplorationDate: Date?
+    var lastAcceleratedFollowUpDate: Date?
+    var lastAcceleratedFollowUpExplorationDate: Date?
+    var proInterestVisits: [ProInterestVisit]
     var lastReviewRequestDate: Date?
     var lastReviewRequestVersion: String?
 
@@ -28,7 +46,13 @@ struct GuidanceState: Equatable, Sendable {
         invitationDismissalCount: Int = 0,
         invitationsDisabled: Bool = false,
         lastReviewRequestDate: Date? = nil,
-        lastReviewRequestVersion: String? = nil
+        lastReviewRequestVersion: String? = nil,
+        invitationPresentationDates: [Date] = [],
+        lastInvitationLaterDate: Date? = nil,
+        lastPurchaseExplorationDate: Date? = nil,
+        lastAcceleratedFollowUpDate: Date? = nil,
+        lastAcceleratedFollowUpExplorationDate: Date? = nil,
+        proInterestVisits: [ProInterestVisit] = []
     ) {
         self.firstLaunchDate = firstLaunchDate
         self.activeDays = Self.normalizedActiveDays(activeDays)
@@ -37,6 +61,12 @@ struct GuidanceState: Equatable, Sendable {
         self.invitationPresentationCount = invitationPresentationCount
         self.invitationDismissalCount = invitationDismissalCount
         self.invitationsDisabled = invitationsDisabled
+        self.invitationPresentationDates = Array(invitationPresentationDates.sorted().suffix(20))
+        self.lastInvitationLaterDate = lastInvitationLaterDate
+        self.lastPurchaseExplorationDate = lastPurchaseExplorationDate
+        self.lastAcceleratedFollowUpDate = lastAcceleratedFollowUpDate
+        self.lastAcceleratedFollowUpExplorationDate = lastAcceleratedFollowUpExplorationDate
+        self.proInterestVisits = Self.normalizedInterestVisits(proInterestVisits)
         self.lastReviewRequestDate = lastReviewRequestDate
         self.lastReviewRequestVersion = lastReviewRequestVersion
     }
@@ -56,6 +86,39 @@ struct GuidanceState: Equatable, Sendable {
         if activeDays.count > Self.maxActiveDayCount {
             activeDays.removeFirst(activeDays.count - Self.maxActiveDayCount)
         }
+    }
+
+    mutating func recordProInterest(_ category: ProInterestCategory, at date: Date, calendar: Calendar) {
+        let key = Self.dayKey(for: date, calendar: calendar)
+        guard !proInterestVisits.contains(where: { $0.category == category && $0.day == key }) else { return }
+        proInterestVisits.append(ProInterestVisit(category: category, day: key))
+        proInterestVisits = Self.normalizedInterestVisits(proInterestVisits)
+    }
+
+    mutating func recordInvitationPresentation(at date: Date) {
+        invitationPresentationDates.append(date)
+        invitationPresentationDates = Array(invitationPresentationDates.sorted().suffix(20))
+    }
+
+    mutating func pruneProInterestVisits(now: Date, calendar: Calendar) {
+        let today = calendar.startOfDay(for: now)
+        guard let oldest = calendar.date(byAdding: .day, value: -13, to: today) else { return }
+        let oldestKey = Self.dayKey(for: oldest, calendar: calendar)
+        proInterestVisits = proInterestVisits.filter { $0.day >= oldestKey }
+    }
+
+    static func dayKey(for date: Date, calendar: Calendar) -> String {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        guard let year = components.year, let month = components.month, let day = components.day else { return "" }
+        return String(format: "%04d-%02d-%02d", year, month, day)
+    }
+
+    private static func normalizedInterestVisits(_ visits: [ProInterestVisit]) -> [ProInterestVisit] {
+        let valid = visits.filter { isValidDayKey($0.day) }
+        let unique = Array(Set(valid)).sorted {
+            $0.day == $1.day ? $0.category.rawValue < $1.category.rawValue : $0.day < $1.day
+        }
+        return Array(unique.suffix(ProInterestCategory.allCases.count * 14))
     }
 
     /// Returns true when `key` matches `YYYY-MM-DD` and forms a real Gregorian

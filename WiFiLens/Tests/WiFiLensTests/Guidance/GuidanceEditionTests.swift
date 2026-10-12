@@ -9,6 +9,11 @@ struct GuidanceEditionTests {
 
         #expect(config.invitationEnabled == true)
         #expect(config.reviewEnabled == false)
+        #expect(config.minimumInvitationCompletions == 0)
+        #expect(config.minimumInvitationActiveDays == 2)
+        #expect(config.invitationCooldownDays == 7)
+        #expect(config.localMarketingPolicyEnabled)
+        #expect(!GuidanceConfiguration().localMarketingPolicyEnabled)
     }
 
     @Test func ossExportSuccessPresentationIsBanner() {

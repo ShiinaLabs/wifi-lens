@@ -193,6 +193,8 @@ The open-source edition is available for local analysis, development, source ins
 
 WiFi Lens does not collect usage analytics, crash telemetry, or Wi-Fi scan data.
 
+- **Product guidance:** Preview categories, local dates, and invitation preferences are stored on this Mac in UserDefaults to tailor and pace Pro recommendations. This information is not linked to a user identity or uploaded.
+
 - **Location Services:** macOS requires this permission to expose Wi-Fi SSID names. WiFi Lens does not read GPS position.
 - **Region detection:** Uses system locale, hardware-reported channel list, and nearby AP country codes on-device.
 - **Network Self-Check:** Resolves public endpoints (`www.apple.com`, `www.msftconnecttest.com`) and may test reachability of configured proxy endpoints.

@@ -6,10 +6,11 @@ import Foundation
 public struct GuidanceConfiguration: Equatable, Sendable {
     public var invitationEnabled = false
     public var reviewEnabled = false
-    var minimumInvitationCompletions = 3
-    var minimumInvitationActiveDays = 2
-    var invitationCooldownDays = 30
-    var maxAutomaticInvitations = 3
+    public var minimumInvitationCompletions = 3
+    public var minimumInvitationActiveDays = 2
+    public var invitationCooldownDays = 30
+    public var maxAutomaticInvitations = 3
+    public var localMarketingPolicyEnabled = false
     var minimumReviewCompletions = 5
     var minimumReviewActiveDays = 3
     var minimumReviewAgeDays = 7
@@ -22,6 +23,7 @@ public struct GuidanceConfiguration: Equatable, Sendable {
 public enum GuidanceValueMoment: String, Equatable, Sendable {
     case diagnosticsCompleted
     case exportSucceeded
+    case appReturnedAfterUse
     case analysisLoaded
     case roamingCompleted
 }
@@ -38,6 +40,10 @@ enum GuidanceSuppressionReason: String, Equatable, Sendable {
     case activeDaysThresholdNotMet
     case invitationCooldown
     case invitationPresentationLimit
+    case invitationWeeklyLimit
+    case invitationAlreadyShownThisSession
+    case invitationRecentlyDeferred
+    case acceleratedFollowUpUnavailable
     case firstLaunchAgeNotMet
     case reviewCooldown
     case reviewAlreadyRequestedForVersion

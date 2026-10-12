@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import SceneKit
 
@@ -12,10 +13,23 @@ public struct OverviewView: View {
     @State private var stableScore = StableScore()
     @State private var displayLevel: ChannelQuality.QualityLevel = .excellent
     @State private var displayScore: Int = 100
+    @State private var renderedInvitationID: UUID?
+    private let guidance: GuidanceCoordinator?
+    private let isInvitationHostActive: Bool
+    private let hostWindow: NSWindow?
 
-    public init(viewModel: ScannerViewModel, store: WiFiObservationStore = .shared) {
+    public init(
+        viewModel: ScannerViewModel,
+        store: WiFiObservationStore = .shared,
+        guidance: GuidanceCoordinator? = nil,
+        isInvitationHostActive: Bool = true,
+        hostWindow: NSWindow? = nil
+    ) {
         self.viewModel = viewModel
         _store = ObservedObject(wrappedValue: store)
+        self.guidance = guidance
+        self.isInvitationHostActive = isInvitationHostActive
+        self.hostWindow = hostWindow
     }
 
     private var verifiedWiFiStatus: WiFiCurrentStatus? {
@@ -129,6 +143,23 @@ public struct OverviewView: View {
                                 unknownConnectionCard
                             } else {
                                 noConnectionCard
+                            }
+                            if let guidance,
+                               let invitation = guidance.pendingInvitation,
+                               invitation.moment == .appReturnedAfterUse {
+                                ProInvitationCard(
+                                    invitation: invitation,
+                                    guidance: guidance,
+                                    isHostVisible: isInvitationHostActive,
+                                    hostWindow: hostWindow
+                                )
+                                .onAppear { renderedInvitationID = invitation.id }
+                                .onDisappear {
+                                    if let id = renderedInvitationID {
+                                        renderedInvitationID = nil
+                                        guidance.endInvitationPresentation(id: id)
+                                    }
+                                }
                             }
                             if viewModel.hasWiFiDataAuthorization && viewModel.isWiFiAvailable {
                                 environmentCard

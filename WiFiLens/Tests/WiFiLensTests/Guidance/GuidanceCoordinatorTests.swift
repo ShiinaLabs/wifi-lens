@@ -313,9 +313,9 @@ final class GuidanceCoordinatorTests {
         #expect(loaded.invitationDismissalCount == 1)
         #expect(loaded.lastInvitationDate == now)
 
-        // The presented-then-dismissed invitation starts the 30-day cooldown.
+        // A user choice prevents another invitation in the same active session.
         let decision = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
-        #expect(decision == .none(.invitationCooldown))
+        #expect(decision == .none(.invitationAlreadyShownThisSession))
     }
 
     @Test func dismissExportFeedbackBeforePresentationCancelsWithoutTrace() throws {
@@ -336,7 +336,7 @@ final class GuidanceCoordinatorTests {
     }
 
     @Test func dismissExportFeedbackWithoutInvitationClearsFeedbackOnly() {
-        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        let coordinator = makeCoordinator(configuration: GuidanceConfiguration(), state: invitationState(completionCount: 0))
         coordinator.handleExportSucceeded()
         #expect(coordinator.exportFeedback != nil)
         #expect(coordinator.pendingInvitation == nil)
@@ -378,24 +378,23 @@ final class GuidanceCoordinatorTests {
     @Test func invitationCardCopySelectsPerMoment() {
         #expect(ProInvitationCard.messageKey(for: .diagnosticsCompleted) == "guidance.invitation.message.diagnostics")
         #expect(ProInvitationCard.messageKey(for: .exportSucceeded) == "guidance.invitation.message.export")
-        #expect(ProInvitationCard.messageKey(for: .analysisLoaded) == "guidance.invitation.message.diagnostics")
-        #expect(ProInvitationCard.messageKey(for: .roamingCompleted) == "guidance.invitation.message.diagnostics")
+        #expect(ProInvitationCard.messageKey(for: .analysisLoaded) == "guidance.invitation.message.general")
+        #expect(ProInvitationCard.messageKey(for: .roamingCompleted) == "guidance.invitation.message.general")
+        #expect(ProInvitationCard.messageKey(for: .appReturnedAfterUse) == "guidance.invitation.message.general")
     }
 
-    @Test func diagnosticsCompletionsCrossThresholdOnThirdUsefulCompletion() {
+    @Test func firstDiagnosticsCompletionCanInviteWithTwoActiveDays() {
         let coordinator = makeCoordinator(state: GuidanceState(
             activeDays: ["2026-07-01", "2026-07-02"],
             meaningfulCompletionCount: 0
         ))
 
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
         #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
 
         let invitation = coordinator.pendingInvitation
         #expect(invitation?.moment == .diagnosticsCompleted)
         let loaded = store.load()
-        #expect(loaded.meaningfulCompletionCount == 3)
+        #expect(loaded.meaningfulCompletionCount == 1)
         #expect(loaded.invitationPresentationCount == 0)
 
         if let id = invitation?.id {
@@ -420,12 +419,12 @@ final class GuidanceCoordinatorTests {
     }
 
     @Test func eventSinkEmitsNoActionWithSuppressionReason() {
-        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        let coordinator = makeCoordinator(state: invitationState(invitationsDisabled: true))
 
         _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
 
         let noAction = events(named: "guidance.no_action").first
-        #expect(noAction?.suppressionReason == .completionThresholdNotMet)
+        #expect(noAction?.suppressionReason == .invitationsDisabledByUser)
         #expect(noAction?.moment == .diagnosticsCompleted)
     }
 
@@ -439,15 +438,79 @@ final class GuidanceCoordinatorTests {
         #expect(coordinator.pendingInvitation == nil)
     }
 
-    @Test func roamingCompletionsDoNotAdvanceInvitationEligibility() {
+    @Test func roamingDoesNotCountButInvitationsDoNotNeedThreeCompletions() {
         let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
         _ = coordinator.recordAndReturnDecision(.roamingCompleted)
         _ = coordinator.recordAndReturnDecision(.roamingCompleted)
 
         #expect(store.load().meaningfulCompletionCount == 0)
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
         #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
+    }
+
+    @Test func distinctStoreEntriesShareOnePendingInvitation() {
+        let coordinator = makeCoordinator(state: invitationState())
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
+        #expect(coordinator.recordAndReturnDecision(.exportSucceeded) == .none(.invitationAlreadyPending))
+    }
+
+    @Test func effectiveForegroundTimeSchedulesReturnInvitationAtThirtySeconds() {
+        var current = now
+        store = InMemoryGuidanceStateStore(initial: invitationState(completionCount: 0))
+        let coordinator = GuidanceCoordinator(
+            configuration: invitationConfig(),
+            stateStore: store,
+            now: { current },
+            calendar: calendar,
+            appVersion: { "2.0.1" },
+            isProAppInstalled: { false },
+            eventSink: { self.collectedEvents.append($0) }
+        )
+
+        coordinator.recordForegroundUsageTick(isEligible: true)
+        for _ in 0..<29 {
+            current.addTimeInterval(1)
+            coordinator.recordForegroundUsageTick(isEligible: true)
+        }
+        #expect(coordinator.pendingInvitation == nil)
+
+        current.addTimeInterval(1)
+        coordinator.recordForegroundUsageTick(isEligible: true)
+        #expect(coordinator.pendingInvitation?.moment == .appReturnedAfterUse)
+    }
+
+    @Test func ineligibleTimeDoesNotContributeToReturnEvaluation() {
+        var current = now
+        store = InMemoryGuidanceStateStore(initial: invitationState(completionCount: 0))
+        let coordinator = GuidanceCoordinator(
+            configuration: invitationConfig(),
+            stateStore: store,
+            now: { current },
+            calendar: calendar,
+            appVersion: { "2.0.1" },
+            isProAppInstalled: { false },
+            eventSink: { self.collectedEvents.append($0) }
+        )
+        coordinator.recordForegroundUsageTick(isEligible: true)
+        current.addTimeInterval(20)
+        coordinator.recordForegroundUsageTick(isEligible: false)
+        coordinator.recordForegroundUsageTick(isEligible: true)
+        #expect(coordinator.pendingInvitation == nil)
+        for _ in 0..<30 {
+            current.addTimeInterval(1)
+            coordinator.recordForegroundUsageTick(isEligible: true)
+        }
+        #expect(coordinator.pendingInvitation?.moment == .appReturnedAfterUse)
+    }
+
+    @Test func previewAndSuccessfulStoreOpenPersistOnlyLocalInterestData() {
+        let coordinator = makeCoordinator(state: invitationState())
+        coordinator.recordProPreviewVisit(.spectrumRecording)
+        coordinator.recordProPreviewVisit(.spectrumRecording)
+        #expect(store.load().proInterestVisits.count == 1)
+        #expect(store.load().lastPurchaseExplorationDate == nil)
+        coordinator.recordSuccessfulStoreOpen()
+        #expect(store.load().lastPurchaseExplorationDate == now)
+        #expect(store.load().proInterestVisits.first?.category == .spectrumRecording)
     }
 
     @Test func reviewEventsOncePerToken() {
@@ -462,25 +525,29 @@ final class GuidanceCoordinatorTests {
 
     // MARK: - Export banner view
 
-    @Test func exportBannerHostsInvitationAndConfirmsPresentation() throws {
+    @Test func exportBannerDoesNotConfirmWhileHostIsNotActuallyForeground() throws {
         let coordinator = makeCoordinator(state: invitationState(completionCount: 3))
         coordinator.handleExportSucceeded()
         let invitation = try #require(coordinator.pendingInvitation)
         #expect(invitation.moment == .exportSucceeded)
 
-        let host = BannerHost(content: ExportSuccessBanner(guidance: coordinator))
+        let host = BannerHost { window in
+            ExportSuccessBanner(guidance: coordinator, isInvitationHostActive: true, hostWindow: window)
+        }
         host.flushLayout()
 
-        #expect(store.load().invitationPresentationCount == 1)
-        #expect(events(named: "guidance.invitation.presented").count == 1)
+        #expect(store.load().invitationPresentationCount == 0)
+        #expect(events(named: "guidance.invitation.presented").isEmpty)
     }
 
     @Test func exportBannerWithoutInvitationShowsFeedbackOnly() throws {
-        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        let coordinator = makeCoordinator(configuration: GuidanceConfiguration(), state: invitationState(completionCount: 0))
         coordinator.handleExportSucceeded()
         #expect(coordinator.pendingInvitation == nil)
 
-        let host = BannerHost(content: ExportSuccessBanner(guidance: coordinator))
+        let host = BannerHost { window in
+            ExportSuccessBanner(guidance: coordinator, isInvitationHostActive: true, hostWindow: window)
+        }
         host.flushLayout()
 
         #expect(events(named: "guidance.invitation.presented").isEmpty)
@@ -491,8 +558,11 @@ final class GuidanceCoordinatorTests {
         let coordinator = makeCoordinator(state: invitationState())
         coordinator.handleExportSucceeded()
         let invitation = try #require(coordinator.pendingInvitation)
+        coordinator.invitationPresented(id: invitation.id)
 
-        let host = BannerHost(content: ExportSuccessBanner(guidance: coordinator))
+        let host = BannerHost { window in
+            ExportSuccessBanner(guidance: coordinator, isInvitationHostActive: true, hostWindow: window)
+        }
         host.flushLayout()
         #expect(store.load().invitationPresentationCount == 1)
         #expect(invitation.id == coordinator.pendingInvitation?.id)
@@ -514,7 +584,9 @@ final class GuidanceCoordinatorTests {
         coordinator.handleExportSucceeded()
         #expect(coordinator.pendingInvitation?.id == invitation.id)
 
-        let host = BannerHost(content: ExportSuccessBanner(guidance: coordinator))
+        let host = BannerHost { window in
+            ExportSuccessBanner(guidance: coordinator, isInvitationHostActive: true, hostWindow: window)
+        }
         host.flushLayout()
         #expect(store.load().invitationPresentationCount == 0)
 
@@ -523,6 +595,29 @@ final class GuidanceCoordinatorTests {
         #expect(coordinator.pendingInvitation?.id == invitation.id)
         #expect(store.load().invitationDismissalCount == 0)
         #expect(events(named: "guidance.invitation.presented").isEmpty)
+    }
+
+    @Test func transparentInvitationHostDoesNotConfirmPresentation() throws {
+        let coordinator = makeCoordinator(state: invitationState())
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
+        let invitation = try #require(coordinator.pendingInvitation)
+
+        let host = BannerHost { window in
+            ProInvitationCard(
+                invitation: invitation,
+                guidance: coordinator,
+                isHostVisible: false,
+                hostWindow: window
+            )
+            .onDisappear { coordinator.endInvitationPresentation(id: invitation.id) }
+        }
+        host.flushLayout()
+
+        #expect(store.load().invitationPresentationCount == 0)
+        #expect(events(named: "guidance.invitation.presented").isEmpty)
+        host.replace(with: EmptyView())
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(events(named: "guidance.invitation.cancelled").count == 1)
     }
 
     // MARK: - Helpers
@@ -554,6 +649,11 @@ final class GuidanceCoordinatorTests {
     private func invitationConfig() -> GuidanceConfiguration {
         var config = GuidanceConfiguration()
         config.invitationEnabled = true
+        config.minimumInvitationCompletions = 0
+        config.minimumInvitationActiveDays = 2
+        config.invitationCooldownDays = 7
+        config.maxAutomaticInvitations = .max
+        config.localMarketingPolicyEnabled = true
         return config
     }
 
@@ -563,10 +663,11 @@ final class GuidanceCoordinatorTests {
         return config
     }
 
-    private func invitationState(completionCount: Int = 2) -> GuidanceState {
+    private func invitationState(completionCount: Int = 2, invitationsDisabled: Bool = false) -> GuidanceState {
         GuidanceState(
             activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: completionCount
+            meaningfulCompletionCount: completionCount,
+            invitationsDisabled: invitationsDisabled
         )
     }
 
@@ -596,12 +697,15 @@ private final class BannerHost {
     private let window: NSWindow
     private let controller: NSHostingController<AnyView>
 
-    init<Content: View>(content: Content) {
-        controller = NSHostingController(rootView: AnyView(content))
+    init<Content: View>(content: (NSWindow) -> Content) {
+        controller = NSHostingController(rootView: AnyView(EmptyView()))
         window = NSWindow(contentViewController: controller)
+        controller.rootView = AnyView(content(window))
     }
 
     func flushLayout() {
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
         window.layoutIfNeeded()
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.02))
     }

@@ -8,10 +8,19 @@ import SwiftUI
 struct ProInvitationCard: View {
     let invitation: GuidanceCoordinator.InvitationPresentation
     let guidance: GuidanceCoordinator
+    var isHostVisible = true
+    var hostWindow: NSWindow?
 
-    public init(invitation: GuidanceCoordinator.InvitationPresentation, guidance: GuidanceCoordinator) {
+    public init(
+        invitation: GuidanceCoordinator.InvitationPresentation,
+        guidance: GuidanceCoordinator,
+        isHostVisible: Bool = true,
+        hostWindow: NSWindow? = nil
+    ) {
         self.invitation = invitation
         self.guidance = guidance
+        self.isHostVisible = isHostVisible
+        self.hostWindow = hostWindow
     }
 
     public var body: some View {
@@ -24,12 +33,10 @@ struct ProInvitationCard: View {
                     .foregroundStyle(Color.accentColor)
             }
 
-            Text(
-                String(
-                    localized: .init(stringLiteral: Self.messageKey(for: invitation.moment)),
-                    comment: "Invitation card body message"
-                )
-            )
+            Text(String(
+                localized: .init(stringLiteral: guidance.invitationMessageKey(for: invitation.moment)),
+                comment: "Invitation card body message"
+            ))
             .font(.callout)
             .foregroundStyle(.secondary)
 
@@ -49,18 +56,20 @@ struct ProInvitationCard: View {
                 }
                 .accessibilityIdentifier("guidance-invitation-later")
 
-                Button {
-                    guidance.disableInvitations(id: invitation.id)
-                } label: {
-                    Text(String(localized: "guidance.invitation.dont_show_again", comment: "Disable future invitations"))
-                }
-                .accessibilityIdentifier("guidance-invitation-dont-show-again")
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.accentColor.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
-        .onAppear { guidance.invitationPresented(id: invitation.id) }
+        .task(id: isHostVisible) {
+            while !Task.isCancelled {
+                if isActuallyVisible {
+                    guidance.invitationPresented(id: invitation.id)
+                    return
+                }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
     }
 
     private func openAppStore() {
@@ -80,8 +89,19 @@ struct ProInvitationCard: View {
             "guidance.invitation.message.diagnostics"
         case .exportSucceeded:
             "guidance.invitation.message.export"
-        case .analysisLoaded, .roamingCompleted:
-            "guidance.invitation.message.diagnostics"
+        case .analysisLoaded, .roamingCompleted, .appReturnedAfterUse:
+            "guidance.invitation.message.general"
         }
+    }
+
+    private var isActuallyVisible: Bool {
+        guard isHostVisible,
+              NSApp.isActive,
+              let hostWindow,
+              hostWindow.isKeyWindow,
+              hostWindow.isVisible,
+              !hostWindow.isMiniaturized,
+              hostWindow.attachedSheet == nil else { return false }
+        return true
     }
 }

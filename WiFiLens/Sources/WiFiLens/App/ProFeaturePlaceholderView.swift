@@ -1,5 +1,17 @@
 import SwiftUI
+import AppKit
 import WiFiLensCore
+
+struct GuidanceHostWindowKey: EnvironmentKey {
+    static let defaultValue: NSWindow? = nil
+}
+
+extension EnvironmentValues {
+    var guidanceHostWindow: NSWindow? {
+        get { self[GuidanceHostWindowKey.self] }
+        set { self[GuidanceHostWindowKey.self] = newValue }
+    }
+}
 
 struct ProBadge: View {
     var body: some View {
@@ -35,20 +47,27 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
     let featureDescription: String
     let featureIcon: String
     let campaign: ExternalDestination
+    let interestCategory: ProInterestCategory?
+    let hostWindow: NSWindow?
     @ViewBuilder var customSkeleton: () -> CustomSkeleton
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
 
     init(
         featureName: String,
         featureDescription: String,
         featureIcon: String,
         campaign: ExternalDestination = .appStoreCampaignPreviewLock,
+        interestCategory: ProInterestCategory? = nil,
+        hostWindow: NSWindow? = nil,
         @ViewBuilder customSkeleton: @escaping () -> CustomSkeleton
     ) {
         self.featureName = featureName
         self.featureDescription = featureDescription
         self.featureIcon = featureIcon
         self.campaign = campaign
+        self.interestCategory = interestCategory
+        self.hostWindow = hostWindow
         self.customSkeleton = customSkeleton
     }
     
@@ -119,11 +138,37 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(String(format: String(localized: "pro.accessibility.feature_fmt", comment: "Pro feature accessibility label"), featureName))
+        .task(id: scenePhase) {
+            guard let interestCategory else { return }
+            var visibleSeconds = 0
+            while visibleSeconds < 5 && !Task.isCancelled {
+                guard isPreviewActuallyVisible else {
+                    visibleSeconds = 0
+                    try? await Task.sleep(for: .seconds(1))
+                    continue
+                }
+                try? await Task.sleep(for: .seconds(1))
+                if isPreviewActuallyVisible { visibleSeconds += 1 } else { visibleSeconds = 0 }
+            }
+            guard visibleSeconds >= 5, !Task.isCancelled else { return }
+            OSSEditionAssembly.guidanceCoordinator.recordProPreviewVisit(interestCategory)
+        }
     }
     
     private func openAppStore() {
-        guard let url = ExternalLinks.url(for: campaign) else { return }
-        NSWorkspace.shared.open(url)
+        guard let url = ExternalLinks.url(for: campaign), NSWorkspace.shared.open(url) else { return }
+        OSSEditionAssembly.guidanceCoordinator.recordSuccessfulStoreOpen()
+    }
+
+    private var isPreviewActuallyVisible: Bool {
+        guard scenePhase == .active,
+              NSApp.isActive,
+              let window = hostWindow,
+              window.isKeyWindow,
+              window.isVisible,
+              !window.isMiniaturized,
+              window.attachedSheet == nil else { return false }
+        return true
     }
 }
 
@@ -132,17 +177,24 @@ extension ProFeaturePlaceholderView where CustomSkeleton == ProFeatureScreenshot
         featureName: String,
         featureDescription: String,
         featureIcon: String,
-        campaign: ExternalDestination = .appStoreCampaignPreviewLock
+        campaign: ExternalDestination = .appStoreCampaignPreviewLock,
+        interestCategory: ProInterestCategory? = nil,
+        hostWindow: NSWindow? = nil
     ) {
         self.featureName = featureName
         self.featureDescription = featureDescription
         self.featureIcon = featureIcon
         self.campaign = campaign
+        self.interestCategory = interestCategory
+        self.hostWindow = hostWindow
         self.customSkeleton = { ProFeatureScreenshotPlaceholder(systemImage: featureIcon) }
     }
 }
 
 struct MenuBarFeaturePreviewRow: View {
+    @Environment(\.guidanceHostWindow) private var hostWindow
+    @Environment(\.scenePhase) private var scenePhase
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
@@ -167,8 +219,8 @@ struct MenuBarFeaturePreviewRow: View {
                 .foregroundColor(.secondary)
 
             Button {
-                guard let url = ExternalLinks.url(for: .appStore) else { return }
-                NSWorkspace.shared.open(url)
+                guard let url = ExternalLinks.url(for: .appStore), NSWorkspace.shared.open(url) else { return }
+                OSSEditionAssembly.guidanceCoordinator.recordSuccessfulStoreOpen()
             } label: {
                 HStack(spacing: 6) {
                     Text(String(localized: "pro.learn_more", comment: "Learn more button for Pro features"))
@@ -180,6 +232,30 @@ struct MenuBarFeaturePreviewRow: View {
             .font(.callout)
         }
         .padding(.vertical, 4)
+        .task(id: hostWindow?.windowNumber) {
+            guard let hostWindow else { return }
+            var visibleSeconds = 0
+            while visibleSeconds < 5 && !Task.isCancelled {
+                guard scenePhase == .active,
+                      NSApp.isActive,
+                      hostWindow.isKeyWindow,
+                      hostWindow.isVisible,
+                      !hostWindow.isMiniaturized,
+                      hostWindow.attachedSheet == nil else {
+                    visibleSeconds = 0
+                    try? await Task.sleep(for: .seconds(1))
+                    continue
+                }
+                try? await Task.sleep(for: .seconds(1))
+                if scenePhase == .active && NSApp.isActive && hostWindow.isKeyWindow {
+                    visibleSeconds += 1
+                } else {
+                    visibleSeconds = 0
+                }
+            }
+            guard visibleSeconds >= 5, !Task.isCancelled else { return }
+            OSSEditionAssembly.guidanceCoordinator.recordProPreviewVisit(.generalPro)
+        }
     }
 }
 

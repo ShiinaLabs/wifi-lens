@@ -1,4 +1,8 @@
-# Neu in Version 2.0
+# Neu in Version 2.0.1
+
+Kleinere Verbesserungen der App.
+
+## WiFi Lens 2.0
 
 WiFi Lens 2.0 ist eine umfassende Grundlage für präzisere, zuverlässigere und konsistentere Wi-Fi-Analysen.
 
