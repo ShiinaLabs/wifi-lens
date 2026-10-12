@@ -11,17 +11,20 @@ public struct WelcomeView: View {
     private let coordinator: OnboardingCoordinator
     private let hostID: UUID
     private let onStart: (SidebarPage, SecondaryToolbarItemID?) -> Void
+    private let onSuccessfulProOpen: () -> Void
 
     public init(
         configuration: OnboardingConfiguration,
         coordinator: OnboardingCoordinator,
         hostID: UUID,
-        onStart: @escaping (SidebarPage, SecondaryToolbarItemID?) -> Void = { _, _ in }
+        onStart: @escaping (SidebarPage, SecondaryToolbarItemID?) -> Void = { _, _ in },
+        onSuccessfulProOpen: @escaping () -> Void = {}
     ) {
         self.configuration = configuration
         self.coordinator = coordinator
         self.hostID = hostID
         self.onStart = onStart
+        self.onSuccessfulProOpen = onSuccessfulProOpen
     }
 
     @Environment(\.dismiss) private var dismiss
@@ -193,6 +196,7 @@ public struct WelcomeView: View {
             Logging.Logger(label: "guidance").error("onboarding pro link open failed")
             return
         }
+        onSuccessfulProOpen()
         coordinator.completeWelcomeAfterOpeningProURL(hostID: hostID, openedSuccessfully: true)
         dismiss()
     }

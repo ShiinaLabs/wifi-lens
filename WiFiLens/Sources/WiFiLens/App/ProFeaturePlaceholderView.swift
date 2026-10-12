@@ -157,7 +157,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
     
     private func openAppStore() {
         guard let url = ExternalLinks.url(for: campaign), NSWorkspace.shared.open(url) else { return }
-        OSSEditionAssembly.guidanceCoordinator.recordSuccessfulStoreOpen()
+        OSSEditionAssembly.guidanceCoordinator.recordSuccessfulStoreOpenIfMarketingEnabled()
     }
 
     private var isPreviewActuallyVisible: Bool {
@@ -220,7 +220,7 @@ struct MenuBarFeaturePreviewRow: View {
 
             Button {
                 guard let url = ExternalLinks.url(for: .appStore), NSWorkspace.shared.open(url) else { return }
-                OSSEditionAssembly.guidanceCoordinator.recordSuccessfulStoreOpen()
+                OSSEditionAssembly.guidanceCoordinator.recordSuccessfulStoreOpenIfMarketingEnabled()
             } label: {
                 HStack(spacing: 6) {
                     Text(String(localized: "pro.learn_more", comment: "Learn more button for Pro features"))

@@ -121,7 +121,8 @@ private struct AppRootView: View {
 
     private func handleSelectedPageChange(_ newPage: SidebarPage) {
         if newPage != .overview {
-            EditionAssemblyProvider.configuration.guidanceCoordinator.cancelUnpresentedReturnInvitation()
+            EditionAssemblyProvider.configuration.guidanceCoordinator
+                .cancelUnpresentedReturnInvitation(hostID: sceneState.id)
         }
         updateMainWindowRoute(sceneState.id, newPage)
     }
@@ -278,7 +279,11 @@ private struct AppRootView: View {
                         onClearLogs: AppLogger.clearLogs,
                         onOpenExternalDestination: { destination in
                             guard let url = ExternalLinks.url(for: destination) else { return }
-                            NSWorkspace.shared.open(url)
+                            guard NSWorkspace.shared.open(url) else { return }
+                            if case .appStoreCampaignSettingsAbout = destination {
+                                EditionAssemblyProvider.configuration.guidanceCoordinator
+                                    .recordSuccessfulStoreOpenIfMarketingEnabled()
+                            }
                         },
                         onScanIntervalChange: { viewModel.scanIntervalSeconds = $0 },
                         onRegulatoryRegionChange: viewModel.handleRegulatoryRegionOverrideChange,
@@ -413,10 +418,13 @@ private struct AppRootView: View {
                         && hostWindow.attachedSheet == nil
                     configuration.guidanceCoordinator.recordForegroundUsageTick(
                         isEligible: eligible,
-                        isOverviewSelected: selectedPage == .overview
+                        isOverviewSelected: selectedPage == .overview,
+                        hostID: sceneState.id
                     )
                 } else if !NSApp.isActive {
-                    configuration.guidanceCoordinator.recordForegroundUsageTick(isEligible: false, isOverviewSelected: false)
+                    configuration.guidanceCoordinator.recordForegroundUsageTick(
+                        isEligible: false, isOverviewSelected: false, hostID: sceneState.id
+                    )
                 }
                 try? await Task.sleep(for: .seconds(1))
             }
@@ -441,6 +449,10 @@ private struct AppRootView: View {
                     if let selection {
                         secondaryToolbarSelections.setSelection(selection, for: route)
                     }
+                },
+                onSuccessfulProOpen: {
+                    EditionAssemblyProvider.configuration.guidanceCoordinator
+                        .recordSuccessfulStoreOpenIfMarketingEnabled()
                 }
             )
         }

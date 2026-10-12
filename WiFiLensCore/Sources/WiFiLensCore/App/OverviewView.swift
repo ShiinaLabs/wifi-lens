@@ -135,30 +135,6 @@ public struct OverviewView: View {
                                     .accessibilityHidden(true)
                             }
 
-                            if !viewModel.hasWiFiDataAuthorization {
-                                authorizationCard
-                            }
-
-                            if viewModel.wifiPowerState == .poweredOff {
-                                wifiOffCard
-                            } else if !viewModel.isWiFiAvailable {
-                                unknownConnectionCard
-                            } else if let status = verifiedWiFiStatus {
-                                connectionCard(status)
-                                signalHealthRow(status)
-                                if recommendationAvailability != .currentGoodEnough {
-                                    diagnosticCard
-                                }
-                                if let current = currentChannelQuality, hasBetterChannel(current) {
-                                    channelAdviceCard(current)
-                                } else if !currentChannelRecommendations.isEmpty {
-                                    channelStatusCard(recommendationAvailability)
-                                }
-                            } else if verifiedLinkState != .disconnected {
-                                unknownConnectionCard
-                            } else {
-                                noConnectionCard
-                            }
                             if let guidance,
                                let invitation = guidance.pendingInvitation,
                                invitation.moment == .appReturnedAfterUse {
@@ -184,6 +160,31 @@ public struct OverviewView: View {
                                         )
                                     }
                                 }
+                            }
+
+                            if !viewModel.hasWiFiDataAuthorization {
+                                authorizationCard
+                            }
+
+                            if viewModel.wifiPowerState == .poweredOff {
+                                wifiOffCard
+                            } else if !viewModel.isWiFiAvailable {
+                                unknownConnectionCard
+                            } else if let status = verifiedWiFiStatus {
+                                connectionCard(status)
+                                signalHealthRow(status)
+                                if recommendationAvailability != .currentGoodEnough {
+                                    diagnosticCard
+                                }
+                                if let current = currentChannelQuality, hasBetterChannel(current) {
+                                    channelAdviceCard(current)
+                                } else if !currentChannelRecommendations.isEmpty {
+                                    channelStatusCard(recommendationAvailability)
+                                }
+                            } else if verifiedLinkState != .disconnected {
+                                unknownConnectionCard
+                            } else {
+                                noConnectionCard
                             }
                             if viewModel.hasWiFiDataAuthorization && viewModel.isWiFiAvailable {
                                 environmentCard

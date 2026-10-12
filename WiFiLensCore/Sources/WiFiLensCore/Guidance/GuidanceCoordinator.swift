@@ -58,6 +58,8 @@ public final class GuidanceCoordinator {
     private var confirmedPresentedInvitationIDs: Set<UUID> = []
     private var lastPresentedInvitationUsageDay: Date?
     private var lastReturnEvaluationDate: Date?
+    private var lastReturnCancellationRetryDate: Date?
+    private var returnInvitationHostID: UUID?
     private var lastEligibleForegroundTick: Date?
     private var eligibleForegroundSeconds: TimeInterval = 0
 
@@ -129,6 +131,7 @@ public final class GuidanceCoordinator {
             // completed diagnostic/export has higher priority and must not be
             // blocked by a prompt the user has not actually seen.
             pendingInvitation = nil
+            returnInvitationHostID = nil
         }
 
         switch moment {
@@ -220,7 +223,11 @@ public final class GuidanceCoordinator {
 
     /// Receives one-second eligibility ticks from the OSS main-window host.
     /// Only time with an active, visible, uncovered main window is accumulated.
-    public func recordForegroundUsageTick(isEligible: Bool, isOverviewSelected: Bool = true) {
+    public func recordForegroundUsageTick(
+        isEligible: Bool,
+        isOverviewSelected: Bool = true,
+        hostID: UUID? = nil
+    ) {
         guard isEligible else {
             lastEligibleForegroundTick = nil
             return
@@ -235,16 +242,29 @@ public final class GuidanceCoordinator {
         guard lastReturnEvaluationDate.map({ calendar.startOfDay(for: $0) != today }) ?? true else { return }
         lastReturnEvaluationDate = current
         _ = recordAndReturnDecision(.appReturnedAfterUse)
+        if pendingInvitation?.moment == .appReturnedAfterUse {
+            returnInvitationHostID = hostID
+        }
     }
 
     /// Discards a return invitation that was queued on Overview but never became
     /// visible before the user navigated elsewhere. It must not reserve the
     /// shared invitation slot needed by diagnostic/export completion.
-    public func cancelUnpresentedReturnInvitation() {
+    public func cancelUnpresentedReturnInvitation(hostID: UUID? = nil) {
         guard let invitation = pendingInvitation,
               invitation.moment == .appReturnedAfterUse,
+              returnInvitationHostID == hostID,
               !confirmedPresentedInvitationIDs.contains(invitation.id) else { return }
         pendingInvitation = nil
+        returnInvitationHostID = nil
+        allowOneReturnRetryAfterCancellation(at: now())
+    }
+
+    private func allowOneReturnRetryAfterCancellation(at date: Date) {
+        let today = calendar.startOfDay(for: date)
+        guard lastReturnCancellationRetryDate.map({ calendar.startOfDay(for: $0) != today }) ?? true else { return }
+        lastReturnCancellationRetryDate = date
+        lastReturnEvaluationDate = nil
     }
 
     /// Records only a feature category and local calendar date after a preview
@@ -261,6 +281,14 @@ public final class GuidanceCoordinator {
         var state = stateStore.load()
         state.lastPurchaseExplorationDate = now()
         stateStore.save(state)
+    }
+
+    /// Records a successful Store handoff for editions that enable local OSS
+    /// marketing. Shared welcome/settings surfaces can call this safely in Pro,
+    /// where the policy remains disabled.
+    public func recordSuccessfulStoreOpenIfMarketingEnabled() {
+        guard configuration.localMarketingPolicyEnabled else { return }
+        recordSuccessfulStoreOpen()
     }
 
     func invitationMessageKey(for moment: GuidanceValueMoment) -> String {
@@ -306,6 +334,8 @@ public final class GuidanceCoordinator {
     func dismissInvitation(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
+        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
+        returnInvitationHostID = nil
         var state = stateStore.load()
         state.invitationDismissalCount += 1
         state.lastInvitationLaterDate = now()
@@ -316,6 +346,7 @@ public final class GuidanceCoordinator {
     func disableInvitations(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
+        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
         var state = stateStore.load()
         state.invitationsDisabled = true
         stateStore.save(state)
@@ -325,6 +356,7 @@ public final class GuidanceCoordinator {
     func openInvitation(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
+        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
         var state = stateStore.load()
         state.lastPurchaseExplorationDate = now()
         stateStore.save(state)
@@ -338,6 +370,7 @@ public final class GuidanceCoordinator {
     func endInvitationPresentation(id: UUID) {
         guard let invitation = pendingInvitation, invitation.id == id else { return }
         pendingInvitation = nil
+        if invitation.moment == .appReturnedAfterUse { returnInvitationHostID = nil }
         if confirmedPresentedInvitationIDs.contains(id) {
             var state = stateStore.load()
             state.invitationDismissalCount += 1
@@ -345,6 +378,9 @@ public final class GuidanceCoordinator {
             stateStore.save(state)
             emit("guidance.invitation.dismissed", moment: invitation.moment, tokenID: id)
         } else {
+            if invitation.moment == .appReturnedAfterUse {
+                allowOneReturnRetryAfterCancellation(at: now())
+            }
             emit("guidance.invitation.cancelled", moment: invitation.moment, tokenID: id)
         }
     }

@@ -567,6 +567,55 @@ final class GuidanceCoordinatorTests {
         #expect(coordinator.pendingInvitation?.moment == .appReturnedAfterUse)
     }
 
+    @Test func cancelledUnseenReturnCanRescheduleOnceWithoutConsumingOpportunity() {
+        var current = now
+        store = InMemoryGuidanceStateStore(initial: invitationState(completionCount: 0))
+        let coordinator = GuidanceCoordinator(
+            configuration: invitationConfig(), stateStore: store, now: { current }, calendar: calendar,
+            appVersion: { "2.0.1" }, isProAppInstalled: { false }, eventSink: { self.collectedEvents.append($0) }
+        )
+        coordinator.recordForegroundUsageTick(isEligible: true)
+        for _ in 0..<30 {
+            current.addTimeInterval(1)
+            coordinator.recordForegroundUsageTick(isEligible: true)
+        }
+        let first = coordinator.pendingInvitation!
+        coordinator.cancelUnpresentedReturnInvitation()
+        #expect(store.load().invitationPresentationCount == 0)
+        #expect(store.load().lastInvitationDate == nil)
+
+        coordinator.recordForegroundUsageTick(isEligible: true)
+        let retry = coordinator.pendingInvitation!
+        #expect(retry.id != first.id)
+        coordinator.cancelUnpresentedReturnInvitation()
+        coordinator.recordForegroundUsageTick(isEligible: true)
+
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(store.load().invitationPresentationCount == 0)
+        #expect(events(named: "guidance.invitation.scheduled").count == 2)
+    }
+
+    @Test func onlySchedulingWindowCanCancelItsUnseenReturnInvitation() {
+        var current = now
+        store = InMemoryGuidanceStateStore(initial: invitationState(completionCount: 0))
+        let coordinator = GuidanceCoordinator(
+            configuration: invitationConfig(), stateStore: store, now: { current }, calendar: calendar,
+            appVersion: { "2.0.1" }, isProAppInstalled: { false }, eventSink: { _ in }
+        )
+        let owner = UUID()
+        coordinator.recordForegroundUsageTick(isEligible: true, hostID: owner)
+        for _ in 0..<30 {
+            current.addTimeInterval(1)
+            coordinator.recordForegroundUsageTick(isEligible: true, hostID: owner)
+        }
+        let invitationID = coordinator.pendingInvitation?.id
+
+        coordinator.cancelUnpresentedReturnInvitation(hostID: UUID())
+        #expect(coordinator.pendingInvitation?.id == invitationID)
+        coordinator.cancelUnpresentedReturnInvitation(hostID: owner)
+        #expect(coordinator.pendingInvitation == nil)
+    }
+
     @Test func leavingOverviewReleasesUnpresentedReturnInvitationSlot() {
         let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
         _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse)
@@ -599,6 +648,22 @@ final class GuidanceCoordinatorTests {
         coordinator.recordSuccessfulStoreOpen()
         #expect(store.load().lastPurchaseExplorationDate == now)
         #expect(store.load().proInterestVisits.first?.category == .spectrumRecording)
+    }
+
+    @Test func successfulStoreHandoffRecordsIntentOnlyForOssMarketing() {
+        let ossCoordinator = makeCoordinator(
+            configuration: invitationConfig(),
+            state: invitationState(invitationsDisabled: true)
+        )
+        ossCoordinator.recordSuccessfulStoreOpenIfMarketingEnabled()
+        #expect(store.load().lastPurchaseExplorationDate == now)
+        #expect(store.load().invitationsDisabled)
+
+        var proConfiguration = invitationConfig()
+        proConfiguration.localMarketingPolicyEnabled = false
+        let proCoordinator = makeCoordinator(configuration: proConfiguration, state: invitationState())
+        proCoordinator.recordSuccessfulStoreOpenIfMarketingEnabled()
+        #expect(store.load().lastPurchaseExplorationDate == nil)
     }
 
     @Test func reviewEventsOncePerToken() {
