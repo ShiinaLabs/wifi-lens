@@ -80,7 +80,8 @@ enum OSSEditionAssembly {
             case .exportSucceeded:
                 ExternalLinks.url(for: .appStoreCampaignExport)
             case .appReturnedAfterUse:
-                ExternalLinks.url(for: .appStoreCampaignDiagnosis)
+                // No App Store Connect campaign is configured for return visits.
+                ExternalLinks.url(for: .appStore)
             }
         }
     )
@@ -201,7 +202,7 @@ enum OSSEditionAssembly {
                 featureDescription: String(localized: "pro.statistics.description", comment: "Pro Statistics feature description"),
                 featureIcon: SidebarPage.statistics.icon,
                 campaign: .appStoreCampaignPreviewStatistics,
-                interestCategory: .advancedDiagnostics,
+                interestCategory: .longTermMonitoring,
                 hostWindow: context.mainWindow,
                 customSkeleton: { StatisticsSkeletonView() }
             )
@@ -212,7 +213,7 @@ enum OSSEditionAssembly {
                 featureDescription: String(localized: "pro.insights.description", comment: "Pro Insights feature description"),
                 featureIcon: SidebarPage.insights.icon,
                 campaign: .appStoreCampaignPreviewInsights,
-                interestCategory: .advancedDiagnostics,
+                interestCategory: .longTermMonitoring,
                 hostWindow: context.mainWindow,
                 customSkeleton: { InsightsSkeletonView() }
             )

@@ -120,6 +120,9 @@ private struct AppRootView: View {
     }
 
     private func handleSelectedPageChange(_ newPage: SidebarPage) {
+        if newPage != .overview {
+            EditionAssemblyProvider.configuration.guidanceCoordinator.cancelUnpresentedReturnInvitation()
+        }
         updateMainWindowRoute(sceneState.id, newPage)
     }
 
@@ -408,9 +411,12 @@ private struct AppRootView: View {
                         && hostWindow.isVisible
                         && !hostWindow.isMiniaturized
                         && hostWindow.attachedSheet == nil
-                    configuration.guidanceCoordinator.recordForegroundUsageTick(isEligible: eligible)
+                    configuration.guidanceCoordinator.recordForegroundUsageTick(
+                        isEligible: eligible,
+                        isOverviewSelected: selectedPage == .overview
+                    )
                 } else if !NSApp.isActive {
-                    configuration.guidanceCoordinator.recordForegroundUsageTick(isEligible: false)
+                    configuration.guidanceCoordinator.recordForegroundUsageTick(isEligible: false, isOverviewSelected: false)
                 }
                 try? await Task.sleep(for: .seconds(1))
             }

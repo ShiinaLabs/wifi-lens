@@ -52,6 +52,8 @@ final class GuidanceCoordinatorTests {
             )
             #expect(campaign == routing.campaign)
         }
+        let returnURL = try #require(coordinator.appStoreCampaignURL(for: .appReturnedAfterUse))
+        #expect(URLComponents(url: returnURL, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "ct" } == nil)
     }
 
     @Test func presentationConsumesCountAndDateIdempotently() {
@@ -66,6 +68,43 @@ final class GuidanceCoordinatorTests {
         #expect(loaded.invitationPresentationCount == 1)
         #expect(loaded.lastInvitationDate == now)
         #expect(events(named: "guidance.invitation.presented").count == 1)
+    }
+
+    @Test func realClockPresentationStoresOneIdenticalTimestamp() {
+        store = InMemoryGuidanceStateStore(initial: invitationState())
+        let coordinator = GuidanceCoordinator(
+            configuration: invitationConfig(),
+            stateStore: store,
+            isProAppInstalled: { false },
+            eventSink: { self.collectedEvents.append($0) }
+        )
+        _ = coordinator.recordAndReturnDecision(.diagnosticsCompleted)
+        let invitation = coordinator.pendingInvitation!
+
+        coordinator.invitationPresented(id: invitation.id)
+
+        let loaded = store.load()
+        #expect(loaded.invitationPresentationDates.count == 1)
+        #expect(loaded.lastInvitationDate == loaded.invitationPresentationDates[0])
+    }
+
+    @Test func returnInvitationConsumesCooldownOnlyWhenMeaningfullyInsideScrollViewport() {
+        #expect(GuidanceInvitationVisibility.isGenuinelyVisible(
+            card: CGRect(x: 20, y: 100, width: 300, height: 100),
+            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+        ))
+        #expect(!GuidanceInvitationVisibility.isGenuinelyVisible(
+            card: CGRect(x: 20, y: 610, width: 300, height: 100),
+            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+        ))
+        #expect(!GuidanceInvitationVisibility.isGenuinelyVisible(
+            card: CGRect(x: 20, y: 580, width: 300, height: 100),
+            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+        ))
+        #expect(!GuidanceInvitationVisibility.isGenuinelyVisible(
+            card: CGRect(x: 390, y: 100, width: 300, height: 100),
+            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+        ))
     }
 
     // MARK: - Token gates (reachable state sequences)
@@ -500,6 +539,55 @@ final class GuidanceCoordinatorTests {
             coordinator.recordForegroundUsageTick(isEligible: true)
         }
         #expect(coordinator.pendingInvitation?.moment == .appReturnedAfterUse)
+    }
+
+    @Test func returnEvaluationWaitsForOverviewAndCanRetryOnLaterDays() {
+        var current = now
+        store = InMemoryGuidanceStateStore(initial: GuidanceState(
+            activeDays: ["2026-07-01", "2026-07-02"],
+            meaningfulCompletionCount: 0,
+            invitationPresentationDates: [daysAgo(1), now]
+        ))
+        let coordinator = GuidanceCoordinator(
+            configuration: invitationConfig(), stateStore: store, now: { current }, calendar: calendar,
+            appVersion: { "2.0.1" }, isProAppInstalled: { false }, eventSink: { _ in }
+        )
+        coordinator.recordForegroundUsageTick(isEligible: true, isOverviewSelected: false)
+        for _ in 0..<30 {
+            current.addTimeInterval(1)
+            coordinator.recordForegroundUsageTick(isEligible: true, isOverviewSelected: false)
+        }
+        #expect(coordinator.pendingInvitation == nil)
+
+        coordinator.recordForegroundUsageTick(isEligible: true, isOverviewSelected: true)
+        #expect(coordinator.pendingInvitation == nil) // Weekly cap suppresses today's return.
+
+        current = calendar.date(byAdding: .day, value: 7, to: current)!
+        coordinator.recordForegroundUsageTick(isEligible: true, isOverviewSelected: true)
+        #expect(coordinator.pendingInvitation?.moment == .appReturnedAfterUse)
+    }
+
+    @Test func leavingOverviewReleasesUnpresentedReturnInvitationSlot() {
+        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse)
+        let returnID = coordinator.pendingInvitation!.id
+        coordinator.cancelUnpresentedReturnInvitation()
+        #expect(coordinator.pendingInvitation == nil)
+        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
+        coordinator.invitationPresented(id: returnID)
+        #expect(store.load().invitationPresentationCount == 0)
+    }
+
+    @Test(arguments: [GuidanceValueMoment.diagnosticsCompleted, .exportSucceeded])
+    func unseenReturnInvitationDoesNotBlockHigherPriorityEntry(_ moment: GuidanceValueMoment) {
+        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse)
+        let returnID = coordinator.pendingInvitation!.id
+
+        #expect(coordinator.recordAndReturnDecision(moment) == .showProInvitation)
+        #expect(coordinator.pendingInvitation?.moment == moment)
+        coordinator.invitationPresented(id: returnID)
+        #expect(store.load().invitationPresentationCount == 0)
     }
 
     @Test func previewAndSuccessfulStoreOpenPersistOnlyLocalInterestData() {

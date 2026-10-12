@@ -175,6 +175,7 @@ enum GuidanceInterestPolicy {
     ) -> Bool {
         guard let exploration = state.lastPurchaseExplorationDate,
               GuidancePolicy.localDaysBetween(exploration, now: now, calendar: calendar) >= 3,
+              GuidancePolicy.localDaysBetween(exploration, now: now, calendar: calendar) < 14,
               state.lastInvitationLaterDate.map({ $0 < exploration }) ?? true,
               state.lastAcceleratedFollowUpExplorationDate != exploration,
               state.lastAcceleratedFollowUpDate.map({

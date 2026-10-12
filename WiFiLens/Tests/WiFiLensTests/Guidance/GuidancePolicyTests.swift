@@ -93,6 +93,13 @@ struct GuidancePolicyTests {
         #expect(decide(for: .appReturnedAfterUse, state: state, config: invitationConfig()) == .none(.invitationCooldown))
     }
 
+    @Test func purchaseExplorationExpiresAfterFourteenDays() {
+        let valid = invitationState(lastInvitationDate: daysAgo(3), lastPurchaseExplorationDate: daysAgo(13))
+        let expired = invitationState(lastInvitationDate: daysAgo(14), lastPurchaseExplorationDate: daysAgo(14))
+        #expect(GuidanceInterestPolicy.canScheduleAcceleratedFollowUp(state: valid, now: now, calendar: calendar))
+        #expect(!GuidanceInterestPolicy.canScheduleAcceleratedFollowUp(state: expired, now: now, calendar: calendar))
+    }
+
     @Test func noMoreThanTwoInvitationsInAnySevenLocalDays() {
         let capped = invitationState(presentationDates: [daysAgo(0), daysAgo(4)])
         let eligible = invitationState(presentationDates: [daysAgo(0)])

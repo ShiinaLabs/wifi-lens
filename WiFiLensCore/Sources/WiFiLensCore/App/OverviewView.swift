@@ -2,6 +2,20 @@ import AppKit
 import SwiftUI
 import SceneKit
 
+private struct GuidanceInvitationFrames: Equatable {
+    var viewport: CGRect?
+    var card: CGRect?
+}
+
+private struct GuidanceInvitationFramesPreference: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue = GuidanceInvitationFrames()
+    static func reduce(value: inout GuidanceInvitationFrames, nextValue: () -> GuidanceInvitationFrames) {
+        let next = nextValue()
+        value.viewport = next.viewport ?? value.viewport
+        value.card = next.card ?? value.card
+    }
+}
+
 public struct OverviewView: View {
     @Bindable var viewModel: ScannerViewModel
     @Environment(\.colorScheme) private var colorScheme
@@ -14,6 +28,7 @@ public struct OverviewView: View {
     @State private var displayLevel: ChannelQuality.QualityLevel = .excellent
     @State private var displayScore: Int = 100
     @State private var renderedInvitationID: UUID?
+    @State private var invitationInVisibleArea = false
     private let guidance: GuidanceCoordinator?
     private let isInvitationHostActive: Bool
     private let hostWindow: NSWindow?
@@ -151,6 +166,7 @@ public struct OverviewView: View {
                                     invitation: invitation,
                                     guidance: guidance,
                                     isHostVisible: isInvitationHostActive,
+                                    isInVisibleArea: invitationInVisibleArea,
                                     hostWindow: hostWindow
                                 )
                                 .onAppear { renderedInvitationID = invitation.id }
@@ -158,6 +174,14 @@ public struct OverviewView: View {
                                     if let id = renderedInvitationID {
                                         renderedInvitationID = nil
                                         guidance.endInvitationPresentation(id: id)
+                                    }
+                                }
+                                .background {
+                                    GeometryReader { card in
+                                        Color.clear.preference(
+                                            key: GuidanceInvitationFramesPreference.self,
+                                            value: GuidanceInvitationFrames(card: card.frame(in: .global))
+                                        )
                                     }
                                 }
                             }
@@ -172,6 +196,22 @@ public struct OverviewView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
+            }
+            .background {
+                GeometryReader { viewport in
+                    Color.clear.preference(
+                        key: GuidanceInvitationFramesPreference.self,
+                        value: GuidanceInvitationFrames(viewport: viewport.frame(in: .global))
+                    )
+                }
+            }
+            .coordinateSpace(name: "overviewScroll")
+            .onPreferenceChange(GuidanceInvitationFramesPreference.self) { frames in
+                guard let card = frames.card, let viewport = frames.viewport else {
+                    invitationInVisibleArea = false
+                    return
+                }
+                invitationInVisibleArea = GuidanceInvitationVisibility.isGenuinelyVisible(card: card, viewport: viewport)
             }
             .onChange(of: currentChannelQuality?.rfScore) { _, newRaw in
             let raw = newRaw ?? 100

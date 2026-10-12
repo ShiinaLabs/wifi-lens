@@ -9,17 +9,20 @@ struct ProInvitationCard: View {
     let invitation: GuidanceCoordinator.InvitationPresentation
     let guidance: GuidanceCoordinator
     var isHostVisible = true
+    var isInVisibleArea = true
     var hostWindow: NSWindow?
 
     public init(
         invitation: GuidanceCoordinator.InvitationPresentation,
         guidance: GuidanceCoordinator,
         isHostVisible: Bool = true,
+        isInVisibleArea: Bool = true,
         hostWindow: NSWindow? = nil
     ) {
         self.invitation = invitation
         self.guidance = guidance
         self.isHostVisible = isHostVisible
+        self.isInVisibleArea = isInVisibleArea
         self.hostWindow = hostWindow
     }
 
@@ -61,9 +64,9 @@ struct ProInvitationCard: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.accentColor.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
-        .task(id: isHostVisible) {
+        .task(id: isHostVisible && isInVisibleArea) {
             while !Task.isCancelled {
-                if isActuallyVisible {
+                if isActuallyVisible && isInVisibleArea {
                     guidance.invitationPresented(id: invitation.id)
                     return
                 }
@@ -103,5 +106,14 @@ struct ProInvitationCard: View {
               !hostWindow.isMiniaturized,
               hostWindow.attachedSheet == nil else { return false }
         return true
+    }
+}
+
+enum GuidanceInvitationVisibility {
+    static func isGenuinelyVisible(card: CGRect, viewport: CGRect) -> Bool {
+        let intersection = card.intersection(viewport)
+        guard !intersection.isNull, card.width > 0, card.height > 0 else { return false }
+        return intersection.height >= min(card.height * 0.5, 80)
+            && intersection.width >= min(card.width * 0.5, 160)
     }
 }

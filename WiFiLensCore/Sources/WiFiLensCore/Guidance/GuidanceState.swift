@@ -100,11 +100,15 @@ struct GuidanceState: Equatable, Sendable {
         invitationPresentationDates = Array(invitationPresentationDates.sorted().suffix(20))
     }
 
-    mutating func pruneProInterestVisits(now: Date, calendar: Calendar) {
+    mutating func pruneLocalMarketingState(now: Date, calendar: Calendar) {
         let today = calendar.startOfDay(for: now)
         guard let oldest = calendar.date(byAdding: .day, value: -13, to: today) else { return }
         let oldestKey = Self.dayKey(for: oldest, calendar: calendar)
         proInterestVisits = proInterestVisits.filter { $0.day >= oldestKey }
+        if let lastPurchaseExplorationDate,
+           GuidancePolicy.localDaysBetween(lastPurchaseExplorationDate, now: now, calendar: calendar) >= 14 {
+            self.lastPurchaseExplorationDate = nil
+        }
     }
 
     static func dayKey(for date: Date, calendar: Calendar) -> String {

@@ -58,6 +58,18 @@ struct GuidanceStateStoreTests {
         #expect(store.load() == original)
     }
 
+    @Test func pruningExpiresOldInterestAndPurchaseExplorationLocally() {
+        var state = GuidanceState(
+            lastPurchaseExplorationDate: date(2026, 8, 1, calendar: utcCalendar),
+            proInterestVisits: [ProInterestVisit(category: .spectrumRecording, day: "2026-08-01")]
+        )
+
+        state.pruneLocalMarketingState(now: date(2026, 8, 15, calendar: utcCalendar), calendar: utcCalendar)
+
+        #expect(state.lastPurchaseExplorationDate == nil)
+        #expect(state.proInterestVisits.isEmpty)
+    }
+
     @Test func savingNilOptionalsClearsThem() {
         let defaults = makeDefaults(suite: "GuidanceStateStoreTests.missingOptionals")
         let store = UserDefaultsGuidanceStateStore(defaults: defaults)
