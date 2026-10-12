@@ -489,11 +489,45 @@ final class GuidanceCoordinatorTests {
         #expect(coordinator.pendingInvitation != nil)
     }
 
+    @Test func exportFeedbackRequiresExistingFeedbackAndMatchingOwner() throws {
+        let firstOwner = UUID()
+        let secondOwner = UUID()
+        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: nil) == nil)
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: firstOwner) == nil)
+
+        coordinator.handleExportSucceeded(ownerWindowID: firstOwner)
+
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: firstOwner) != nil)
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: firstOwner)
+            == coordinator.exportFeedback)
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: secondOwner) == nil)
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: nil) == nil)
+    }
+
+    @Test func exportCompletingAfterOwnerWindowClosesKeepsValueEventButNoStaleFeedbackOrInvitation() {
+        let owner = UUID()
+        let coordinator = makeCoordinator(state: invitationState(completionCount: 3))
+
+        // The owner starts an asynchronous export and closes before its save callback returns.
+        coordinator.closeInvitationHost(forHostID: owner)
+        coordinator.handleExportSucceeded(ownerWindowID: owner)
+
+        #expect(store.load().meaningfulCompletionCount == 4)
+        #expect(events(named: "guidance.value_moment").last?.moment == .exportSucceeded)
+        #expect(coordinator.exportFeedback == nil)
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: owner) == nil)
+        #expect(coordinator.pendingInvitation == nil)
+    }
+
     @Test func recordExportSucceededAloneNeverPublishesFeedback() {
         let coordinator = makeCoordinator(configuration: reviewConfig(), state: reviewState())
 
-        _ = coordinator.recordAndReturnDecision(.exportSucceeded)
+        let decision = coordinator.recordAndReturnDecision(.exportSucceeded)
 
+        #expect(decision == .requestReview)
+        #expect(coordinator.pendingReviewRequest?.moment == .exportSucceeded)
         #expect(coordinator.exportFeedback == nil)
         #expect(store.load().meaningfulCompletionCount == 5)
     }

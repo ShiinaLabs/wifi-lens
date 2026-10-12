@@ -29,7 +29,7 @@ public struct ExportSuccessBanner: View {
     @State private var renderedInvitationID: UUID?
 
     public var body: some View {
-        if guidance.exportFeedback?.ownerWindowID == ownerWindowID {
+        if guidance.matchingExportFeedback(ownerWindowID: ownerWindowID) != nil {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Label {

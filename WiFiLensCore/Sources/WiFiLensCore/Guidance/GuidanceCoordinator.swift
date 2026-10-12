@@ -347,8 +347,20 @@ public final class GuidanceCoordinator {
 
     // MARK: - Export feedback
 
+    func matchingExportFeedback(ownerWindowID: UUID?) -> ExportFeedback? {
+        guard let exportFeedback,
+              exportFeedback.ownerWindowID == ownerWindowID else { return nil }
+        return exportFeedback
+    }
+
     func handleExportSucceeded(ownerWindowID: UUID? = nil) {
-        record(.exportSucceeded, ownerWindowID: ownerWindowID)
+        let ownerIsOpen = ownerWindowID.map { !closedHostWindowIDs.contains($0) } ?? true
+        record(
+            .exportSucceeded,
+            ownerWindowID: ownerWindowID,
+            invitationHostEligible: ownerIsOpen
+        )
+        guard ownerIsOpen else { return }
         exportFeedback = ExportFeedback(occurredAt: now(), ownerWindowID: ownerWindowID)
     }
 
