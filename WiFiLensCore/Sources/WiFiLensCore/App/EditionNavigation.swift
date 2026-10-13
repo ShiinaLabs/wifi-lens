@@ -12,13 +12,14 @@ public enum SidebarPage: String, CaseIterable, Sendable {
     case bleScanner
     case apRadar
     case timeline
+    case problemHistory
     case statistics
     case insights
     case settings
 
     public var requiresLocationAuthorization: Bool {
         switch self {
-        case .overview, .settings, .bleScanner, .timeline, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
+        case .overview, .settings, .bleScanner, .timeline, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -27,7 +28,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
 
     public var requiresWiFi: Bool {
         switch self {
-        case .overview, .settings, .bleScanner, .timeline, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
+        case .overview, .settings, .bleScanner, .timeline, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -46,6 +47,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .bleScanner: String(localized: "nav.ble_scanner", comment: "BLE Scanner sidebar navigation item")
         case .apRadar: String(localized: "nav.apRadar", comment: "AP Radar sidebar navigation item")
         case .timeline: String(localized: "nav.timeline", comment: "Timeline sidebar navigation item")
+        case .problemHistory: String(localized: "nav.problem_history", comment: "Problem history sidebar navigation item")
         case .statistics: String(localized: "nav.statistics", comment: "Statistics sidebar navigation item")
         case .insights: String(localized: "nav.insights", comment: "Insights sidebar navigation item")
         case .settings: String(localized: "common.action.settings", comment: "Settings button or menu item")
@@ -64,6 +66,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .bleScanner: "personalhotspot"
         case .apRadar: "dot.radiowaves.left.and.right"
         case .timeline: "clock.arrow.circlepath"
+        case .problemHistory: "list.bullet.rectangle"
         case .statistics: "chart.bar.xaxis"
         case .insights: "lightbulb"
         case .settings: "gearshape"

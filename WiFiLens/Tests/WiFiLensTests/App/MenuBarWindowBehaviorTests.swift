@@ -109,11 +109,13 @@ struct MenuBarWindowBehaviorTests {
         #expect(!SidebarPage.timeline.requiresWiFi)
     }
 
+    @MainActor
     @Test("Analysis routes have stable identities and order")
     func analysisRoutesHaveStableIdentitiesAndOrder() {
         #expect(SidebarPage.statistics.rawValue == "statistics")
         #expect(SidebarPage.insights.rawValue == "insights")
         #expect(SidebarPage.analysisPages == [.timeline, .statistics, .insights])
+        #expect(EditionAssemblyProvider.configuration.analysisSidebarPages == SidebarPage.analysisPages)
         #expect(SidebarPage.timeline.rawValue == "timeline")
         #expect(!SidebarPage.statistics.requiresLocationAuthorization)
         #expect(!SidebarPage.statistics.requiresWiFi)
