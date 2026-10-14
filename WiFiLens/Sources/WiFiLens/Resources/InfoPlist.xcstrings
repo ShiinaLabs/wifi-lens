@@ -13,8 +13,8 @@
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "WiFi Lens Pro Dev"
+            "state": "translated",
+            "value": "WiFi Lens"
           }
         }
       },
@@ -32,8 +32,8 @@
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "WiFi Lens Pro Dev"
+            "state": "translated",
+            "value": "WiFi Lens"
           }
         }
       },
