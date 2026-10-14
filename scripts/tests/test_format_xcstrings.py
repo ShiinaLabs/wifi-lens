@@ -119,6 +119,27 @@ class XcstringsFormatterTests(unittest.TestCase):
         committed = self.git("show", "HEAD:Catalog.xcstrings")
         self.assertEqual(committed, b'{\n  "a": 2,\n  "z": 1\n}\n')
 
+    def test_pre_commit_hook_rejects_invalid_catalog(self):
+        self.path.write_bytes(b'{"broken": }\n')
+        self.stage()
+        environment = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": "Formatter Test",
+            "GIT_AUTHOR_EMAIL": "formatter@example.invalid",
+            "GIT_COMMITTER_NAME": "Formatter Test",
+            "GIT_COMMITTER_EMAIL": "formatter@example.invalid",
+        }
+        result = subprocess.run(
+            ["git", "-c", "core.hooksPath=.githooks", "commit", "-m", "reject invalid formatter input"],
+            cwd=self.root,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(b"xcstrings formatting failed", result.stderr)
+        self.assertEqual(self.git("show", ":Catalog.xcstrings"), b'{"broken": }\n')
+
 
 if __name__ == "__main__":
     unittest.main()
