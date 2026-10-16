@@ -1,6 +1,7 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@": {},
     "%@ %@": {
       "localizations": {
         "en": {
@@ -20019,6 +20020,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld 個樣本"
+          }
+        }
+      }
+    },
+    "coverage=%@; inference=%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "coverage=%1$@; inference=%2$@"
           }
         }
       }
