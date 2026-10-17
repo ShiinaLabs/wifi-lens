@@ -12,6 +12,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
     case bleScanner
     case apRadar
     case timeline
+    case networkExperience
     case problemHistory
     case statistics
     case insights
@@ -19,7 +20,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
 
     public var requiresLocationAuthorization: Bool {
         switch self {
-        case .overview, .settings, .bleScanner, .timeline, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
+        case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -28,7 +29,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
 
     public var requiresWiFi: Bool {
         switch self {
-        case .overview, .settings, .bleScanner, .timeline, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
+        case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -47,6 +48,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .bleScanner: String(localized: "nav.ble_scanner", comment: "BLE Scanner sidebar navigation item")
         case .apRadar: String(localized: "nav.apRadar", comment: "AP Radar sidebar navigation item")
         case .timeline: String(localized: "nav.timeline", comment: "Timeline sidebar navigation item")
+        case .networkExperience: String(localized: "nav.network_experience", comment: "Network Experience sidebar navigation item")
         case .problemHistory: String(localized: "nav.problem_history", comment: "Problem history sidebar navigation item")
         case .statistics: String(localized: "nav.statistics", comment: "Statistics sidebar navigation item")
         case .insights: String(localized: "nav.insights", comment: "Insights sidebar navigation item")
@@ -66,6 +68,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .bleScanner: "personalhotspot"
         case .apRadar: "dot.radiowaves.left.and.right"
         case .timeline: "clock.arrow.circlepath"
+        case .networkExperience: "chart.xyaxis.line"
         case .problemHistory: "list.bullet.rectangle"
         case .statistics: "chart.bar.xaxis"
         case .insights: "lightbulb"
