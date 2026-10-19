@@ -35,9 +35,12 @@ struct SpectrumBandPanel: View {
 
     var toolbarContent: some View {
         HStack(spacing: 8) {
-            TextField(String(localized: "spectrum.panel.filter_placeholder", comment: "Filter input placeholder"), text: filterQueryBinding)
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: 300)
+            TextField(
+                String(localized: "spectrum.panel.filter_placeholder", comment: "Filter input placeholder"),
+                text: filterQueryBinding
+            )
+            .textFieldStyle(.roundedBorder)
+            .frame(maxWidth: 300)
 
             if hiddenCount > 0 {
                 Text("\(displayedCount)/\(totalCount)")

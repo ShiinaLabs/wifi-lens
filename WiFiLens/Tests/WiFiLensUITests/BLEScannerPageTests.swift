@@ -21,8 +21,9 @@ final class BLEScannerPageTests: XCTestCase {
         guard navigateToPage("sidebar-bleScanner", pageID: "page-bleScanner", app: app) else { return }
 
         let disabledState = app.descendants(matching: .any)["ble-disabled-state"]
-        waitForElement(disabledState,
-                       message: "UI test mode should expose the deterministic BLE disabled state",
-                       app: app)
+        waitForElement(
+            disabledState,
+            message: "UI test mode should expose the deterministic BLE disabled state",
+            app: app)
     }
 }

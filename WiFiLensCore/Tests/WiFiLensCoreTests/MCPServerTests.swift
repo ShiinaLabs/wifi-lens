@@ -1,7 +1,9 @@
 import Foundation
-import Testing
 import MCP
+import Testing
+
 @testable import WiFiLensCore
+
 @Suite struct MCPServerTests {
 
     @Test func contentLengthParserPreservesMissingAndAcceptsZero() {
@@ -96,7 +98,7 @@ import MCP
         ht20[1] = 0
         var ht40 = [UInt8](repeating: 0, count: 22)
         ht40[0] = 6
-        ht40[1] = 0x05 // STA Channel Width Any + secondary channel above
+        ht40[1] = 0x05  // STA Channel Width Any + secondary channel above
 
         let known20 = makeNetwork(
             bssid: "aa:bb:cc:dd:ee:20",
@@ -129,11 +131,13 @@ import MCP
             networks: [known20, unknown, known40, vht80, vht80plus80]
         )
         let json = resultJSON(from: result) as? [[String: Any]]
-        let widths: [String: String] = Dictionary(uniqueKeysWithValues: json?.compactMap { entry in
-            guard let bssid = entry["bssid"] as? String,
-                  let width = entry["channelWidth"] as? String else { return nil }
-            return (bssid, width)
-        } ?? [])
+        let widths: [String: String] = Dictionary(
+            uniqueKeysWithValues: json?.compactMap { entry in
+                guard let bssid = entry["bssid"] as? String,
+                    let width = entry["channelWidth"] as? String
+                else { return nil }
+                return (bssid, width)
+            } ?? [])
 
         #expect(widths[known20.bssid] == "20")
         #expect(widths[unknown.bssid] == "")
@@ -387,15 +391,16 @@ import MCP
             supportedBands: [.band24GHz, .band5GHz],
             timestamp: capturedAt
         )
-        store.apply(WiFiObservation(
-            timestamp: capturedAt,
-            sourceCycleID: cycleID,
-            environmentSnapshot: WiFiEnvironmentSnapshot(
+        store.apply(
+            WiFiObservation(
                 timestamp: capturedAt,
-                networks: [],
-                sourceCycleID: cycleID
-            )
-        ))
+                sourceCycleID: cycleID,
+                environmentSnapshot: WiFiEnvironmentSnapshot(
+                    timestamp: capturedAt,
+                    networks: [],
+                    sourceCycleID: cycleID
+                )
+            ))
 
         let snapshot = viewModel.makeMCPSnapshot()
         #expect(snapshot.networks.map(\.bssid) == ["aa:bb:cc:dd:ee:ff"])
@@ -414,15 +419,16 @@ import MCP
 
         viewModel.isScanning = true
         let failedAt = capturedAt.addingTimeInterval(1)
-        store.apply(WiFiObservation(
-            timestamp: failedAt,
-            sourceCycleID: UUID(),
-            environmentSnapshot: WiFiEnvironmentSnapshot(
+        store.apply(
+            WiFiObservation(
                 timestamp: failedAt,
-                networks: [],
-                error: .environmentScanFailed("test failure")
-            )
-        ))
+                sourceCycleID: UUID(),
+                environmentSnapshot: WiFiEnvironmentSnapshot(
+                    timestamp: failedAt,
+                    networks: [],
+                    error: .environmentScanFailed("test failure")
+                )
+            ))
         let failed = viewModel.makeMCPSnapshot()
         #expect(failed.networks.isEmpty)
         #expect(failed.capturedAt == nil)
@@ -431,11 +437,13 @@ import MCP
         let recoveryCycleID = UUID()
         store.beginScanLifecycle(at: recoveredAt)
         viewModel.debugApplyNetworksForTesting([network], supportedBands: [.band5GHz], timestamp: recoveredAt)
-        store.apply(WiFiObservation(
-            timestamp: recoveredAt,
-            sourceCycleID: recoveryCycleID,
-            environmentSnapshot: WiFiEnvironmentSnapshot(timestamp: recoveredAt, networks: [], sourceCycleID: recoveryCycleID)
-        ))
+        store.apply(
+            WiFiObservation(
+                timestamp: recoveredAt,
+                sourceCycleID: recoveryCycleID,
+                environmentSnapshot: WiFiEnvironmentSnapshot(
+                    timestamp: recoveredAt, networks: [], sourceCycleID: recoveryCycleID)
+            ))
         #expect(viewModel.makeMCPSnapshot(at: recoveredAt).networks.count == 1)
         #expect(viewModel.makeMCPSnapshot(at: recoveredAt.addingTimeInterval(16)).networks.isEmpty)
 

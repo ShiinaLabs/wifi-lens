@@ -1,7 +1,7 @@
-@testable import WiFiLensCore
-
 import Foundation
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 struct GuidancePolicyTests {
@@ -309,11 +309,11 @@ struct GuidancePolicyTests {
                 state: reviewState(firstLaunchDate: daysAgo(7), lastReviewRequestVersion: appVersion),
                 config: reviewConfig()
             ),
-            decide(for: .diagnosticsCompleted, state: invitationState(), config: GuidanceConfiguration())
+            decide(for: .diagnosticsCompleted, state: invitationState(), config: GuidanceConfiguration()),
         ]
 
         for decision in scenarios {
-            if case let .none(reason) = decision {
+            if case .none(let reason) = decision {
                 #expect(reason != .invitationAlreadyPending)
                 #expect(reason != .reviewRequestPending)
             }

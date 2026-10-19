@@ -1,6 +1,6 @@
+import AppKit
 import CoreWLAN
 import Foundation
-import AppKit
 import SystemConfiguration
 
 public protocol WiFiLinkEvidenceCollecting: Sendable {
@@ -155,7 +155,10 @@ public struct WiFiLinkListenerStatus: Equatable, Sendable {
     public let coreWLANRegistered: Bool
     public let coreWLANRegistrationError: String?
 
-    public init(isRunning: Bool, systemConfigurationRegistered: Bool, coreWLANRegistered: Bool, coreWLANRegistrationError: String?) {
+    public init(
+        isRunning: Bool, systemConfigurationRegistered: Bool, coreWLANRegistered: Bool,
+        coreWLANRegistrationError: String?
+    ) {
         self.isRunning = isRunning
         self.systemConfigurationRegistered = systemConfigurationRegistered
         self.coreWLANRegistered = coreWLANRegistered
@@ -164,88 +167,93 @@ public struct WiFiLinkListenerStatus: Equatable, Sendable {
 }
 
 #if DEBUG
-enum WiFiLinkDiagnosticEvidenceFields {
-    static func make(from evidence: WiFiLinkRawEvidence) -> [String: Any] {
-        let modeValue: String = switch evidence.mode {
-        case .station: "station"
-        case .none: "none"
-        case .noneOrReadFailure: "noneOrReadFailure"
-        case .other(let rawValue): "other(\(rawValue))"
-        case .unavailable: "unavailable"
+    enum WiFiLinkDiagnosticEvidenceFields {
+        static func make(from evidence: WiFiLinkRawEvidence) -> [String: Any] {
+            let modeValue: String =
+                switch evidence.mode {
+                case .station: "station"
+                case .none: "none"
+                case .noneOrReadFailure: "noneOrReadFailure"
+                case .other(let rawValue): "other(\(rawValue))"
+                case .unavailable: "unavailable"
+                }
+            return [
+                "mode": modeValue,
+                "modeRaw": evidence.coreWLANModeRawValue as Any? ?? NSNull(),
+                "modeInterpretation": evidence.mode == .noneOrReadFailure ? "noneOrReadFailure" : modeValue,
+                "modeReadAmbiguous": evidence.mode == .noneOrReadFailure,
+                "powerOnRaw": evidence.radioPowerOnRaw as Any? ?? NSNull(),
+                "serviceActiveRaw": evidence.serviceActive as Any? ?? NSNull(),
+                "scLinkActive": evidence.linkActive as Any? ?? NSNull(),
+                "scLinkDetaching": evidence.linkDetaching as Any? ?? NSNull(),
+                "interfaceUp": evidence.interfaceFlagsUp as Any? ?? NSNull(),
+                "interfaceRunning": evidence.interfaceFlagsRunning as Any? ?? NSNull(),
+                "scLinkKeyPresent": evidence.linkSource != nil,
+                "cycleID": evidence.snapshotCycleID.uuidString,
+                "interfaceIndex": evidence.interfaceIndex.map { String($0) } ?? "unknown",
+                "readFailures": evidence.readFailures.keys.map(\.rawValue).sorted().joined(separator: ","),
+            ]
         }
-        return [
-            "mode": modeValue,
-            "modeRaw": evidence.coreWLANModeRawValue as Any? ?? NSNull(),
-            "modeInterpretation": evidence.mode == .noneOrReadFailure ? "noneOrReadFailure" : modeValue,
-            "modeReadAmbiguous": evidence.mode == .noneOrReadFailure,
-            "powerOnRaw": evidence.radioPowerOnRaw as Any? ?? NSNull(),
-            "serviceActiveRaw": evidence.serviceActive as Any? ?? NSNull(),
-            "scLinkActive": evidence.linkActive as Any? ?? NSNull(),
-            "scLinkDetaching": evidence.linkDetaching as Any? ?? NSNull(),
-            "interfaceUp": evidence.interfaceFlagsUp as Any? ?? NSNull(),
-            "interfaceRunning": evidence.interfaceFlagsRunning as Any? ?? NSNull(),
-            "scLinkKeyPresent": evidence.linkSource != nil,
-            "cycleID": evidence.snapshotCycleID.uuidString,
-            "interfaceIndex": evidence.interfaceIndex.map { String($0) } ?? "unknown",
-            "readFailures": evidence.readFailures.keys.map(\.rawValue).sorted().joined(separator: ",")
-        ]
-    }
-}
-
-private enum WiFiLinkDiagnosticsLogger {
-    private static let queue = DispatchQueue(label: "WiFiLens.WiFiLinkDiagnostics")
-    private static let enabled = ProcessInfo.processInfo.environment["WIFILENS_LINK_DIAGNOSTICS"] == "1"
-    private static let maximumFileSize = 4 * 1024 * 1024
-
-    static var isEnabled: Bool { enabled }
-
-    static var logURL: URL? {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("WiFiLens/Diagnostics/WiFiLinkState.jsonl")
     }
 
-    static func record(_ kind: String, _ values: [String: Any] = [:], fileName: String = "events.jsonl") {
-        guard enabled, let rootURL = logURL?.deletingLastPathComponent() else { return }
-        let fileURL = rootURL.appendingPathComponent(fileName)
-        var record = values
-        record["kind"] = kind
-        record["recordedAt"] = ISO8601DateFormatter().string(from: Date())
-        guard let data = try? JSONSerialization.data(withJSONObject: record, options: [.sortedKeys, .fragmentsAllowed]) else { return }
-        queue.async {
-            do {
-                try FileManager.default.createDirectory(at: rootURL, withIntermediateDirectories: true)
-                let environmentURL = rootURL.appendingPathComponent("environment.json")
-                if !FileManager.default.fileExists(atPath: environmentURL.path) {
-                    let environment: [String: Any] = [
-                        "schemaVersion": 1,
-                        "source": "WiFi Lens DEBUG app",
-                        "diagnosticsEnabled": true
-                    ]
-                    try JSONSerialization.data(withJSONObject: environment, options: [.sortedKeys, .prettyPrinted]).write(to: environmentURL, options: .atomic)
-                    try Data().write(to: rootURL.appendingPathComponent("markers.jsonl"), options: .atomic)
-                }
-                var line = data
-                line.append(0x0A)
-                if FileManager.default.fileExists(atPath: fileURL.path) {
-                    let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
-                    let currentSize = (attributes[.size] as? NSNumber)?.intValue ?? 0
-                    guard currentSize + line.count <= maximumFileSize else {
-                        return
+    private enum WiFiLinkDiagnosticsLogger {
+        private static let queue = DispatchQueue(label: "WiFiLens.WiFiLinkDiagnostics")
+        private static let enabled = ProcessInfo.processInfo.environment["WIFILENS_LINK_DIAGNOSTICS"] == "1"
+        private static let maximumFileSize = 4 * 1024 * 1024
+
+        static var isEnabled: Bool { enabled }
+
+        static var logURL: URL? {
+            FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+                .appendingPathComponent("WiFiLens/Diagnostics/WiFiLinkState.jsonl")
+        }
+
+        static func record(_ kind: String, _ values: [String: Any] = [:], fileName: String = "events.jsonl") {
+            guard enabled, let rootURL = logURL?.deletingLastPathComponent() else { return }
+            let fileURL = rootURL.appendingPathComponent(fileName)
+            var record = values
+            record["kind"] = kind
+            record["recordedAt"] = ISO8601DateFormatter().string(from: Date())
+            guard
+                let data = try? JSONSerialization.data(
+                    withJSONObject: record, options: [.sortedKeys, .fragmentsAllowed])
+            else { return }
+            queue.async {
+                do {
+                    try FileManager.default.createDirectory(at: rootURL, withIntermediateDirectories: true)
+                    let environmentURL = rootURL.appendingPathComponent("environment.json")
+                    if !FileManager.default.fileExists(atPath: environmentURL.path) {
+                        let environment: [String: Any] = [
+                            "schemaVersion": 1,
+                            "source": "WiFi Lens DEBUG app",
+                            "diagnosticsEnabled": true,
+                        ]
+                        try JSONSerialization.data(withJSONObject: environment, options: [.sortedKeys, .prettyPrinted])
+                            .write(to: environmentURL, options: .atomic)
+                        try Data().write(to: rootURL.appendingPathComponent("markers.jsonl"), options: .atomic)
                     }
-                    let handle = try FileHandle(forWritingTo: fileURL)
-                    try handle.seekToEnd()
-                    try handle.write(contentsOf: line)
-                    try handle.close()
-                } else {
-                    guard line.count <= maximumFileSize else { return }
-                    try line.write(to: fileURL, options: .atomic)
+                    var line = data
+                    line.append(0x0A)
+                    if FileManager.default.fileExists(atPath: fileURL.path) {
+                        let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+                        let currentSize = (attributes[.size] as? NSNumber)?.intValue ?? 0
+                        guard currentSize + line.count <= maximumFileSize else {
+                            return
+                        }
+                        let handle = try FileHandle(forWritingTo: fileURL)
+                        try handle.seekToEnd()
+                        try handle.write(contentsOf: line)
+                        try handle.close()
+                    } else {
+                        guard line.count <= maximumFileSize else { return }
+                        try line.write(to: fileURL, options: .atomic)
+                    }
+                } catch {
+                    // Diagnostics must never interfere with link monitoring.
                 }
-            } catch {
-                // Diagnostics must never interfere with link monitoring.
             }
         }
     }
-}
 #endif
 
 @MainActor
@@ -269,7 +277,7 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
     private var sleepTokens: [NSObjectProtocol] = []
     private var monitoredInterfaceName: String?
     private let desiredEvents: [CWEventType] = [
-        .powerDidChange, .linkDidChange, .ssidDidChange, .bssidDidChange, .modeDidChange
+        .powerDidChange, .linkDidChange, .ssidDidChange, .bssidDidChange, .modeDidChange,
     ]
     private var registeredEvents = Set<CWEventType>()
     private var eventRegistrationErrors: [CWEventType: String] = [:]
@@ -282,30 +290,36 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
         registerSystemConfiguration(interfaceName: interfaceName)
         registerCoreWLAN()
         #if DEBUG
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": "systemConfigurationRegistration",
-            "source": "SystemConfiguration",
-            "success": systemConfigurationRegistered,
-            "time": ISO8601DateFormatter().string(from: Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": coreWLANRegistered ? "coreWLANRegistrationSuccess" : "coreWLANRegistrationFailure",
-            "source": "CoreWLAN",
-            "success": coreWLANRegistered,
-            "error": coreWLANRegistrationError ?? "none",
-            "time": ISO8601DateFormatter().string(from: Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": "systemConfigurationRegistration",
+                    "source": "SystemConfiguration",
+                    "success": systemConfigurationRegistered,
+                    "time": ISO8601DateFormatter().string(from: Date()),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": coreWLANRegistered ? "coreWLANRegistrationSuccess" : "coreWLANRegistrationFailure",
+                    "source": "CoreWLAN",
+                    "success": coreWLANRegistered,
+                    "error": coreWLANRegistrationError ?? "none",
+                    "time": ISO8601DateFormatter().string(from: Date()),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
         #endif
         let workspaceCenter = NSWorkspace.shared.notificationCenter
         sleepTokens = [
-            workspaceCenter.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
+            workspaceCenter.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) {
+                [weak self] _ in
                 Task { @MainActor in self?.handler?(.willSleep) }
             },
-            workspaceCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            workspaceCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) {
+                [weak self] _ in
                 Task { @MainActor in self?.handler?(.didWake) }
-            }
+            },
         ]
     }
 
@@ -325,17 +339,18 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
         sleepTokens.removeAll()
         let client = CWWiFiClient.shared()
         for event in registeredEvents {
-            do { try client.stopMonitoringEvent(with: event) }
-            catch {
+            do { try client.stopMonitoringEvent(with: event) } catch {
                 let message = "stop: \(error)"
                 eventRegistrationErrors[event] = message
                 #if DEBUG
-                WiFiLinkDiagnosticsLogger.record("event", [
-                    "eventType": "coreWLANEventUnregisterFailure",
-                    "event": String(describing: event),
-                    "error": message,
-                    "source": "CoreWLAN"
-                ])
+                    WiFiLinkDiagnosticsLogger.record(
+                        "event",
+                        [
+                            "eventType": "coreWLANEventUnregisterFailure",
+                            "event": String(describing: event),
+                            "error": message,
+                            "source": "CoreWLAN",
+                        ])
                 #endif
             }
         }
@@ -345,7 +360,8 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
         }
         handler = nil
         monitoredInterfaceName = nil
-        coreWLANRegistrationError = eventRegistrationErrors.isEmpty
+        coreWLANRegistrationError =
+            eventRegistrationErrors.isEmpty
             ? nil
             : eventRegistrationErrors.map { "\($0.key): \($0.value)" }.sorted().joined(separator: "; ")
         isCoreWLANInterrupted = false
@@ -364,20 +380,28 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
             let trigger = Unmanaged<WiFiLinkChangeTrigger>.fromOpaque(info).takeUnretainedValue()
             Task { @MainActor in
                 #if DEBUG
-                WiFiLinkDiagnosticsLogger.record("event", ["eventType": "dynamicStoreChanged", "source": "SystemConfiguration", "time": ISO8601DateFormatter().string(from: Date()), "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds])
+                    WiFiLinkDiagnosticsLogger.record(
+                        "event",
+                        [
+                            "eventType": "dynamicStoreChanged", "source": "SystemConfiguration",
+                            "time": ISO8601DateFormatter().string(from: Date()),
+                            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                        ])
                 #endif
                 trigger.handler?(.systemConfiguration)
             }
         }
         var storeContext = context
-        guard let store = SCDynamicStoreCreate(nil, "WiFiLens.LinkStateCenter" as CFString, callback, &storeContext) else {
+        guard let store = SCDynamicStoreCreate(nil, "WiFiLens.LinkStateCenter" as CFString, callback, &storeContext)
+        else {
             systemConfigurationRegistered = false
             return
         }
         let keys = interfaceName.map { ["State:/Network/Interface/\($0)/Link" as CFString] as CFArray } ?? [] as CFArray
         let patterns = ["State:/Network/Service/.*/IPv4" as CFString] as CFArray
         guard SCDynamicStoreSetNotificationKeys(store, keys, patterns),
-              SCDynamicStoreSetDispatchQueue(store, DispatchQueue.main) else {
+            SCDynamicStoreSetDispatchQueue(store, DispatchQueue.main)
+        else {
             dynamicStore = nil
             systemConfigurationRegistered = false
             return
@@ -406,34 +430,40 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
                 registeredEvents.insert(event)
                 eventRegistrationErrors.removeValue(forKey: event)
                 #if DEBUG
-                WiFiLinkDiagnosticsLogger.record("event", [
-                    "eventType": "coreWLANEventRegistration",
-                    "event": String(describing: event),
-                    "success": true,
-                    "source": "CoreWLAN"
-                ])
+                    WiFiLinkDiagnosticsLogger.record(
+                        "event",
+                        [
+                            "eventType": "coreWLANEventRegistration",
+                            "event": String(describing: event),
+                            "success": true,
+                            "source": "CoreWLAN",
+                        ])
                 #endif
             } catch {
                 eventRegistrationErrors[event] = String(describing: error)
                 #if DEBUG
-                WiFiLinkDiagnosticsLogger.record("event", [
-                    "eventType": "coreWLANEventRegistration",
-                    "event": String(describing: event),
-                    "success": false,
-                    "error": String(describing: error),
-                    "source": "CoreWLAN"
-                ])
+                    WiFiLinkDiagnosticsLogger.record(
+                        "event",
+                        [
+                            "eventType": "coreWLANEventRegistration",
+                            "event": String(describing: event),
+                            "success": false,
+                            "error": String(describing: error),
+                            "source": "CoreWLAN",
+                        ])
                 #endif
             }
         }
         isCoreWLANInterrupted = false
-        coreWLANRegistrationError = eventRegistrationErrors.isEmpty
+        coreWLANRegistrationError =
+            eventRegistrationErrors.isEmpty
             ? nil
             : eventRegistrationErrors.map { "\($0.key): \($0.value)" }.sorted().joined(separator: "; ")
     }
 
     nonisolated public func powerStateDidChangeForWiFiInterface(withName interfaceName: String) {
-        handleCoreWLANEvent(interfaceName: interfaceName, eventType: .powerDidChange, reason: .coreWLANPowerStateChanged)
+        handleCoreWLANEvent(
+            interfaceName: interfaceName, eventType: .powerDidChange, reason: .coreWLANPowerStateChanged)
     }
 
     nonisolated public func linkDidChangeForWiFiInterface(withName interfaceName: String) {
@@ -458,7 +488,8 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
             isCoreWLANInterrupted = true
             coreWLANRegistrationError = "CoreWLAN connection interrupted; automatic event recovery is pending."
             #if DEBUG
-            WiFiLinkDiagnosticsLogger.record("event", ["eventType": "coreWLANConnectionInterrupted", "source": "CoreWLAN"])
+                WiFiLinkDiagnosticsLogger.record(
+                    "event", ["eventType": "coreWLANConnectionInterrupted", "source": "CoreWLAN"])
             #endif
             handler?(.coreWLAN)
         }
@@ -471,7 +502,8 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
             isCoreWLANInterrupted = false
             coreWLANRegistrationError = "CoreWLAN client connection invalidated."
             #if DEBUG
-            WiFiLinkDiagnosticsLogger.record("event", ["eventType": "coreWLANConnectionInvalidated", "source": "CoreWLAN"])
+                WiFiLinkDiagnosticsLogger.record(
+                    "event", ["eventType": "coreWLANConnectionInvalidated", "source": "CoreWLAN"])
             #endif
             handler?(.coreWLAN)
         }
@@ -482,17 +514,20 @@ public final class WiFiLinkChangeTrigger: NSObject, CWEventDelegate, WiFiLinkCha
     ) {
         Task { @MainActor in
             guard handler != nil,
-                  monitoredInterfaceName == nil || monitoredInterfaceName == interfaceName else { return }
+                monitoredInterfaceName == nil || monitoredInterfaceName == interfaceName
+            else { return }
             isCoreWLANInterrupted = false
             if eventRegistrationErrors.isEmpty { coreWLANRegistrationError = nil }
             #if DEBUG
-            WiFiLinkDiagnosticsLogger.record("event", [
-                "eventType": String(describing: eventType), "interfaceName": interfaceName,
-                "source": "CoreWLAN", "success": true,
-                "listenerInterrupted": isCoreWLANInterrupted,
-                "time": ISO8601DateFormatter().string(from: Date()),
-                "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-            ])
+                WiFiLinkDiagnosticsLogger.record(
+                    "event",
+                    [
+                        "eventType": String(describing: eventType), "interfaceName": interfaceName,
+                        "source": "CoreWLAN", "success": true,
+                        "listenerInterrupted": isCoreWLANInterrupted,
+                        "time": ISO8601DateFormatter().string(from: Date()),
+                        "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                    ])
             #endif
             handler?(reason)
         }
@@ -634,12 +669,14 @@ public actor WiFiLinkStateCenter {
             )
             publishCurrent()
             #if DEBUG
-            WiFiLinkDiagnosticsLogger.record("event", [
-                "eventType": "centerStartSkipped",
-                "reason": "unitTestHost",
-                "time": Self.utcTimestamp(Date()),
-                "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-            ])
+                WiFiLinkDiagnosticsLogger.record(
+                    "event",
+                    [
+                        "eventType": "centerStartSkipped",
+                        "reason": "unitTestHost",
+                        "time": Self.utcTimestamp(Date()),
+                        "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                    ])
             #endif
             return
         }
@@ -665,21 +702,22 @@ public actor WiFiLinkStateCenter {
         )
         publishCurrent()
         #if DEBUG
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": "centerStarted",
-            "runSessionID": sessionID.uuidString,
-            "lifecycleGeneration": generation,
-            "diagnosticsEnabled": WiFiLinkDiagnosticsLogger.isEnabled,
-            "time": Self.utcTimestamp(Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": "centerStarted",
+                    "runSessionID": sessionID.uuidString,
+                    "lifecycleGeneration": generation,
+                    "diagnosticsEnabled": WiFiLinkDiagnosticsLogger.isEnabled,
+                    "time": Self.utcTimestamp(Date()),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
         #endif
         await startTrigger(interfaceName: nil, sessionID: sessionID)
         guard isRunning, runSessionID == sessionID else { return }
         pollingTask = Task { [weak self, pollingInterval, pollingClock] in
             while !Task.isCancelled {
-                do { try await pollingClock.sleep(for: pollingInterval) }
-                catch { break }
+                do { try await pollingClock.sleep(for: pollingInterval) } catch { break }
                 guard !Task.isCancelled else { break }
                 await self?.compensationTick(sessionID: sessionID)
             }
@@ -718,17 +756,21 @@ public actor WiFiLinkStateCenter {
             sources: [], identity: nil, radio: currentSnapshot.radio
         )
         publishCurrent()
-        publishEvent(.continuityReset, previous: previousEvidence, current: nil, firstAt: nil, previousAt: previousConfirmationTime)
+        publishEvent(
+            .continuityReset, previous: previousEvidence, current: nil, firstAt: nil,
+            previousAt: previousConfirmationTime)
         self.previousEvidence = nil
         clearTrustedAssociations()
         #if DEBUG
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": "centerStopped",
-            "runSessionID": stoppedSessionID.uuidString,
-            "lifecycleGeneration": lifecycleGeneration,
-            "time": Self.utcTimestamp(Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": "centerStopped",
+                    "runSessionID": stoppedSessionID.uuidString,
+                    "lifecycleGeneration": lifecycleGeneration,
+                    "time": Self.utcTimestamp(Date()),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
         #endif
         await stopTrigger()
     }
@@ -758,7 +800,8 @@ public actor WiFiLinkStateCenter {
             let sampleEndedAt = Date()
             let sampleEndMonotonicNanoseconds = DispatchTime.now().uptimeNanoseconds
             guard isCurrent(sessionID: expectedSessionID, generation: expectedGeneration),
-                  activeSampleID == sampleID else {
+                activeSampleID == sampleID
+            else {
                 logDiscardedSample(
                     sampleID: sampleID, sessionID: expectedSessionID,
                     startedAt: sampleStartedAt, endedAt: sampleEndedAt,
@@ -801,7 +844,8 @@ public actor WiFiLinkStateCenter {
             cancelCandidateReview(reason: "sampleFailed")
             hasAssociationEvidenceGap = true
             if currentContinuityValid || confirmedState != .unknown {
-                resetContinuityWithoutAwaiting(reason: .compensationSampleFailed, previous: previousEvidence, current: nil)
+                resetContinuityWithoutAwaiting(
+                    reason: .compensationSampleFailed, previous: previousEvidence, current: nil)
             }
             confirmedState = .unknown
             lastConfirmedStateAt = nil
@@ -828,13 +872,17 @@ public actor WiFiLinkStateCenter {
         }
 
         if let previousEvidence,
-           previousEvidence.interfaceName != evidence.interfaceName || previousEvidence.interfaceIndex != evidence.interfaceIndex {
+            previousEvidence.interfaceName != evidence.interfaceName
+                || previousEvidence.interfaceIndex != evidence.interfaceIndex
+        {
             cancelCandidateReview(reason: "interfaceChanged")
             resetContinuityWithoutAwaiting(reason: .interfaceChanged, previous: previousEvidence, current: evidence)
             clearTrustedAssociations()
         }
         if let comparableEvidence = lastComparableIdentityAssociation?.evidence,
-           (comparableEvidence.interfaceName != evidence.interfaceName || comparableEvidence.interfaceIndex != evidence.interfaceIndex) {
+            comparableEvidence.interfaceName != evidence.interfaceName
+                || comparableEvidence.interfaceIndex != evidence.interfaceIndex
+        {
             clearTrustedAssociations()
         }
 
@@ -847,7 +895,8 @@ public actor WiFiLinkStateCenter {
         var state = assessment.state
         var assessmentReason = assessment.reason
         if evidence.readFailures[.mode] == .interfaceNotFound,
-           evidence.readFailures[.radio] == .interfaceNotFound {
+            evidence.readFailures[.radio] == .interfaceNotFound
+        {
             assessmentReason = .interfaceUnavailable
         }
         var eventType: WiFiLinkStateEventType?
@@ -873,8 +922,10 @@ public actor WiFiLinkStateCenter {
                 eventType = .networkIdentityChanged
                 firstCurrentAt = evidence.capturedAt
                 identityEventPrevious = difference == .ssidChanged ? trustedSSID?.evidence : trustedBSSID?.evidence
-                identityEventPreviousAt = difference == .ssidChanged ? trustedSSID?.confirmedAt : trustedBSSID?.confirmedAt
-                identityContinuity = associationGap
+                identityEventPreviousAt =
+                    difference == .ssidChanged ? trustedSSID?.confirmedAt : trustedBSSID?.confirmedAt
+                identityContinuity =
+                    associationGap
                     ? .separatedByUncertainEvidence
                     : (identityGap ? .separatedByUnknownIdentity : .adjacentVerifiedObservations)
                 if difference == .ssidChanged {
@@ -895,7 +946,8 @@ public actor WiFiLinkStateCenter {
             if confirmedState != .associated, confirmedState == .unknown { lastConfirmedStateAt = evidence.capturedAt }
             confirmedState = .associated
             disconnectTransitionEmitted = false
-            lastVerifiedAssociation = TrustedAssociation(evidence: evidence, identity: newIdentity, confirmedAt: evidence.capturedAt)
+            lastVerifiedAssociation = TrustedAssociation(
+                evidence: evidence, identity: newIdentity, confirmedAt: evidence.capturedAt)
             if let ssid = evidence.ssid {
                 trustedSSID = TrustedIdentityField(value: ssid, evidence: evidence, confirmedAt: evidence.capturedAt)
             } else {
@@ -907,7 +959,8 @@ public actor WiFiLinkStateCenter {
                 hasIdentityEvidenceGap = true
             }
             if newIdentity?.isKnown == true {
-                lastComparableIdentityAssociation = TrustedAssociation(evidence: evidence, identity: newIdentity, confirmedAt: evidence.capturedAt)
+                lastComparableIdentityAssociation = TrustedAssociation(
+                    evidence: evidence, identity: newIdentity, confirmedAt: evidence.capturedAt)
             }
             if difference != .insufficientEvidence {
                 hasAssociationEvidenceGap = false
@@ -923,7 +976,8 @@ public actor WiFiLinkStateCenter {
             let wasFirstCandidate = disconnectCandidates.isEmpty
             let candidateWasAccepted = appendCandidate(evidence)
             if candidateWasAccepted, wasFirstCandidate {
-                logCandidateEvent("candidateCycleStarted", evidence: evidence, sessionID: sessionID, generation: generation)
+                logCandidateEvent(
+                    "candidateCycleStarted", evidence: evidence, sessionID: sessionID, generation: generation)
             } else if !candidateWasAccepted {
                 cancelCandidateReview(reason: "candidateSequenceInvalid")
             }
@@ -943,7 +997,8 @@ public actor WiFiLinkStateCenter {
                 confirmedState = .disconnected
             } else {
                 state = .unknown
-                assessmentReason = disconnectCandidates.isEmpty
+                assessmentReason =
+                    disconnectCandidates.isEmpty
                     ? .conflictingLinkEvidence
                     : (allowsUnvalidatedDisconnectConfirmation ? .disconnectCandidate : .disconnectEvidenceNotValidated)
                 if wasFirstCandidate, !disconnectCandidates.isEmpty {
@@ -993,35 +1048,36 @@ public actor WiFiLinkStateCenter {
         )
         publishCurrent()
         #if DEBUG
-        let triggerValue: String = switch reason {
-        case .startup: "startup"
-        case .compensationSample: "timer"
-        case .candidateReview: "notification"
-        case .systemConfiguration, .coreWLAN, .coreWLANPowerStateChanged, .interfaceChanged: "notification"
-        case .appBecameActive, .didWake, .willSleep: "startup"
-        case .compensationSampleFailed: "notification"
-        }
-        var fields = WiFiLinkDiagnosticEvidenceFields.make(from: evidence)
-        fields.merge([
-            "schemaVersion": 1,
-            "time": Self.utcTimestamp(sampleEndedAt),
-            "sampleStartedAt": Self.utcTimestamp(sampleStartedAt),
-            "sampleEndedAt": Self.utcTimestamp(sampleEndedAt),
-            "monotonicNanoseconds": sampleEndMonotonicNanoseconds,
-            "sampleStartMonotonicNanoseconds": sampleStartMonotonicNanoseconds,
-            "trigger": triggerValue,
-            "sampleReason": reason.rawValue,
-            "sampleID": sampleID.uuidString,
-            "runSessionID": sessionID.uuidString,
-            "lifecycleGeneration": generation,
-            "interfaceName": evidence.interfaceName,
-            "assessment": assessmentReason.rawValue,
-            "state": state.rawValue,
-            "reason": assessmentReason.rawValue,
-            "captureStartedAt": Self.utcTimestamp(evidence.captureStartedAt),
-            "captureEndedAt": Self.utcTimestamp(evidence.captureEndedAt)
-        ]) { _, new in new }
-        WiFiLinkDiagnosticsLogger.record("sample", fields, fileName: "observations.jsonl")
+            let triggerValue: String =
+                switch reason {
+                case .startup: "startup"
+                case .compensationSample: "timer"
+                case .candidateReview: "notification"
+                case .systemConfiguration, .coreWLAN, .coreWLANPowerStateChanged, .interfaceChanged: "notification"
+                case .appBecameActive, .didWake, .willSleep: "startup"
+                case .compensationSampleFailed: "notification"
+                }
+            var fields = WiFiLinkDiagnosticEvidenceFields.make(from: evidence)
+            fields.merge([
+                "schemaVersion": 1,
+                "time": Self.utcTimestamp(sampleEndedAt),
+                "sampleStartedAt": Self.utcTimestamp(sampleStartedAt),
+                "sampleEndedAt": Self.utcTimestamp(sampleEndedAt),
+                "monotonicNanoseconds": sampleEndMonotonicNanoseconds,
+                "sampleStartMonotonicNanoseconds": sampleStartMonotonicNanoseconds,
+                "trigger": triggerValue,
+                "sampleReason": reason.rawValue,
+                "sampleID": sampleID.uuidString,
+                "runSessionID": sessionID.uuidString,
+                "lifecycleGeneration": generation,
+                "interfaceName": evidence.interfaceName,
+                "assessment": assessmentReason.rawValue,
+                "state": state.rawValue,
+                "reason": assessmentReason.rawValue,
+                "captureStartedAt": Self.utcTimestamp(evidence.captureStartedAt),
+                "captureEndedAt": Self.utcTimestamp(evidence.captureEndedAt),
+            ]) { _, new in new }
+            WiFiLinkDiagnosticsLogger.record("sample", fields, fileName: "observations.jsonl")
         #endif
         if reason == .candidateReview, let reviewID = candidateReviewID {
             logCandidateEvent(
@@ -1031,13 +1087,15 @@ public actor WiFiLinkStateCenter {
                     "reviewID": reviewID.uuidString,
                     "result": state.rawValue,
                     "reason": assessmentReason.rawValue,
-                    "candidateSampleCount": disconnectCandidates.count
+                    "candidateSampleCount": disconnectCandidates.count,
                 ]
             )
             candidateReviewID = nil
         }
         if oldRadio != sampleRadio, oldRadio != .unavailable {
-            publishEvent(.radioChanged, previous: previousEvidence, current: evidence, firstAt: evidence.capturedAt, previousAt: previousConfirmationTime)
+            publishEvent(
+                .radioChanged, previous: previousEvidence, current: evidence, firstAt: evidence.capturedAt,
+                previousAt: previousConfirmationTime)
         }
         if let eventType {
             publishEvent(
@@ -1051,7 +1109,9 @@ public actor WiFiLinkStateCenter {
             lastConfirmedStateAt = evidence.capturedAt
         }
         if continuityReset {
-            publishEvent(.continuityReset, previous: previousEvidence, current: evidence, firstAt: nil, previousAt: previousConfirmationTime)
+            publishEvent(
+                .continuityReset, previous: previousEvidence, current: evidence, firstAt: nil,
+                previousAt: previousConfirmationTime)
         }
         previousEvidence = evidence
         if trigger != nil {
@@ -1061,20 +1121,22 @@ public actor WiFiLinkStateCenter {
 
     private func appendCandidate(_ evidence: WiFiLinkRawEvidence) -> Bool {
         guard evidence.mode == .none || evidence.mode == .noneOrReadFailure,
-              evidence.coreWLANModeRawValue == nil || evidence.coreWLANModeRawValue == 0,
-              evidence.radio == .reportedOn,
-              evidence.radioPowerOnRaw != false,
-              evidence.linkActive == false,
-              evidence.captureStartedAt <= evidence.capturedAt,
-              evidence.capturedAt <= evidence.captureEndedAt else {
+            evidence.coreWLANModeRawValue == nil || evidence.coreWLANModeRawValue == 0,
+            evidence.radio == .reportedOn,
+            evidence.radioPowerOnRaw != false,
+            evidence.linkActive == false,
+            evidence.captureStartedAt <= evidence.capturedAt,
+            evidence.capturedAt <= evidence.captureEndedAt
+        else {
             disconnectCandidates.removeAll()
             return false
         }
         if let previous = disconnectCandidates.last {
             guard previous.snapshotCycleID != evidence.snapshotCycleID,
-                  previous.interfaceName == evidence.interfaceName,
-                  previous.interfaceIndex == evidence.interfaceIndex,
-                  previous.capturedAt < evidence.capturedAt else {
+                previous.interfaceName == evidence.interfaceName,
+                previous.interfaceIndex == evidence.interfaceIndex,
+                previous.capturedAt < evidence.capturedAt
+            else {
                 disconnectCandidates.removeAll()
                 return false
             }
@@ -1122,7 +1184,8 @@ public actor WiFiLinkStateCenter {
             radio: current?.radio ?? currentSnapshot.radio
         )
         publishCurrent()
-        publishEvent(.continuityReset, previous: previous, current: current, firstAt: nil, previousAt: previousConfirmationTime)
+        publishEvent(
+            .continuityReset, previous: previous, current: current, firstAt: nil, previousAt: previousConfirmationTime)
     }
 
     private func isCurrent(sessionID: UUID, generation: UInt64) -> Bool {
@@ -1137,7 +1200,7 @@ public actor WiFiLinkStateCenter {
     private func takePendingSampleReason() -> WiFiLinkChangeReason? {
         let priority: [WiFiLinkChangeReason] = [
             .candidateReview, .appBecameActive, .systemConfiguration, .coreWLANPowerStateChanged, .coreWLAN,
-            .interfaceChanged, .didWake, .willSleep, .compensationSample, .startup
+            .interfaceChanged, .didWake, .willSleep, .compensationSample, .startup,
         ]
         guard let reason = priority.first(where: pendingSampleReasons.contains) else { return nil }
         pendingSampleReasons.remove(reason)
@@ -1146,9 +1209,10 @@ public actor WiFiLinkStateCenter {
 
     private func scheduleCandidateReview(sessionID: UUID) {
         guard isRunning, runSessionID == sessionID,
-              candidateReviewID == nil, candidateReviewTask == nil,
-              !pendingSampleReasons.contains(.candidateReview),
-              !disconnectCandidates.isEmpty else { return }
+            candidateReviewID == nil, candidateReviewTask == nil,
+            !pendingSampleReasons.contains(.candidateReview),
+            !disconnectCandidates.isEmpty
+        else { return }
         let reviewID = UUID()
         let generation = lifecycleGeneration
         candidateReviewID = reviewID
@@ -1163,31 +1227,36 @@ public actor WiFiLinkStateCenter {
             )
         }
         #if DEBUG
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": "candidateReviewScheduled",
-            "reviewID": reviewID.uuidString,
-            "runSessionID": sessionID.uuidString,
-            "lifecycleGeneration": generation,
-            "reviewIntervalMilliseconds": reviewIntervalMilliseconds,
-            "time": Self.utcTimestamp(Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": "candidateReviewScheduled",
+                    "reviewID": reviewID.uuidString,
+                    "runSessionID": sessionID.uuidString,
+                    "lifecycleGeneration": generation,
+                    "reviewIntervalMilliseconds": reviewIntervalMilliseconds,
+                    "time": Self.utcTimestamp(Date()),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
         #endif
     }
 
     private func candidateReviewFired(reviewID: UUID, sessionID: UUID, generation: UInt64) async {
         guard candidateReviewID == reviewID,
-              isCurrent(sessionID: sessionID, generation: generation) else { return }
+            isCurrent(sessionID: sessionID, generation: generation)
+        else { return }
         candidateReviewTask = nil
         #if DEBUG
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": "candidateReviewStarted",
-            "reviewID": reviewID.uuidString,
-            "runSessionID": sessionID.uuidString,
-            "lifecycleGeneration": generation,
-            "time": Self.utcTimestamp(Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": "candidateReviewStarted",
+                    "reviewID": reviewID.uuidString,
+                    "runSessionID": sessionID.uuidString,
+                    "lifecycleGeneration": generation,
+                    "time": Self.utcTimestamp(Date()),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
         #endif
         await requestSample(reason: .candidateReview, sessionID: sessionID)
     }
@@ -1199,15 +1268,17 @@ public actor WiFiLinkStateCenter {
         candidateReviewTask = nil
         candidateReviewID = nil
         #if DEBUG
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": "candidateReviewCancelled",
-            "reviewID": reviewID.uuidString,
-            "runSessionID": runSessionID.uuidString,
-            "lifecycleGeneration": lifecycleGeneration,
-            "reason": reason,
-            "time": Self.utcTimestamp(Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": "candidateReviewCancelled",
+                    "reviewID": reviewID.uuidString,
+                    "runSessionID": runSessionID.uuidString,
+                    "lifecycleGeneration": lifecycleGeneration,
+                    "reason": reason,
+                    "time": Self.utcTimestamp(Date()),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
         #endif
     }
 
@@ -1224,20 +1295,20 @@ public actor WiFiLinkStateCenter {
         extra: [String: Any] = [:]
     ) {
         #if DEBUG
-        var fields: [String: Any] = [
-            "eventType": eventType,
-            "source": "WiFiLinkStateCenter",
-            "cycleID": evidence.snapshotCycleID.uuidString,
-            "interfaceIndex": evidence.interfaceIndex.map { String($0) } ?? "unknown",
-            "runSessionID": sessionID.uuidString,
-            "lifecycleGeneration": generation,
-            "sampleTime": Self.utcTimestamp(evidence.capturedAt),
-            "linkEpoch": linkEpoch,
-            "time": Self.utcTimestamp(Date()),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ]
-        fields.merge(extra) { _, new in new }
-        WiFiLinkDiagnosticsLogger.record("event", fields)
+            var fields: [String: Any] = [
+                "eventType": eventType,
+                "source": "WiFiLinkStateCenter",
+                "cycleID": evidence.snapshotCycleID.uuidString,
+                "interfaceIndex": evidence.interfaceIndex.map { String($0) } ?? "unknown",
+                "runSessionID": sessionID.uuidString,
+                "lifecycleGeneration": generation,
+                "sampleTime": Self.utcTimestamp(evidence.capturedAt),
+                "linkEpoch": linkEpoch,
+                "time": Self.utcTimestamp(Date()),
+                "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+            ]
+            fields.merge(extra) { _, new in new }
+            WiFiLinkDiagnosticsLogger.record("event", fields)
         #endif
     }
 
@@ -1246,22 +1317,24 @@ public actor WiFiLinkStateCenter {
         startMonotonic: UInt64, endMonotonic: UInt64, reason: String
     ) {
         #if DEBUG
-        WiFiLinkDiagnosticsLogger.record("sample", [
-            "schemaVersion": 1,
-            "kind": "sample",
-            "time": Self.utcTimestamp(endedAt),
-            "sampleStartedAt": Self.utcTimestamp(startedAt),
-            "sampleEndedAt": Self.utcTimestamp(endedAt),
-            "monotonicNanoseconds": endMonotonic,
-            "sampleStartMonotonicNanoseconds": startMonotonic,
-            "trigger": "notification",
-            "sampleReason": "discarded",
-            "sampleID": sampleID.uuidString,
-            "runSessionID": sessionID.uuidString,
-            "state": "unknown",
-            "reason": reason,
-            "resultingStateImpact": "discardedWithoutPublication"
-        ], fileName: "observations.jsonl")
+            WiFiLinkDiagnosticsLogger.record(
+                "sample",
+                [
+                    "schemaVersion": 1,
+                    "kind": "sample",
+                    "time": Self.utcTimestamp(endedAt),
+                    "sampleStartedAt": Self.utcTimestamp(startedAt),
+                    "sampleEndedAt": Self.utcTimestamp(endedAt),
+                    "monotonicNanoseconds": endMonotonic,
+                    "sampleStartMonotonicNanoseconds": startMonotonic,
+                    "trigger": "notification",
+                    "sampleReason": "discarded",
+                    "sampleID": sampleID.uuidString,
+                    "runSessionID": sessionID.uuidString,
+                    "state": "unknown",
+                    "reason": reason,
+                    "resultingStateImpact": "discardedWithoutPublication",
+                ], fileName: "observations.jsonl")
         #endif
     }
 
@@ -1271,31 +1344,34 @@ public actor WiFiLinkStateCenter {
         failureReason: String, resultingState: VerifiedWiFiLinkState
     ) {
         #if DEBUG
-        let triggerValue = reason == .startup || reason == .appBecameActive || reason == .didWake || reason == .willSleep
-            ? "startup"
-            : "notification"
-        WiFiLinkDiagnosticsLogger.record("sample", [
-            "schemaVersion": 1,
-            "kind": "sample",
-            "time": Self.utcTimestamp(endedAt),
-            "sampleStartedAt": Self.utcTimestamp(startedAt),
-            "sampleEndedAt": Self.utcTimestamp(endedAt),
-            "monotonicNanoseconds": endMonotonic,
-            "sampleStartMonotonicNanoseconds": startMonotonic,
-            "trigger": triggerValue,
-            "sampleReason": reason.rawValue,
-            "sampleID": sampleID.uuidString,
-            "runSessionID": sessionID.uuidString,
-            "lifecycleGeneration": generation,
-            "mode": "unavailable",
-            "modeRaw": NSNull(),
-            "modeInterpretation": "unavailable",
-            "modeReadAmbiguous": false,
-            "state": resultingState.rawValue,
-            "reason": failureReason,
-            "failureReason": failureReason,
-            "resultingStateImpact": "currentEvidenceInvalidated"
-        ], fileName: "observations.jsonl")
+            let triggerValue =
+                reason == .startup || reason == .appBecameActive || reason == .didWake || reason == .willSleep
+                ? "startup"
+                : "notification"
+            WiFiLinkDiagnosticsLogger.record(
+                "sample",
+                [
+                    "schemaVersion": 1,
+                    "kind": "sample",
+                    "time": Self.utcTimestamp(endedAt),
+                    "sampleStartedAt": Self.utcTimestamp(startedAt),
+                    "sampleEndedAt": Self.utcTimestamp(endedAt),
+                    "monotonicNanoseconds": endMonotonic,
+                    "sampleStartMonotonicNanoseconds": startMonotonic,
+                    "trigger": triggerValue,
+                    "sampleReason": reason.rawValue,
+                    "sampleID": sampleID.uuidString,
+                    "runSessionID": sessionID.uuidString,
+                    "lifecycleGeneration": generation,
+                    "mode": "unavailable",
+                    "modeRaw": NSNull(),
+                    "modeInterpretation": "unavailable",
+                    "modeReadAmbiguous": false,
+                    "state": resultingState.rawValue,
+                    "reason": failureReason,
+                    "failureReason": failureReason,
+                    "resultingStateImpact": "currentEvidenceInvalidated",
+                ], fileName: "observations.jsonl")
         #endif
     }
 
@@ -1330,20 +1406,24 @@ public actor WiFiLinkStateCenter {
             lastConfirmedPreviousAt: previousAt ?? lastConfirmedStateAt, firstConfirmedCurrentAt: firstAt,
             confirmedAt: Date(), identityComparisonContinuity: identityComparisonContinuity
         )
-#if DEBUG
-        WiFiLinkDiagnosticsLogger.record("event", [
-            "eventType": type.rawValue,
-            "source": "WiFiLinkStateCenter",
-            "eventID": event.id.uuidString,
-            "sequence": event.sequence,
-            "linkEpoch": event.linkEpoch,
-            "previousStateTime": event.lastConfirmedPreviousAt.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull() as Any,
-            "currentStateTime": event.firstConfirmedCurrentAt.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull() as Any,
-            "identityComparisonContinuity": event.identityComparisonContinuity?.rawValue ?? NSNull() as Any,
-            "time": ISO8601DateFormatter().string(from: event.confirmedAt),
-            "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds
-        ])
-#endif
+        #if DEBUG
+            WiFiLinkDiagnosticsLogger.record(
+                "event",
+                [
+                    "eventType": type.rawValue,
+                    "source": "WiFiLinkStateCenter",
+                    "eventID": event.id.uuidString,
+                    "sequence": event.sequence,
+                    "linkEpoch": event.linkEpoch,
+                    "previousStateTime": event.lastConfirmedPreviousAt.map { ISO8601DateFormatter().string(from: $0) }
+                        ?? NSNull() as Any,
+                    "currentStateTime": event.firstConfirmedCurrentAt.map { ISO8601DateFormatter().string(from: $0) }
+                        ?? NSNull() as Any,
+                    "identityComparisonContinuity": event.identityComparisonContinuity?.rawValue ?? NSNull() as Any,
+                    "time": ISO8601DateFormatter().string(from: event.confirmedAt),
+                    "monotonicNanoseconds": DispatchTime.now().uptimeNanoseconds,
+                ])
+        #endif
         eventSubscribers.values.forEach { $0.yield(event) }
     }
 
@@ -1415,7 +1495,8 @@ public actor WiFiLinkStateCenter {
         if let old = previous.ssid, let new = current.ssid, old != new { return .ssidChanged }
         if let old = previous.bssid, let new = current.bssid, old != new { return .bssidChanged }
         guard previous.ssid != nil, current.ssid != nil,
-              previous.bssid != nil, current.bssid != nil else { return .insufficientEvidence }
+            previous.bssid != nil, current.bssid != nil
+        else { return .insufficientEvidence }
         return .sameComparableFields
     }
 

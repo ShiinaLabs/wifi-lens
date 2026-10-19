@@ -53,7 +53,7 @@ public struct MACVendorBundledDatabase: Decodable, Equatable, Sendable {
 
     public static func load(from bundle: Bundle = .main) -> MACVendorBundledDatabase? {
         guard let url = bundle.url(forResource: "mac-vendor-database", withExtension: "json"),
-              let data = try? Data(contentsOf: url)
+            let data = try? Data(contentsOf: url)
         else {
             logger.warning("Bundled MAC vendor database resource is unavailable")
             return nil

@@ -1,9 +1,9 @@
-@testable import WiFiLensCore
-
 import AppKit
 import Foundation
 import SwiftUI
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor
@@ -383,10 +383,11 @@ final class GuidanceCoordinatorTests {
     }
 
     @Test func diagnosticsCompletionsCrossThresholdOnThirdUsefulCompletion() {
-        let coordinator = makeCoordinator(state: GuidanceState(
-            activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: 0
-        ))
+        let coordinator = makeCoordinator(
+            state: GuidanceState(
+                activeDays: ["2026-07-01", "2026-07-02"],
+                meaningfulCompletionCount: 0
+            ))
 
         #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))
         #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.completionThresholdNotMet))

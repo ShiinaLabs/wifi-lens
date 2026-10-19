@@ -1,5 +1,5 @@
-import SwiftUI
 import CryptoKit
+import SwiftUI
 
 /// Deterministic color assignment for SSIDs using SHA-1 hash,
 /// matching the JavaScript `getColorForSSID()` behavior.

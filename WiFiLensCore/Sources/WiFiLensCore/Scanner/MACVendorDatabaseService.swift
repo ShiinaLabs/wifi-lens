@@ -68,7 +68,7 @@ public actor MACVendorDatabaseService: MACVendorDatabaseServicing {
             return database
         } catch is CancellationError {
             throw CancellationError()
-        } catch where Task.isCancelled {
+        } catch  where Task.isCancelled {
             throw CancellationError()
         } catch let error as MACVendorDatabaseError {
             throw error
@@ -97,7 +97,7 @@ public actor MACVendorDatabaseService: MACVendorDatabaseServicing {
             return database
         } catch is CancellationError {
             throw CancellationError()
-        } catch where Task.isCancelled {
+        } catch  where Task.isCancelled {
             throw CancellationError()
         } catch let error as MACVendorDatabaseError {
             throw error

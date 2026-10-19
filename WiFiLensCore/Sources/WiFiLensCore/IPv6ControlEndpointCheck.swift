@@ -359,15 +359,17 @@ struct SystemIPv6AddressResolver: IPv6AddressResolving {
     private static func numericAddress(_ address: UnsafePointer<sockaddr>) -> String? {
         guard address.pointee.sa_family == sa_family_t(AF_INET6) else { return nil }
         var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-        guard getnameinfo(
-            address,
-            socklen_t(address.pointee.sa_len),
-            &buffer,
-            socklen_t(buffer.count),
-            nil,
-            0,
-            NI_NUMERICHOST
-        ) == 0 else {
+        guard
+            getnameinfo(
+                address,
+                socklen_t(address.pointee.sa_len),
+                &buffer,
+                socklen_t(buffer.count),
+                nil,
+                0,
+                NI_NUMERICHOST
+            ) == 0
+        else {
             return nil
         }
         return String(
@@ -509,9 +511,10 @@ struct NetworkIPv6HTTPSConnector: IPv6HTTPSConnecting {
                         break
                     }
                 }
-                connection.start(queue: DispatchQueue(
-                    label: "io.github.kaoru.wifi-lens.network-diagnostics.ipv6-https"
-                ))
+                connection.start(
+                    queue: DispatchQueue(
+                        label: "io.github.kaoru.wifi-lens.network-diagnostics.ipv6-https"
+                    ))
                 let timeoutTask = Task { [context] in
                     do {
                         try await Task.sleep(for: timeout)
@@ -590,14 +593,16 @@ private final class IPv6HTTPSConnectionContext: @unchecked Sendable {
         requestSent = true
         lock.unlock()
 
-        connection.send(content: request, completion: .contentProcessed { [weak self] error in
-            guard let self else { return }
-            if error != nil {
-                finish(.failed)
-            } else {
-                receiveResponse()
-            }
-        })
+        connection.send(
+            content: request,
+            completion: .contentProcessed { [weak self] error in
+                guard let self else { return }
+                if error != nil {
+                    finish(.failed)
+                } else {
+                    receiveResponse()
+                }
+            })
     }
 
     func finish(_ outcome: IPv6HTTPSConnectionOutcome) {

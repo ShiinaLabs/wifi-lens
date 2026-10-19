@@ -1,5 +1,5 @@
-import Foundation
 import CoreWLAN
+import Foundation
 import SystemConfiguration
 
 public enum WiFiMetricsAttribution: Equatable, Sendable {
@@ -57,7 +57,8 @@ public struct NetworkInterfaceInfo: Sendable {
         security: String = "—"
     ) {
         self.interfaceName = interfaceName
-        self.interfaceIndex = interfaceIndex ?? (if_nametoindex(interfaceName) == 0 ? nil : if_nametoindex(interfaceName))
+        self.interfaceIndex =
+            interfaceIndex ?? (if_nametoindex(interfaceName) == 0 ? nil : if_nametoindex(interfaceName))
         self.hardwareMAC = hardwareMAC
         self.isWiFiInterface = isWiFiInterface
         self.wifiLinkEvidence = wifiLinkEvidence
@@ -82,9 +83,13 @@ public struct NetworkInterfaceInfo: Sendable {
         return .virtual
     }
 
-    var displayMAC: String { hardwareMAC ?? String(localized: "common.label.unknown", comment: "Generic unknown value label") }
+    var displayMAC: String {
+        hardwareMAC ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")
+    }
     public var displaySSID: String { ssid ?? "n/a" }
-    public var displayBSSID: String { bssid ?? String(localized: "common.label.unknown", comment: "Generic unknown value label") }
+    public var displayBSSID: String {
+        bssid ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")
+    }
     public var displayChannel: String { channel.map { "\($0)" } ?? "—" }
     public var displayRSSI: String { rssi.map { "\($0) dBm" } ?? "—" }
     var displayTxRate: String { txRate.map { "\(Int($0)) Mbps" } ?? "—" }
@@ -94,7 +99,6 @@ public struct NetworkInterfaceInfo: Sendable {
     var displaySubnet: String { subnetMasks.first ?? "—" }
     var displayRouter: String { router ?? "—" }
     var displayDNS: String { dnsServers.isEmpty ? "—" : dnsServers.joined(separator: ", ") }
-
 
     var hasNetworkInfo: Bool { !ipv4Addresses.isEmpty || router != nil || !dnsServers.isEmpty }
 }
@@ -165,7 +169,9 @@ public enum NetworkInfoService {
         let client = CWWiFiClient.shared()
         let names = preferredName.map { [$0] } ?? client.interfaceNames() ?? []
         guard !names.isEmpty else { return nil }
-        let name = preferredName ?? client.interface()?.interfaceName.flatMap { names.contains($0) ? $0 : nil } ?? names.sorted().first!
+        let name =
+            preferredName ?? client.interface()?.interfaceName.flatMap { names.contains($0) ? $0 : nil }
+            ?? names.sorted().first!
         let interface = preferredInterface ?? client.interface(withName: name)
         var failures: [WiFiLinkEvidenceField: WiFiLinkEvidenceReadFailure] = [:]
         guard let interface else {
@@ -201,8 +207,11 @@ public enum NetworkInfoService {
         }
         let linkActive = linkDictionary?[kSCPropNetLinkActive as String] as? Bool
         let linkDetaching = linkDictionary?["Detaching"] as? Bool
-        if linkDictionary == nil { failures[.linkActive] = .missingValue }
-        else if linkActive == nil { failures[.linkActive] = .missingValue }
+        if linkDictionary == nil {
+            failures[.linkActive] = .missingValue
+        } else if linkActive == nil {
+            failures[.linkActive] = .missingValue
+        }
         if linkDetaching == nil { failures[.linkDetaching] = .missingValue }
 
         let serviceActive = interface.serviceActive()
@@ -273,7 +282,8 @@ public enum NetworkInfoService {
 
         for ptr in sequence(first: first, next: { $0.pointee.ifa_next }) {
             guard let namePtr = ptr.pointee.ifa_name,
-                  let addr = ptr.pointee.ifa_addr else { continue }
+                let addr = ptr.pointee.ifa_addr
+            else { continue }
             let name = String(cString: namePtr)
             if name == "lo0" { continue }  // skip loopback
 
@@ -281,16 +291,21 @@ public enum NetworkInfoService {
 
             if addr.pointee.sa_family == sa_family_t(AF_INET) {
                 var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                if getnameinfo(addr, socklen_t(addr.pointee.sa_len), &buffer, socklen_t(buffer.count),
-                               nil, 0, NI_NUMERICHOST) == 0 {
+                if getnameinfo(
+                    addr, socklen_t(addr.pointee.sa_len), &buffer, socklen_t(buffer.count),
+                    nil, 0, NI_NUMERICHOST) == 0
+                {
                     entry.ips.append(String(decoding: buffer.prefix(while: { $0 != 0 }).map(UInt8.init), as: UTF8.self))
                 }
                 // Subnet mask
                 if let netmask = ptr.pointee.ifa_netmask, netmask.pointee.sa_family == sa_family_t(AF_INET) {
                     var maskBuf = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    if getnameinfo(netmask, socklen_t(netmask.pointee.sa_len), &maskBuf, socklen_t(maskBuf.count),
-                                   nil, 0, NI_NUMERICHOST) == 0 {
-                        entry.subnets.append(String(decoding: maskBuf.prefix(while: { $0 != 0 }).map(UInt8.init), as: UTF8.self))
+                    if getnameinfo(
+                        netmask, socklen_t(netmask.pointee.sa_len), &maskBuf, socklen_t(maskBuf.count),
+                        nil, 0, NI_NUMERICHOST) == 0
+                    {
+                        entry.subnets.append(
+                            String(decoding: maskBuf.prefix(while: { $0 != 0 }).map(UInt8.init), as: UTF8.self))
                     }
                 }
             }
@@ -315,7 +330,8 @@ public enum NetworkInfoService {
         // below are reused while enriching every discovered interface.
         var interfaceIPv4ByName: [String: [String: Any]] = [:]
         if let store,
-           let ipv4Keys = SCDynamicStoreCopyKeyList(store, "State:/Network/Interface/.*/IPv4" as CFString) as? [String] {
+            let ipv4Keys = SCDynamicStoreCopyKeyList(store, "State:/Network/Interface/.*/IPv4" as CFString) as? [String]
+        {
             for key in ipv4Keys {
                 let name = key.components(separatedBy: "/").dropLast().last ?? key
                 guard let dict = SCDynamicStoreCopyValue(store, key as CFString) as? [String: Any] else { continue }
@@ -334,10 +350,13 @@ public enum NetworkInfoService {
 
         var serviceIPv4ByInterface: [String: [String: Any]] = [:]
         if let store,
-           let serviceKeys = SCDynamicStoreCopyKeyList(store, "State:/Network/Service/.*/IPv4" as CFString) as? [String] {
+            let serviceKeys = SCDynamicStoreCopyKeyList(store, "State:/Network/Service/.*/IPv4" as CFString)
+                as? [String]
+        {
             for key in serviceKeys {
                 guard let dictionary = SCDynamicStoreCopyValue(store, key as CFString) as? [String: Any],
-                      let interfaceName = dictionary["InterfaceName"] as? String else { continue }
+                    let interfaceName = dictionary["InterfaceName"] as? String
+                else { continue }
                 if serviceIPv4ByInterface[interfaceName] == nil {
                     serviceIPv4ByInterface[interfaceName] = dictionary
                 }
@@ -351,23 +370,28 @@ public enum NetworkInfoService {
             let wifiInterface = isWiFi ? wifiClient.interface(withName: name) : nil
             let wiFiInfo = wifiInterface.flatMap(fetchWiFiDetails)
             let linkEvidence = cycleID.flatMap { id in
-                isWiFi ? captureWiFiLinkEvidence(
-                    cycleID: id,
-                    capturedAt: capturedAt,
-                    interfaceName: name,
-                    interface: wifiInterface,
-                    store: store
-                ) : nil
+                isWiFi
+                    ? captureWiFiLinkEvidence(
+                        cycleID: id,
+                        capturedAt: capturedAt,
+                        interfaceName: name,
+                        interface: wifiInterface,
+                        store: store
+                    ) : nil
             }
-            let metricsAttribution = isWiFi
+            let metricsAttribution =
+                isWiFi
                 ? Self.evaluateMetricsAttribution(detailsBSSID: wiFiInfo?.bssid, evidenceBSSID: linkEvidence?.bssid)
                 : .unverified
 
             // Router lookup from SystemConfiguration (Interface path)
             var router: String?
             if let ipv4Dict = interfaceIPv4ByName[name] {
-                if let r = ipv4Dict["Router"] as? String { router = r }
-                else if let arr = ipv4Dict["Router"] as? [String], let first = arr.first { router = first }
+                if let r = ipv4Dict["Router"] as? String {
+                    router = r
+                } else if let arr = ipv4Dict["Router"] as? [String], let first = arr.first {
+                    router = first
+                }
             }
 
             if router == nil, let serviceIPv4 = serviceIPv4ByInterface[name] {
@@ -378,25 +402,26 @@ public enum NetworkInfoService {
                 }
             }
 
-            result.append(NetworkInterfaceInfo(
-                interfaceName: name,
-                hardwareMAC: isWiFi ? (wiFiInfo?.hardwareMAC ?? entry.mac) : entry.mac,
-                isWiFiInterface: isWiFi,
-                wifiLinkEvidence: linkEvidence,
-                metricsAttribution: metricsAttribution,
-                ipv4Addresses: entry.ips,
-                subnetMasks: entry.subnets,
-                router: router,
-                dnsServers: dns,
-                ssid: linkEvidence == nil ? wiFiInfo?.ssid : linkEvidence?.ssid,
-                bssid: linkEvidence == nil ? wiFiInfo?.bssid : linkEvidence?.bssid,
-                channel: wiFiInfo?.channel,
-                band: wiFiInfo?.band,
-                rssi: wiFiInfo?.rssi,
-                txRate: wiFiInfo?.txRate,
-                phyMode: wiFiInfo?.phyMode,
-                security: wiFiInfo?.security ?? "—"
-            ))
+            result.append(
+                NetworkInterfaceInfo(
+                    interfaceName: name,
+                    hardwareMAC: isWiFi ? (wiFiInfo?.hardwareMAC ?? entry.mac) : entry.mac,
+                    isWiFiInterface: isWiFi,
+                    wifiLinkEvidence: linkEvidence,
+                    metricsAttribution: metricsAttribution,
+                    ipv4Addresses: entry.ips,
+                    subnetMasks: entry.subnets,
+                    router: router,
+                    dnsServers: dns,
+                    ssid: linkEvidence == nil ? wiFiInfo?.ssid : linkEvidence?.ssid,
+                    bssid: linkEvidence == nil ? wiFiInfo?.bssid : linkEvidence?.bssid,
+                    channel: wiFiInfo?.channel,
+                    band: wiFiInfo?.band,
+                    rssi: wiFiInfo?.rssi,
+                    txRate: wiFiInfo?.txRate,
+                    phyMode: wiFiInfo?.phyMode,
+                    security: wiFiInfo?.security ?? "—"
+                ))
         }
         return InterfaceCaptureResult(
             interfaces: result.sorted { a, b in
@@ -425,11 +450,11 @@ public enum NetworkInfoService {
         return nil
     }
 
-
     static func fetch() -> NetworkInterfaceInfo? {
         let client = CWWiFiClient.shared()
         guard let iface = client.interface(),
-              let name = iface.interfaceName else { return nil }
+            let name = iface.interfaceName
+        else { return nil }
 
         // Wi-Fi specifics from CoreWLAN
         let ssid = iface.ssid()
@@ -452,7 +477,9 @@ public enum NetworkInfoService {
 
         let store = SCDynamicStoreCreate(nil, "WiFiLens" as CFString, nil, nil)
         if let store,
-           let ipv4Dict = SCDynamicStoreCopyValue(store, "State:/Network/Interface/\(name)/IPv4" as CFString) as? [String: Any] {
+            let ipv4Dict = SCDynamicStoreCopyValue(store, "State:/Network/Interface/\(name)/IPv4" as CFString)
+                as? [String: Any]
+        {
             ipv4s = ipv4Dict["Addresses"] as? [String] ?? []
             subnets = ipv4Dict["SubnetMasks"] as? [String] ?? []
             // Router may be a String or [String]; try both
@@ -493,8 +520,9 @@ public enum NetworkInfoService {
         // DNS servers
         var dnsServers: [String] = []
         if let store,
-           let dnsDict = SCDynamicStoreCopyValue(store, "State:/Network/Global/DNS" as CFString) as? [String: Any],
-           let servers = dnsDict["ServerAddresses"] as? [String] {
+            let dnsDict = SCDynamicStoreCopyValue(store, "State:/Network/Global/DNS" as CFString) as? [String: Any],
+            let servers = dnsDict["ServerAddresses"] as? [String]
+        {
             dnsServers = servers
         }
 
@@ -521,8 +549,9 @@ public enum NetworkInfoService {
 
     private static func fetchDNS(_ store: SCDynamicStore?) -> [String] {
         guard let store,
-              let dict = SCDynamicStoreCopyValue(store, "State:/Network/Global/DNS" as CFString) as? [String: Any],
-              let servers = dict["ServerAddresses"] as? [String] else { return [] }
+            let dict = SCDynamicStoreCopyValue(store, "State:/Network/Global/DNS" as CFString) as? [String: Any],
+            let servers = dict["ServerAddresses"] as? [String]
+        else { return [] }
         return servers
     }
 
@@ -545,7 +574,8 @@ public enum NetworkInfoService {
         case 10: return String(localized: "wifi.security.enterprise", comment: "Generic Enterprise security type label")
         case 13: return String(localized: "wifi.security.wpa3_personal", comment: "WPA3 Personal security type")
         case 14: return String(localized: "wifi.security.wpa3_enterprise", comment: "WPA3 Enterprise security type")
-        case 15: return String(localized: "wifi.security.wpa3_transition", comment: "WPA3 Transition mode security type")
+        case 15:
+            return String(localized: "wifi.security.wpa3_transition", comment: "WPA3 Transition mode security type")
         default: return "—"
         }
     }
@@ -565,7 +595,10 @@ public enum NetworkInfoService {
         }
     }
 
-    private static func fetchWiFiDetails(_ iface: CWInterface) -> (hardwareMAC: String?, ssid: String?, bssid: String?, channel: Int?, band: ChannelBand?, rssi: Int?, txRate: Double?, phyMode: String?, security: String)? {
+    private static func fetchWiFiDetails(_ iface: CWInterface) -> (
+        hardwareMAC: String?, ssid: String?, bssid: String?, channel: Int?, band: ChannelBand?, rssi: Int?,
+        txRate: Double?, phyMode: String?, security: String
+    )? {
         let wlanChannel = iface.wlanChannel()
         return (
             iface.hardwareAddress(),

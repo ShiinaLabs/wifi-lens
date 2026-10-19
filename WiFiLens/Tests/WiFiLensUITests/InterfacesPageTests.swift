@@ -31,8 +31,9 @@ final class InterfacesPageTests: XCTestCase {
         let details = app.radioButtons["secondary-toolbar-interfaces-details"]
         let monitor = app.radioButtons["secondary-toolbar-interfaces-monitor"]
         guard waitForElement(simple, message: "Simple interfaces mode not found", app: app),
-              waitForElement(details, message: "Details interfaces mode not found", app: app),
-              waitForElement(monitor, message: "Monitor interfaces mode not found", app: app) else { return }
+            waitForElement(details, message: "Details interfaces mode not found", app: app),
+            waitForElement(monitor, message: "Monitor interfaces mode not found", app: app)
+        else { return }
 
         XCTAssertEqual(simple.value as? Int, 1, "Simple mode should be selected by default")
         details.click()

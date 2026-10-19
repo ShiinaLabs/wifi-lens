@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct DeviceCompatibilityFilterTests {
@@ -55,7 +56,7 @@ import Testing
 
     @Test("DFS channel without DFS-capable device is incompatible")
     func dfsChannelWithoutDFSSupport() {
-        let supported = makeChannels([(2, 52)]) // channel IS in supported set
+        let supported = makeChannels([(2, 52)])  // channel IS in supported set
         let caps = DevicePHYCapabilities(
             supportsAX: false,
             supportsAC: true,

@@ -19,13 +19,14 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
     public init() {}
     func fetchCurrentStatus(from snapshot: NetworkInterfaceSnapshot) async -> WiFiCurrentStatus {
         guard let wifi = snapshot.interfaces.first(where: \.isWiFiInterface) else {
-            let reason: WiFiLinkEvidenceReason = if !snapshot.interfaceEnumerationSucceeded {
-                .interfaceEnumerationFailed
-            } else if !snapshot.wifiInterfaceDiscoverySucceeded {
-                .interfaceDiscoveryUnavailable
-            } else {
-                .interfaceUnavailable
-            }
+            let reason: WiFiLinkEvidenceReason =
+                if !snapshot.interfaceEnumerationSucceeded {
+                    .interfaceEnumerationFailed
+                } else if !snapshot.wifiInterfaceDiscoverySucceeded {
+                    .interfaceDiscoveryUnavailable
+                } else {
+                    .interfaceUnavailable
+                }
             return WiFiCurrentStatus(
                 timestamp: snapshot.capturedAt,
                 interfaceSnapshotCycleID: snapshot.cycleID,
@@ -70,9 +71,12 @@ struct WiFiCurrentConnectionProvider: WiFiCurrentConnectionProviding {
         )
         let verified = WiFiLinkEvidenceValidator.assessment(for: provisional)
         var status = provisional
-        let finalAssessment: WiFiLinkAssessment = verified ?? (wifi.wifiLinkEvidence == nil
-            ? interpreted
-            : WiFiLinkAssessment(state: VerifiedWiFiLinkState.unknown, reason: WiFiLinkEvidenceReason.conflictingLinkEvidence))
+        let finalAssessment: WiFiLinkAssessment =
+            verified
+            ?? (wifi.wifiLinkEvidence == nil
+                ? interpreted
+                : WiFiLinkAssessment(
+                    state: VerifiedWiFiLinkState.unknown, reason: WiFiLinkEvidenceReason.conflictingLinkEvidence))
         status.linkAssessment = finalAssessment
         status.isConnected = status.linkAssessment?.state == .associated
         return status

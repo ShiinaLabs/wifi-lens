@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import MarkdownKit
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -23,39 +24,46 @@ final class WhatsNewCoordinatorTests {
     @Test func releaseNotesResolveChineseScriptAndRegionVariants() {
         let available: Set<String> = ["en", "fr", "zh-Hans", "zh-Hant"]
 
-        #expect(ReleaseNotesLanguageResolver.resolve(
-            preferredLocalizations: ["zh-Hant"],
-            availableLanguages: available
-        ) == "zh-Hant")
-        #expect(ReleaseNotesLanguageResolver.resolve(
-            preferredLocalizations: ["zh-Hant-HK"],
-            availableLanguages: available
-        ) == "zh-Hant")
-        #expect(ReleaseNotesLanguageResolver.resolve(
-            preferredLocalizations: ["zh_TW"],
-            availableLanguages: available
-        ) == "zh-Hant")
-        #expect(ReleaseNotesLanguageResolver.resolve(
-            preferredLocalizations: ["zh-Hans-CN"],
-            availableLanguages: available
-        ) == "zh-Hans")
-        #expect(ReleaseNotesLanguageResolver.resolve(
-            preferredLocalizations: ["zh"],
-            availableLanguages: available
-        ) == "zh-Hans")
+        #expect(
+            ReleaseNotesLanguageResolver.resolve(
+                preferredLocalizations: ["zh-Hant"],
+                availableLanguages: available
+            ) == "zh-Hant")
+        #expect(
+            ReleaseNotesLanguageResolver.resolve(
+                preferredLocalizations: ["zh-Hant-HK"],
+                availableLanguages: available
+            ) == "zh-Hant")
+        #expect(
+            ReleaseNotesLanguageResolver.resolve(
+                preferredLocalizations: ["zh_TW"],
+                availableLanguages: available
+            ) == "zh-Hant")
+        #expect(
+            ReleaseNotesLanguageResolver.resolve(
+                preferredLocalizations: ["zh-Hans-CN"],
+                availableLanguages: available
+            ) == "zh-Hans")
+        #expect(
+            ReleaseNotesLanguageResolver.resolve(
+                preferredLocalizations: ["zh"],
+                availableLanguages: available
+            ) == "zh-Hans")
     }
 
     @Test func releaseNotesResolveLanguageOnlyAndFallbackToEnglish() {
         let available: Set<String> = ["en", "fr"]
 
-        #expect(ReleaseNotesLanguageResolver.resolve(
-            preferredLocalizations: ["fr-CA"],
-            availableLanguages: available
-        ) == "fr")
-        #expect(ReleaseNotesLanguageResolver.resolve(
-            preferredLocalizations: ["ru"],
-            availableLanguages: available
-        ) == "en")
+        #expect(
+            ReleaseNotesLanguageResolver.resolve(
+                preferredLocalizations: ["fr-CA"],
+                availableLanguages: available
+            ) == "fr")
+        #expect(
+            ReleaseNotesLanguageResolver.resolve(
+                preferredLocalizations: ["ru"],
+                availableLanguages: available
+            ) == "en")
     }
 
     // MARK: - Version gating
@@ -128,7 +136,6 @@ final class WhatsNewCoordinatorTests {
         #expect(coordinator.versionString == "WiFi Lens 1.6.0")
     }
 
-
     // MARK: - Markdown renderer
 
     @Test func rendererUsesSharedMarkdownKitImplementation() {
@@ -184,7 +191,6 @@ final class WhatsNewCoordinatorTests {
         }
         #expect(foundLink)
     }
-
 
     @Test func renderBlockQuoteIndentsText() {
         let ns = MarkdownRenderer.render("> a quote", pointSize: 13)

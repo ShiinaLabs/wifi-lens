@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -14,11 +15,12 @@ struct MACVendorDatabaseDownloaderTests {
         #expect(inputs.count == 4)
         #expect(inputs.map(\.displayName) == ["oui.csv", "mam.csv", "oui36.csv", "iab.csv"])
         #expect(Set(requests.compactMap(\.url)) == Set(MACVendorRegistry.allCases.map(\.downloadURL)))
-        #expect(requests.allSatisfy { request in
-            request.httpMethod == "GET"
-                && request.httpBody == nil
-                && request.value(forHTTPHeaderField: "Cookie") == nil
-        })
+        #expect(
+            requests.allSatisfy { request in
+                request.httpMethod == "GET"
+                    && request.httpBody == nil
+                    && request.value(forHTTPHeaderField: "Cookie") == nil
+            })
         #expect(await transport.maximumByteLimits == Array(repeating: 16 * 1_024 * 1_024, count: 4))
     }
 
@@ -127,16 +129,17 @@ struct MACVendorDatabaseDownloaderTests {
     }
 
     @Test func rejectsResponseOverPerFileLimit() async {
-        var responses = Dictionary(uniqueKeysWithValues: MACVendorRegistry.allCases.map { registry in
-            (
-                registry.downloadURL,
-                MACVendorHTTPResponse(
-                    data: Data([0x41]),
-                    statusCode: 200,
-                    finalURL: registry.downloadURL
+        var responses = Dictionary(
+            uniqueKeysWithValues: MACVendorRegistry.allCases.map { registry in
+                (
+                    registry.downloadURL,
+                    MACVendorHTTPResponse(
+                        data: Data([0x41]),
+                        statusCode: 200,
+                        finalURL: registry.downloadURL
+                    )
                 )
-            )
-        })
+            })
         responses[MACVendorRegistry.maL.downloadURL] = MACVendorHTTPResponse(
             data: Data(repeating: 0x41, count: 17),
             statusCode: 200,
@@ -158,16 +161,17 @@ struct MACVendorDatabaseDownloaderTests {
     }
 
     @Test func rejectsAggregateResponsesOverTotalDownloadLimit() async {
-        let responses = Dictionary(uniqueKeysWithValues: MACVendorRegistry.allCases.map { registry in
-            (
-                registry.downloadURL,
-                MACVendorHTTPResponse(
-                    data: Data(repeating: 0x41, count: 9),
-                    statusCode: 200,
-                    finalURL: registry.downloadURL
+        let responses = Dictionary(
+            uniqueKeysWithValues: MACVendorRegistry.allCases.map { registry in
+                (
+                    registry.downloadURL,
+                    MACVendorHTTPResponse(
+                        data: Data(repeating: 0x41, count: 9),
+                        statusCode: 200,
+                        finalURL: registry.downloadURL
+                    )
                 )
-            )
-        })
+            })
         let transport = RecordingMACVendorHTTPTransport(responses: responses)
         let downloader = MACVendorDatabaseDownloader(
             transport: transport,
@@ -251,21 +255,26 @@ struct MACVendorDatabaseDownloaderTests {
     }
 
     @Test func productionURLPolicyAllowsOnlyHTTPSOnTheIEEERegistryHost() {
-        #expect(URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
-            URL(string: "https://standards-oui.ieee.org/oui/oui.csv")!
-        ))
-        #expect(!URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
-            URL(string: "http://standards-oui.ieee.org/oui/oui.csv")!
-        ))
-        #expect(!URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
-            URL(string: "https://standards-oui.ieee.org.example.com/oui.csv")!
-        ))
-        #expect(!URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
-            URL(string: "https://user@standards-oui.ieee.org/oui/oui.csv")!
-        ))
-        #expect(!URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
-            URL(string: "https://standards-oui.ieee.org:444/oui/oui.csv")!
-        ))
+        #expect(
+            URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
+                URL(string: "https://standards-oui.ieee.org/oui/oui.csv")!
+            ))
+        #expect(
+            !URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
+                URL(string: "http://standards-oui.ieee.org/oui/oui.csv")!
+            ))
+        #expect(
+            !URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
+                URL(string: "https://standards-oui.ieee.org.example.com/oui.csv")!
+            ))
+        #expect(
+            !URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
+                URL(string: "https://user@standards-oui.ieee.org/oui/oui.csv")!
+            ))
+        #expect(
+            !URLSessionMACVendorHTTPTransport.isAllowedIEEEURL(
+                URL(string: "https://standards-oui.ieee.org:444/oui/oui.csv")!
+            ))
     }
 
     @Test func productionTransportPreservesChunkedResponseData() async throws {
@@ -663,7 +672,7 @@ private final class MACVendorStubURLProtocol: URLProtocol, @unchecked Sendable {
 
     override func startLoading() {
         guard let url = request.url,
-              let handler = Self.handlersLock.withLock({ Self.handlers[url] })
+            let handler = Self.handlersLock.withLock({ Self.handlers[url] })
         else {
             client?.urlProtocol(self, didFailWithError: URLError(.resourceUnavailable))
             return
@@ -759,7 +768,8 @@ private func response(
 }
 
 private func validResponses() -> [URL: MACVendorHTTPResponse] {
-    Dictionary(uniqueKeysWithValues: MACVendorRegistry.allCases.map { registry in
-        (registry.downloadURL, response(for: registry))
-    })
+    Dictionary(
+        uniqueKeysWithValues: MACVendorRegistry.allCases.map { registry in
+            (registry.downloadURL, response(for: registry))
+        })
 }

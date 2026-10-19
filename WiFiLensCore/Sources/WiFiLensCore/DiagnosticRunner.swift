@@ -99,11 +99,12 @@ struct DiagnosticRunner: Sendable {
     ) async -> DiagnosticRunOutcome {
         var results: [NetworkDiagnosticResult] = []
         let retainedByID = Dictionary(uniqueKeysWithValues: retainedResults.map { ($0.id, $0) })
-        let sessionDeadline: ContinuousClock.Instant = if let deadline {
-            deadline
-        } else {
-            (await clock.now()).advanced(by: sessionBudget)
-        }
+        let sessionDeadline: ContinuousClock.Instant =
+            if let deadline {
+                deadline
+            } else {
+                (await clock.now()).advanced(by: sessionBudget)
+            }
         var endReason: DiagnosticRunEndReason = .completed
 
         for check in checks {
@@ -188,33 +189,35 @@ struct DiagnosticRunner: Sendable {
                         if Task.isCancelled {
                             gate.finish(.init(result: nil, endReason: .cancelled))
                         } else {
-                            gate.finish(.init(
-                                result: NetworkDiagnosticResult(
-                                    id: check.id,
-                                    status: .indeterminate,
-                                    summary: "The check could not complete.",
-                                    evidence: [.init(code: "check.failed", value: nil)]
-                                ),
-                                endReason: nil
-                            ))
+                            gate.finish(
+                                .init(
+                                    result: NetworkDiagnosticResult(
+                                        id: check.id,
+                                        status: .indeterminate,
+                                        summary: "The check could not complete.",
+                                        evidence: [.init(code: "check.failed", value: nil)]
+                                    ),
+                                    endReason: nil
+                                ))
                         }
                     }
                 }
                 let timeout = Task {
                     do {
                         try await clock.sleep(until: deadline)
-                        gate.finish(.init(
-                            result: NetworkDiagnosticResult(
-                                id: check.id,
-                                status: .indeterminate,
-                                summary: String(
-                                    localized: "network_diagnostics.check.timed_out",
-                                    comment: "Network self-check individual check timeout summary"
+                        gate.finish(
+                            .init(
+                                result: NetworkDiagnosticResult(
+                                    id: check.id,
+                                    status: .indeterminate,
+                                    summary: String(
+                                        localized: "network_diagnostics.check.timed_out",
+                                        comment: "Network self-check individual check timeout summary"
+                                    ),
+                                    evidence: [.init(code: "check.timeout", value: nil)]
                                 ),
-                                evidence: [.init(code: "check.timeout", value: nil)]
-                            ),
-                            endReason: .timedOut
-                        ))
+                                endReason: .timedOut
+                            ))
                     } catch {
                         // The operation completed or the parent cancelled.
                     }
@@ -231,21 +234,23 @@ struct DiagnosticRunner: Sendable {
         from results: [NetworkDiagnosticResult]
     ) -> NetworkDiagnosticResult? {
         let hardFailureStatuses: Set<NetworkDiagnosticStatus> = [.abnormal, .blocked]
-        let dependencies: [DiagnosticDependency] = switch id {
-        case .path:
-            []
-        case .gatewayReachability:
-            [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-        case .dns:
-            [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-        case .internet, .ipv6:
-            [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-        case .proxy:
-            [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-        }
+        let dependencies: [DiagnosticDependency] =
+            switch id {
+            case .path:
+                []
+            case .gatewayReachability:
+                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
+            case .dns:
+                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
+            case .internet, .ipv6:
+                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
+            case .proxy:
+                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
+            }
         return dependencies.compactMap { dependency -> NetworkDiagnosticResult? in
             guard let result = results.first(where: { $0.id == dependency.id }),
-                  dependency.blockingStatuses.contains(result.status) else {
+                dependency.blockingStatuses.contains(result.status)
+            else {
                 return nil
             }
             return result

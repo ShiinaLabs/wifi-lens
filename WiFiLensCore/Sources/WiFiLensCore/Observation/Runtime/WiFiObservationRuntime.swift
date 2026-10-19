@@ -29,8 +29,13 @@ struct RawCycleDeliveryDiagnostics: Equatable, Sendable {
 }
 
 struct WiFiObservationRuntimeConfiguration: Sendable {
-    public init(scanInterval: Duration, userRegionOverride: RegulatoryDomain? = nil, userDefaultsRegionOverride: RegulatoryDomain? = nil) {
-        self.scanInterval = scanInterval; self.userRegionOverride = userRegionOverride; self.userDefaultsRegionOverride = userDefaultsRegionOverride
+    public init(
+        scanInterval: Duration, userRegionOverride: RegulatoryDomain? = nil,
+        userDefaultsRegionOverride: RegulatoryDomain? = nil
+    ) {
+        self.scanInterval = scanInterval
+        self.userRegionOverride = userRegionOverride
+        self.userDefaultsRegionOverride = userDefaultsRegionOverride
     }
     var scanInterval: Duration
     var userRegionOverride: RegulatoryDomain?
@@ -92,28 +97,28 @@ public final class WiFiObservationRuntime {
     private var recentlyAcceptedObservationIDs: [UUID] = []
     private let recentObservationIdentityLimit = 256
     private(set) var sourceIdentityConflictCount = 0
-#if DEBUG
-    var onActiveScanStoppedForTesting: (@MainActor () -> Void)?
-    var onConsumerDrainStartedForTesting: (@MainActor () -> Void)?
+    #if DEBUG
+        var onActiveScanStoppedForTesting: (@MainActor () -> Void)?
+        var onConsumerDrainStartedForTesting: (@MainActor () -> Void)?
 
-    func drainRawCyclesForTesting() async {
-        while let task = rawCycleTask {
-            await task.value
+        func drainRawCyclesForTesting() async {
+            while let task = rawCycleTask {
+                await task.value
+            }
         }
-    }
 
-    /// Waits for every pending lifecycle replay scheduled by `addConsumer`.
-    ///
-    /// The tail is cleared before awaiting so a completed replay does not make
-    /// this loop re-await the same finished task forever; a replay added while
-    /// draining is picked up by the next iteration.
-    func drainLifecycleReplaysForTesting() async {
-        while let task = lifecycleReplayTail {
-            lifecycleReplayTail = nil
-            await task.value
+        /// Waits for every pending lifecycle replay scheduled by `addConsumer`.
+        ///
+        /// The tail is cleared before awaiting so a completed replay does not make
+        /// this loop re-await the same finished task forever; a replay added while
+        /// draining is picked up by the next iteration.
+        func drainLifecycleReplaysForTesting() async {
+            while let task = lifecycleReplayTail {
+                lifecycleReplayTail = nil
+                await task.value
+            }
         }
-    }
-#endif
+    #endif
 
     public convenience init(store: WiFiObservationStore = .shared) {
         self.init(
@@ -164,14 +169,16 @@ public final class WiFiObservationRuntime {
         // the next restart. The generation guard drops the replay if the scan
         // stops or restarts before it runs.
         guard let startedAt = activeLifecycleStartedAt,
-              let interval = activeScanInterval,
-              let generation = activeLifecycleGeneration else { return }
+            let interval = activeScanInterval,
+            let generation = activeLifecycleGeneration
+        else { return }
         let previous = lifecycleReplayTail
         lifecycleReplayTail = Task { @MainActor [weak self] in
             await previous?.value
             guard let self,
-                  self.activeLifecycleGeneration == generation,
-                  self.workers[identifier] === worker else { return }
+                self.activeLifecycleGeneration == generation,
+                self.workers[identifier] === worker
+            else { return }
             await worker.sessionStarted(at: startedAt, expectedInterval: interval)
         }
     }
@@ -193,9 +200,9 @@ public final class WiFiObservationRuntime {
     }
 
     func drainConsumers() async {
-#if DEBUG
-        onConsumerDrainStartedForTesting?()
-#endif
+        #if DEBUG
+            onConsumerDrainStartedForTesting?()
+        #endif
         for worker in workers.values {
             await worker.drain()
         }
@@ -309,12 +316,13 @@ public final class WiFiObservationRuntime {
             await worker.sessionStarted(at: startedAt, expectedInterval: configuration.scanInterval)
         }
         await scanSource.startScanning(interval: configuration.scanInterval) { [weak self] event in
-            await self?.admitRawCycle(RawCycleAdmission(
-                event: event,
-                configuration: configuration,
-                cache: cache,
-                generation: generation
-            ))
+            await self?.admitRawCycle(
+                RawCycleAdmission(
+                    event: event,
+                    configuration: configuration,
+                    cache: cache,
+                    generation: generation
+                ))
         }
         guard isLatestLifecycleRequest(requestID) else {
             await scanSource.stopScanning()
@@ -402,13 +410,14 @@ public final class WiFiObservationRuntime {
             return false
         }
         guard admit(cycle.observation) else { return true }
-        outputProjection?(WiFiObservationScanOutput(
-            rawNetworks: networks,
-            cycle: cycle,
-            interfaceSnapshot: interfaceSnapshot,
-            interfaceName: cache.interfaceName,
-            supportedBands: cache.supportedBands
-        ))
+        outputProjection?(
+            WiFiObservationScanOutput(
+                rawNetworks: networks,
+                cycle: cycle,
+                interfaceSnapshot: interfaceSnapshot,
+                interfaceName: cache.interfaceName,
+                supportedBands: cache.supportedBands
+            ))
         for worker in workers.values {
             await worker.consume(cycle.observation)
         }
@@ -468,11 +477,11 @@ public final class WiFiObservationRuntime {
             await scanSource.stopScanning()
         }
         await task?.value
-#if DEBUG
-        if notifyScanStoppedForTesting {
-            onActiveScanStoppedForTesting?()
-        }
-#endif
+        #if DEBUG
+            if notifyScanStoppedForTesting {
+                onActiveScanStoppedForTesting?()
+            }
+        #endif
         await drainConsumers()
         if let lifecycleGeneration {
             await finishLifecycleIfOwned(lifecycleGeneration, at: now())

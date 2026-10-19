@@ -1,6 +1,7 @@
-import Testing
-import SwiftUI
 import AppKit
+import SwiftUI
+import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 

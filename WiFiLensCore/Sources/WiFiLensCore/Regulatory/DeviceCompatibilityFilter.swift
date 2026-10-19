@@ -14,7 +14,7 @@ enum DeviceCompatibilityFilter {
         channel: Int,
         band: String,
         capabilities: DevicePHYCapabilities,
-        supportedChannels: Set<String>,    // "bandRaw-channelNumber" keys
+        supportedChannels: Set<String>,  // "bandRaw-channelNumber" keys
         channelMeta: RegulatoryChannelMeta?
     ) -> Result {
         let key = "\(bandToRaw(band))-\(channel)"
@@ -55,9 +55,9 @@ enum DeviceCompatibilityFilter {
     private static func bandToRaw(_ id: String) -> Int {
         switch id {
         case "24": return 1
-        case "5":  return 2
-        case "6":  return 3
-        default:   return 0
+        case "5": return 2
+        case "6": return 3
+        default: return 0
         }
     }
 }

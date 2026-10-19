@@ -46,12 +46,12 @@ public struct ChannelQuality: Identifiable, Sendable {
     public let channel: Int
     public let band: String
     public let bandDisplay: String
-    public let qualityScore: Int          // 0–100
+    public let qualityScore: Int  // 0–100
     public let qualityLevel: QualityLevel
-    public let apCount: Int               // APs on or overlapping this channel
-    public let coChannelCount: Int         // APs on the same channel only
-    public let adjacentCount: Int          // APs on overlapping adjacent channels
-    public let interferenceScore: Int      // raw interference penalty (0 = clean)
+    public let apCount: Int  // APs on or overlapping this channel
+    public let coChannelCount: Int  // APs on the same channel only
+    public let adjacentCount: Int  // APs on overlapping adjacent channels
+    public let interferenceScore: Int  // raw interference penalty (0 = clean)
     public let overlapLevel: OverlapLevel
     public let strongestNeighborRSSI: Int
     public var isRecommended: Bool = false
@@ -74,9 +74,9 @@ public struct ChannelQuality: Identifiable, Sendable {
         public var displayName: String {
             switch self {
             case .excellent: String(localized: "channels.quality.excellent", comment: "Excellent channel quality tier")
-            case .good:      String(localized: "overview.signal.good", comment: "Good signal level label")
-            case .moderate:  String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier")
-            case .busy:      String(localized: "channels.quality.busy", comment: "Busy channel quality tier")
+            case .good: String(localized: "overview.signal.good", comment: "Good signal level label")
+            case .moderate: String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier")
+            case .busy: String(localized: "channels.quality.busy", comment: "Busy channel quality tier")
             case .congested: String(localized: "channels.quality.congested", comment: "Congested channel quality tier")
             }
         }
@@ -84,9 +84,9 @@ public struct ChannelQuality: Identifiable, Sendable {
         public var scoreRange: ClosedRange<Int> {
             switch self {
             case .excellent: 90...100
-            case .good:      70...89
-            case .moderate:  50...69
-            case .busy:      30...49
+            case .good: 70...89
+            case .moderate: 50...69
+            case .busy: 30...49
             case .congested: 0...29
             }
         }
@@ -94,9 +94,9 @@ public struct ChannelQuality: Identifiable, Sendable {
         public var color: String {
             switch self {
             case .excellent: "#34C759"
-            case .good:      "#30B0C7"
-            case .moderate:  "#FF9F0A"
-            case .busy:      "#FF6B35"
+            case .good: "#30B0C7"
+            case .moderate: "#FF9F0A"
+            case .busy: "#FF6B35"
             case .congested: "#FF3B30"
             }
         }
@@ -106,16 +106,20 @@ public struct ChannelQuality: Identifiable, Sendable {
         public static func from(score: Int) -> Self {
             switch score {
             case 90...100: .excellent
-            case 70...89:  .good
-            case 50...69:  .moderate
-            case 30...49:  .busy
-            default:       .congested
+            case 70...89: .good
+            case 50...69: .moderate
+            case 30...49: .busy
+            default: .congested
             }
         }
 
         fileprivate var order: Int {
             switch self {
-            case .excellent: 4; case .good: 3; case .moderate: 2; case .busy: 1; case .congested: 0
+            case .excellent: 4
+            case .good: 3
+            case .moderate: 2
+            case .busy: 1
+            case .congested: 0
             }
         }
     }
@@ -127,9 +131,9 @@ public struct ChannelQuality: Identifiable, Sendable {
 
         public var displayName: String {
             switch self {
-            case .low:      String(localized: "channels.overlap.low", comment: "Low overlap level")
+            case .low: String(localized: "channels.overlap.low", comment: "Low overlap level")
             case .moderate: String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier")
-            case .high:     String(localized: "channels.overlap.high", comment: "High overlap level")
+            case .high: String(localized: "channels.overlap.high", comment: "High overlap level")
             }
         }
     }
@@ -214,11 +218,13 @@ public enum ChannelQualityCalculator {
         public let channel: Int
         public let rssi: Int
         public let channelWidth: String  // "20"/"40"/"80"/"160"/"80+80"
-        public let band: String          // "24"/"5"/"6"
+        public let band: String  // "24"/"5"/"6"
         public let bssid: String?
         public let ssid: String?
 
-        public init(channel: Int, rssi: Int, channelWidth: String, band: String, bssid: String? = nil, ssid: String? = nil) {
+        public init(
+            channel: Int, rssi: Int, channelWidth: String, band: String, bssid: String? = nil, ssid: String? = nil
+        ) {
             self.channel = channel
             self.rssi = rssi
             self.channelWidth = channelWidth
@@ -240,42 +246,52 @@ public enum ChannelQualityCalculator {
 
         for band in supportedBands.sorted() {
             let bandAPs = aps.filter { $0.band == band }
-            let bandCurrentChannel = currentBand == nil || currentBand == band
+            let bandCurrentChannel =
+                currentBand == nil || currentBand == band
                 ? currentChannel
                 : nil
             let targetResolution = resolveTargetAP(targetAP, in: bandAPs)
-            let recommendationAPs = targetResolution.confidence == .unknown
+            let recommendationAPs =
+                targetResolution.confidence == .unknown
                 ? bandAPs
                 : bandAPs.filter { !targetResolution.matches($0) }
 
             let channels: [Int] = {
                 switch band {
                 case "24": return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-                case "5":  return stride(from: 36, through: 144, by: 4).map { $0 }
-                          + stride(from: 149, through: 165, by: 4).map { $0 }
-                default:   return stride(from: 1, through: 233, by: 4).map { $0 }
+                case "5":
+                    return stride(from: 36, through: 144, by: 4).map { $0 }
+                        + stride(from: 149, through: 165, by: 4).map { $0 }
+                default: return stride(from: 1, through: 233, by: 4).map { $0 }
                 }
             }()
 
-            let bandDisplay = band == "24" ? String(localized: "wifi.band.24ghz", comment: "2.4 GHz Wi-Fi band name") : band == "5" ? String(localized: "wifi.band.5ghz", comment: "5 GHz Wi-Fi band name") : String(localized: "wifi.band.6ghz", comment: "6 GHz Wi-Fi band name")
+            let bandDisplay =
+                band == "24"
+                ? String(localized: "wifi.band.24ghz", comment: "2.4 GHz Wi-Fi band name")
+                : band == "5"
+                    ? String(localized: "wifi.band.5ghz", comment: "5 GHz Wi-Fi band name")
+                    : String(localized: "wifi.band.6ghz", comment: "6 GHz Wi-Fi band name")
 
             var scored = channels.map { ch -> ChannelQuality in
                 let observed = score(channel: ch, band: band, aps: bandAPs)
                 let recommendation = score(channel: ch, band: band, aps: recommendationAPs)
                 let level = ChannelQuality.QualityLevel.from(score: observed.score)
                 let recommendationLevel = ChannelQuality.QualityLevel.from(score: recommendation.score)
-                let strongest = bandAPs
+                let strongest =
+                    bandAPs
                     .filter { overlaps(channel: ch, other: $0, band: band) }
                     .map(\.rssi).max() ?? -100
                 let allOverlapping = bandAPs.filter { overlaps(channel: ch, other: $0, band: band) }
                 let overlapCount = allOverlapping.count
                 let coChanCount = bandAPs.filter { $0.channel == ch }.count
                 let adjCount = allOverlapping.filter { $0.channel != ch }.count
-                let overlap: ChannelQuality.OverlapLevel = switch overlapCount {
-                case 0...1: .low
-                case 2...3: .moderate
-                default:    .high
-                }
+                let overlap: ChannelQuality.OverlapLevel =
+                    switch overlapCount {
+                    case 0...1: .low
+                    case 2...3: .moderate
+                    default: .high
+                    }
 
                 return ChannelQuality(
                     channel: ch,
@@ -393,19 +409,22 @@ public enum ChannelQualityCalculator {
             return
         }
 
-        let selectedIDs = Set(scored
-            .filter { candidate in
-                candidate.channel != currentChannel
-                    && candidate.recommendationScore >= minimumRecommendedScore
-                    && candidate.recommendationScore - current.recommendationScore >= minimumImprovement
-            }
-            .sorted { a, b in
-                if a.recommendationScore != b.recommendationScore { return a.recommendationScore > b.recommendationScore }
-                if a.qualityScore != b.qualityScore { return a.qualityScore > b.qualityScore }
-                return a.channel < b.channel
-            }
-            .prefix(maxRecommendationsPerBand)
-            .map(\.id))
+        let selectedIDs = Set(
+            scored
+                .filter { candidate in
+                    candidate.channel != currentChannel
+                        && candidate.recommendationScore >= minimumRecommendedScore
+                        && candidate.recommendationScore - current.recommendationScore >= minimumImprovement
+                }
+                .sorted { a, b in
+                    if a.recommendationScore != b.recommendationScore {
+                        return a.recommendationScore > b.recommendationScore
+                    }
+                    if a.qualityScore != b.qualityScore { return a.qualityScore > b.qualityScore }
+                    return a.channel < b.channel
+                }
+                .prefix(maxRecommendationsPerBand)
+                .map(\.id))
 
         for index in scored.indices {
             if selectedIDs.contains(scored[index].id) {
@@ -424,12 +443,13 @@ public enum ChannelQualityCalculator {
             let factor = overlapFactor(channel: channel, other: ap, band: band)
             guard factor > 0 else { continue }
             let rssiWeight = max(0, min(1, Double(ap.rssi + 100) / 70.0))
-            let widthMul: Double = switch ap.channelWidth {
-            case "160":     2.0
-            case "80", "80+80": 1.5
-            case "40":      1.2
-            default:         1.0
-            }
+            let widthMul: Double =
+                switch ap.channelWidth {
+                case "160": 2.0
+                case "80", "80+80": 1.5
+                case "40": 1.2
+                default: 1.0
+                }
             let bandMul: Double = band == "24" ? 1.8 : 1.0
             penalty += factor * rssiWeight * widthMul * bandMul * 18.0
         }
@@ -464,13 +484,14 @@ public enum ChannelQualityCalculator {
         guard let channelBand = ChannelBand(id: band) else { return 0 }
         // 80+80 is non-contiguous and cannot be represented by the scalar
         // channelBlock model. Use one 80 MHz segment for defensive geometry.
-        let apWidth: Int = switch other.channelWidth {
-        case "160": 160
-        case "80", "80+80": 80
-        case "40": 40
-        case "20": 20
-        default: 20
-        }
+        let apWidth: Int =
+            switch other.channelWidth {
+            case "160": 160
+            case "80", "80+80": 80
+            case "40": 40
+            case "20": 20
+            default: 20
+            }
         let candidateSpan = ChannelSpanCalculator.channelBlock(
             primaryChannel: channel, widthMHz: 20, band: channelBand, spanDirection: nil
         )
@@ -487,8 +508,8 @@ public enum ChannelQualityCalculator {
     }
 }
 
-private extension String {
-    var nilIfBlank: String? {
+extension String {
+    fileprivate var nilIfBlank: String? {
         let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
     }

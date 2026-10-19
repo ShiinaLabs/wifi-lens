@@ -1,7 +1,7 @@
 import Foundation
 import Logging
-import Network
 import MCP
+import Network
 
 struct MCPSnapshot: Sendable {
     enum PowerState: String, Sendable, Equatable {
@@ -74,7 +74,8 @@ final class MCPServer: @unchecked Sendable {
     private let lock = NSLock()
     private var listener: NWListener?
     private(set) var isRunning = false
-    var port: UInt16 = UInt16(exactly: AppEnvironment.current.defaultMCPPort)
+    var port: UInt16 =
+        UInt16(exactly: AppEnvironment.current.defaultMCPPort)
         ?? UInt16(AppEnvironment.productionMCPPort)
 
     var snapshotProvider: (@MainActor @Sendable () -> MCPSnapshot)? {
@@ -178,26 +179,27 @@ final class MCPServer: @unchecked Sendable {
 
     // MARK: - Tool definitions
 
-#if DEBUG
-    static var toolNamesForTesting: [String] {
-        tools.map(\.name)
-    }
-#endif
+    #if DEBUG
+        static var toolNamesForTesting: [String] {
+            tools.map(\.name)
+        }
+    #endif
 
     private static let tools: [Tool] = [
         Tool(
             name: "scan_networks",
-            description: "Scan nearby Wi-Fi networks. Returns SSID, BSSID, RSSI, channel, band, PHY mode, channel width, security, MCS/NSS, and country code for each visible network.",
+            description:
+                "Scan nearby Wi-Fi networks. Returns SSID, BSSID, RSSI, channel, band, PHY mode, channel width, security, MCS/NSS, and country code for each visible network.",
             inputSchema: .object([
                 "type": .string("object"),
                 "properties": .object([
                     "band": .object([
                         "type": .string("string"),
                         "enum": .array(["24", "5", "6"].map { .string($0) }),
-                        "description": .string("Filter by band: 24 = 2.4 GHz, 5 = 5 GHz, 6 = 6 GHz.")
+                        "description": .string("Filter by band: 24 = 2.4 GHz, 5 = 5 GHz, 6 = 6 GHz."),
                     ])
                 ]),
-                "required": .array([])
+                "required": .array([]),
             ])
         ),
         Tool(
@@ -208,10 +210,11 @@ final class MCPServer: @unchecked Sendable {
                 "properties": .object([
                     "bssid": .object([
                         "type": .string("string"),
-                        "description": .string("The BSSID (MAC address) of the target network, e.g. 'aa:bb:cc:dd:ee:ff'.")
+                        "description": .string(
+                            "The BSSID (MAC address) of the target network, e.g. 'aa:bb:cc:dd:ee:ff'."),
                     ])
                 ]),
-                "required": .array([.string("bssid")])
+                "required": .array([.string("bssid")]),
             ])
         ),
         Tool(
@@ -220,16 +223,17 @@ final class MCPServer: @unchecked Sendable {
             inputSchema: .object([
                 "type": .string("object"),
                 "properties": .object([:]),
-                "required": .array([])
+                "required": .array([]),
             ])
         ),
         Tool(
             name: "get_scan_metadata",
-            description: "Return read-only context for the most recent Wi-Fi scan snapshot. It does not trigger a new scan.",
+            description:
+                "Return read-only context for the most recent Wi-Fi scan snapshot. It does not trigger a new scan.",
             inputSchema: .object([
                 "type": .string("object"),
                 "properties": .object([:]),
-                "required": .array([])
+                "required": .array([]),
             ])
         ),
     ]
@@ -241,17 +245,17 @@ final class MCPServer: @unchecked Sendable {
         let serverName = AppEnvironment.current.mcpServerName
 
         return """
-        Add or update an MCP server entry named "\(serverName)" with these properties:
-        - Transport: Streamable HTTP
-        - URL: \(url)
-        - Purpose: Read-only access to local Wi-Fi scan data exposed by \(AppEnvironment.current.displayName).
+            Add or update an MCP server entry named "\(serverName)" with these properties:
+            - Transport: Streamable HTTP
+            - URL: \(url)
+            - Purpose: Read-only access to local Wi-Fi scan data exposed by \(AppEnvironment.current.displayName).
 
-        Use this client's native configuration format. Preserve every other setting and MCP server.
-        Do not expose this server through LAN, tunneling, or public networking. It must stay bound to 127.0.0.1.
-        Do not install dependencies or modify unrelated settings.
-        After applying the configuration, verify that the \(serverName) MCP server is available and list its tools.
-        If you cannot modify the client configuration directly, return the exact minimal configuration snippet and the manual step required.
-        """
+            Use this client's native configuration format. Preserve every other setting and MCP server.
+            Do not expose this server through LAN, tunneling, or public networking. It must stay bound to 127.0.0.1.
+            Do not install dependencies or modify unrelated settings.
+            After applying the configuration, verify that the \(serverName) MCP server is available and list its tools.
+            If you cannot modify the client configuration directly, return the exact minimal configuration snippet and the manual step required.
+            """
     }
 
     // MARK: - HTTP adapter (NWListener → StatelessHTTPServerTransport)
@@ -265,7 +269,10 @@ final class MCPServer: @unchecked Sendable {
         _ conn: NWConnection, transport: StatelessHTTPServerTransport, accumulated: Data
     ) {
         conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, _, error in
-            guard let self, error == nil, let data else { conn.cancel(); return }
+            guard let self, error == nil, let data else {
+                conn.cancel()
+                return
+            }
             var buf = accumulated
             buf.append(data)
 
@@ -281,11 +288,20 @@ final class MCPServer: @unchecked Sendable {
             let headerData = buf[..<headerEnd.lowerBound]
             let afterHeaders = buf[headerEnd.upperBound...]
 
-            guard let headerStr = String(data: headerData, encoding: .utf8) else { conn.cancel(); return }
+            guard let headerStr = String(data: headerData, encoding: .utf8) else {
+                conn.cancel()
+                return
+            }
             let lines = headerStr.components(separatedBy: "\r\n")
-            guard let requestLine = lines.first else { conn.cancel(); return }
+            guard let requestLine = lines.first else {
+                conn.cancel()
+                return
+            }
             let parts = requestLine.components(separatedBy: " ")
-            guard parts.count >= 2 else { conn.cancel(); return }
+            guard parts.count >= 2 else {
+                conn.cancel()
+                return
+            }
             let method = parts[0]
             let path = parts[1]
 
@@ -294,7 +310,8 @@ final class MCPServer: @unchecked Sendable {
                 let colonIdx = line.firstIndex(of: ":") ?? line.startIndex
                 let key = String(line[..<colonIdx]).lowercased()
                 let valStart = line.index(colonIdx, offsetBy: 1)
-                let value = valStart < line.endIndex
+                let value =
+                    valStart < line.endIndex
                     ? String(line[line.index(after: valStart)...]).trimmingCharacters(in: .whitespaces)
                     : ""
                 headers[key] = value
@@ -307,18 +324,21 @@ final class MCPServer: @unchecked Sendable {
             case .failure(let failure):
                 let statusCode = failure == .payloadTooLarge ? 413 : 400
                 let message = failure == .payloadTooLarge ? "Payload Too Large" : "Bad Request"
-                conn.send(content: Self.serialize(statusCode: statusCode, body: Data(message.utf8)),
-                          completion: .contentProcessed { _ in conn.cancel() })
+                conn.send(
+                    content: Self.serialize(statusCode: statusCode, body: Data(message.utf8)),
+                    completion: .contentProcessed { _ in conn.cancel() })
                 return
             }
             let bodySoFar = Data(afterHeaders)
 
             switch Self.frameBody(bodySoFar, contentLength: contentLength) {
             case .complete(let body):
-                self.processRequest(conn, transport: transport, method: method, path: path, headers: headers, body: body)
+                self.processRequest(
+                    conn, transport: transport, method: method, path: path, headers: headers, body: body)
             case .needsMore:
-                self.receiveBody(conn, transport: transport, method: method, path: path,
-                                 headers: headers, bodySoFar: bodySoFar, contentLength: contentLength)
+                self.receiveBody(
+                    conn, transport: transport, method: method, path: path,
+                    headers: headers, bodySoFar: bodySoFar, contentLength: contentLength)
             case .invalid:
                 conn.cancel()
             }
@@ -332,25 +352,34 @@ final class MCPServer: @unchecked Sendable {
     ) {
         guard case .needsMore(let remaining) = Self.frameBody(bodySoFar, contentLength: contentLength) else {
             if case .complete(let body) = Self.frameBody(bodySoFar, contentLength: contentLength) {
-                processRequest(conn, transport: transport, method: method, path: path,
-                               headers: headers, body: body)
+                processRequest(
+                    conn, transport: transport, method: method, path: path,
+                    headers: headers, body: body)
             } else {
                 conn.cancel()
             }
             return
         }
         conn.receive(minimumIncompleteLength: remaining, maximumLength: remaining) { [weak self] data, _, _, error in
-            guard let self else { conn.cancel(); return }
-            if error != nil { conn.cancel(); return }
+            guard let self else {
+                conn.cancel()
+                return
+            }
+            if error != nil {
+                conn.cancel()
+                return
+            }
             var full = bodySoFar
             if let data { full.append(data) }
             switch Self.frameBody(full, contentLength: contentLength) {
             case .complete(let body):
-                self.processRequest(conn, transport: transport, method: method, path: path,
-                                    headers: headers, body: body)
+                self.processRequest(
+                    conn, transport: transport, method: method, path: path,
+                    headers: headers, body: body)
             case .needsMore:
-                self.receiveBody(conn, transport: transport, method: method, path: path,
-                                 headers: headers, bodySoFar: full, contentLength: contentLength)
+                self.receiveBody(
+                    conn, transport: transport, method: method, path: path,
+                    headers: headers, bodySoFar: full, contentLength: contentLength)
             case .invalid:
                 conn.cancel()
             }
@@ -361,7 +390,8 @@ final class MCPServer: @unchecked Sendable {
         guard let header else { return .success(0) }
         let bytes = header.utf8
         guard !bytes.isEmpty, bytes.allSatisfy({ $0 >= 48 && $0 <= 57 }),
-              let length = Int(header) else {
+            let length = Int(header)
+        else {
             return .failure(.badRequest)
         }
         guard length <= maximumRequestBodyLength else { return .failure(.payloadTooLarge) }
@@ -380,8 +410,9 @@ final class MCPServer: @unchecked Sendable {
         _ conn: NWConnection, transport: StatelessHTTPServerTransport,
         method: String, path: String, headers: [String: String], body: Data
     ) {
-        let request = HTTPRequest(method: method, headers: headers,
-                                   body: body.isEmpty ? nil : body, path: path)
+        let request = HTTPRequest(
+            method: method, headers: headers,
+            body: body.isEmpty ? nil : body, path: path)
         Task {
             let response = await transport.handleRequest(request)
             let raw = Self.serialize(response)
@@ -410,7 +441,7 @@ final class MCPServer: @unchecked Sendable {
         case 405: statusLine = "HTTP/1.1 405 Method Not Allowed\r\n"
         case 406: statusLine = "HTTP/1.1 406 Not Acceptable\r\n"
         case 415: statusLine = "HTTP/1.1 415 Unsupported Media Type\r\n"
-        default:  statusLine = "HTTP/1.1 \(statusCode) Error\r\n"
+        default: statusLine = "HTTP/1.1 \(statusCode) Error\r\n"
         }
 
         var headerStr = statusLine
@@ -451,7 +482,9 @@ final class MCPServer: @unchecked Sendable {
         case "get_network_detail":
             guard let bssid = arguments?["bssid"]?.stringValue else {
                 return .init(
-                    content: [.text(text: #"{"error":"missing required parameter: bssid"}"#, annotations: nil, _meta: nil)],
+                    content: [
+                        .text(text: #"{"error":"missing required parameter: bssid"}"#, annotations: nil, _meta: nil)
+                    ],
                     isError: true
                 )
             }
@@ -472,7 +505,8 @@ final class MCPServer: @unchecked Sendable {
                 band.reduce(into: [String: Int]()) { $0[String($1.key)] = $1.value }
             }
             if let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
-               let json = String(data: data, encoding: .utf8) {
+                let json = String(data: data, encoding: .utf8)
+            {
                 return .init(content: [.text(text: json, annotations: nil, _meta: nil)])
             }
             return .init(content: [.text(text: "{}", annotations: nil, _meta: nil)], isError: true)
@@ -493,8 +527,9 @@ final class MCPServer: @unchecked Sendable {
     private static func serializeNetworks(_ nets: [WiFiNetwork]) -> String {
         let entries = nets.map { entryDict($0, detail: false) }
         guard JSONSerialization.isValidJSONObject(entries),
-              let data = try? JSONSerialization.data(withJSONObject: entries, options: .prettyPrinted),
-              let json = String(data: data, encoding: .utf8) else {
+            let data = try? JSONSerialization.data(withJSONObject: entries, options: .prettyPrinted),
+            let json = String(data: data, encoding: .utf8)
+        else {
             return "[]"
         }
         return json
@@ -503,8 +538,9 @@ final class MCPServer: @unchecked Sendable {
     private static func serializeNetwork(_ nw: WiFiNetwork, detail: Bool) -> String {
         let dict = entryDict(nw, detail: detail)
         guard JSONSerialization.isValidJSONObject(dict),
-              let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
-              let json = String(data: data, encoding: .utf8) else {
+            let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
+            let json = String(data: data, encoding: .utf8)
+        else {
             return "{}"
         }
         return json
@@ -572,8 +608,9 @@ final class MCPServer: @unchecked Sendable {
         }
 
         guard JSONSerialization.isValidJSONObject(dict),
-              let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
-              let json = String(data: data, encoding: .utf8) else {
+            let data = try? JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted),
+            let json = String(data: data, encoding: .utf8)
+        else {
             return .init(
                 content: [.text(text: #"{"error":"metadata serialization failed"}"#, annotations: nil, _meta: nil)],
                 isError: true

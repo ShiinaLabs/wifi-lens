@@ -64,9 +64,13 @@ struct SpectrumHeatmapPanel: View {
     private var emptyState: some View {
         VStack {
             Spacer()
-            Text(String(localized: "spectrum.heatmap.empty", comment: "Placeholder when the current scan has no heatmap envelopes"))
-                .foregroundColor(.secondary)
-                .font(.caption)
+            Text(
+                String(
+                    localized: "spectrum.heatmap.empty",
+                    comment: "Placeholder when the current scan has no heatmap envelopes")
+            )
+            .foregroundColor(.secondary)
+            .font(.caption)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -88,13 +92,15 @@ struct SpectrumHeatmapPanel: View {
     private func heatmapCanvas(_ model: SpectrumHeatmapModel) -> some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let domain = SpectrumHeatmapLayout.channelDomain(
-                channels: model.channels,
-                band: band
-            ) ?? SpectrumHeatmapChannelDomain(
-                minChannelCoordinate: band == .band24GHz ? -1 : 1,
-                maxChannelCoordinate: Double(band.maxChannel)
-            )
+            let domain =
+                SpectrumHeatmapLayout.channelDomain(
+                    channels: model.channels,
+                    band: band
+                )
+                ?? SpectrumHeatmapChannelDomain(
+                    minChannelCoordinate: band == .band24GHz ? -1 : 1,
+                    maxChannelCoordinate: Double(band.maxChannel)
+                )
             let rssiRange = SpectrumHeatmapLayout.rssiRange(
                 for: model.envelopes.map(\.peakRSSI)
             )
@@ -136,8 +142,8 @@ struct SpectrumHeatmapPanel: View {
             .resizable()
             .interpolation(.high)
             .opacity(opacity)
-        .frame(width: plotRect.width, height: plotRect.height)
-        .position(x: plotRect.midX, y: plotRect.midY)
+            .frame(width: plotRect.width, height: plotRect.height)
+            .position(x: plotRect.midX, y: plotRect.midY)
     }
 
     private func axisLayer(
@@ -151,11 +157,13 @@ struct SpectrumHeatmapPanel: View {
             let rssiValues = Self.rssiReferenceValues(for: rssiRange)
             let labels = Self.rssiAxisLabels(for: rssiRange)
             for (index, rssi) in rssiValues.enumerated() {
-                guard let y = SpectrumHeatmapLayout.yPosition(
-                    forRSSI: rssi,
-                    in: plotRect,
-                    rssiRange: rssiRange
-                ) else { continue }
+                guard
+                    let y = SpectrumHeatmapLayout.yPosition(
+                        forRSSI: rssi,
+                        in: plotRect,
+                        rssiRange: rssiRange
+                    )
+                else { continue }
                 let label = Text(labels[index])
                     .font(.caption2)
                     .foregroundColor(labelColor)
@@ -219,6 +227,7 @@ struct SpectrumLegendBar: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 3))
-        .accessibilityLabel(String(localized: "spectrum.heatmap.legend.gradient", comment: "Thermal color gradient legend"))
+        .accessibilityLabel(
+            String(localized: "spectrum.heatmap.legend.gradient", comment: "Thermal color gradient legend"))
     }
 }

@@ -6,8 +6,9 @@ enum WiFiQualityEvaluator {
         gatewayLatency: GatewayLatencyResult? = nil
     ) -> WiFiQualityResult {
         guard WiFiLinkEvidenceValidator.assessment(for: currentStatus)?.state == .associated,
-              currentStatus.metricsAttribution == .verified,
-              let rssi = currentStatus.rssi else {
+            currentStatus.metricsAttribution == .verified,
+            let rssi = currentStatus.rssi
+        else {
             return WiFiQualityResult(
                 level: .unknown,
                 signalLabel: String(localized: "observation.quality.unknown", comment: "Unknown signal label"),
@@ -25,17 +26,18 @@ enum WiFiQualityEvaluator {
 
     private static func validLatency(_ result: GatewayLatencyResult?, for status: WiFiCurrentStatus) -> Double? {
         guard let result,
-              case let .replied(reportedMilliseconds)? = result.probeOutcome,
-              let latency = result.latencyMs,
-              latency.isFinite, latency >= 0,
-              reportedMilliseconds.isFinite, reportedMilliseconds >= 0,
-              latency == reportedMilliseconds,
-              result.attemptID != nil,
-              result.interfaceBound,
-              result.cycleID == status.interfaceSnapshotCycleID,
-              result.interfaceName == status.interfaceName,
-              result.routerIP == status.routerIP,
-              result.timestamp >= status.timestamp else { return nil }
+            case .replied(let reportedMilliseconds)? = result.probeOutcome,
+            let latency = result.latencyMs,
+            latency.isFinite, latency >= 0,
+            reportedMilliseconds.isFinite, reportedMilliseconds >= 0,
+            latency == reportedMilliseconds,
+            result.attemptID != nil,
+            result.interfaceBound,
+            result.cycleID == status.interfaceSnapshotCycleID,
+            result.interfaceName == status.interfaceName,
+            result.routerIP == status.routerIP,
+            result.timestamp >= status.timestamp
+        else { return nil }
         return latency
     }
 
@@ -60,7 +62,9 @@ enum WiFiQualityEvaluator {
     }
 
     private static func latencyLabel(ms: Double?) -> String {
-        guard let ms else { return String(localized: "observation.latency.unavailable", comment: "Latency unavailable") }
+        guard let ms else {
+            return String(localized: "observation.latency.unavailable", comment: "Latency unavailable")
+        }
         if ms < 50 { return String(localized: "observation.latency.normal", comment: "Normal latency") }
         if ms < 100 { return String(localized: "observation.latency.elevated", comment: "Elevated latency") }
         return String(localized: "observation.latency.high", comment: "High latency")
@@ -68,9 +72,9 @@ enum WiFiQualityEvaluator {
 
     private static func summary(level: WiFiQualityLevel, signalLabel: String, latencyLabel: String) -> String {
         switch level {
-        case .good:    return String(localized: "observation.summary.good", comment: "Good connection summary")
-        case .fair:    return String(localized: "observation.summary.fair", comment: "Fair connection summary")
-        case .poor:    return String(localized: "observation.summary.poor", comment: "Poor connection summary")
+        case .good: return String(localized: "observation.summary.good", comment: "Good connection summary")
+        case .fair: return String(localized: "observation.summary.fair", comment: "Fair connection summary")
+        case .poor: return String(localized: "observation.summary.poor", comment: "Poor connection summary")
         case .unknown: return String(localized: "observation.summary.unknown", comment: "Unknown connection summary")
         }
     }

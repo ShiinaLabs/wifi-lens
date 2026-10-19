@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct RegionInferenceEngineTests {
@@ -16,7 +17,7 @@ import Testing
             userOverride: nil
         )
         #expect(result.domain == .JP)
-        #expect(result.confidence == .low) // locale alone is low confidence
+        #expect(result.confidence == .low)  // locale alone is low confidence
     }
 
     @Test("System locale US maps to regulatory domain US")
@@ -57,7 +58,7 @@ import Testing
 
     @Test("Unknown locale region maps to unknown domain")
     func unknownLocaleMapsToUnknown() {
-        let locale = Locale(identifier: "en_ZZ") // invalid region
+        let locale = Locale(identifier: "en_ZZ")  // invalid region
         let result = RegionInferenceEngine.infer(
             systemLocale: locale,
             supportedChannels: [],
@@ -157,7 +158,7 @@ import Testing
 
     @Test("No usable sources yields unknown domain")
     func noSourcesYieldsUnknown() {
-        let locale = Locale(identifier: "en_ZZ") // invalid
+        let locale = Locale(identifier: "en_ZZ")  // invalid
         let result = RegionInferenceEngine.infer(
             systemLocale: locale,
             supportedChannels: [],

@@ -146,8 +146,8 @@ public final class MACVendorDatabaseManager {
         }
 
         guard currentOperationOwnerID == ownerID,
-              let operationID = currentOperationID,
-              let task = currentTask
+            let operationID = currentOperationID,
+            let task = currentTask
         else {
             return nil
         }
@@ -222,7 +222,7 @@ public final class MACVendorDatabaseManager {
             publishInstalled(database, clearsPreparedImport: false)
         } catch is CancellationError {
             return
-        } catch where Task.isCancelled {
+        } catch  where Task.isCancelled {
             return
         } catch let error as MACVendorDatabaseError {
             setPresentedError(error, ownerID: currentOperationOwnerID)
@@ -250,7 +250,7 @@ public final class MACVendorDatabaseManager {
             setPresentedError(nil, ownerID: ownerID)
         } catch is CancellationError {
             return
-        } catch where Task.isCancelled {
+        } catch  where Task.isCancelled {
             return
         } catch let error as MACVendorDatabaseError {
             setPresentedError(error, ownerID: ownerID)

@@ -41,7 +41,8 @@ public final class BLEViewModel {
 
     var selectedDeviceHistory: [BLERSSISample]? {
         guard let id = selectedDeviceID,
-              let uuid = UUID(uuidString: id) else { return nil }
+            let uuid = UUID(uuidString: id)
+        else { return nil }
         return deviceTracker.rssiHistory(for: uuid)
     }
 
@@ -76,9 +77,12 @@ public final class BLEViewModel {
             if bluetoothPermission.authorizationStatus == .notDetermined {
                 bluetoothPermission.requestPermissionIfNeeded()
             }
-            errorMessage = bluetoothPermission.authorizationStatus == .denied
-                ? String(localized: "ble.permission.denied_message", comment: "Bluetooth permission denied error message")
-                : String(localized: "ble.permission.required_message", comment: "Bluetooth permission required explanation")
+            errorMessage =
+                bluetoothPermission.authorizationStatus == .denied
+                ? String(
+                    localized: "ble.permission.denied_message", comment: "Bluetooth permission denied error message")
+                : String(
+                    localized: "ble.permission.required_message", comment: "Bluetooth permission required explanation")
             return
         }
 
@@ -152,7 +156,8 @@ public final class BLEViewModel {
 
         if previousState != state {
             let source = fromScanner ? BluetoothStateChangeSource.scanner : BluetoothStateChangeSource.monitor
-            Self.logger.info("Bluetooth state changed [\(source.rawValue)]: \(previousState.logLabel) -> \(state.logLabel)")
+            Self.logger.info(
+                "Bluetooth state changed [\(source.rawValue)]: \(previousState.logLabel) -> \(state.logLabel)")
         }
 
         switch state {
@@ -175,7 +180,9 @@ public final class BLEViewModel {
                 Self.logger.warning("Bluetooth scan stopped because authorization is unavailable")
                 stopScanning(preserveResumeIntent: false)
             }
-            errorMessage = String(localized: "ble.permission.required_with_action", comment: "Bluetooth permission required with action instruction")
+            errorMessage = String(
+                localized: "ble.permission.required_with_action",
+                comment: "Bluetooth permission required with action instruction")
 
         case .unsupported:
             shouldResumeScanningAfterPowerRestore = false
@@ -183,7 +190,8 @@ public final class BLEViewModel {
                 Self.logger.error("Bluetooth scan stopped because hardware is unsupported")
                 stopScanning(preserveResumeIntent: false)
             }
-            errorMessage = String(localized: "ble.state.unsupported", comment: "BLE state: hardware does not support BLE")
+            errorMessage = String(
+                localized: "ble.state.unsupported", comment: "BLE state: hardware does not support BLE")
 
         case .unknown:
             break
@@ -234,15 +242,16 @@ final class BLEPowerMonitor: NSObject, CBCentralManagerDelegate {
     }
 
     private func updateState(from central: CBCentralManager) {
-        let nextState: BLEBluetoothState = switch central.state {
-        case .unknown:      .unknown
-        case .resetting:    .resetting
-        case .unsupported:  .unsupported
-        case .unauthorized: .unauthorized
-        case .poweredOff:   .poweredOff
-        case .poweredOn:    .poweredOn
-        @unknown default:   .unknown
-        }
+        let nextState: BLEBluetoothState =
+            switch central.state {
+            case .unknown: .unknown
+            case .resetting: .resetting
+            case .unsupported: .unsupported
+            case .unauthorized: .unauthorized
+            case .poweredOff: .poweredOff
+            case .poweredOn: .poweredOn
+            @unknown default: .unknown
+            }
 
         guard nextState != currentState else { return }
         currentState = nextState
@@ -254,8 +263,8 @@ final class BLEPowerMonitor: NSObject, CBCentralManagerDelegate {
     }
 }
 
-private extension BLEBluetoothState {
-    var logLabel: String {
+extension BLEBluetoothState {
+    fileprivate var logLabel: String {
         switch self {
         case .unknown: return "unknown"
         case .resetting: return "resetting"

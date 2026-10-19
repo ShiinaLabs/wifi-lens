@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -122,7 +123,8 @@ func appLocalNetworkUsageDescriptions(
         }
 
         guard configurations.count == 2,
-              Set(configurations.map(\.configuration)) == ["Debug", "Release"] else {
+            Set(configurations.map(\.configuration)) == ["Debug", "Release"]
+        else {
             throw projectConfigurationError("The app target must provide Debug and Release configurations.")
         }
         return configurations
@@ -478,12 +480,13 @@ struct RecordingIPv6HTTPSConnector: IPv6HTTPSConnecting {
         serverName: String,
         timeout: Duration
     ) async -> IPv6HTTPSConnectionOutcome {
-        await recorder.record(.init(
-            url: url,
-            ipv6Address: ipv6Address,
-            serverName: serverName,
-            timeout: timeout
-        ))
+        await recorder.record(
+            .init(
+                url: url,
+                ipv6Address: ipv6Address,
+                serverName: serverName,
+                timeout: timeout
+            ))
         return succeeds ? .succeeded : .failed
     }
 }
@@ -1044,10 +1047,11 @@ final class IsolatedGuidance {
         let calendar = Self.makeCalendar()
         let now = calendar.date(from: DateComponents(year: 2026, month: 8, day: 5, hour: 12))!
         let box = DiagnosticGuidanceEventBox()
-        store = InMemoryGuidanceStateStore(initial: GuidanceState(
-            activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: completionCount
-        ))
+        store = InMemoryGuidanceStateStore(
+            initial: GuidanceState(
+                activeDays: ["2026-07-01", "2026-07-02"],
+                meaningfulCompletionCount: completionCount
+            ))
         var configuration = GuidanceConfiguration()
         configuration.invitationEnabled = true
         coordinator = GuidanceCoordinator(

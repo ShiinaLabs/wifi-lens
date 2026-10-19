@@ -34,16 +34,17 @@ struct WiFiGatewayProbeTarget: Equatable, Sendable {
 
     static func make(from status: WiFiCurrentStatus, cycleID: UUID) -> WiFiGatewayProbeTarget? {
         guard let evidence = status.linkEvidence,
-              evidence.snapshotCycleID == cycleID,
-              evidence.capturedAt == status.timestamp,
-              status.interfaceSnapshotCycleID == cycleID,
-              let interfaceName = status.interfaceName,
-              evidence.interfaceName == interfaceName,
-              let interfaceIndex = status.interfaceIndex,
-              interfaceIndex != 0,
-              evidence.interfaceIndex == interfaceIndex,
-              let address = status.routerIP,
-              !address.isEmpty else { return nil }
+            evidence.snapshotCycleID == cycleID,
+            evidence.capturedAt == status.timestamp,
+            status.interfaceSnapshotCycleID == cycleID,
+            let interfaceName = status.interfaceName,
+            evidence.interfaceName == interfaceName,
+            let interfaceIndex = status.interfaceIndex,
+            interfaceIndex != 0,
+            evidence.interfaceIndex == interfaceIndex,
+            let address = status.routerIP,
+            !address.isEmpty
+        else { return nil }
         guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else { return nil }
         return WiFiGatewayProbeTarget(
             interfaceName: interfaceName,
@@ -56,21 +57,20 @@ struct WiFiGatewayProbeTarget: Equatable, Sendable {
 
     static func isValidWiFiGatewayResult(_ result: GatewayLatencyResult, for target: WiFiGatewayProbeTarget) -> Bool {
         guard isAttributedToWiFiTarget(result, target),
-              result.timestamp >= target.capturedAt,
-              let latency = result.latencyMs,
-              latency.isFinite, latency >= 0,
-              case .replied(let reportedLatency) = result.probeOutcome,
-              reportedLatency.isFinite, reportedLatency >= 0,
-              latency == reportedLatency else { return false }
+            result.timestamp >= target.capturedAt,
+            let latency = result.latencyMs,
+            latency.isFinite, latency >= 0,
+            case .replied(let reportedLatency) = result.probeOutcome,
+            reportedLatency.isFinite, reportedLatency >= 0,
+            latency == reportedLatency
+        else { return false }
         return true
     }
 
     static func isAttributedToWiFiTarget(_ result: GatewayLatencyResult, _ target: WiFiGatewayProbeTarget) -> Bool {
-        result.interfaceBound &&
-            result.cycleID == target.snapshotCycleID &&
-            result.interfaceName == target.interfaceName &&
-            result.routerIP == target.address &&
-            result.attemptID != nil
+        result.interfaceBound && result.cycleID == target.snapshotCycleID
+            && result.interfaceName == target.interfaceName && result.routerIP == target.address
+            && result.attemptID != nil
     }
 }
 

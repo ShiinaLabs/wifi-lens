@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -304,10 +305,10 @@ struct MACVendorDatabaseStoreTests {
                     validRecordCount: 1,
                     sha256: String(repeating: "a", count: 64),
                     sourceURL: nil
-                ),
+                )
             ],
             entries: [
-                MACVendorEntry(prefix: "001122", prefixLength: 24, organization: organization),
+                MACVendorEntry(prefix: "001122", prefixLength: 24, organization: organization)
             ]
         )
     }

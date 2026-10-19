@@ -181,14 +181,14 @@ public final class NetworkDiagnosticsViewModel {
     }
 
     init(
-    checks: [any DiagnosticCheck]? = nil,
-    fingerprintMonitor: any NetworkFingerprintMonitoring = SystemNetworkFingerprintMonitor(
-        routeStateSource: SystemNetworkFingerprintRouteStateSource()
-    ),
-    contextSource: any DiagnosticNetworkContextSourcing = SystemDiagnosticNetworkContextSource(),
-    diagnosticGatewayMeasuring: any DiagnosticGatewayMeasuring = GatewayLatencyProvider(),
-    clock: any DiagnosticClock = ContinuousDiagnosticClock(),
-    onDiagnosticsCompleted: @escaping @MainActor () -> Void = {}
+        checks: [any DiagnosticCheck]? = nil,
+        fingerprintMonitor: any NetworkFingerprintMonitoring = SystemNetworkFingerprintMonitor(
+            routeStateSource: SystemNetworkFingerprintRouteStateSource()
+        ),
+        contextSource: any DiagnosticNetworkContextSourcing = SystemDiagnosticNetworkContextSource(),
+        diagnosticGatewayMeasuring: any DiagnosticGatewayMeasuring = GatewayLatencyProvider(),
+        clock: any DiagnosticClock = ContinuousDiagnosticClock(),
+        onDiagnosticsCompleted: @escaping @MainActor () -> Void = {}
     ) {
         let productionChecks = checks == nil
         let configuredChecks = checks ?? Self.defaultChecks()
@@ -456,10 +456,12 @@ public final class NetworkDiagnosticsViewModel {
             let shouldRestart = await restartController.completeRun()
             guard isCurrentGeneration(generation) else { return }
             if shouldRestart {
-                guard await restartController.waitForStability(
-                    using: clock,
-                    until: sessionDeadline
-                ) else {
+                guard
+                    await restartController.waitForStability(
+                        using: clock,
+                        until: sessionDeadline
+                    )
+                else {
                     guard isCurrentGeneration(generation) else { return }
                     let retainedResults = configurationOnlyResults(from: outcome.results)
                     finish(
@@ -570,9 +572,10 @@ public final class NetworkDiagnosticsViewModel {
 
     private func prepareExecutionPhases(retaining retainedResults: [NetworkDiagnosticResult]) {
         let retainedIDs = Set(retainedResults.map(\.id))
-        executionPhases = Dictionary(uniqueKeysWithValues: checkIDs.map { id in
-            (id, retainedIDs.contains(id) ? .completed : .waiting)
-        })
+        executionPhases = Dictionary(
+            uniqueKeysWithValues: checkIDs.map { id in
+                (id, retainedIDs.contains(id) ? .completed : .waiting)
+            })
     }
 
     private func invalidateNetworkResultsForChange() {
@@ -610,25 +613,29 @@ public final class NetworkDiagnosticsViewModel {
         } else {
             elapsedMilliseconds = 0
         }
-        logStore.append(NetworkDiagnosticEvent(
-            runID: eventRunID,
-            elapsedMilliseconds: elapsedMilliseconds,
-            kind: kind,
-            checkID: checkID,
-            reasonCode: reasonCode,
-            runNumber: logRunNumber,
-            result: result,
-            durationMilliseconds: durationMilliseconds,
-            conclusion: conclusion,
-            pendingIDs: pendingIDs,
-            retainedIDs: retainedIDs
-        ))
+        logStore.append(
+            NetworkDiagnosticEvent(
+                runID: eventRunID,
+                elapsedMilliseconds: elapsedMilliseconds,
+                kind: kind,
+                checkID: checkID,
+                reasonCode: reasonCode,
+                runNumber: logRunNumber,
+                result: result,
+                durationMilliseconds: durationMilliseconds,
+                conclusion: conclusion,
+                pendingIDs: pendingIDs,
+                retainedIDs: retainedIDs
+            ))
     }
 
     private static func milliseconds(_ duration: Duration) -> Int64 {
         let components = duration.components
-        return Int64(max(0, (Double(components.seconds) * 1_000
-            + Double(components.attoseconds) / 1_000_000_000_000_000).rounded()))
+        return Int64(
+            max(
+                0,
+                (Double(components.seconds) * 1_000
+                    + Double(components.attoseconds) / 1_000_000_000_000_000).rounded()))
     }
 
     private func finish(_ outcome: DiagnosticRunOutcome, generation: UInt64) {
@@ -644,11 +651,12 @@ public final class NetworkDiagnosticsViewModel {
         )
         conclusion = assessment?.conclusion
         phase = .completed
-        let endEvent: DiagnosticEventKind = switch outcome.endReason {
-        case .completed: .completed
-        case .timedOut, .superseded: .timedOut
-        case .cancelled: .cancelled
-        }
+        let endEvent: DiagnosticEventKind =
+            switch outcome.endReason {
+            case .completed: .completed
+            case .timedOut, .superseded: .timedOut
+            case .cancelled: .cancelled
+            }
         appendEvent(
             endEvent,
             runID: outcome.runID,
@@ -821,26 +829,26 @@ actor NetworkDiagnosticRestartController {
 }
 
 #if DEBUG
-extension NetworkDiagnosticsViewModel {
-    /// Debug-only: publishes a synthetic completed result so the real
-    /// diagnostics host renders its production conclusion strip and the
-    /// production invitation card, without running a real diagnostic. Never
-    /// writes Timeline, diagnostic history, or user data; the production
-    /// `record(.diagnosticsCompleted)` path is not invoked (Debug triggers
-    /// schedule invitations explicitly).
-    func debugStageCompletedResult() {
-        activeTask?.cancel()
-        activeTask = nil
-        let staged = checkIDs.map { id in
-            NetworkDiagnosticResult(id: id, status: .normal, summary: "Debug staged result")
+    extension NetworkDiagnosticsViewModel {
+        /// Debug-only: publishes a synthetic completed result so the real
+        /// diagnostics host renders its production conclusion strip and the
+        /// production invitation card, without running a real diagnostic. Never
+        /// writes Timeline, diagnostic history, or user data; the production
+        /// `record(.diagnosticsCompleted)` path is not invoked (Debug triggers
+        /// schedule invitations explicitly).
+        func debugStageCompletedResult() {
+            activeTask?.cancel()
+            activeTask = nil
+            let staged = checkIDs.map { id in
+                NetworkDiagnosticResult(id: id, status: .normal, summary: "Debug staged result")
+            }
+            results = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, $0) })
+            executionPhases = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, .completed) })
+            conclusion = NetworkDiagnosticConclusion.evaluate(
+                staged,
+                requiredIDs: Set(checkIDs)
+            )
+            phase = .completed
         }
-        results = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, $0) })
-        executionPhases = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, .completed) })
-        conclusion = NetworkDiagnosticConclusion.evaluate(
-            staged,
-            requiredIDs: Set(checkIDs)
-        )
-        phase = .completed
     }
-}
 #endif

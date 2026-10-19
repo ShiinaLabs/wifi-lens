@@ -1,6 +1,8 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
+
 struct ChannelSeriesDataBuilderTests {
     private func htOperationIE(primaryChannel: UInt8, offset: UInt8, staChannelWidthAny: Bool = false) -> Data {
         var payload = [UInt8](repeating: 0, count: 22)

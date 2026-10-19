@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -39,39 +40,44 @@ extension NetworkDiagnosticsTests {
             proxyFacts: .init(http: .available, https: .available)
         )
 
-        #expect(NetworkDiagnosticRemediation.forResult(recoveredProxy).actionKey
-            == "network_diagnostics.remediation.indeterminate.action")
+        #expect(
+            NetworkDiagnosticRemediation.forResult(recoveredProxy).actionKey
+                == "network_diagnostics.remediation.indeterminate.action")
     }
 
     @Test("runner applies the path and DNS dependency matrix")
     func runnerDependencyMatrix() async {
-        let cases: [(overrides: [NetworkDiagnosticCheckID: NetworkDiagnosticStatus], statuses: [NetworkDiagnosticStatus], invocations: [NetworkDiagnosticCheckID])] = [
-            (
-                [.path: .abnormal],
-                [.abnormal, .blocked, .blocked, .blocked, .blocked, .blocked],
-                [.path]
-            ),
-            (
-                [.path: .indeterminate],
-                [.indeterminate, .normal, .normal, .normal, .normal, .normal],
-                NetworkDiagnosticCheckID.allCases
-            ),
-            (
-                [.dns: .indeterminate],
-                [.normal, .normal, .indeterminate, .normal, .normal, .normal],
-                NetworkDiagnosticCheckID.allCases
-            ),
-            (
-                [.dns: .abnormal],
-                [.normal, .normal, .abnormal, .normal, .normal, .normal],
-                NetworkDiagnosticCheckID.allCases
-            ),
-            (
-                [.gatewayReachability: .abnormal],
-                [.normal, .abnormal, .normal, .normal, .normal, .normal],
-                NetworkDiagnosticCheckID.allCases
-            ),
-        ]
+        let cases:
+            [(
+                overrides: [NetworkDiagnosticCheckID: NetworkDiagnosticStatus], statuses: [NetworkDiagnosticStatus],
+                invocations: [NetworkDiagnosticCheckID]
+            )] = [
+                (
+                    [.path: .abnormal],
+                    [.abnormal, .blocked, .blocked, .blocked, .blocked, .blocked],
+                    [.path]
+                ),
+                (
+                    [.path: .indeterminate],
+                    [.indeterminate, .normal, .normal, .normal, .normal, .normal],
+                    NetworkDiagnosticCheckID.allCases
+                ),
+                (
+                    [.dns: .indeterminate],
+                    [.normal, .normal, .indeterminate, .normal, .normal, .normal],
+                    NetworkDiagnosticCheckID.allCases
+                ),
+                (
+                    [.dns: .abnormal],
+                    [.normal, .normal, .abnormal, .normal, .normal, .normal],
+                    NetworkDiagnosticCheckID.allCases
+                ),
+                (
+                    [.gatewayReachability: .abnormal],
+                    [.normal, .abnormal, .normal, .normal, .normal, .normal],
+                    NetworkDiagnosticCheckID.allCases
+                ),
+            ]
 
         for testCase in cases {
             let recorder = DiagnosticTestRecorder()
@@ -109,9 +115,10 @@ extension NetworkDiagnosticsTests {
             )
         }
 
-        let results = (await DiagnosticRunner(checks: checks).run { result in
-            await publications.record(result.id)
-        }).results
+        let results =
+            (await DiagnosticRunner(checks: checks).run { result in
+                await publications.record(result.id)
+            }).results
 
         #expect(results.map(\.id) == NetworkDiagnosticCheckID.allCases)
         #expect(await invocations.values == NetworkDiagnosticCheckID.allCases)
@@ -187,4 +194,3 @@ extension NetworkDiagnosticsTests {
         #expect(outcome.endReason == .cancelled)
     }
 }
-

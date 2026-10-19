@@ -1,5 +1,6 @@
-import Testing
 import AppKit
+import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 

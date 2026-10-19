@@ -1,6 +1,8 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
+
 @Suite @MainActor struct SignalHistoryStoreTests {
     private func makeSnapshot(timestamp: Date, rssi: Int) -> NetworkSnapshot {
         NetworkSnapshot(

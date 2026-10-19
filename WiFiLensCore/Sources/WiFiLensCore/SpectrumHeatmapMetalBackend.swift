@@ -1,5 +1,5 @@
-@preconcurrency import Metal
 import Foundation
+@preconcurrency import Metal
 
 private final class WiFiLensCoreBundleMarker: NSObject {}
 
@@ -20,12 +20,13 @@ actor MetalHeatmapComputeBackend: SpectrumHeatmapComputeBackend {
 
     init?() {
         guard let device = MTLCreateSystemDefaultDevice(),
-              let commandQueue = device.makeCommandQueue(),
-              let library = try? device.makeDefaultLibrary(bundle: Bundle(for: WiFiLensCoreBundleMarker.self)),
-              let fieldFunction = library.makeFunction(name: "heatmapFieldKernel"),
-              let smoothFunction = library.makeFunction(name: "heatmapSmoothKernel"),
-              let fieldPipeline = try? device.makeComputePipelineState(function: fieldFunction),
-              let smoothPipeline = try? device.makeComputePipelineState(function: smoothFunction) else {
+            let commandQueue = device.makeCommandQueue(),
+            let library = try? device.makeDefaultLibrary(bundle: Bundle(for: WiFiLensCoreBundleMarker.self)),
+            let fieldFunction = library.makeFunction(name: "heatmapFieldKernel"),
+            let smoothFunction = library.makeFunction(name: "heatmapSmoothKernel"),
+            let fieldPipeline = try? device.makeComputePipelineState(function: fieldFunction),
+            let smoothPipeline = try? device.makeComputePipelineState(function: smoothFunction)
+        else {
             return nil
         }
 
@@ -52,21 +53,23 @@ actor MetalHeatmapComputeBackend: SpectrumHeatmapComputeBackend {
         let outputStride = MemoryLayout<Float>.stride
         let envelopeByteCount = input.envelopes.count
             .multipliedReportingOverflow(by: envelopeStride)
-        let outputByteCount = storageCount
+        let outputByteCount =
+            storageCount
             .multipliedReportingOverflow(by: outputStride)
         guard !envelopeByteCount.overflow,
-              !outputByteCount.overflow,
-              let envelopeBuffer = device.makeBuffer(
-                  length: max(envelopeStride, envelopeByteCount.partialValue),
-                  options: .storageModeShared
-              ),
-              let parameterBuffer = device.makeBuffer(
-                  length: parameterStride,
-                  options: .storageModeShared
-              ),
-              let rawBuffer = device.makeBuffer(length: outputByteCount.partialValue, options: .storageModeShared),
-              let smoothedBuffer = device.makeBuffer(length: outputByteCount.partialValue, options: .storageModeShared),
-              let commandBuffer = commandQueue.makeCommandBuffer() else {
+            !outputByteCount.overflow,
+            let envelopeBuffer = device.makeBuffer(
+                length: max(envelopeStride, envelopeByteCount.partialValue),
+                options: .storageModeShared
+            ),
+            let parameterBuffer = device.makeBuffer(
+                length: parameterStride,
+                options: .storageModeShared
+            ),
+            let rawBuffer = device.makeBuffer(length: outputByteCount.partialValue, options: .storageModeShared),
+            let smoothedBuffer = device.makeBuffer(length: outputByteCount.partialValue, options: .storageModeShared),
+            let commandBuffer = commandQueue.makeCommandBuffer()
+        else {
             throw SpectrumHeatmapMetalBackendError.bufferAllocationFailed
         }
 

@@ -2,7 +2,10 @@ import SwiftUI
 
 public struct DiagnosticResult: Equatable, Sendable {
     public init(icon: String, title: String, message: String, severity: DiagnosticSeverity) {
-        self.icon = icon; self.title = title; self.message = message; self.severity = severity
+        self.icon = icon
+        self.title = title
+        self.message = message
+        self.severity = severity
     }
     public var icon: String
     public var title: String

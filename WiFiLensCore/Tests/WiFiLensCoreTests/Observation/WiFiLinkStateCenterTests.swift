@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite("WiFi link evidence interpretation")
@@ -7,7 +8,8 @@ struct WiFiLinkEvidenceInterpreterTests {
     @Test("A same-cycle station link-active sample confirms association without SSID")
     func associationDoesNotRequireNetworkIdentity() {
         let sample = evidence(mode: .station, radio: .reportedOn, linkActive: true)
-        let result = WiFiLinkInterpreter.evaluate(sample, expectedCycleID: sample.snapshotCycleID, expectedCapturedAt: sample.capturedAt)
+        let result = WiFiLinkInterpreter.evaluate(
+            sample, expectedCycleID: sample.snapshotCycleID, expectedCapturedAt: sample.capturedAt)
         #expect(result.state == .associated)
         #expect(result.reason == .stationMode)
     }
@@ -29,7 +31,11 @@ struct WiFiLinkEvidenceInterpreterTests {
         let sample = evidence(mode: .station, radio: .reportedOn, linkActive: false)
         #expect(WiFiLinkInterpreter.evaluate(sample, expectedCycleID: sample.snapshotCycleID).state == .unknown)
         #expect(WiFiLinkInterpreter.evaluate(sample, expectedCycleID: UUID()).reason == .cycleMismatch)
-        #expect(WiFiLinkInterpreter.evaluate(sample, expectedCycleID: sample.snapshotCycleID, expectedCapturedAt: sample.capturedAt.addingTimeInterval(1)).reason == .captureTimestampMismatch)
+        #expect(
+            WiFiLinkInterpreter.evaluate(
+                sample, expectedCycleID: sample.snapshotCycleID,
+                expectedCapturedAt: sample.capturedAt.addingTimeInterval(1)
+            ).reason == .captureTimestampMismatch)
     }
 
     @Test("Reported-off ambiguity and failed reads do not become a confirmed radio or link failure")
@@ -43,7 +49,8 @@ struct WiFiLinkEvidenceInterpreterTests {
         #expect(off.radioPowerOnRaw == false)
         #expect(unavailable.radioPowerOnRaw == nil)
         #expect(WiFiLinkInterpreter.evaluate(off, expectedCycleID: off.snapshotCycleID).state == .unknown)
-        #expect(WiFiLinkInterpreter.evaluate(unavailable, expectedCycleID: unavailable.snapshotCycleID).state == .unknown)
+        #expect(
+            WiFiLinkInterpreter.evaluate(unavailable, expectedCycleID: unavailable.snapshotCycleID).state == .unknown)
     }
 
     @Test("Invalid collection timing is not trusted")
@@ -57,27 +64,27 @@ struct WiFiLinkEvidenceInterpreterTests {
     }
 
     #if DEBUG
-    @Test("Debug diagnostic evidence preserves raw none mode and omits network identity")
-    func diagnosticEvidenceFieldsPreserveModeWithoutIdentity() {
-        let sample = evidence(
-            mode: .noneOrReadFailure,
-            radio: .reportedOn,
-            linkActive: false,
-            ssid: "Private SSID",
-            bssid: "02:11:22:33:44:55",
-            modeRawValue: 0,
-            radioPowerOnRaw: true
-        )
-        let fields = WiFiLinkDiagnosticEvidenceFields.make(from: sample)
+        @Test("Debug diagnostic evidence preserves raw none mode and omits network identity")
+        func diagnosticEvidenceFieldsPreserveModeWithoutIdentity() {
+            let sample = evidence(
+                mode: .noneOrReadFailure,
+                radio: .reportedOn,
+                linkActive: false,
+                ssid: "Private SSID",
+                bssid: "02:11:22:33:44:55",
+                modeRawValue: 0,
+                radioPowerOnRaw: true
+            )
+            let fields = WiFiLinkDiagnosticEvidenceFields.make(from: sample)
 
-        #expect(fields["modeRaw"] as? Int == 0)
-        #expect(fields["mode"] as? String == "noneOrReadFailure")
-        #expect(fields["modeReadAmbiguous"] as? Bool == true)
-        #expect(!fields.keys.contains { $0.localizedCaseInsensitiveContains("ssid") })
-        #expect(!fields.keys.contains { $0.localizedCaseInsensitiveContains("bssid") })
-        #expect(!fields.values.contains { ($0 as? String) == "Private SSID" })
-        #expect(!fields.values.contains { ($0 as? String) == "02:11:22:33:44:55" })
-    }
+            #expect(fields["modeRaw"] as? Int == 0)
+            #expect(fields["mode"] as? String == "noneOrReadFailure")
+            #expect(fields["modeReadAmbiguous"] as? Bool == true)
+            #expect(!fields.keys.contains { $0.localizedCaseInsensitiveContains("ssid") })
+            #expect(!fields.keys.contains { $0.localizedCaseInsensitiveContains("bssid") })
+            #expect(!fields.values.contains { ($0 as? String) == "Private SSID" })
+            #expect(!fields.values.contains { ($0 as? String) == "02:11:22:33:44:55" })
+        }
     #endif
 }
 
@@ -86,9 +93,10 @@ struct WiFiLinkEvidenceInterpreterTests {
 struct WiFiLinkStateCenterTests {
     @Test("A repeated delivery of the same center snapshot is not a new radio sample")
     func monitorSubscriptionDeduplicatesSnapshotIdentity() async {
-        let monitor = WiFiPowerMonitor(center: WiFiLinkStateCenter(
-            collector: SequenceCollector([]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600)
-        ))
+        let monitor = WiFiPowerMonitor(
+            center: WiFiLinkStateCenter(
+                collector: SequenceCollector([]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600)
+            ))
         var iterator = monitor.events.makeAsyncIterator()
         let cached = await iterator.next()
         #expect(cached?.sampleIdentity == nil)
@@ -136,7 +144,7 @@ struct WiFiLinkStateCenterTests {
     func failedStartupStillSchedulesCompensationSampling() async {
         let collector = SequenceCollector([
             nil,
-            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1)
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1),
         ])
         let trigger = FakeLinkTrigger()
         let pollingClock = ManualReviewClock()
@@ -189,7 +197,7 @@ struct WiFiLinkStateCenterTests {
     func unknownStartupStillRegistersNotificationHandler() async {
         let collector = SequenceCollector([
             evidence(mode: .station, radio: .reportedOn, linkActive: nil),
-            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1)
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1),
         ])
         let trigger = FakeLinkTrigger()
         let center = WiFiLinkStateCenter(
@@ -375,7 +383,7 @@ struct WiFiLinkStateCenterTests {
         let collector = SequenceCollector([
             evidence(mode: .station, radio: .reportedOn, linkActive: true),
             observedAPLoss(offset: 1),
-            nil
+            nil,
         ])
         let clock = ManualReviewClock()
         let center = WiFiLinkStateCenter(
@@ -411,7 +419,7 @@ struct WiFiLinkStateCenterTests {
         let collector = SequenceCollector([
             evidence(mode: .station, radio: .reportedOn, linkActive: true),
             observedAPLoss(offset: 1),
-            nil
+            nil,
         ])
         let clock = ManualReviewClock()
         let center = WiFiLinkStateCenter(
@@ -497,7 +505,7 @@ struct WiFiLinkStateCenterTests {
         let collector = SequenceCollector([
             evidence(mode: .station, radio: .reportedOn, linkActive: true),
             observedAPLoss(offset: 1), observedAPLoss(offset: 2),
-            observedAPLoss(offset: 3), observedAPLoss(offset: 4), observedAPLoss(offset: 5)
+            observedAPLoss(offset: 3), observedAPLoss(offset: 4), observedAPLoss(offset: 5),
         ])
         let center = WiFiLinkStateCenter(
             collector: collector,
@@ -522,7 +530,7 @@ struct WiFiLinkStateCenterTests {
         let collector = SequenceCollector([
             evidence(mode: .station, radio: .reportedOn, linkActive: true),
             observedAPLoss(offset: 1),
-            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 2)
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 2),
         ])
         let center = WiFiLinkStateCenter(
             collector: collector, trigger: FakeLinkTrigger(),
@@ -545,7 +553,7 @@ struct WiFiLinkStateCenterTests {
         let collector = SequenceCollector([
             evidence(mode: .station, radio: .reportedOn, linkActive: true),
             observedAPLoss(offset: 1),
-            evidence(mode: .station, radio: .reportedOn, linkActive: true, interfaceName: "en1", offset: 2)
+            evidence(mode: .station, radio: .reportedOn, linkActive: true, interfaceName: "en1", offset: 2),
         ])
         let center = WiFiLinkStateCenter(
             collector: collector, trigger: FakeLinkTrigger(),
@@ -574,7 +582,8 @@ struct WiFiLinkStateCenterTests {
         )
         let startTask = Task { await center.start() }
         await collector.waitForPendingCount(1)
-        await collector.resolve(await collector.pendingIDs()[0], with: evidence(mode: .station, radio: .reportedOn, linkActive: true))
+        await collector.resolve(
+            await collector.pendingIDs()[0], with: evidence(mode: .station, radio: .reportedOn, linkActive: true))
         await startTask.value
 
         let candidateTask = Task { await center.refresh() }
@@ -617,7 +626,8 @@ struct WiFiLinkStateCenterTests {
         #expect((await center.snapshot()).runSessionID == newSessionID)
         #expect((await center.snapshot()).state == .unknown)
 
-        await collector.resolve(secondRequest, with: evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1))
+        await collector.resolve(
+            secondRequest, with: evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 1))
         await secondStart.value
         #expect((await center.snapshot()).runSessionID == newSessionID)
         #expect((await center.snapshot()).state == .associated)
@@ -644,8 +654,10 @@ struct WiFiLinkStateCenterTests {
 
     @Test("A BSSID change is emitted when both observations share a trusted SSID")
     func bssidChangeWithStableSSIDIsReported() async {
-        let first = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "00:00:00:00:00:01")
-        let second = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "00:00:00:00:00:02", offset: 1)
+        let first = evidence(
+            mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "00:00:00:00:00:01")
+        let second = evidence(
+            mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "00:00:00:00:00:02", offset: 1)
         let center = WiFiLinkStateCenter(
             collector: SequenceCollector([first, second]),
             trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600)
@@ -665,7 +677,8 @@ struct WiFiLinkStateCenterTests {
         let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A")
         let unknown = evidence(mode: .station, radio: .reportedOn, linkActive: nil, offset: 1)
         let b = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "B", bssid: "AP-B", offset: 2)
-        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, unknown, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([a, unknown, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
         let stream = await center.events()
         var iterator = stream.makeAsyncIterator()
 
@@ -691,7 +704,8 @@ struct WiFiLinkStateCenterTests {
         let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "AP-1")
         let missing = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", offset: 1)
         let b = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Lab", bssid: "AP-2", offset: 2)
-        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, missing, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([a, missing, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
         let stream = await center.events()
         var iterator = stream.makeAsyncIterator()
         await center.start()
@@ -710,8 +724,11 @@ struct WiFiLinkStateCenterTests {
     func sameIdentityAfterUnknownDoesNotEmitChange() async {
         let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A")
         let unknown = evidence(mode: .station, radio: .reportedOn, linkActive: nil, offset: 1)
-        let returned = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A", offset: 2)
-        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, unknown, returned]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let returned = evidence(
+            mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A", offset: 2)
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([a, unknown, returned]), trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600))
         let recorder = LinkEventRecorder()
         let stream = await center.events()
         let task = Task { for await event in stream { await recorder.append(event) } }
@@ -728,8 +745,11 @@ struct WiFiLinkStateCenterTests {
     @Test("An interface change after a failed sample cannot compare identities across interfaces")
     func failedSampleThenNewInterfaceClearsIdentityBaseline() async {
         let a = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "A", bssid: "AP-A")
-        let b = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "B", bssid: "AP-B", interfaceName: "en1", offset: 2)
-        let center = WiFiLinkStateCenter(collector: SequenceCollector([a, nil, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let b = evidence(
+            mode: .station, radio: .reportedOn, linkActive: true, ssid: "B", bssid: "AP-B", interfaceName: "en1",
+            offset: 2)
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([a, nil, b]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
         let recorder = LinkEventRecorder()
         let stream = await center.events()
         let task = Task { for await event in stream { await recorder.append(event) } }
@@ -817,8 +837,10 @@ struct WiFiLinkStateCenterTests {
     @Test("Current-state subscribers are independent, cancellation is local, and event history remains ordered")
     func independentSubscribers() async {
         let first = evidence(mode: .station, radio: .reportedOn, linkActive: true)
-        let second = evidence(mode: .station, radio: .reportedOn, linkActive: true, ssid: "Office", bssid: "02:00:00:00:00:02", offset: 1)
-        let center = WiFiLinkStateCenter(collector: SequenceCollector([first, second]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let second = evidence(
+            mode: .station, radio: .reportedOn, linkActive: true, ssid: "Office", bssid: "02:00:00:00:00:02", offset: 1)
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([first, second]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
         let streamA = await center.currentStates()
         let streamB = await center.currentStates()
         var a = streamA.makeAsyncIterator()
@@ -839,7 +861,9 @@ struct WiFiLinkStateCenterTests {
         let initial = evidence(mode: .station, radio: .reportedOn, linkActive: true)
         let changed = evidence(mode: .station, radio: .reportedOn, linkActive: true, interfaceName: "en1", offset: 1)
         let resumed = evidence(mode: .station, radio: .reportedOn, linkActive: true, interfaceName: "en1", offset: 2)
-        let center = WiFiLinkStateCenter(collector: SequenceCollector([initial, changed, resumed]), trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600))
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([initial, changed, resumed]), trigger: FakeLinkTrigger(),
+            pollingInterval: .seconds(3_600))
         let events = await center.events()
         var iterator = events.makeAsyncIterator()
         await center.start()
@@ -858,7 +882,9 @@ struct WiFiLinkStateCenterTests {
     @Test("Repeated start and stop are idempotent and injected trigger can report registration failure")
     func lifecycleIsIdempotent() async {
         let trigger = FakeLinkTrigger(systemConfigurationRegistered: false, coreWLANRegistrationError: "denied")
-        let center = WiFiLinkStateCenter(collector: SequenceCollector([evidence(mode: .station, radio: .reportedOn, linkActive: true)]), trigger: trigger, pollingInterval: .seconds(3_600))
+        let center = WiFiLinkStateCenter(
+            collector: SequenceCollector([evidence(mode: .station, radio: .reportedOn, linkActive: true)]),
+            trigger: trigger, pollingInterval: .seconds(3_600))
         await center.start()
         await center.start()
         let listenerStatus = await center.listenerStatus()
@@ -887,8 +913,10 @@ struct WiFiLinkStateCenterTests {
     @Test("Candidate review rejects reused IDs and time that moves backwards")
     func invalidCandidateSequenceDoesNotDisconnect() async {
         let id = UUID()
-        let first = evidence(mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 2, cycleID: id)
-        let repeated = evidence(mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 3, cycleID: id)
+        let first = evidence(
+            mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 2, cycleID: id)
+        let repeated = evidence(
+            mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 3, cycleID: id)
         let backwards = evidence(mode: .none, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 1)
         let center = WiFiLinkStateCenter(
             collector: SequenceCollector([first, repeated, backwards]), trigger: FakeLinkTrigger(),
@@ -937,14 +965,20 @@ struct WiFiLinkStateCenterTests {
     @Test("A continuity gap prevents duplicate disconnect and synthetic recovery events")
     func continuityGapDoesNotRepeatTransitions() async {
         let baseline = evidence(mode: .station, radio: .reportedOn, linkActive: true)
-        let candidate1 = evidence(mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 1)
-        let candidate2 = evidence(mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 2)
+        let candidate1 = evidence(
+            mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 1)
+        let candidate2 = evidence(
+            mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 2)
         let unknown = evidence(mode: .station, radio: .reportedOn, linkActive: nil, offset: 3)
-        let candidate3 = evidence(mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 4)
-        let candidate4 = evidence(mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 5)
+        let candidate3 = evidence(
+            mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 4)
+        let candidate4 = evidence(
+            mode: .noneOrReadFailure, radio: .reportedOn, linkActive: false, serviceActive: false, offset: 5)
         let associated = evidence(mode: .station, radio: .reportedOn, linkActive: true, offset: 6)
         let center = WiFiLinkStateCenter(
-            collector: SequenceCollector([baseline, candidate1, candidate2, unknown, candidate3, candidate4, associated]),
+            collector: SequenceCollector([
+                baseline, candidate1, candidate2, unknown, candidate3, candidate4, associated,
+            ]),
             trigger: FakeLinkTrigger(), pollingInterval: .seconds(3_600),
             allowsUnvalidatedDisconnectConfirmation: true
         )
@@ -1096,7 +1130,10 @@ private final class FakeLinkTrigger: WiFiLinkChangeTriggering {
     let coreWLANRegistrationError: String?
     private(set) var savedHandler: (@Sendable (WiFiLinkChangeReason) -> Void)?
 
-    init(systemConfigurationRegistered: Bool = false, coreWLANRegistered: Bool = false, coreWLANRegistrationError: String? = nil) {
+    init(
+        systemConfigurationRegistered: Bool = false, coreWLANRegistered: Bool = false,
+        coreWLANRegistrationError: String? = nil
+    ) {
         self.systemConfigurationRegistered = systemConfigurationRegistered
         self.coreWLANRegistered = coreWLANRegistered
         self.coreWLANRegistrationError = coreWLANRegistrationError

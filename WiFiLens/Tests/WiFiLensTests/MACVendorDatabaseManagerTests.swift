@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -911,20 +912,21 @@ private let fixtureDate = Date(timeIntervalSince1970: 1_700_000_000)
 private let oneRecordMinimums = Dictionary(
     uniqueKeysWithValues: MACVendorRegistry.allCases.map { ($0, 1) }
 )
-private let cancelCurrentTaskAfterFinalSort: @Sendable (
-    MACVendorCSVParserCancellationPoint
-) throws -> Void = { point in
-    if point == .afterFinalSort {
-        withUnsafeCurrentTask { task in
-            task?.cancel()
+private let cancelCurrentTaskAfterFinalSort:
+    @Sendable (
+        MACVendorCSVParserCancellationPoint
+    ) throws -> Void = { point in
+        if point == .afterFinalSort {
+            withUnsafeCurrentTask { task in
+                task?.cancel()
+            }
         }
     }
-}
 
 @MainActor
 private func makeResolver(organization: String) -> MACVendorResolver {
     MACVendorResolver(entries: [
-        MACVendorEntry(prefix: "001122", prefixLength: 24, organization: organization),
+        MACVendorEntry(prefix: "001122", prefixLength: 24, organization: organization)
     ])
 }
 
@@ -945,7 +947,7 @@ private func makeDatabase(
             )
         },
         entries: [
-            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: organization),
+            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: organization)
         ]
     )
 }

@@ -1,8 +1,8 @@
-@testable import WiFiLensCore
-
 import AppKit
 import SwiftUI
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 /// Detail pages stay mounted while hidden so their page-local state survives navigation.
@@ -25,7 +25,12 @@ struct DetailPageMinimumHeightTests {
     /// emits that constraint for split-view columns, so `sizeThatFits` on the bare page reports
     /// a small height and misses the defect entirely.
     private func minimumHeight(of view: some View) -> CGFloat {
-        let host = NSHostingView(rootView: NavigationSplitView { Color.clear } detail: { view })
+        let host = NSHostingView(
+            rootView: NavigationSplitView {
+                Color.clear
+            } detail: {
+                view
+            })
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: Self.probeWidth, height: 200),
             styleMask: [.titled, .resizable],
@@ -61,10 +66,11 @@ struct DetailPageMinimumHeightTests {
 
     @Test("Network self-check page minimum height stays within the default window height")
     func networkDiagnosticsMinimumHeightIsBounded() {
-        let height = minimumHeight(of: NetworkDiagnosticsView(
-            viewModel: NetworkDiagnosticsViewModel(),
-            guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
-        ))
+        let height = minimumHeight(
+            of: NetworkDiagnosticsView(
+                viewModel: NetworkDiagnosticsViewModel(),
+                guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
+            ))
         #expect(height <= Self.maximumMinimumHeight)
     }
 

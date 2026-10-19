@@ -6,11 +6,11 @@ enum BuildConfig {
 
     static var current: BuildConfig {
         #if OSS
-        .oss
+            .oss
         #elseif PRO
-        .pro
+            .pro
         #else
-        .oss
+            .oss
         #endif
     }
 }

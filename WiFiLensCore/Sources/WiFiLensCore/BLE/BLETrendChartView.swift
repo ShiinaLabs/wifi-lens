@@ -1,5 +1,5 @@
-import SwiftUI
 import ChartLens
+import SwiftUI
 
 /// Canvas-based time-series chart showing RSSI over time for a selected BLE device.
 /// Draws two lines: raw RSSI (thin, semi-transparent) and EMA-smoothed RSSI (thick, solid).
@@ -11,13 +11,21 @@ struct BLETrendChartView: View {
 
     var body: some View {
         if samples.count < 2 {
-            Text(String(localized: "common.label.collecting_data", comment: "Status shown while collecting sensor data"))
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(height: chartHeight)
+            Text(
+                String(localized: "common.label.collecting_data", comment: "Status shown while collecting sensor data")
+            )
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .frame(height: chartHeight)
         } else {
             Chart(series: buildSeries(), axis: axisConfig, style: chartStyle)
-                .accessibilityLabel(String(format: String(localized: "ble.accessibility.trend_chart_fmt", comment: "BLE trend chart accessibility label with sample count and range"), samples.count, Int(samples.map(\.smoothedRSSI).min() ?? 0), Int(samples.map(\.smoothedRSSI).max() ?? 0)))
+                .accessibilityLabel(
+                    String(
+                        format: String(
+                            localized: "ble.accessibility.trend_chart_fmt",
+                            comment: "BLE trend chart accessibility label with sample count and range"), samples.count,
+                        Int(samples.map(\.smoothedRSSI).min() ?? 0), Int(samples.map(\.smoothedRSSI).max() ?? 0))
+                )
                 .frame(height: chartHeight)
         }
     }

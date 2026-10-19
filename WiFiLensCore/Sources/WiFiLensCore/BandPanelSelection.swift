@@ -78,7 +78,7 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
     static let defaultPanels = [
         SpectrumPanelDescriptor(id: .primary, viewType: .spectrum, band: .band24GHz),
         SpectrumPanelDescriptor(id: .secondary, viewType: .spectrum, band: .band5GHz),
-        SpectrumPanelDescriptor(id: .tertiary, viewType: .table, band: .band24GHz)
+        SpectrumPanelDescriptor(id: .tertiary, viewType: .table, band: .band24GHz),
     ]
 
     private static let persistenceVersion = 1
@@ -124,7 +124,8 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
     @discardableResult
     func removePanel(id: SpectrumPanelID) -> Bool {
         guard panels.count > Self.minimumPanelCount,
-              let index = panels.firstIndex(where: { $0.id == id }) else {
+            let index = panels.firstIndex(where: { $0.id == id })
+        else {
             return false
         }
 
@@ -168,7 +169,8 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
             let defaults = userDefaults
             let fractionKey = Self.fractionPersistenceKey(for: key)
             let shouldPersist = persistenceEnabled
-            let initialFraction = shouldPersist
+            let initialFraction =
+                shouldPersist
                 ? Self.storedFraction(from: defaults, key: fractionKey, fallback: defaultFraction)
                 : defaultFraction
             let holder = FractionHolder(
@@ -198,10 +200,11 @@ public struct SpectrumPanelDescriptor: Identifiable, Codable, Equatable, Sendabl
 
     private static func loadPanels(from userDefaults: UserDefaults) -> [SpectrumPanelDescriptor]? {
         guard let data = userDefaults.data(forKey: persistenceKey),
-              let payload = try? JSONDecoder().decode(PersistedPayload.self, from: data),
-              payload.version == persistenceVersion,
-              payload.panels.count >= minimumPanelCount,
-              payload.panels.count <= maximumPanelCount else {
+            let payload = try? JSONDecoder().decode(PersistedPayload.self, from: data),
+            payload.version == persistenceVersion,
+            payload.panels.count >= minimumPanelCount,
+            payload.panels.count <= maximumPanelCount
+        else {
             return nil
         }
 

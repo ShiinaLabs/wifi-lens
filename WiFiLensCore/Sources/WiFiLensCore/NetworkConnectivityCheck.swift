@@ -1,5 +1,5 @@
-import Foundation
 import Darwin
+import Foundation
 import Network
 
 protocol NetworkInterfaceInfoSourcing: Sendable {
@@ -27,12 +27,13 @@ struct SystemNetworkPathChecker: NetworkPathChecking {
         let monitor = NWPathMonitor()
         let stream = AsyncStream<NetworkPathState> { continuation in
             monitor.pathUpdateHandler = { path in
-                let state: NetworkPathState = switch path.status {
-                case .satisfied: .satisfied
-                case .unsatisfied: .unsatisfied
-                case .requiresConnection: .requiresConnection
-                @unknown default: .requiresConnection
-                }
+                let state: NetworkPathState =
+                    switch path.status {
+                    case .satisfied: .satisfied
+                    case .unsatisfied: .unsatisfied
+                    case .requiresConnection: .requiresConnection
+                    @unknown default: .requiresConnection
+                    }
                 continuation.yield(state)
                 continuation.finish()
             }
@@ -77,7 +78,8 @@ struct SystemNetworkPathChecker: NetworkPathChecking {
                         .first
                     guard let activeInterface else { return [] }
                     var evidence = [
-                        NetworkDiagnosticEvidence(code: "path.interface-type", value: activeInterface.type.pathEvidenceName),
+                        NetworkDiagnosticEvidence(
+                            code: "path.interface-type", value: activeInterface.type.pathEvidenceName),
                         NetworkDiagnosticEvidence(code: "path.interface-name", value: activeInterface.name),
                     ]
                     if ["utun", "ipsec", "ppp"].contains(where: { activeInterface.name.hasPrefix($0) }) {
@@ -155,26 +157,31 @@ struct NetworkConnectivityCheck: DiagnosticCheck {
             NetworkDiagnosticResult(
                 id: id,
                 status: .abnormal,
-                summary: String(localized: "network_diagnostics.path.abnormal.summary", comment: "Network self-check system path failure summary"),
+                summary: String(
+                    localized: "network_diagnostics.path.abnormal.summary",
+                    comment: "Network self-check system path failure summary"),
                 evidence: evidence
             )
         case .requiresConnection, nil:
             NetworkDiagnosticResult(
                 id: id,
                 status: .indeterminate,
-                summary: String(localized: "network_diagnostics.path.indeterminate.summary", comment: "Network self-check system path indeterminate summary"),
+                summary: String(
+                    localized: "network_diagnostics.path.indeterminate.summary",
+                    comment: "Network self-check system path indeterminate summary"),
                 evidence: evidence
             )
         }
     }
 
     private func contextResult(_ context: DiagnosticNetworkContext) -> NetworkDiagnosticResult {
-        let selectedInterface: NetworkInterfaceInfo? = switch context.route {
-        case .selected(let target):
-            context.interfaces.interfaces.first { $0.interfaceName == target.interfaceName }
-        case .tunneled, .unavailable, .ambiguous, .unsupported:
-            nil
-        }
+        let selectedInterface: NetworkInterfaceInfo? =
+            switch context.route {
+            case .selected(let target):
+                context.interfaces.interfaces.first { $0.interfaceName == target.interfaceName }
+            case .tunneled, .unavailable, .ambiguous, .unsupported:
+                nil
+            }
         var evidence = pathEvidence(interface: selectedInterface)
         if case .selected(let target) = context.route {
             evidence.append(.init(code: "path.interface-index", value: String(target.interfaceIndex)))
@@ -200,14 +207,18 @@ struct NetworkConnectivityCheck: DiagnosticCheck {
             NetworkDiagnosticResult(
                 id: id,
                 status: .abnormal,
-                summary: String(localized: "network_diagnostics.path.abnormal.summary", comment: "Network self-check system path failure summary"),
+                summary: String(
+                    localized: "network_diagnostics.path.abnormal.summary",
+                    comment: "Network self-check system path failure summary"),
                 evidence: evidence
             )
         case .requiresConnection, nil:
             NetworkDiagnosticResult(
                 id: id,
                 status: .indeterminate,
-                summary: String(localized: "network_diagnostics.path.indeterminate.summary", comment: "Network self-check system path indeterminate summary"),
+                summary: String(
+                    localized: "network_diagnostics.path.indeterminate.summary",
+                    comment: "Network self-check system path indeterminate summary"),
                 evidence: evidence
             )
         }
@@ -292,10 +303,12 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
             target = selectedTarget
             probeScope = "selected-route"
         case .tunneled(let tunnel):
-            guard let underlayTarget = underlyingGatewayTarget(
-                for: tunnel,
-                interfaces: context.interfaces.interfaces
-            ) else {
+            guard
+                let underlayTarget = underlyingGatewayTarget(
+                    for: tunnel,
+                    interfaces: context.interfaces.interfaces
+                )
+            else {
                 return skippedTunnelResult(tunnel)
             }
             target = underlayTarget
@@ -306,7 +319,8 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
 
         let gateway = await diagnosticGatewayMeasuring.measure(target: target)
         if let routeSource,
-           await routeSource.currentRoute(timeout: .seconds(1)) != context.route {
+            await routeSource.currentRoute(timeout: .seconds(1)) != context.route
+        {
             return NetworkDiagnosticResult(
                 id: id,
                 status: .indeterminate,
@@ -339,7 +353,8 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
             targetEvidence.append(.init(code: "gateway.route-interface", value: tunnel.interfaceName))
             targetEvidence.append(.init(code: "gateway.route-interface-index", value: String(tunnel.interfaceIndex)))
         }
-        let underlayDetail: String? = probeScope == "underlying-lan"
+        let underlayDetail: String? =
+            probeScope == "underlying-lan"
             ? String(
                 localized: "network_diagnostics.gateway.vpn_underlay.detail",
                 comment: "Gateway probe scope when a system VPN owns the default route"
@@ -348,10 +363,11 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
 
         var outcome = Self.interpretProbeResult(gateway)
         if outcome == .noReply,
-           !(gateway.interfaceBound
+            !(gateway.interfaceBound
                 && gateway.interfaceName == target.interfaceName
                 && gateway.routerIP == target.address
-                && gateway.attemptID != nil) {
+                && gateway.attemptID != nil)
+        {
             outcome = .unverified
         }
         return result(
@@ -379,9 +395,10 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         switch outcome {
         case .replied(let milliseconds):
             guard let latency = result.latencyMs,
-                  latency.isFinite,
-                  latency >= 0,
-                  latency == milliseconds else {
+                latency.isFinite,
+                latency >= 0,
+                latency == milliseconds
+            else {
                 return .unverified
             }
             return .replied(milliseconds: milliseconds)
@@ -480,12 +497,13 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
     }
 
     private func indeterminateRouteResult(for route: DiagnosticRouteSelection) -> NetworkDiagnosticResult {
-        let detailKey: String = switch route {
-        case .unsupported:
-            "network_diagnostics.gateway.unsupported"
-        default:
-            "network_diagnostics.gateway.route_changed"
-        }
+        let detailKey: String =
+            switch route {
+            case .unsupported:
+                "network_diagnostics.gateway.unsupported"
+            default:
+                "network_diagnostics.gateway.route_changed"
+            }
         return NetworkDiagnosticResult(
             id: id,
             status: .indeterminate,
@@ -528,9 +546,10 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
     ) -> DiagnosticGatewayTarget? {
         let candidates = interfaces.compactMap { interface -> DiagnosticGatewayTarget? in
             guard interface.interfaceName != tunnel.interfaceName,
-                  !DiagnosticRouteInterface.isTunnel(interface.interfaceName),
-                  interface.interfaceType != .virtual,
-                  let address = interface.router else {
+                !DiagnosticRouteInterface.isTunnel(interface.interfaceName),
+                interface.interfaceType != .virtual,
+                let address = interface.router
+            else {
                 return nil
             }
             let interfaceIndex = interfaceIndexProvider(interface.interfaceName)
@@ -556,8 +575,8 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
     }
 }
 
-private extension NWInterface.InterfaceType {
-    var pathEvidenceName: String {
+extension NWInterface.InterfaceType {
+    fileprivate var pathEvidenceName: String {
         switch self {
         case .wifi: "wifi"
         case .wiredEthernet: "wiredEthernet"

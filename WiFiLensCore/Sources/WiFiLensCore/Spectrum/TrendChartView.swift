@@ -1,5 +1,5 @@
-import SwiftUI
 import ChartLens
+import SwiftUI
 
 struct TrendChartView: View {
     let snapshots: [NetworkSnapshot]
@@ -7,11 +7,13 @@ struct TrendChartView: View {
 
     var body: some View {
         if snapshots.count < 2 {
-            Text(String(localized: "common.label.collecting_data", comment: "Status shown while collecting sensor data"))
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.vertical, 12)
+            Text(
+                String(localized: "common.label.collecting_data", comment: "Status shown while collecting sensor data")
+            )
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, 12)
         } else {
             Chart(series: buildSeries(), axis: axisConfig, style: chartStyle)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -48,7 +50,12 @@ struct TrendChartView: View {
             let idx = t * (snapshots.count - 1) / max(1, tickCount - 1)
             let offset = snapshots[idx].timestamp.timeIntervalSince(baseTime)
             let secsAgo = latestTime.timeIntervalSince(snapshots[idx].timestamp)
-            ticks.append(ChartAxisConfig.XTick(position: offset, label: chartDurationLabel(secsAgo, zeroText: String(localized: "common.label.now", comment: "Just now timestamp indicator"))))
+            ticks.append(
+                ChartAxisConfig.XTick(
+                    position: offset,
+                    label: chartDurationLabel(
+                        secsAgo,
+                        zeroText: String(localized: "common.label.now", comment: "Just now timestamp indicator"))))
         }
         axis.xTicks = ticks
         axis.xTickLabelOffset = 10
@@ -81,17 +88,23 @@ struct TrendChartView: View {
         switch delta {
         case 2...:
             return String(
-                format: String(localized: "spectrum.accessibility.trend_improving_fmt", comment: "RSSI trend improving: from, to, and sample count"),
+                format: String(
+                    localized: "spectrum.accessibility.trend_improving_fmt",
+                    comment: "RSSI trend improving: from, to, and sample count"),
                 first, last, delta, count
             )
         case ...(-2):
             return String(
-                format: String(localized: "spectrum.accessibility.trend_declining_fmt", comment: "RSSI trend declining: from, to, change amount, and sample count"),
+                format: String(
+                    localized: "spectrum.accessibility.trend_declining_fmt",
+                    comment: "RSSI trend declining: from, to, change amount, and sample count"),
                 first, last, abs(delta), count
             )
         default:
             return String(
-                format: String(localized: "spectrum.accessibility.trend_stable_fmt", comment: "RSSI trend stable: level and sample count"),
+                format: String(
+                    localized: "spectrum.accessibility.trend_stable_fmt",
+                    comment: "RSSI trend stable: level and sample count"),
                 last, count
             )
         }

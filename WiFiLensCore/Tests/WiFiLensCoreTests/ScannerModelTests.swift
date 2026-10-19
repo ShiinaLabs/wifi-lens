@@ -1,6 +1,8 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
+
 // MARK: - ChannelBand
 
 struct ChannelBandTests {
@@ -413,9 +415,9 @@ struct WiFiNetworkTests {
         vm.hiddenBands = ["24"]
         vm.applyGlobalFilterToBands()
 
-        #expect(vm.cachedTotalNetworks == 2) // Counts unchanged; visibility is per-row.
+        #expect(vm.cachedTotalNetworks == 2)  // Counts unchanged; visibility is per-row.
         let rowsByID = Dictionary(uniqueKeysWithValues: vm.cachedCombinedTableRows.map { ($0.id, $0) })
-        #expect(rowsByID[a.id]?.isVisible == false) // 2.4 GHz band hidden.
+        #expect(rowsByID[a.id]?.isVisible == false)  // 2.4 GHz band hidden.
         #expect(rowsByID[c.id]?.isVisible == true)  // 5 GHz band still visible.
     }
 

@@ -4,7 +4,7 @@ import Foundation
 enum DiagnosticRouteParser {
     private static let recognizedFields = ["destination", "gateway", "interface", "flags", "mask"]
     private static let unsupportedInterfacePrefixes = [
-        "lo", "utun", "ipsec", "ppp", "tun", "tap", "bridge", "gif", "stf"
+        "lo", "utun", "ipsec", "ppp", "tun", "tap", "bridge", "gif", "stf",
     ]
 
     static func parse(
@@ -24,25 +24,29 @@ enum DiagnosticRouteParser {
         }
 
         guard let destination = fields["destination"], destination == "default",
-              let interfaceName = fields["interface"], !interfaceName.isEmpty,
-              let flags = fields["flags"], !flags.isEmpty else {
+            let interfaceName = fields["interface"], !interfaceName.isEmpty,
+            let flags = fields["flags"], !flags.isEmpty
+        else {
             return .unavailable
         }
 
         guard hasUpFlag(flags),
-              let interfaceIndex = interfaceIndices[interfaceName], interfaceIndex != 0 else {
+            let interfaceIndex = interfaceIndices[interfaceName], interfaceIndex != 0
+        else {
             return .unavailable
         }
 
         if DiagnosticRouteInterface.isTunnel(interfaceName) {
-            return .tunneled(.init(
-                interfaceName: interfaceName,
-                interfaceIndex: interfaceIndex
-            ))
+            return .tunneled(
+                .init(
+                    interfaceName: interfaceName,
+                    interfaceIndex: interfaceIndex
+                ))
         }
 
         guard let gateway = fields["gateway"], !gateway.isEmpty,
-              hasRequiredFlags(flags) else {
+            hasRequiredFlags(flags)
+        else {
             return .unavailable
         }
         if isLinkLayerAddress(gateway) {
@@ -53,15 +57,17 @@ enum DiagnosticRouteParser {
             return .unsupported
         }
 
-        return .selected(.init(
-            interfaceName: interfaceName,
-            interfaceIndex: interfaceIndex,
-            address: gateway
-        ))
+        return .selected(
+            .init(
+                interfaceName: interfaceName,
+                interfaceIndex: interfaceIndex,
+                address: gateway
+            ))
     }
 
     private static func hasRequiredFlags(_ flags: String) -> Bool {
-        let normalized = flags
+        let normalized =
+            flags
             .trimmingCharacters(in: CharacterSet(charactersIn: "<>"))
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -70,7 +76,8 @@ enum DiagnosticRouteParser {
     }
 
     private static func hasUpFlag(_ flags: String) -> Bool {
-        let normalized = flags
+        let normalized =
+            flags
             .trimmingCharacters(in: CharacterSet(charactersIn: "<>"))
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -119,13 +126,14 @@ enum DiagnosticIPv6RouteParser {
         }
 
         guard fields["destination"] == "::",
-              fields["mask"] == "default",
-              let interfaceName = fields["interface"],
-              !interfaceName.isEmpty,
-              let flags = fields["flags"],
-              hasUpFlag(flags),
-              let interfaceIndex = interfaceIndices[interfaceName],
-              interfaceIndex != 0 else {
+            fields["mask"] == "default",
+            let interfaceName = fields["interface"],
+            !interfaceName.isEmpty,
+            let flags = fields["flags"],
+            hasUpFlag(flags),
+            let interfaceIndex = interfaceIndices[interfaceName],
+            interfaceIndex != 0
+        else {
             return nil
         }
 
@@ -136,7 +144,8 @@ enum DiagnosticIPv6RouteParser {
     }
 
     private static func hasUpFlag(_ flags: String) -> Bool {
-        let normalized = flags
+        let normalized =
+            flags
             .trimmingCharacters(in: CharacterSet(charactersIn: "<>"))
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -270,13 +279,14 @@ final class DiagnosticRouteProcessExecution: @unchecked Sendable {
             lock.lock()
             if didFinish {
                 lock.unlock()
-                continuation.resume(returning: DiagnosticRouteProcessResult(
-                    exitCode: nil,
-                    stdout: "",
-                    stderr: "",
-                    timedOut: false,
-                    cancelled: true
-                ))
+                continuation.resume(
+                    returning: DiagnosticRouteProcessResult(
+                        exitCode: nil,
+                        stdout: "",
+                        stderr: "",
+                        timedOut: false,
+                        cancelled: true
+                    ))
             } else {
                 self.continuation = continuation
                 let timeoutSource = DispatchSource.makeTimerSource(queue: timeoutQueue)
@@ -318,13 +328,14 @@ final class DiagnosticRouteProcessExecution: @unchecked Sendable {
             process.terminate()
         }
 
-        continuation?.resume(returning: .init(
-            exitCode: nil,
-            stdout: "",
-            stderr: "",
-            timedOut: false,
-            cancelled: true
-        ))
+        continuation?.resume(
+            returning: .init(
+                exitCode: nil,
+                stdout: "",
+                stderr: "",
+                timedOut: false,
+                cancelled: true
+            ))
     }
 
     private func execute() {
@@ -369,13 +380,14 @@ final class DiagnosticRouteProcessExecution: @unchecked Sendable {
         let stdout = shouldStop ? "" : read(pipe: stdoutPipe.fileHandleForReading)
         let stderr = shouldStop ? "" : read(pipe: stderrPipe.fileHandleForReading)
 
-        continuation?.resume(returning: .init(
-            exitCode: exitCode,
-            stdout: stdout,
-            stderr: stderr,
-            timedOut: timedOut,
-            cancelled: cancelled
-        ))
+        continuation?.resume(
+            returning: .init(
+                exitCode: exitCode,
+                stdout: stdout,
+                stderr: stderr,
+                timedOut: timedOut,
+                cancelled: cancelled
+            ))
     }
 
     private func isFinished() -> Bool {
@@ -392,7 +404,8 @@ final class DiagnosticRouteProcessExecution: @unchecked Sendable {
 
     private static func dispatchInterval(for duration: Duration) -> DispatchTimeInterval {
         let components = duration.components
-        let nanoseconds = Double(components.seconds) * 1_000_000_000
+        let nanoseconds =
+            Double(components.seconds) * 1_000_000_000
             + Double(components.attoseconds) / 1_000_000_000
         let clamped = min(max(nanoseconds, 0), Double(Int.max))
         return .nanoseconds(Int(clamped))

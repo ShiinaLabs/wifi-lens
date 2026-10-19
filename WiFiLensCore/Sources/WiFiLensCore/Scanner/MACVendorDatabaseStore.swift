@@ -26,13 +26,14 @@ actor MACVendorDatabaseStore {
     ) {
         self.fileManager = fileManager
         self.baseDirectory = baseDirectory ?? StorageLocations.current.macVendorDatabase
-        self.commitPendingFile = commitPendingFile ?? { pendingURL, databaseURL in
-            if FileManager.default.fileExists(atPath: databaseURL.path) {
-                _ = try FileManager.default.replaceItemAt(databaseURL, withItemAt: pendingURL)
-            } else {
-                try FileManager.default.moveItem(at: pendingURL, to: databaseURL)
+        self.commitPendingFile =
+            commitPendingFile ?? { pendingURL, databaseURL in
+                if FileManager.default.fileExists(atPath: databaseURL.path) {
+                    _ = try FileManager.default.replaceItemAt(databaseURL, withItemAt: pendingURL)
+                } else {
+                    try FileManager.default.moveItem(at: pendingURL, to: databaseURL)
+                }
             }
-        }
     }
 
     func load() throws -> MACVendorDatabase? {
@@ -134,7 +135,7 @@ actor MACVendorDatabaseStore {
                 while true {
                     try Task.checkCancellation()
                     guard let chunk = try handle.read(upToCount: 64 * 1_024),
-                          !chunk.isEmpty
+                        !chunk.isEmpty
                     else { break }
                     guard chunk.count <= maximumFileBytes - fileData.count else {
                         throw MACVendorDatabaseError.fileTooLarge(

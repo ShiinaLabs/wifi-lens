@@ -141,11 +141,13 @@ struct NetworkFingerprint: Equatable, Sendable {
             || selectedInterfaceIndex != previous.selectedInterfaceIndex
             || selectedGateway != previous.selectedGateway
             || ipv4PrimaryServiceIdentity != previous.ipv4PrimaryServiceIdentity
-            || ipv6PrimaryServiceIdentity != previous.ipv6PrimaryServiceIdentity {
+            || ipv6PrimaryServiceIdentity != previous.ipv6PrimaryServiceIdentity
+        {
             return .route
         }
         if selectedInterfaceAddresses != previous.selectedInterfaceAddresses
-            || selectedInterfaceSubnets != previous.selectedInterfaceSubnets {
+            || selectedInterfaceSubnets != previous.selectedInterfaceSubnets
+        {
             return .address
         }
         if dnsSettingsHash != previous.dnsSettingsHash {
@@ -232,7 +234,8 @@ enum NetworkTunnelInterfaceClassifier {
         tunnelInterfaces: [String]
     ) -> String? {
         guard let activeInterfaceName,
-              tunnelInterfaces.contains(activeInterfaceName) else {
+            tunnelInterfaces.contains(activeInterfaceName)
+        else {
             return nil
         }
         return activeInterfaceName
@@ -301,9 +304,10 @@ struct SystemNetworkPathFingerprintSource: NetworkPathFingerprintSourcing {
                 continuation.yield(Self.fingerprint(for: path))
             }
             continuation.onTermination = { _ in monitor.cancel() }
-            monitor.start(queue: DispatchQueue(
-                label: "io.github.kaoru.wifi-lens.network-diagnostics.fingerprint-path"
-            ))
+            monitor.start(
+                queue: DispatchQueue(
+                    label: "io.github.kaoru.wifi-lens.network-diagnostics.fingerprint-path"
+                ))
         }
     }
 
@@ -360,9 +364,10 @@ struct SystemNetworkFingerprintSettingsReader: NetworkFingerprintSettingsReading
     }
 
     static func proxySettingsHash(for settings: [String: Any]) -> UInt64 {
-        let staticSettings = Dictionary(uniqueKeysWithValues: Self.staticProxyKeys.compactMap { key in
-            settings[key].map { (key, $0) }
-        })
+        let staticSettings = Dictionary(
+            uniqueKeysWithValues: Self.staticProxyKeys.compactMap { key in
+                settings[key].map { (key, $0) }
+            })
         return StableNetworkSettingsHash.value(for: staticSettings)
     }
 }
@@ -544,8 +549,8 @@ private enum StableNetworkSettingsHash {
     }
 }
 
-private extension NWInterface.InterfaceType {
-    var fingerprintName: String {
+extension NWInterface.InterfaceType {
+    fileprivate var fingerprintName: String {
         switch self {
         case .wifi: "wifi"
         case .wiredEthernet: "wiredEthernet"
@@ -557,8 +562,8 @@ private extension NWInterface.InterfaceType {
     }
 }
 
-private extension NWPath.Status {
-    var fingerprintState: NetworkPathState {
+extension NWPath.Status {
+    fileprivate var fingerprintState: NetworkPathState {
         switch self {
         case .satisfied: .satisfied
         case .unsatisfied: .unsatisfied

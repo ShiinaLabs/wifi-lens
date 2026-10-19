@@ -111,7 +111,8 @@ public final class WiFiObservationStore: ObservableObject {
         validityExpiryTask = Task { @MainActor [weak self] in
             do { try await Task.sleep(for: .seconds(Self.currentValueMaximumAge)) } catch { return }
             guard let self, currentObservation?.timestamp == observationTimestamp,
-                  currentObservation?.sourceCycleID == observationCycleID else { return }
+                currentObservation?.sourceCycleID == observationCycleID
+            else { return }
             expireCurrentValuesIfNeeded(at: Date())
         }
         return true
@@ -121,18 +122,21 @@ public final class WiFiObservationStore: ObservableObject {
     /// `history`; after the age limit, a current value is explicitly expired.
     public func validity(at date: Date = Date(), maximumAge: TimeInterval = 15) -> WiFiObservationValidity? {
         guard let validity, let currentObservation else { return validity }
-        var result = date.timeIntervalSince(currentObservation.timestamp) > maximumAge
+        var result =
+            date.timeIntervalSince(currentObservation.timestamp) > maximumAge
             ? expired(validity)
             : validity
         guard isScanningEnvironment,
-              let scanLifecycleStartedAt,
-              currentObservation.timestamp >= scanLifecycleStartedAt else {
+            let scanLifecycleStartedAt,
+            currentObservation.timestamp >= scanLifecycleStartedAt
+        else {
             result = WiFiObservationValidity(
                 currentStatus: result.currentStatus,
                 gatewayLatency: result.gatewayLatency == .current ? .expired : result.gatewayLatency,
                 environment: result.environment == .current ? .expired : result.environment,
                 channelAnalysis: result.channelAnalysis == .current ? .expired : result.channelAnalysis,
-                channelRecommendation: result.channelRecommendation == .current ? .expired : result.channelRecommendation,
+                channelRecommendation: result.channelRecommendation == .current
+                    ? .expired : result.channelRecommendation,
                 quality: result.quality == .current ? .expired : result.quality,
                 diagnosis: result.diagnosis == .current ? .expired : result.diagnosis
             )
@@ -145,8 +149,9 @@ public final class WiFiObservationStore: ObservableObject {
     /// observation arrives. Historical observations remain untouched.
     func expireCurrentValuesIfNeeded(at date: Date) {
         guard let currentValidity = validity,
-              let currentObservation,
-              date.timeIntervalSince(currentObservation.timestamp) > Self.currentValueMaximumAge else { return }
+            let currentObservation,
+            date.timeIntervalSince(currentObservation.timestamp) > Self.currentValueMaximumAge
+        else { return }
         validity = expired(currentValidity)
     }
 
@@ -156,7 +161,8 @@ public final class WiFiObservationStore: ObservableObject {
             gatewayLatency: validity.gatewayLatency == .current ? .expired : validity.gatewayLatency,
             environment: validity.environment == .current ? .expired : validity.environment,
             channelAnalysis: validity.channelAnalysis == .current ? .expired : validity.channelAnalysis,
-            channelRecommendation: validity.channelRecommendation == .current ? .expired : validity.channelRecommendation,
+            channelRecommendation: validity.channelRecommendation == .current
+                ? .expired : validity.channelRecommendation,
             quality: validity.quality == .current ? .expired : validity.quality,
             diagnosis: validity.diagnosis == .current ? .expired : validity.diagnosis
         )
@@ -164,12 +170,14 @@ public final class WiFiObservationStore: ObservableObject {
 
     private static func validity(for observation: WiFiObservation) -> WiFiObservationValidity {
         let environmentFailed = observation.environmentSnapshot?.error != nil
-        let environment: WiFiObservationFieldValidity = observation.environmentSnapshot.map { $0.error == nil ? .current : .failed } ?? .notTested
+        let environment: WiFiObservationFieldValidity =
+            observation.environmentSnapshot.map { $0.error == nil ? .current : .failed } ?? .notTested
         func derived<T>(_ value: T?) -> WiFiObservationFieldValidity {
             if value != nil { return .current }
             return environmentFailed ? .failed : .notTested
         }
-        let status: WiFiObservationFieldValidity = observation.currentStatus.map { $0.error == nil ? .current : .failed } ?? .notTested
+        let status: WiFiObservationFieldValidity =
+            observation.currentStatus.map { $0.error == nil ? .current : .failed } ?? .notTested
         let latency: WiFiObservationFieldValidity
         if let result = observation.gatewayLatency {
             switch result.probeOutcome {

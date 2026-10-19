@@ -20,7 +20,8 @@ public enum SidebarPage: String, CaseIterable, Sendable {
 
     public var requiresLocationAuthorization: Bool {
         switch self {
-        case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
+        case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights,
+            .networkDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -29,7 +30,8 @@ public enum SidebarPage: String, CaseIterable, Sendable {
 
     public var requiresWiFi: Bool {
         switch self {
-        case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights, .networkDiagnostics, .wifiCallingTest:
+        case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights,
+            .networkDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -42,14 +44,18 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .spectrum: String(localized: "nav.spectrum", comment: "Spectrum sidebar navigation item")
         case .channels: String(localized: "nav.channels", comment: "Channels sidebar navigation item")
         case .interfaces: String(localized: "nav.interfaces", comment: "Interfaces sidebar navigation item")
-        case .networkDiagnostics: String(localized: "nav.network_diagnostics", comment: "Network Self-Check sidebar navigation item")
-        case .wifiCallingTest: String(localized: "nav.wifi_calling_test", comment: "Wi-Fi Calling Test sidebar navigation item")
+        case .networkDiagnostics:
+            String(localized: "nav.network_diagnostics", comment: "Network Self-Check sidebar navigation item")
+        case .wifiCallingTest:
+            String(localized: "nav.wifi_calling_test", comment: "Wi-Fi Calling Test sidebar navigation item")
         case .roaming: String(localized: "nav.roaming_test", comment: "Roaming Test sidebar navigation item")
         case .bleScanner: String(localized: "nav.ble_scanner", comment: "BLE Scanner sidebar navigation item")
         case .apRadar: String(localized: "nav.apRadar", comment: "AP Radar sidebar navigation item")
         case .timeline: String(localized: "nav.timeline", comment: "Timeline sidebar navigation item")
-        case .networkExperience: String(localized: "nav.network_experience", comment: "Network Experience sidebar navigation item")
-        case .problemHistory: String(localized: "nav.problem_history", comment: "Problem history sidebar navigation item")
+        case .networkExperience:
+            String(localized: "nav.network_experience", comment: "Network Experience sidebar navigation item")
+        case .problemHistory:
+            String(localized: "nav.problem_history", comment: "Problem history sidebar navigation item")
         case .statistics: String(localized: "nav.statistics", comment: "Statistics sidebar navigation item")
         case .insights: String(localized: "nav.insights", comment: "Insights sidebar navigation item")
         case .settings: String(localized: "common.action.settings", comment: "Settings button or menu item")
@@ -133,17 +139,30 @@ public struct SecondaryToolbarDescriptor: Equatable, Sendable {
         case .channels:
             Self(
                 items: [
-                    SecondaryToolbarItem(id: .channelsSimple, title: String(localized: "channels.mode.simple", comment: "Simple view mode for channel quality")),
-                    SecondaryToolbarItem(id: .channelsTable, title: String(localized: "channels.mode.professional", comment: "Professional view mode for channel quality")),
+                    SecondaryToolbarItem(
+                        id: .channelsSimple,
+                        title: String(
+                            localized: "channels.mode.simple", comment: "Simple view mode for channel quality")),
+                    SecondaryToolbarItem(
+                        id: .channelsTable,
+                        title: String(
+                            localized: "channels.mode.professional",
+                            comment: "Professional view mode for channel quality")),
                 ],
                 defaultSelection: .channelsSimple
             )
         case .interfaces:
             Self(
                 items: [
-                    SecondaryToolbarItem(id: .interfacesSimple, title: String(localized: "channels.mode.simple", comment: "Simple view mode for interfaces")),
-                    SecondaryToolbarItem(id: .interfacesDetails, title: String(localized: "common.label.details", comment: "Details view mode label")),
-                    SecondaryToolbarItem(id: .interfacesMonitor, title: String(localized: "interfaces.mode.monitor", comment: "Throughput monitor view mode")),
+                    SecondaryToolbarItem(
+                        id: .interfacesSimple,
+                        title: String(localized: "channels.mode.simple", comment: "Simple view mode for interfaces")),
+                    SecondaryToolbarItem(
+                        id: .interfacesDetails,
+                        title: String(localized: "common.label.details", comment: "Details view mode label")),
+                    SecondaryToolbarItem(
+                        id: .interfacesMonitor,
+                        title: String(localized: "interfaces.mode.monitor", comment: "Throughput monitor view mode")),
                 ],
                 defaultSelection: .interfacesSimple
             )
@@ -179,8 +198,12 @@ public struct SecondaryToolbarDescriptor: Equatable, Sendable {
     public static func spectrum(recordingLocked: Bool) -> Self {
         Self(
             items: [
-                SecondaryToolbarItem(id: .spectrumLive, title: String(localized: "spectrum.mode.live", comment: "Live spectrum mode")),
-                SecondaryToolbarItem(id: .spectrumRecording, title: String(localized: "spectrum.mode.recording_page", comment: "Recording page mode"), isLocked: recordingLocked),
+                SecondaryToolbarItem(
+                    id: .spectrumLive, title: String(localized: "spectrum.mode.live", comment: "Live spectrum mode")),
+                SecondaryToolbarItem(
+                    id: .spectrumRecording,
+                    title: String(localized: "spectrum.mode.recording_page", comment: "Recording page mode"),
+                    isLocked: recordingLocked),
             ],
             defaultSelection: .spectrumLive
         )
@@ -189,10 +212,18 @@ public struct SecondaryToolbarDescriptor: Equatable, Sendable {
     public static func timeline(defaultSelection: SecondaryToolbarItemID) -> Self {
         Self(
             items: [
-                SecondaryToolbarItem(id: .timelineAll, title: String(localized: "timeline.filter.all", comment: "Timeline all-time range filter")),
-                SecondaryToolbarItem(id: .timelineToday, title: String(localized: "timeline.filter.today", comment: "Timeline today range filter")),
-                SecondaryToolbarItem(id: .timelineThisWeek, title: String(localized: "timeline.filter.this_week", comment: "Timeline this-week range filter")),
-                SecondaryToolbarItem(id: .timelineCustom, title: String(localized: "timeline.filter.custom", comment: "Timeline custom range filter")),
+                SecondaryToolbarItem(
+                    id: .timelineAll,
+                    title: String(localized: "timeline.filter.all", comment: "Timeline all-time range filter")),
+                SecondaryToolbarItem(
+                    id: .timelineToday,
+                    title: String(localized: "timeline.filter.today", comment: "Timeline today range filter")),
+                SecondaryToolbarItem(
+                    id: .timelineThisWeek,
+                    title: String(localized: "timeline.filter.this_week", comment: "Timeline this-week range filter")),
+                SecondaryToolbarItem(
+                    id: .timelineCustom,
+                    title: String(localized: "timeline.filter.custom", comment: "Timeline custom range filter")),
             ],
             defaultSelection: defaultSelection
         )

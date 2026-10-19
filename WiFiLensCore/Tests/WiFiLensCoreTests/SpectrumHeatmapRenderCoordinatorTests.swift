@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite @MainActor struct SpectrumHeatmapRenderCoordinatorTests {
@@ -28,12 +29,14 @@ import Testing
             model: SpectrumHeatmapModel(
                 band: .band24GHz,
                 channels: [marker],
-                envelopes: [SpectrumHeatmapEnvelope(
-                    leftX: Double(marker),
-                    rightX: Double(marker + 1),
-                    peakRSSI: -50,
-                    baselineRSSI: -100
-                )]
+                envelopes: [
+                    SpectrumHeatmapEnvelope(
+                        leftX: Double(marker),
+                        rightX: Double(marker + 1),
+                        peakRSSI: -50,
+                        baselineRSSI: -100
+                    )
+                ]
             ),
             domain: SpectrumHeatmapChannelDomain(minChannelCoordinate: 1, maxChannelCoordinate: 16),
             rssiRange: -100...(-30),
@@ -69,8 +72,8 @@ private struct DelayedHeatmapBackend: SpectrumHeatmapComputeBackend, Sendable {
     }
 }
 
-private extension SpectrumHeatmapComputeInput {
-    var modelMarker: Int {
+extension SpectrumHeatmapComputeInput {
+    fileprivate var modelMarker: Int {
         Int(envelopes.first?.leftX ?? 0)
     }
 }

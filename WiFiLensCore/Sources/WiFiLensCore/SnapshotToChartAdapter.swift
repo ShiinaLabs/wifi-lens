@@ -1,6 +1,6 @@
+import ChartLens
 import Foundation
 import SwiftUI
-import ChartLens
 
 /// Converts recorded NetworkSnapshot data into ChartSeriesData for history playback.
 /// Mirrors ChannelSeriesDataBuilder.toSeriesData() but operates on snapshots instead of WiFiNetwork.
@@ -60,10 +60,10 @@ enum SnapshotToChartAdapter {
             let trend = trends[bssid]
             let arrow: String = {
                 switch trend?.direction {
-                case .up:     return "▲"
-                case .down:   return "▼"
+                case .up: return "▲"
+                case .down: return "▼"
                 case .stable: return "●"
-                case .none:   return ""
+                case .none: return ""
                 }
             }()
 

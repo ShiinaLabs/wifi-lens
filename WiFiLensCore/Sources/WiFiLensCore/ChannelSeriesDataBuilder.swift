@@ -36,10 +36,10 @@ enum ChannelSeriesDataBuilder {
             let trend = trends[nw.bssid]
             let arrow: String = {
                 switch trend?.direction {
-                case .up:     return "▲"
-                case .down:   return "▼"
+                case .up: return "▲"
+                case .down: return "▼"
                 case .stable: return "●"
-                case .none:   return ""
+                case .none: return ""
                 }
             }()
 

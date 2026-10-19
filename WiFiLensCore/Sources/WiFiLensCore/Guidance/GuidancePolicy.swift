@@ -72,7 +72,8 @@ enum GuidancePolicy {
             return .none(.activeDaysThresholdNotMet)
         }
         if let lastInvitationDate = state.lastInvitationDate,
-           daysSince(lastInvitationDate, now: now, calendar: calendar) < config.invitationCooldownDays {
+            daysSince(lastInvitationDate, now: now, calendar: calendar) < config.invitationCooldownDays
+        {
             return .none(.invitationCooldown)
         }
         guard state.invitationPresentationCount < config.maxAutomaticInvitations else {
@@ -89,7 +90,8 @@ enum GuidancePolicy {
         appVersion: String
     ) -> GuidanceDecision {
         guard let firstLaunchDate = state.firstLaunchDate,
-              daysSince(firstLaunchDate, now: now, calendar: calendar) >= config.minimumReviewAgeDays else {
+            daysSince(firstLaunchDate, now: now, calendar: calendar) >= config.minimumReviewAgeDays
+        else {
             return .none(.firstLaunchAgeNotMet)
         }
         guard state.activeDays.count >= config.minimumReviewActiveDays else {
@@ -102,7 +104,8 @@ enum GuidancePolicy {
             return .none(.reviewAlreadyRequestedForVersion)
         }
         if let lastReviewRequestDate = state.lastReviewRequestDate,
-           daysSince(lastReviewRequestDate, now: now, calendar: calendar) < config.reviewCooldownDays {
+            daysSince(lastReviewRequestDate, now: now, calendar: calendar) < config.reviewCooldownDays
+        {
             return .none(.reviewCooldown)
         }
         return .requestReview

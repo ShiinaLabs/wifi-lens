@@ -24,22 +24,35 @@ struct ReasonPopover: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(String(localized: "channels.reason.popover.title",
-                                   comment: "Title for recommendation reason popover"))
+        .accessibilityLabel(
+            String(
+                localized: "channels.reason.popover.title",
+                comment: "Title for recommendation reason popover")
+        )
         .onHover { hovering in
             withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) {
                 isHovering = hovering
             }
             if !hovering { isTapped = false }
         }
-        .popover(isPresented: Binding<Bool>(
-            get: { isHovering || isTapped },
-            set: { newValue in if !newValue { isTapped = false; isHovering = false } }
-        ), arrowEdge: .trailing) {
+        .popover(
+            isPresented: Binding<Bool>(
+                get: { isHovering || isTapped },
+                set: { newValue in
+                    if !newValue {
+                        isTapped = false
+                        isHovering = false
+                    }
+                }
+            ), arrowEdge: .trailing
+        ) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(String(localized: "channels.reason.popover.title",
-                            comment: "Title for recommendation reason popover"))
-                    .font(.caption.weight(.semibold))
+                Text(
+                    String(
+                        localized: "channels.reason.popover.title",
+                        comment: "Title for recommendation reason popover")
+                )
+                .font(.caption.weight(.semibold))
 
                 ForEach(reasons, id: \.self) { reason in
                     HStack(alignment: .top, spacing: 6) {

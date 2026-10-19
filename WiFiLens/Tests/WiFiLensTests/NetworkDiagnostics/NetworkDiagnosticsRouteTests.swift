@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -9,13 +10,13 @@ extension NetworkDiagnosticsTests {
     @Test("IPv6 route parser recognizes an active default route")
     func ipv6RouteParserRecognizesActiveDefaultRoute() {
         let output = """
-        route to: ::
-        destination: ::
-        mask: default
-        gateway: fdfe:dcba:9876::
-        interface: utun6
-        flags: <UP,GATEWAY,DONE,PRCLONING,GLOBAL>
-        """
+            route to: ::
+            destination: ::
+            mask: default
+            gateway: fdfe:dcba:9876::
+            interface: utun6
+            flags: <UP,GATEWAY,DONE,PRCLONING,GLOBAL>
+            """
 
         #expect(
             DiagnosticIPv6RouteParser.parse(
@@ -28,24 +29,27 @@ extension NetworkDiagnosticsTests {
     @Test("route selection follows the kernel-selected interface")
     func routeSelectionUsesKernelInterface() {
         let output = """
-           route to: default
-        destination: default
-               mask: default
-            gateway: 192.0.2.1
-          interface: en7
-              flags: <UP,GATEWAY,DONE,STATIC,PRCLONING,GLOBAL>
-        """
+               route to: default
+            destination: default
+                   mask: default
+                gateway: 192.0.2.1
+              interface: en7
+                  flags: <UP,GATEWAY,DONE,STATIC,PRCLONING,GLOBAL>
+            """
 
         let result = DiagnosticRouteParser.parse(
             output: output,
             interfaceIndices: ["en0": 4, "en7": 12]
         )
 
-        #expect(result == .selected(.init(
-            interfaceName: "en7",
-            interfaceIndex: 12,
-            address: "192.0.2.1"
-        )))
+        #expect(
+            result
+                == .selected(
+                    .init(
+                        interfaceName: "en7",
+                        interfaceIndex: 12,
+                        address: "192.0.2.1"
+                    )))
 
         let firstOrder = DiagnosticRouteParser.parse(
             output: output,
@@ -57,28 +61,34 @@ extension NetworkDiagnosticsTests {
         )
 
         #expect(firstOrder == reversedOrder)
-        #expect(firstOrder == .selected(.init(
-            interfaceName: "en7",
-            interfaceIndex: 12,
-            address: "192.0.2.1"
-        )))
-        #expect(DiagnosticRouteParser.parse(
-            output: output,
-            interfaceIndices: ["en0": 4, "en7": 12]
-        ) == .selected(.init(
-            interfaceName: "en7",
-            interfaceIndex: 12,
-            address: "192.0.2.1"
-        )))
+        #expect(
+            firstOrder
+                == .selected(
+                    .init(
+                        interfaceName: "en7",
+                        interfaceIndex: 12,
+                        address: "192.0.2.1"
+                    )))
+        #expect(
+            DiagnosticRouteParser.parse(
+                output: output,
+                interfaceIndices: ["en0": 4, "en7": 12]
+            )
+                == .selected(
+                    .init(
+                        interfaceName: "en7",
+                        interfaceIndex: 12,
+                        address: "192.0.2.1"
+                    )))
     }
 
     @Test("route parser recognizes an active tunnel default without a gateway")
     func routeParserRecognizesTunnelDefaultWithoutGateway() {
         let output = """
-        destination: default
-        interface: utun6
-        flags: <UP,DONE,CLONING,STATIC,GLOBAL>
-        """
+            destination: default
+            interface: utun6
+            flags: <UP,DONE,CLONING,STATIC,GLOBAL>
+            """
 
         let result = DiagnosticRouteParser.parse(
             output: output,
@@ -91,17 +101,18 @@ extension NetworkDiagnosticsTests {
     @Test("route parser rejects invalid, ambiguous, and unsupported default routes")
     func routeParserRejectsInvalidDefaultRoutes() {
         let ambiguousOutput = """
-        destination: default
-        gateway: 192.0.2.1
-        gateway: 192.0.2.254
-        interface: en7
-        flags: <UP,GATEWAY>
-        """
+            destination: default
+            gateway: 192.0.2.1
+            gateway: 192.0.2.254
+            interface: en7
+            flags: <UP,GATEWAY>
+            """
 
-        #expect(DiagnosticRouteParser.parse(
-            output: ambiguousOutput,
-            interfaceIndices: ["en7": 12]
-        ) == .ambiguous)
+        #expect(
+            DiagnosticRouteParser.parse(
+                output: ambiguousOutput,
+                interfaceIndices: ["en7": 12]
+            ) == .ambiguous)
 
         let addresses = ["0.0.0.0", "224.0.0.1", "255.255.255.255", "not-an-ip"]
 
@@ -117,39 +128,44 @@ extension NetworkDiagnosticsTests {
         let linkLayer = "destination: default\ngateway: link#4\ninterface: en7\nflags: <UP,GATEWAY>"
         let tunnel = "destination: default\ngateway: 192.0.2.1\ninterface: utun3\nflags: <UP,GATEWAY>"
 
-        #expect(DiagnosticRouteParser.parse(
-            output: linkLayer,
-            interfaceIndices: ["en7": 12]
-        ) == .unsupported)
-        #expect(DiagnosticRouteParser.parse(
-            output: tunnel,
-            interfaceIndices: ["utun3": 20]
-        ) == .tunneled(.init(interfaceName: "utun3", interfaceIndex: 20)))
+        #expect(
+            DiagnosticRouteParser.parse(
+                output: linkLayer,
+                interfaceIndices: ["en7": 12]
+            ) == .unsupported)
+        #expect(
+            DiagnosticRouteParser.parse(
+                output: tunnel,
+                interfaceIndices: ["utun3": 20]
+            ) == .tunneled(.init(interfaceName: "utun3", interfaceIndex: 20)))
 
         let missingRouteOutput = "gateway: 192.0.2.1\ninterface: en7\nflags: <UP,GATEWAY>"
 
-        #expect(DiagnosticRouteParser.parse(
-            output: missingRouteOutput,
-            interfaceIndices: ["en7": 12]
-        ) == .unavailable)
+        #expect(
+            DiagnosticRouteParser.parse(
+                output: missingRouteOutput,
+                interfaceIndices: ["en7": 12]
+            ) == .unavailable)
 
         let records = [
             "destination: default\ngateway: 192.0.2.1\ninterface: en7\nflags: <GATEWAY>",
             "destination: default\ngateway: 192.0.2.1\ninterface: en7\nflags: <UP>",
-            "destination: default\ngateway: 192.0.2.1\ninterface: en7\nflags: <>"
+            "destination: default\ngateway: 192.0.2.1\ninterface: en7\nflags: <>",
         ]
 
         for output in records {
-            #expect(DiagnosticRouteParser.parse(
-                output: output,
-                interfaceIndices: ["en7": 12]
-            ) == .unavailable)
+            #expect(
+                DiagnosticRouteParser.parse(
+                    output: output,
+                    interfaceIndices: ["en7": 12]
+                ) == .unavailable)
         }
 
-        #expect(DiagnosticRouteParser.parse(
-            output: "destination: default\ngateway: 192.0.2.1\ninterface: en7\nflags: <UP,GATEWAY>",
-            interfaceIndices: ["en0": 4]
-        ) == .unavailable)
+        #expect(
+            DiagnosticRouteParser.parse(
+                output: "destination: default\ngateway: 192.0.2.1\ninterface: en7\nflags: <UP,GATEWAY>",
+                interfaceIndices: ["en0": 4]
+            ) == .unavailable)
     }
 
     @Test("route command timeout terminates the child without waiting for EOF")
@@ -181,9 +197,10 @@ extension NetworkDiagnosticsTests {
         _ = await pinger.ping(target: target)
 
         #expect(await runner.executablePath == "/sbin/ping")
-        #expect(await runner.arguments == [
-            "-b", "en7", "-c", "1", "-W", "1000", "192.0.2.1"
-        ])
+        #expect(
+            await runner.arguments == [
+                "-b", "en7", "-c", "1", "-W", "1000", "192.0.2.1",
+            ])
     }
 
     @Test("overlapping gateway pings cancel only their own attempts")
@@ -217,11 +234,12 @@ extension NetworkDiagnosticsTests {
     func contextualChecksShareSelectedRouteTarget() async {
         let context = makeDiagnosticContext(
             pathState: .satisfied,
-            route: .selected(.init(
-                interfaceName: "en7",
-                interfaceIndex: 12,
-                address: "192.0.2.1"
-            )),
+            route: .selected(
+                .init(
+                    interfaceName: "en7",
+                    interfaceIndex: 12,
+                    address: "192.0.2.1"
+                )),
             interfaces: [
                 makeNetworkInterface(name: "en0", router: "192.0.2.1"),
                 makeNetworkInterface(name: "en7", router: "192.0.2.1"),
@@ -239,9 +257,10 @@ extension NetworkDiagnosticsTests {
         #expect(pathResult.evidence.contains(.init(code: "path.interface", value: "en7")))
         #expect(pathResult.evidence.contains(.init(code: "path.gateway", value: "192.0.2.1")))
         #expect(gatewayResult.evidence.contains(.init(code: "gateway.interface", value: "en7")))
-        #expect(await gateway.targets == [
-            .init(interfaceName: "en7", interfaceIndex: 12, address: "192.0.2.1")
-        ])
+        #expect(
+            await gateway.targets == [
+                .init(interfaceName: "en7", interfaceIndex: 12, address: "192.0.2.1")
+            ])
     }
 
     @Test("VPN route probes the uniquely identified physical underlay gateway")
@@ -265,9 +284,10 @@ extension NetworkDiagnosticsTests {
         #expect(result.evidence.contains(.init(code: "gateway.probe-scope", value: "underlying-lan")))
         #expect(result.evidence.contains(.init(code: "gateway.interface", value: "en0")))
         #expect(result.evidence.contains(.init(code: "gateway.address", value: "192.0.2.1")))
-        #expect(await gateway.targets == [
-            .init(interfaceName: "en0", interfaceIndex: 4, address: "192.0.2.1")
-        ])
+        #expect(
+            await gateway.targets == [
+                .init(interfaceName: "en0", interfaceIndex: 4, address: "192.0.2.1")
+            ])
     }
 
     @Test("VPN route skips gateway probing when no physical underlay gateway is identifiable")
@@ -292,11 +312,12 @@ extension NetworkDiagnosticsTests {
 
     @Test("context capture accepts a stable route")
     func diagnosticContextCaptureAcceptsStableRoute() async {
-        let route = DiagnosticRouteSelection.selected(.init(
-            interfaceName: "en7",
-            interfaceIndex: 12,
-            address: "192.0.2.1"
-        ))
+        let route = DiagnosticRouteSelection.selected(
+            .init(
+                interfaceName: "en7",
+                interfaceIndex: 12,
+                address: "192.0.2.1"
+            ))
         let routeSource = SequencedDiagnosticRouteSource(values: [route, route])
         let source = SystemDiagnosticNetworkContextSource(
             routeSource: routeSource,
@@ -313,16 +334,18 @@ extension NetworkDiagnosticsTests {
 
     @Test("context capture does not publish a conflicting route")
     func diagnosticContextCaptureRejectsChangingRoute() async {
-        let first = DiagnosticRouteSelection.selected(.init(
-            interfaceName: "en0",
-            interfaceIndex: 4,
-            address: "192.0.2.1"
-        ))
-        let second = DiagnosticRouteSelection.selected(.init(
-            interfaceName: "en7",
-            interfaceIndex: 12,
-            address: "192.0.2.1"
-        ))
+        let first = DiagnosticRouteSelection.selected(
+            .init(
+                interfaceName: "en0",
+                interfaceIndex: 4,
+                address: "192.0.2.1"
+            ))
+        let second = DiagnosticRouteSelection.selected(
+            .init(
+                interfaceName: "en7",
+                interfaceIndex: 12,
+                address: "192.0.2.1"
+            ))
         let routeSource = SequencedDiagnosticRouteSource(values: [first, second, first, second])
         let source = SystemDiagnosticNetworkContextSource(
             routeSource: routeSource,
@@ -380,7 +403,9 @@ extension NetworkDiagnosticsTests {
         #expect(satisfied.id == .path)
         #expect(satisfied.status == .normal)
         #expect(await NetworkConnectivityCheck(pathSource: StubPathSource(.unsatisfied)).run().status == .abnormal)
-        #expect(await NetworkConnectivityCheck(pathSource: StubPathSource(.requiresConnection)).run().status == .indeterminate)
+        #expect(
+            await NetworkConnectivityCheck(pathSource: StubPathSource(.requiresConnection)).run().status
+                == .indeterminate)
         #expect(await NetworkConnectivityCheck(pathSource: StubPathSource(nil)).run().status == .indeterminate)
     }
 
@@ -388,12 +413,13 @@ extension NetworkDiagnosticsTests {
     func gatewayReachabilityOutcomeMatrix() async {
         let replied = await GatewayReachabilityCheck(
             interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: "192.0.2.1")),
-            gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
-                timestamp: Date(),
-                routerIP: "192.0.2.1",
-                latencyMs: 2.5,
-                probeOutcome: .replied(milliseconds: 2.5)
-            ))
+            gatewayLatency: StubGatewayLatencyProvider(
+                result: GatewayLatencyResult(
+                    timestamp: Date(),
+                    routerIP: "192.0.2.1",
+                    latencyMs: 2.5,
+                    probeOutcome: .replied(milliseconds: 2.5)
+                ))
         ).run()
 
         #expect(replied.id == .gatewayReachability)
@@ -403,12 +429,13 @@ extension NetworkDiagnosticsTests {
 
         let unverifiedNoReply = await GatewayReachabilityCheck(
             interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: "192.0.2.1")),
-            gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
-                timestamp: Date(),
-                routerIP: "192.0.2.1",
-                error: .gatewayPingFailed("192.0.2.1"),
-                probeOutcome: .noReply
-            ))
+            gatewayLatency: StubGatewayLatencyProvider(
+                result: GatewayLatencyResult(
+                    timestamp: Date(),
+                    routerIP: "192.0.2.1",
+                    error: .gatewayPingFailed("192.0.2.1"),
+                    probeOutcome: .noReply
+                ))
         ).run()
 
         #expect(unverifiedNoReply.status == .indeterminate)
@@ -418,11 +445,12 @@ extension NetworkDiagnosticsTests {
 
         let missingRouter = await GatewayReachabilityCheck(
             interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: nil)),
-            gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
-                timestamp: Date(),
-                error: .missingRouterIP,
-                probeOutcome: .notTested
-            ))
+            gatewayLatency: StubGatewayLatencyProvider(
+                result: GatewayLatencyResult(
+                    timestamp: Date(),
+                    error: .missingRouterIP,
+                    probeOutcome: .notTested
+                ))
         ).run()
 
         #expect(missingRouter.status == .indeterminate)
@@ -449,10 +477,12 @@ extension NetworkDiagnosticsTests {
             ).run()
             #expect(result.status == expectedStatus)
             if detailKey != nil {
-                #expect(result.detail == String(
-                    localized: "network_diagnostics.gateway.no_response",
-                    comment: "Expected explicit no-response detail"
-                ))
+                #expect(
+                    result.detail
+                        == String(
+                            localized: "network_diagnostics.gateway.no_response",
+                            comment: "Expected explicit no-response detail"
+                        ))
             } else {
                 #expect(result.detail == nil)
             }
@@ -543,10 +573,12 @@ extension NetworkDiagnosticsTests {
             routeSource: nil
         ).run()
         #expect(confirmed.status == .indeterminate)
-        #expect(confirmed.detail == String(
-            localized: "network_diagnostics.gateway.no_response",
-            comment: "Expected explicit no-response detail"
-        ))
+        #expect(
+            confirmed.detail
+                == String(
+                    localized: "network_diagnostics.gateway.no_response",
+                    comment: "Expected explicit no-response detail"
+                ))
         #expect(confirmed.evidence.contains(.init(code: "gateway.no-response", value: "192.0.2.1")))
     }
 
@@ -554,12 +586,13 @@ extension NetworkDiagnosticsTests {
     func typedExecutionFailureOverridesLegacyGatewayError() async {
         let result = await GatewayReachabilityCheck(
             interfaceSource: StubNetworkInterfaceSource(interface: makeNetworkInterface(router: "192.0.2.1")),
-            gatewayLatency: StubGatewayLatencyProvider(result: GatewayLatencyResult(
-                timestamp: Date(),
-                routerIP: "192.0.2.1",
-                error: .gatewayPingFailed("192.0.2.1"),
-                probeOutcome: .executionFailed
-            ))
+            gatewayLatency: StubGatewayLatencyProvider(
+                result: GatewayLatencyResult(
+                    timestamp: Date(),
+                    routerIP: "192.0.2.1",
+                    error: .gatewayPingFailed("192.0.2.1"),
+                    probeOutcome: .executionFailed
+                ))
         ).run()
 
         #expect(result.status == .indeterminate)

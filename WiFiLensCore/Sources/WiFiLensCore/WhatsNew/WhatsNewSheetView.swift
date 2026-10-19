@@ -139,7 +139,8 @@ public struct WhatsNewSheetView: View {
             return nil
         }
         guard let data = try? Data(contentsOf: url),
-              let markdown = String(data: data, encoding: .utf8) else {
+            let markdown = String(data: data, encoding: .utf8)
+        else {
             return nil
         }
         // The sheet header supplies the title and version, so drop a leading
@@ -194,21 +195,23 @@ enum ReleaseNotesLanguageResolver {
 
         let normalizedSubtags = subtags.dropFirst().map { $0.lowercased() }
         if normalizedSubtags.contains("hant") || normalizedSubtags.contains("tw")
-            || normalizedSubtags.contains("hk") || normalizedSubtags.contains("mo") {
+            || normalizedSubtags.contains("hk") || normalizedSubtags.contains("mo")
+        {
             return ["zh-Hant", "zh-Hans"]
         }
         if normalizedSubtags.contains("hans") || normalizedSubtags.contains("cn")
-            || normalizedSubtags.contains("sg") {
+            || normalizedSubtags.contains("sg")
+        {
             return ["zh-Hans", "zh-Hant"]
         }
         return ["zh-Hans", "zh-Hant"]
     }
 }
 
-private extension Bundle {
+extension Bundle {
     /// Returns the URL for the release notes file matching the given language code,
     /// falling back to English if no match exists.
-    func url(forReleaseNotesLanguage languageCode: String?) -> URL? {
+    fileprivate func url(forReleaseNotesLanguage languageCode: String?) -> URL? {
         let languages: [String]
         if let code = languageCode {
             languages = [code, "en"]

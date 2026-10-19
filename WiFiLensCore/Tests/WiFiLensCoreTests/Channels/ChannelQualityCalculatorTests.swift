@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WiFiLensCore
 
 struct ChannelQualityCalculatorTests {
@@ -61,24 +62,30 @@ struct ChannelQualityCalculatorTests {
 
     @Test func nonContiguous80Plus80Uses80MHzScalarFallback() async throws {
         let width80 = ChannelQualityCalculator.compute(
-            aps: [ChannelQualityCalculator.APInfo(
-                channel: 44, rssi: -30, channelWidth: "80", band: "5"
-            )],
+            aps: [
+                ChannelQualityCalculator.APInfo(
+                    channel: 44, rssi: -30, channelWidth: "80", band: "5"
+                )
+            ],
             currentChannel: nil,
             supportedBands: ["5"]
         )
         let width80Plus80 = ChannelQualityCalculator.compute(
-            aps: [ChannelQualityCalculator.APInfo(
-                channel: 44, rssi: -30, channelWidth: "80+80", band: "5"
-            )],
+            aps: [
+                ChannelQualityCalculator.APInfo(
+                    channel: 44, rssi: -30, channelWidth: "80+80", band: "5"
+                )
+            ],
             currentChannel: nil,
             supportedBands: ["5"]
         )
 
-        #expect(width80.first(where: { $0.channel == 44 })?.qualityScore ==
-            width80Plus80.first(where: { $0.channel == 44 })?.qualityScore)
-        #expect(width80.first(where: { $0.channel == 40 })?.qualityScore ==
-            width80Plus80.first(where: { $0.channel == 40 })?.qualityScore)
+        #expect(
+            width80.first(where: { $0.channel == 44 })?.qualityScore
+                == width80Plus80.first(where: { $0.channel == 44 })?.qualityScore)
+        #expect(
+            width80.first(where: { $0.channel == 40 })?.qualityScore
+                == width80Plus80.first(where: { $0.channel == 40 })?.qualityScore)
     }
 
     @Test func band24Multiplier() async throws {
@@ -190,7 +197,8 @@ struct ChannelQualityCalculatorTests {
         #expect(r2.first(where: { $0.channel == 44 })!.overlapLevel == .moderate)
 
         // 4 APs → high
-        let r4 = ChannelQualityCalculator.compute(aps: [ap(44, -50), ap(44, -60), ap(44, -70), ap(44, -80)], currentChannel: nil)
+        let r4 = ChannelQualityCalculator.compute(
+            aps: [ap(44, -50), ap(44, -60), ap(44, -70), ap(44, -80)], currentChannel: nil)
         #expect(r4.first(where: { $0.channel == 44 })!.overlapLevel == .high)
     }
 
@@ -296,7 +304,7 @@ struct ChannelQualityCalculatorTests {
                     band: "5",
                     bssid: "aa:bb:cc:dd:ee:02",
                     ssid: "Neighbor"
-                )
+                ),
             ],
             currentChannel: 36,
             supportedBands: ["5"],
@@ -476,7 +484,7 @@ struct ChannelQualityCalculatorTests {
         let ch48 = result.first(where: { $0.channel == 48 })!
         let ch40 = result.first(where: { $0.channel == 40 })!
         #expect(ch48.qualityScore == 92)  // 0.5 * 0.714 * 1.2 * 18 ≈ 7.7 → 8
-        #expect(ch40.qualityScore == 100) // block is offset upward, no overlap
+        #expect(ch40.qualityScore == 100)  // block is offset upward, no overlap
     }
 
     @Test func overlap5GHz160MHzAdjacent() async throws {
@@ -485,7 +493,7 @@ struct ChannelQualityCalculatorTests {
         let result = ChannelQualityCalculator.compute(aps: aps, currentChannel: nil)
         for ch in [40, 44, 48] {
             let c = result.first(where: { $0.channel == ch })!
-            #expect(c.qualityScore == 97) // 0.125 * 0.714 * 2.0 * 18 ≈ 3.2 → 3
+            #expect(c.qualityScore == 97)  // 0.125 * 0.714 * 2.0 * 18 ≈ 3.2 → 3
         }
     }
 
@@ -510,7 +518,7 @@ struct ChannelQualityCalculatorTests {
         let ch29 = result.first(where: { $0.channel == 29 && $0.band == "6" })!
         #expect(ch37.qualityScore == 95)  // 4/16 = 0.25
         #expect(ch45.qualityScore == 95)  // 4/16 = 0.25
-        #expect(ch29.qualityScore == 100) // outside the block
+        #expect(ch29.qualityScore == 100)  // outside the block
     }
 
     @Test func overlap6GHzEdgeChannel() async throws {

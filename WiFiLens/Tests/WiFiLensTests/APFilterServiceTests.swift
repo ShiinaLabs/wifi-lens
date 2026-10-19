@@ -1,6 +1,6 @@
-@testable import WiFiLensCore
-
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 struct FilterConditionTests {
@@ -57,20 +57,22 @@ struct TokenizerTests {
 
     @Test func tokenizeWithAND() {
         let tokens = APFilterQueryParser.Tokenizer.tokenize("band:5G AND rssi:>-60")
-        #expect(tokens == [
-            .field("band"), .colon, .value("5G"),
-            .and,
-            .field("rssi"), .colon, .gt, .value("-60")
-        ])
+        #expect(
+            tokens == [
+                .field("band"), .colon, .value("5G"),
+                .and,
+                .field("rssi"), .colon, .gt, .value("-60"),
+            ])
     }
 
     @Test func tokenizeWithOR() {
         let tokens = APFilterQueryParser.Tokenizer.tokenize("band:5G OR band:6G")
-        #expect(tokens == [
-            .field("band"), .colon, .value("5G"),
-            .or,
-            .field("band"), .colon, .value("6G")
-        ])
+        #expect(
+            tokens == [
+                .field("band"), .colon, .value("5G"),
+                .or,
+                .field("band"), .colon, .value("6G"),
+            ])
     }
 
     @Test func tokenizeWithNOT() {
@@ -283,8 +285,12 @@ struct ParserTests {
 struct EvaluateTests {
     let service = APFilterService(parser: APFilterQueryParser())
 
-    func makeAP(ssid: String = "TestNet", band: ChannelBand = .band5GHz, rssi: Int = -50, channel: Int = 36) -> WiFiNetwork {
-        WiFiNetwork(ssid: ssid, bssid: "00:11:22:33:44:55", rssi: rssi, channel: WiFiChannel(band: band, channelNumber: channel))
+    func makeAP(ssid: String = "TestNet", band: ChannelBand = .band5GHz, rssi: Int = -50, channel: Int = 36)
+        -> WiFiNetwork
+    {
+        WiFiNetwork(
+            ssid: ssid, bssid: "00:11:22:33:44:55", rssi: rssi, channel: WiFiChannel(band: band, channelNumber: channel)
+        )
     }
 
     @Test func bandMatch() throws {
@@ -411,7 +417,10 @@ struct EvaluateTests {
 struct FilterIntegrationTests {
     let service = APFilterService(parser: APFilterQueryParser())
 
-    func makeAP(ssid: String = "TestNet", band: ChannelBand = .band5GHz, rssi: Int = -50, channel: Int = 36, bssid: String = "00:11:22:33:44:55") -> WiFiNetwork {
+    func makeAP(
+        ssid: String = "TestNet", band: ChannelBand = .band5GHz, rssi: Int = -50, channel: Int = 36,
+        bssid: String = "00:11:22:33:44:55"
+    ) -> WiFiNetwork {
         WiFiNetwork(ssid: ssid, bssid: bssid, rssi: rssi, channel: WiFiChannel(band: band, channelNumber: channel))
     }
 
@@ -436,7 +445,7 @@ struct FilterIntegrationTests {
 
     @Test func filterNoMatchReturnsEmpty() throws {
         let aps = [
-            makeAP(ssid: "Office", band: .band24GHz, bssid: "aa:bb:cc:dd:ee:01"),
+            makeAP(ssid: "Office", band: .band24GHz, bssid: "aa:bb:cc:dd:ee:01")
         ]
         let result = try service.filter(aps: aps, query: "band:5G")
         #expect(result.isEmpty)

@@ -85,24 +85,30 @@ extension XCTestCase {
 
     /// Click a sidebar item by its accessibility identifier.
     @discardableResult
-    func selectSidebar(_ sidebarID: String, app: XCUIApplication,
-                       file: StaticString = #filePath, line: UInt = #line) -> Bool {
+    func selectSidebar(
+        _ sidebarID: String, app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) -> Bool {
         let sidebar = app.descendants(matching: .any)[sidebarID]
-        guard waitForElement(
-            sidebar,
-            message: "Sidebar item '\(sidebarID)' not found",
-            app: app,
-            file: file,
-            line: line
-        ) else { return false }
+        guard
+            waitForElement(
+                sidebar,
+                message: "Sidebar item '\(sidebarID)' not found",
+                app: app,
+                file: file,
+                line: line
+            )
+        else { return false }
         sidebar.click()
         return true
     }
 
     /// Click a sidebar item by its accessibility identifier and verify its exact target page.
     @discardableResult
-    func navigateToPage(_ sidebarID: String, pageID: String, app: XCUIApplication,
-                        file: StaticString = #filePath, line: UInt = #line) -> Bool {
+    func navigateToPage(
+        _ sidebarID: String, pageID: String, app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) -> Bool {
         guard selectSidebar(sidebarID, app: app, file: file, line: line) else { return false }
 
         let page = app.descendants(matching: .any)[pageID]
@@ -118,8 +124,10 @@ extension XCTestCase {
 
     /// Click the Settings sidebar item and wait for the settings page to appear.
     @discardableResult
-    func navigateToSettings(_ app: XCUIApplication,
-                            file: StaticString = #filePath, line: UInt = #line) -> Bool {
+    func navigateToSettings(
+        _ app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) -> Bool {
         navigateToPage("sidebar-settings", pageID: "page-settings", app: app, file: file, line: line)
     }
 }

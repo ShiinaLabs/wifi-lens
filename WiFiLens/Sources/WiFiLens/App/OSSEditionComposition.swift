@@ -64,13 +64,13 @@ enum OSSEditionAssembly {
         configuration: guidanceConfiguration,
         stateStore: UserDefaultsGuidanceStateStore(),
         isProAppInstalled: {
-#if DEBUG
-            switch GuidanceDebugOverrides.proInstallationOverride {
-            case .useRealDetection: break
-            case .treatAsNotInstalled: return false
-            case .treatAsInstalled: return true
-            }
-#endif
+            #if DEBUG
+                switch GuidanceDebugOverrides.proInstallationOverride {
+                case .useRealDetection: break
+                case .treatAsNotInstalled: return false
+                case .treatAsInstalled: return true
+                }
+            #endif
             return NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.kaoru.wifi-lens-pro") != nil
         },
         campaignURL: { moment in
@@ -106,7 +106,7 @@ enum OSSEditionAssembly {
             highlights: [
                 OnboardingHighlight(icon: "wifi", titleKey: "onboarding.welcome.highlight.live"),
                 OnboardingHighlight(icon: "waveform.path.ecg", titleKey: "onboarding.welcome.highlight.diagnostics"),
-                OnboardingHighlight(icon: "square.and.arrow.up", titleKey: "onboarding.welcome.highlight.export")
+                OnboardingHighlight(icon: "square.and.arrow.up", titleKey: "onboarding.welcome.highlight.export"),
             ]
         )
     }
@@ -179,7 +179,9 @@ enum OSSEditionAssembly {
         case .networkExperience:
             ProFeaturePlaceholderView(
                 featureName: SidebarPage.networkExperience.label,
-                featureDescription: String(localized: "pro.network_experience.description", comment: "Pro Network Experience feature description"),
+                featureDescription: String(
+                    localized: "pro.network_experience.description",
+                    comment: "Pro Network Experience feature description"),
                 featureIcon: SidebarPage.networkExperience.icon,
                 customSkeleton: { NetworkExperienceSkeletonView() }
             )
@@ -187,15 +189,19 @@ enum OSSEditionAssembly {
         case .problemHistory:
             ProFeaturePlaceholderView(
                 featureName: SidebarPage.problemHistory.label,
-                featureDescription: String(localized: "pro.problem_history.description", comment: "Pro Problem History feature description"),
+                featureDescription: String(
+                    localized: "pro.problem_history.description", comment: "Pro Problem History feature description"),
                 featureIcon: SidebarPage.problemHistory.icon,
                 customSkeleton: { ProblemHistorySkeletonView() }
             )
             .accessibilityIdentifier("page-problemHistory")
         case .wifiCallingTest:
             ProFeaturePlaceholderView(
-                featureName: String(localized: "pro.wifi_calling_test.title", comment: "Pro Wi-Fi Calling Test feature title"),
-                featureDescription: String(localized: "pro.wifi_calling_test.description", comment: "Pro Wi-Fi Calling Test feature description"),
+                featureName: String(
+                    localized: "pro.wifi_calling_test.title", comment: "Pro Wi-Fi Calling Test feature title"),
+                featureDescription: String(
+                    localized: "pro.wifi_calling_test.description",
+                    comment: "Pro Wi-Fi Calling Test feature description"),
                 featureIcon: "wifi",
                 campaign: .appStoreCampaignPreviewLock,
                 customSkeleton: { WiFiCallingSkeletonView() }
@@ -206,78 +212,81 @@ enum OSSEditionAssembly {
         }
     }
 
-#if DEBUG
-    /// Debug-only manual testing controls for the OSS invitation flow. The
-    /// whole menu is compiled out of Release builds.
-    @MainActor
-    static func debugCommands(
-        showMainWindow: @escaping (SidebarPage) -> Void
-    ) -> some Commands {
-        CommandMenu("Debug") {
-            Menu("Onboarding") {
-                Button("Reset Welcome State") {
-                    EditionAssemblyProvider.onboardingCoordinator.debugReset()
-                }
-                Button("Show Welcome Now") {
-                    guard OSSEditionAssembly.onboardingConfiguration.welcomeEnabled else { return }
-                    EditionAssemblyProvider.onboardingCoordinator.debugRequestShowWelcome()
-                    NSApp.activate(ignoringOtherApps: true)
-                    if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
-                        mainWindow.makeKeyAndOrderFront(nil)
-                    } else {
-                        showMainWindow(.overview)
+    #if DEBUG
+        /// Debug-only manual testing controls for the OSS invitation flow. The
+        /// whole menu is compiled out of Release builds.
+        @MainActor
+        static func debugCommands(
+            showMainWindow: @escaping (SidebarPage) -> Void
+        ) -> some Commands {
+            CommandMenu("Debug") {
+                Menu("Onboarding") {
+                    Button("Reset Welcome State") {
+                        EditionAssemblyProvider.onboardingCoordinator.debugReset()
+                    }
+                    Button("Show Welcome Now") {
+                        guard OSSEditionAssembly.onboardingConfiguration.welcomeEnabled else { return }
+                        EditionAssemblyProvider.onboardingCoordinator.debugRequestShowWelcome()
+                        NSApp.activate(ignoringOtherApps: true)
+                        if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
+                            mainWindow.makeKeyAndOrderFront(nil)
+                        } else {
+                            showMainWindow(.overview)
+                        }
+                    }
+                    Button("Log Onboarding State") {
+                        EditionAssemblyProvider.onboardingCoordinator.debugLogState(edition: "OSS")
                     }
                 }
-                Button("Log Onboarding State") {
-                    EditionAssemblyProvider.onboardingCoordinator.debugLogState(edition: "OSS")
-                }
-            }
-            Menu("What's New") {
-                Button("Reset What's New State") {
-                    WhatsNewCoordinator.shared.debugReset()
-                }
-                Button("Show What's New Now") {
-                    WhatsNewCoordinator.shared.debugRequestShow()
-                }
-            }
-            Divider()
-            Menu("Lifecycle Guidance") {
-                Button("Reset Lifecycle Guidance State") {
-                    OSSEditionAssembly.guidanceCoordinator.debugResetState()
-                }
-                Button("Prepare OSS Invitation Eligibility") {
-                    OSSEditionAssembly.guidanceCoordinator.debugPrepareInvitationEligibility()
-                }
-                Button("Trigger Diagnostics Invitation") {
-                    OSSEditionAssembly.guidanceCoordinator.debugScheduleInvitation(for: .diagnosticsCompleted)
-                    GuidanceDebugOverrides.requestDiagnosticsStaging()
-                    showMainWindow(.networkDiagnostics)
-                }
-                Button("Trigger Export Invitation Banner") {
-                    OSSEditionAssembly.guidanceCoordinator.debugScheduleInvitation(for: .exportSucceeded)
-                    OSSEditionAssembly.guidanceCoordinator.debugPublishExportFeedback()
-                    NSApp.activate(ignoringOtherApps: true)
-                    if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
-                        mainWindow.makeKeyAndOrderFront(nil)
-                    } else {
-                        showMainWindow(.overview)
+                Menu("What's New") {
+                    Button("Reset What's New State") {
+                        WhatsNewCoordinator.shared.debugReset()
+                    }
+                    Button("Show What's New Now") {
+                        WhatsNewCoordinator.shared.debugRequestShow()
                     }
                 }
-                Picker("Pro Installation Override", selection: Binding(
-                    get: { GuidanceDebugOverrides.proInstallationOverride },
-                    set: { GuidanceDebugOverrides.setProInstallationOverride($0) }
-                )) {
-                    Text("Use Real Detection").tag(ProInstallationOverride.useRealDetection)
-                    Text("Treat Pro as Not Installed").tag(ProInstallationOverride.treatAsNotInstalled)
-                    Text("Treat Pro as Installed").tag(ProInstallationOverride.treatAsInstalled)
-                }
-                Button("Log Lifecycle Guidance State") {
-                    OSSEditionAssembly.guidanceCoordinator.debugLogState(edition: "OSS")
+                Divider()
+                Menu("Lifecycle Guidance") {
+                    Button("Reset Lifecycle Guidance State") {
+                        OSSEditionAssembly.guidanceCoordinator.debugResetState()
+                    }
+                    Button("Prepare OSS Invitation Eligibility") {
+                        OSSEditionAssembly.guidanceCoordinator.debugPrepareInvitationEligibility()
+                    }
+                    Button("Trigger Diagnostics Invitation") {
+                        OSSEditionAssembly.guidanceCoordinator.debugScheduleInvitation(for: .diagnosticsCompleted)
+                        GuidanceDebugOverrides.requestDiagnosticsStaging()
+                        showMainWindow(.networkDiagnostics)
+                    }
+                    Button("Trigger Export Invitation Banner") {
+                        OSSEditionAssembly.guidanceCoordinator.debugScheduleInvitation(for: .exportSucceeded)
+                        OSSEditionAssembly.guidanceCoordinator.debugPublishExportFeedback()
+                        NSApp.activate(ignoringOtherApps: true)
+                        if let mainWindow = NSApp.windows.first(where: { $0.canBecomeMain }) {
+                            mainWindow.makeKeyAndOrderFront(nil)
+                        } else {
+                            showMainWindow(.overview)
+                        }
+                    }
+                    Picker(
+                        "Pro Installation Override",
+                        selection: Binding(
+                            get: { GuidanceDebugOverrides.proInstallationOverride },
+                            set: { GuidanceDebugOverrides.setProInstallationOverride($0) }
+                        )
+                    ) {
+                        Text("Use Real Detection").tag(ProInstallationOverride.useRealDetection)
+                        Text("Treat Pro as Not Installed").tag(ProInstallationOverride.treatAsNotInstalled)
+                        Text("Treat Pro as Installed").tag(ProInstallationOverride.treatAsInstalled)
+                    }
+                    Button("Log Lifecycle Guidance State") {
+                        OSSEditionAssembly.guidanceCoordinator.debugLogState(edition: "OSS")
+                    }
                 }
             }
         }
-    }
-#endif
+    #endif
 
     static func startLifecycle(observationRuntime: WiFiObservationRuntime) {}
 
@@ -309,7 +318,8 @@ private struct OSSSpectrumCompositionView: View {
         if selection == .spectrumRecording {
             ProFeaturePlaceholderView(
                 featureName: String(localized: "pro.recording.title", comment: "Pro recording feature title"),
-                featureDescription: String(localized: "pro.recording.description", comment: "Pro recording feature description"),
+                featureDescription: String(
+                    localized: "pro.recording.description", comment: "Pro recording feature description"),
                 featureIcon: "record.circle",
                 customSkeleton: { RecordingSkeletonView() }
             )
@@ -321,7 +331,6 @@ private struct OSSSpectrumCompositionView: View {
         }
     }
 }
-
 
 enum EditionAssemblyProvider {
     @MainActor static let configuration = OSSEditionAssembly.configuration
@@ -352,13 +361,15 @@ enum EditionAppShell {
     @ViewBuilder @MainActor
     static func channelsPageContent<Content: View>(@ViewBuilder content: () -> Content) -> some View { content() }
 
-#if DEBUG
-    @MainActor
-    static func debugCommands(showMainWindow: @escaping (SidebarPage) -> Void) -> some Commands {
-        OSSEditionAssembly.debugCommands(showMainWindow: showMainWindow)
-    }
-#endif
+    #if DEBUG
+        @MainActor
+        static func debugCommands(showMainWindow: @escaping (SidebarPage) -> Void) -> some Commands {
+            OSSEditionAssembly.debugCommands(showMainWindow: showMainWindow)
+        }
+    #endif
 
     @SceneBuilder @MainActor
-    static func menuBarScene(openMainWindow: @escaping (SidebarPage?) -> Void, terminate: @escaping () -> Void) -> some Scene {}
+    static func menuBarScene(openMainWindow: @escaping (SidebarPage?) -> Void, terminate: @escaping () -> Void)
+        -> some Scene
+    {}
 }

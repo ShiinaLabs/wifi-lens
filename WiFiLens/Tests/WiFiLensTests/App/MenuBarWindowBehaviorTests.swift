@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -80,7 +81,8 @@ struct MenuBarWindowBehaviorTests {
                 presentation: .full
             )
         )
-        let expectedWidth = label.fittingSize.width
+        let expectedWidth =
+            label.fittingSize.width
             + SidebarBadgeRowContent.minimumGap
             + badge.fittingSize.width
 

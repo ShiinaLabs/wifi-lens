@@ -21,7 +21,10 @@ final class BLEDeviceTracker {
     let staleTimeout: TimeInterval
     let maxTrackedDevices: Int
 
-    init(maxHistoryCount: Int = 30, emaAlpha: Double = 0.25, staleTimeout: TimeInterval = 30, maxTrackedDevices: Int = 100) {
+    init(
+        maxHistoryCount: Int = 30, emaAlpha: Double = 0.25, staleTimeout: TimeInterval = 30,
+        maxTrackedDevices: Int = 100
+    ) {
         self.maxHistoryCount = maxHistoryCount
         self.emaAlpha = emaAlpha
         self.staleTimeout = staleTimeout
@@ -36,7 +39,8 @@ final class BLEDeviceTracker {
         // Update history and metadata for devices in the current batch
         for (identifier, events) in eventsByDevice {
             guard let latest = events.max(by: { $0.timestamp < $1.timestamp }),
-                  !events.isEmpty else { continue }
+                !events.isEmpty
+            else { continue }
 
             if firstSeenTimestamps[identifier] == nil {
                 firstSeenTimestamps[identifier] = latest.timestamp
@@ -54,7 +58,8 @@ final class BLEDeviceTracker {
             let bestRSSI = events.map(\.rssi).max() ?? latest.rssi
 
             // EMA smoothing
-            var ema = emaFilters[identifier]
+            var ema =
+                emaFilters[identifier]
                 ?? ExponentialMovingAverage(alpha: emaAlpha, initial: Double(bestRSSI))
             let smoothed = ema.smooth(Double(bestRSSI))
             emaFilters[identifier] = ema
@@ -83,21 +88,23 @@ final class BLEDeviceTracker {
         var snapshots: [BLEDeviceSnapshot] = []
         for (identifier, history) in deviceHistories {
             guard let lastSample = history.last,
-                  let meta = lastMetadata[identifier] else { continue }
+                let meta = lastMetadata[identifier]
+            else { continue }
 
-            snapshots.append(BLEDeviceSnapshot(
-                peripheralIdentifier: identifier,
-                localName: meta.localName,
-                rssi: lastSample.rawRSSI,
-                smoothedRSSI: lastSample.smoothedRSSI,
-                txPower: meta.txPower,
-                isConnectable: meta.isConnectable,
-                firstSeen: firstSeenTimestamps[identifier] ?? lastSample.timestamp,
-                lastSeen: lastSample.timestamp,
-                advertisementCount: history.count,
-                rssiHistory: history,
-                manufacturerData: meta.manufacturerData
-            ))
+            snapshots.append(
+                BLEDeviceSnapshot(
+                    peripheralIdentifier: identifier,
+                    localName: meta.localName,
+                    rssi: lastSample.rawRSSI,
+                    smoothedRSSI: lastSample.smoothedRSSI,
+                    txPower: meta.txPower,
+                    isConnectable: meta.isConnectable,
+                    firstSeen: firstSeenTimestamps[identifier] ?? lastSample.timestamp,
+                    lastSeen: lastSample.timestamp,
+                    advertisementCount: history.count,
+                    rssiHistory: history,
+                    manufacturerData: meta.manufacturerData
+                ))
         }
 
         return snapshots

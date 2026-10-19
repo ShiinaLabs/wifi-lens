@@ -21,8 +21,10 @@ public struct ExportSuccessBanner: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Label {
-                        Text(String(localized: "export.success_banner_message", comment: "Export success banner message"))
-                            .font(.headline)
+                        Text(
+                            String(localized: "export.success_banner_message", comment: "Export success banner message")
+                        )
+                        .font(.headline)
                     } icon: {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
@@ -35,7 +37,8 @@ public struct ExportSuccessBanner: View {
                             .font(.body.weight(.semibold))
                     }
                     .buttonStyle(.borderless)
-                    .accessibilityLabel(String(localized: "common.action.dismiss", comment: "Dismiss/close alert button"))
+                    .accessibilityLabel(
+                        String(localized: "common.action.dismiss", comment: "Dismiss/close alert button"))
                 }
 
                 if let invitation = guidance.pendingInvitation, invitation.moment == .exportSucceeded {

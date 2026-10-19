@@ -32,7 +32,8 @@ struct NetworkDiagnosticEvent: Equatable, Sendable {
         case .sessionStarted:
             return "Session started"
         case .runStarted:
-            let retained = retainedIDs.isEmpty ? "" : "; retained: " + retainedIDs.map(\.logTitle).joined(separator: ", ")
+            let retained =
+                retainedIDs.isEmpty ? "" : "; retained: " + retainedIDs.map(\.logTitle).joined(separator: ", ")
             return run + "Network self-check started" + retained
         case .checkStarted:
             return run + "Checking " + (checkID?.logTitle ?? "diagnostic")
@@ -48,19 +49,22 @@ struct NetworkDiagnosticEvent: Equatable, Sendable {
             let outcome: String
             switch kind {
             case .timedOut:
-                outcome = reasonCode == "network-change"
+                outcome =
+                    reasonCode == "network-change"
                     ? "Timed out; network did not stabilize within the session budget"
                     : "Timed out; session budget exhausted"
             case .cancelled: outcome = "Cancelled by user"
             default:
-                outcome = switch conclusion {
-                case .networkNormal: "Network normal"
-                case .needsAttention: "Needs attention"
-                case .networkUnavailable: "Network unavailable"
-                case nil: "Completed; conclusion unavailable"
-                }
+                outcome =
+                    switch conclusion {
+                    case .networkNormal: "Network normal"
+                    case .needsAttention: "Needs attention"
+                    case .networkUnavailable: "Network unavailable"
+                    case nil: "Completed; conclusion unavailable"
+                    }
             }
-            let pending = pendingIDs.isEmpty ? "" : "; unfinished: " + pendingIDs.map(\.logTitle).joined(separator: ", ")
+            let pending =
+                pendingIDs.isEmpty ? "" : "; unfinished: " + pendingIDs.map(\.logTitle).joined(separator: ", ")
             return run + "Summary: " + outcome + pending + " (\(max(0, elapsedMilliseconds)) ms total)"
         }
     }
@@ -112,11 +116,12 @@ struct DiagnosticLogResult: Equatable, Sendable {
         status = result.status
         var details = result.evidence.compactMap(Self.describe)
         if result.id == .path {
-            let state: String? = switch result.status {
-            case .normal: "System network path is available"
-            case .abnormal: "System network path is unsatisfied"
-            default: nil
-            }
+            let state: String? =
+                switch result.status {
+                case .normal: "System network path is available"
+                case .abnormal: "System network path is unsatisfied"
+                default: nil
+                }
             if let state { details.insert(state, at: 0) }
         }
         if let facts = result.proxyFacts {
@@ -124,13 +129,14 @@ struct DiagnosticLogResult: Equatable, Sendable {
             details.append("Final HTTPS egress: " + Self.availability(facts.https))
         }
         if details.isEmpty {
-            let fallback = switch result.status {
-            case .normal: "Check passed; no additional probe evidence"
-            case .abnormal: "Check failed; no additional probe evidence"
-            case .indeterminate: "Insufficient evidence to determine availability"
-            case .blocked: "Not tested because a prerequisite failed"
-            case .skipped: "Not tested; check not applicable"
-            }
+            let fallback =
+                switch result.status {
+                case .normal: "Check passed; no additional probe evidence"
+                case .abnormal: "Check failed; no additional probe evidence"
+                case .indeterminate: "Insufficient evidence to determine availability"
+                case .blocked: "Not tested because a prerequisite failed"
+                case .skipped: "Not tested; check not applicable"
+                }
             details = [fallback]
         }
         self.details = details
@@ -172,9 +178,12 @@ struct DiagnosticLogResult: Equatable, Sendable {
             return "Not tested because " + check.logTitle + " failed"
         }
         if code == "gateway.route-selection" {
-            let reasons = ["unavailable": "No usable default IPv4 route", "ambiguous": "Default route is ambiguous",
-                           "unsupported": "Default route does not support this gateway probe", "selected": "Default route selected",
-                           "tunneled": "Default route selected through a VPN tunnel"]
+            let reasons = [
+                "unavailable": "No usable default IPv4 route", "ambiguous": "Default route is ambiguous",
+                "unsupported": "Default route does not support this gateway probe",
+                "selected": "Default route selected",
+                "tunneled": "Default route selected through a VPN tunnel",
+            ]
             return reasons[value]
         }
         if code == "gateway.probe-scope" {
@@ -186,44 +195,66 @@ struct DiagnosticLogResult: Equatable, Sendable {
         if code == "ipv6.route-interface-index" {
             return "IPv6 route interface index: " + value
         }
-        let interfaces = ["path.interface", "path.interface-name", "path.routed-tunnel", "gateway.interface", "gateway.route-interface",
-                          "proxy.http.tunnel-interface", "proxy.https.tunnel-interface"]
-        if interfaces.contains(code), value.range(of: #"^(en|utun|ipsec|ppp|bridge|lo|awdl|llw|gif|stf)[0-9]{1,5}$"#, options: .regularExpression) != nil {
-            return ((code.contains("tunnel") || code == "gateway.route-interface") ? "Tunnel interface: " : "Interface: ") + value
+        let interfaces = [
+            "path.interface", "path.interface-name", "path.routed-tunnel", "gateway.interface",
+            "gateway.route-interface",
+            "proxy.http.tunnel-interface", "proxy.https.tunnel-interface",
+        ]
+        if interfaces.contains(code),
+            value.range(of: #"^(en|utun|ipsec|ppp|bridge|lo|awdl|llw|gif|stf)[0-9]{1,5}$"#, options: .regularExpression)
+                != nil
+        {
+            return
+                ((code.contains("tunnel") || code == "gateway.route-interface") ? "Tunnel interface: " : "Interface: ")
+                + value
         }
         if code == "path.interface-type" {
-            let types = ["wifi": "Wi-Fi", "wiredEthernet": "Ethernet", "cellular": "Cellular", "loopback": "Loopback", "other": "Other"]
+            let types = [
+                "wifi": "Wi-Fi", "wiredEthernet": "Ethernet", "cellular": "Cellular", "loopback": "Loopback",
+                "other": "Other",
+            ]
             return types[value].map { "Path type: " + $0 }
         }
         if code.hasPrefix("dns.sample.") {
             let sample = String(code.dropFirst("dns.sample.".count))
-            guard ["apple", "microsoft", "msft-connect-test"].contains(sample)
+            guard
+                ["apple", "microsoft", "msft-connect-test"].contains(sample)
                     || sample.range(of: #"^sample-[0-9]{1,3}$"#, options: .regularExpression) != nil,
-                  ["resolved", "failed", "indeterminate"].contains(value) else { return nil }
+                ["resolved", "failed", "indeterminate"].contains(value)
+            else { return nil }
             return "DNS sample " + sample + ": " + value
         }
         if ["dns.success-count", "dns.failure-count", "dns.indeterminate-count"].contains(code),
-           value.range(of: #"^[0-9]{1,3}/[0-9]{1,3}$"#, options: .regularExpression) != nil {
-            let label = code == "dns.success-count" ? "resolved" : code == "dns.failure-count" ? "failed" : "indeterminate"
+            value.range(of: #"^[0-9]{1,3}/[0-9]{1,3}$"#, options: .regularExpression) != nil
+        {
+            let label =
+                code == "dns.success-count" ? "resolved" : code == "dns.failure-count" ? "failed" : "indeterminate"
             return "DNS samples " + label + ": " + value
         }
-        let numbers = ["gateway.latency-ms": "Gateway ICMP RTT", "https.metrics.dns-ms": "HTTPS DNS",
-                       "https.metrics.connect-ms": "HTTPS connect", "https.metrics.tls-ms": "HTTPS TLS",
-                       "http.metrics.dns-ms": "HTTP DNS", "http.metrics.connect-ms": "HTTP connect",
-                       "captive-portal.metrics.dns-ms": "HTTP DNS", "captive-portal.metrics.connect-ms": "HTTP connect"]
+        let numbers = [
+            "gateway.latency-ms": "Gateway ICMP RTT", "https.metrics.dns-ms": "HTTPS DNS",
+            "https.metrics.connect-ms": "HTTPS connect", "https.metrics.tls-ms": "HTTPS TLS",
+            "http.metrics.dns-ms": "HTTP DNS", "http.metrics.connect-ms": "HTTP connect",
+            "captive-portal.metrics.dns-ms": "HTTP DNS", "captive-portal.metrics.connect-ms": "HTTP connect",
+        ]
         if let label = numbers[code], let number = Double(value), number.isFinite, number >= 0, value.count <= 24 {
             return label + ": " + String(number) + " ms"
         }
-        let responses = ["https.available": "HTTPS responded", "https.http-status": "HTTPS unexpected response",
-                         "captive-portal.redirect": "HTTP control redirected; captive portal suspected",
-                         "captive-portal.http-status": "HTTP control unexpected response"]
+        let responses = [
+            "https.available": "HTTPS responded", "https.http-status": "HTTPS unexpected response",
+            "captive-portal.redirect": "HTTP control redirected; captive portal suspected",
+            "captive-portal.http-status": "HTTP control unexpected response",
+        ]
         if let label = responses[code], let status = Int(value), (100...599).contains(status) {
             return label + ": HTTP " + String(status)
         }
-        let errors = ["https.connectivity-error": "HTTPS connection failed", "https.tls-error": "HTTPS TLS failed",
-                      "https.certificate-error": "HTTPS certificate validation failed",
-                      "https.certificate-time-error": "HTTPS certificate validity dates failed",
-                      "https.transport-error": "HTTPS transport failed", "captive-portal.transport-error": "HTTP control transport failed"]
+        let errors = [
+            "https.connectivity-error": "HTTPS connection failed", "https.tls-error": "HTTPS TLS failed",
+            "https.certificate-error": "HTTPS certificate validation failed",
+            "https.certificate-time-error": "HTTPS certificate validity dates failed",
+            "https.transport-error": "HTTPS transport failed",
+            "captive-portal.transport-error": "HTTP control transport failed",
+        ]
         if let label = errors[code] { return label + ": " + errorDescription(value) }
         for scheme in ["http", "https"] {
             let prefix = "proxy." + scheme + "."
@@ -238,17 +269,31 @@ struct DiagnosticLogResult: Equatable, Sendable {
                 guard ["direct", "tunnel", "http", "https", "socks", "unavailable"].contains(value) else { return nil }
                 return label + " route: " + value
             case "endpoint-status", "authentication-status", "egress-status":
-                if let status = Int(value), (100...599).contains(status) { return label + " " + field.replacingOccurrences(of: "-status", with: "") + ": HTTP " + String(status) }
-                if let error = Int(value), error < 0 { return label + " " + field.replacingOccurrences(of: "-status", with: "") + ": " + errorDescription(value) }
-                guard ["available", "unavailable", "required", "not-required", "not-tested", "timed-out", "base-check", "unknown"].contains(value) else { return nil }
-                return label + " " + field.replacingOccurrences(of: "-status", with: "") + ": " + (value == "base-check" ? "see base Internet check" : value)
+                if let status = Int(value), (100...599).contains(status) {
+                    return label + " " + field.replacingOccurrences(of: "-status", with: "") + ": HTTP "
+                        + String(status)
+                }
+                if let error = Int(value), error < 0 {
+                    return label + " " + field.replacingOccurrences(of: "-status", with: "") + ": "
+                        + errorDescription(value)
+                }
+                guard
+                    [
+                        "available", "unavailable", "required", "not-required", "not-tested", "timed-out", "base-check",
+                        "unknown",
+                    ].contains(value)
+                else { return nil }
+                return label + " " + field.replacingOccurrences(of: "-status", with: "") + ": "
+                    + (value == "base-check" ? "see base Internet check" : value)
             case "resolution":
                 let reasons = [
                     "pac-execution-failed": "PAC execution failed", "pac-execution-invalid": "PAC result invalid",
                     "pac-timeout": "PAC evaluation timed out", "pac-cancelled": "PAC evaluation cancelled",
                     "pac-script-unsupported": "PAC scripts unsupported", "pac-url-unavailable": "PAC URL unavailable",
-                    "pac-script-unavailable": "PAC script unavailable", "proxy-endpoint-invalid": "Proxy endpoint invalid",
-                    "proxy-type-unsupported": "Proxy type unsupported", "settings-unavailable": "System settings unavailable",
+                    "pac-script-unavailable": "PAC script unavailable",
+                    "proxy-endpoint-invalid": "Proxy endpoint invalid",
+                    "proxy-type-unsupported": "Proxy type unsupported",
+                    "settings-unavailable": "System settings unavailable",
                     "resolution-empty": "No route candidates returned", "resolution-cancelled": "Resolution cancelled",
                     "resolution-invalid": "Resolution result invalid",
                 ]
@@ -256,7 +301,8 @@ struct DiagnosticLogResult: Equatable, Sendable {
             case "timeout": return label + " candidate budget exhausted"
             case "cancelled": return label + " probe cancelled"
             case "tunnel-detection-source":
-                return value == "nwpath" ? "Tunnel confirmed on active path" : "Tunnel interface detected; target routing not confirmed"
+                return value == "nwpath"
+                    ? "Tunnel confirmed on active path" : "Tunnel interface detected; target routing not confirmed"
             default: return nil
             }
         }
@@ -265,20 +311,21 @@ struct DiagnosticLogResult: Equatable, Sendable {
 
     private static func errorDescription(_ value: String) -> String {
         guard let code = Int(value), (-100_000...(-1)).contains(code) else { return "unknown error" }
-        let reason: String = switch code {
-        case -1001: "timed out"
-        case -1003: "host not found"
-        case -1004: "could not connect to host"
-        case -1005: "connection lost"
-        case -1006: "DNS lookup failed"
-        case -1009: "no Internet connection"
-        case -1200: "TLS negotiation failed"
-        case -1201: "certificate date invalid"
-        case -1202: "certificate untrusted"
-        case -1203: "certificate root unknown"
-        case -1204: "certificate not yet valid"
-        default: "transport error"
-        }
+        let reason: String =
+            switch code {
+            case -1001: "timed out"
+            case -1003: "host not found"
+            case -1004: "could not connect to host"
+            case -1005: "connection lost"
+            case -1006: "DNS lookup failed"
+            case -1009: "no Internet connection"
+            case -1200: "TLS negotiation failed"
+            case -1201: "certificate date invalid"
+            case -1202: "certificate untrusted"
+            case -1203: "certificate root unknown"
+            case -1204: "certificate not yet valid"
+            default: "transport error"
+            }
         return reason + " (" + String(code) + ")"
     }
 }

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 private func verifiedAssociatedStatus(
@@ -230,9 +231,9 @@ struct ChannelOccupancyAnalyzerTests {
             targetAP: nil
         )
         let ch36 = try #require(result.first { $0.channel == 36 && $0.band == "5" })
-        #expect(ch36.apCount == 1)                    // deduplicated, not double-counted
+        #expect(ch36.apCount == 1)  // deduplicated, not double-counted
         #expect(ch36.coChannelCount == 1)
-        #expect(ch36.strongestNeighborRSSI == -45)    // strongest RSSI survives
+        #expect(ch36.strongestNeighborRSSI == -45)  // strongest RSSI survives
     }
 
     @Test("ChannelOccupancyAnalyzer: duplicate BSSID order does not change the kept entry")
@@ -307,7 +308,9 @@ struct ChannelOccupancyAnalyzerTests {
         // 0.5 (score 92 at -50). Using the 160 MHz capability block (34,66)
         // would yield 0.125 (score 97), so 92 distinguishes operating width.
         let result = ChannelOccupancyAnalyzer.analyze(
-            snapshot: snapshot([observation(bssid: "AA:BB:CC:DD:EE:07", rssi: -50, channel: 44, widthMHz: 40, capabilitiesWidth: 160)]),
+            snapshot: snapshot([
+                observation(bssid: "AA:BB:CC:DD:EE:07", rssi: -50, channel: 44, widthMHz: 40, capabilitiesWidth: 160)
+            ]),
             currentChannel: nil,
             supportedBands: ["5"],
             targetAP: nil

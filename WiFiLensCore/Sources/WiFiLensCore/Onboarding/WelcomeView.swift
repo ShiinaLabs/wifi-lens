@@ -1,6 +1,6 @@
 import AppKit
-import SwiftUI
 import Logging
+import SwiftUI
 
 /// First-run welcome sheet. A dumb presentation component: it receives the
 /// edition configuration and the claiming host id, and every action routes
@@ -39,7 +39,9 @@ public struct WelcomeView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(String(localized: "onboarding.welcome.close", comment: "Close first-run welcome sheet"))
+                .accessibilityLabel(
+                    String(localized: "onboarding.welcome.close", comment: "Close first-run welcome sheet")
+                )
                 .keyboardShortcut(.cancelAction)
             }
 
@@ -91,7 +93,10 @@ public struct WelcomeView: View {
                     learnAboutPro(proURL)
                 } label: {
                     Label {
-                        Text(String(localized: "onboarding.welcome.learn_pro", comment: "OSS secondary first-run welcome action"))
+                        Text(
+                            String(
+                                localized: "onboarding.welcome.learn_pro",
+                                comment: "OSS secondary first-run welcome action"))
                     } icon: {
                         Image(systemName: "arrow.up.right")
                             .font(.caption.weight(.semibold))
@@ -119,7 +124,10 @@ public struct WelcomeView: View {
             if let discordURL = ExternalLinks.url(for: .discord) {
                 Link(destination: discordURL) {
                     Label {
-                        Text(String(localized: "onboarding.welcome.discord", comment: "Discord community link in first-run welcome sheet"))
+                        Text(
+                            String(
+                                localized: "onboarding.welcome.discord",
+                                comment: "Discord community link in first-run welcome sheet"))
                     } icon: {
                         Image("Discord")
                             .resizable()

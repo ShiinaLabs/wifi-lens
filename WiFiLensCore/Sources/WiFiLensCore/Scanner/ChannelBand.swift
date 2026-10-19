@@ -31,9 +31,9 @@ public enum ChannelBand: Int, Sendable, CaseIterable, Hashable {
     public init?(id: String) {
         switch id {
         case "24": self = .band24GHz
-        case "5":  self = .band5GHz
-        case "6":  self = .band6GHz
-        default:   return nil
+        case "5": self = .band5GHz
+        case "6": self = .band6GHz
+        default: return nil
         }
     }
 }

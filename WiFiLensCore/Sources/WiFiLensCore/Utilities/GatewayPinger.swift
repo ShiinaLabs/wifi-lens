@@ -72,8 +72,9 @@ actor GatewayPinger {
             switch status {
             case 0:
                 guard let milliseconds = parseLatency(from: output),
-                      milliseconds.isFinite,
-                      milliseconds >= 0 else {
+                    milliseconds.isFinite,
+                    milliseconds >= 0
+                else {
                     return .executionFailed
                 }
                 return .replied(milliseconds: milliseconds)
@@ -111,19 +112,21 @@ actor GatewayPinger {
         ]
         guard !localErrors.contains(where: normalized.contains) else { return false }
 
-        let statisticsLines = normalized
+        let statisticsLines =
+            normalized
             .components(separatedBy: .newlines)
             .filter { $0.contains("packets transmitted") || $0.contains("packet loss") }
         guard statisticsLines.count == 1,
-              let statisticsLine = statisticsLines.first else {
+            let statisticsLine = statisticsLines.first
+        else {
             return false
         }
 
         let fields = statisticsLine.components(separatedBy: ", ")
         guard fields.count == 3,
-              let sent = integerValue(in: fields[0], suffix: " packets transmitted"),
-              let received = integerValue(in: fields[1], suffix: " packets received"),
-              let packetLoss = percentageValue(in: fields[2], suffix: "% packet loss")
+            let sent = integerValue(in: fields[0], suffix: " packets transmitted"),
+            let received = integerValue(in: fields[1], suffix: " packets received"),
+            let packetLoss = percentageValue(in: fields[2], suffix: "% packet loss")
         else {
             return false
         }

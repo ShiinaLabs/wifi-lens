@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -27,14 +28,23 @@ extension NetworkDiagnosticsTests {
         #expect(resolver.status(for: .thisMac, results: proxyOnly) == .abnormal)
         #expect(resolver.status(for: .thisMac, results: [:]) == nil)
         let missingContributors: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [
-            .path: .init(id: .path, status: .normal, summary: ""),
+            .path: .init(id: .path, status: .normal, summary: "")
         ]
         #expect(resolver.status(for: .thisMac, results: missingContributors) == nil)
 
-        #expect(resolver.status(for: .internet, results: [.internet: .init(id: .internet, status: .normal, summary: "")]) == .normal)
-        #expect(resolver.status(for: .internet, results: [.internet: .init(id: .internet, status: .abnormal, summary: "")]) == .abnormal)
-        #expect(resolver.status(for: .internet, results: [.internet: .init(id: .internet, status: .indeterminate, summary: "")]) == .indeterminate)
-        #expect(resolver.status(for: .internet, results: [.internet: .init(id: .internet, status: .blocked, summary: "")]) == .blocked)
+        #expect(
+            resolver.status(for: .internet, results: [.internet: .init(id: .internet, status: .normal, summary: "")])
+                == .normal)
+        #expect(
+            resolver.status(for: .internet, results: [.internet: .init(id: .internet, status: .abnormal, summary: "")])
+                == .abnormal)
+        #expect(
+            resolver.status(
+                for: .internet, results: [.internet: .init(id: .internet, status: .indeterminate, summary: "")])
+                == .indeterminate)
+        #expect(
+            resolver.status(for: .internet, results: [.internet: .init(id: .internet, status: .blocked, summary: "")])
+                == .blocked)
         let extras: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [
             .internet: .init(id: .internet, status: .normal, summary: ""),
             .dns: .init(id: .dns, status: .abnormal, summary: ""),
@@ -42,7 +52,7 @@ extension NetworkDiagnosticsTests {
         ]
         #expect(resolver.status(for: .internet, results: extras) == .normal)
         let partial: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [
-            .dns: .init(id: .dns, status: .normal, summary: ""),
+            .dns: .init(id: .dns, status: .normal, summary: "")
         ]
 
         #expect(resolver.status(for: .internet, results: partial) == nil)
@@ -74,7 +84,7 @@ extension NetworkDiagnosticsTests {
         #expect(presentation.edges[1].status == .normal)
 
         let executionPhases: [NetworkDiagnosticCheckID: NetworkDiagnosticExecutionPhase] = [
-            .gatewayReachability: .checking,
+            .gatewayReachability: .checking
         ]
         let activePresentation = NetworkDiagnosticsPipelinePresentation.from(
             results: [:],
@@ -103,11 +113,12 @@ extension NetworkDiagnosticsTests {
             .proxy: .waiting,
         ]
 
-        #expect(NetworkDiagnosticsPresentation.workbenchItems(
-            pagePhase: .idle,
-            executionPhases: executionPhases,
-            results: [:]
-        ).isEmpty)
+        #expect(
+            NetworkDiagnosticsPresentation.workbenchItems(
+                pagePhase: .idle,
+                executionPhases: executionPhases,
+                results: [:]
+            ).isEmpty)
 
         let runningItems = NetworkDiagnosticsPresentation.workbenchItems(
             pagePhase: .running,
@@ -119,22 +130,24 @@ extension NetworkDiagnosticsTests {
         #expect(runningItems[0] == .stageHeader(.thisMac))
         #expect(runningItems[1] == .check(.init(id: .path, executionPhase: .completed, result: path)))
 
-        let completedResults = Dictionary(uniqueKeysWithValues: makeResults(
-            path: .normal,
-            dns: .abnormal,
-            internet: .normal,
-            proxy: .indeterminate
-        ).map { ($0.id, $0) })
+        let completedResults = Dictionary(
+            uniqueKeysWithValues: makeResults(
+                path: .normal,
+                dns: .abnormal,
+                internet: .normal,
+                proxy: .indeterminate
+            ).map { ($0.id, $0) })
         let completedItems = NetworkDiagnosticsPresentation.workbenchItems(
             pagePhase: .completed,
             executionPhases: executionPhases,
             results: completedResults,
             checkIDs: [.path, .dns, .ipv6, .proxy]
         )
-        #expect(completedItems.map(\.id) == [
-            "header.thisMac", "check.path", "check.dns", "check.proxy",
-            "header.additional", "check.ipv6",
-        ])
+        #expect(
+            completedItems.map(\.id) == [
+                "header.thisMac", "check.path", "check.dns", "check.proxy",
+                "header.additional", "check.ipv6",
+            ])
         #expect(completedItems[4] == .additionalHeader)
 
         let timedOutItems = NetworkDiagnosticsPresentation.workbenchItems(
@@ -144,12 +157,14 @@ extension NetworkDiagnosticsTests {
             checkIDs: [.path, .dns],
             endReason: .timedOut
         )
-        #expect(timedOutItems.last == .check(.init(
-            id: .dns,
-            executionPhase: .waiting,
-            result: nil,
-            pendingReason: .timedOut
-        )))
+        #expect(
+            timedOutItems.last
+                == .check(
+                    .init(
+                        id: .dns,
+                        executionPhase: .waiting,
+                        result: nil,
+                        pendingReason: .timedOut
+                    )))
     }
 }
-

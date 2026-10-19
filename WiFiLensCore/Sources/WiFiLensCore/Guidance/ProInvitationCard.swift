@@ -37,7 +37,10 @@ struct ProInvitationCard: View {
                 Button {
                     openAppStore()
                 } label: {
-                    Text(String(localized: "guidance.invitation.view_pro", comment: "Open the Pro product page in the App Store"))
+                    Text(
+                        String(
+                            localized: "guidance.invitation.view_pro",
+                            comment: "Open the Pro product page in the App Store"))
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("guidance-invitation-view-pro")
@@ -52,7 +55,8 @@ struct ProInvitationCard: View {
                 Button {
                     guidance.disableInvitations(id: invitation.id)
                 } label: {
-                    Text(String(localized: "guidance.invitation.dont_show_again", comment: "Disable future invitations"))
+                    Text(
+                        String(localized: "guidance.invitation.dont_show_again", comment: "Disable future invitations"))
                 }
                 .accessibilityIdentifier("guidance-invitation-dont-show-again")
             }
@@ -65,7 +69,8 @@ struct ProInvitationCard: View {
 
     private func openAppStore() {
         guard let url = guidance.appStoreCampaignURL(for: invitation.moment),
-              NSWorkspace.shared.open(url) else {
+            NSWorkspace.shared.open(url)
+        else {
             return
         }
         guidance.openInvitation(id: invitation.id)

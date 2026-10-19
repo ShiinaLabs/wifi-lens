@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite("APRadarSoundSynthesizer")
@@ -27,13 +28,13 @@ struct APRadarSoundSynthesizerTests {
         #expect(String(data: data[0..<4], encoding: .ascii) == "RIFF")
         #expect(String(data: data[8..<12], encoding: .ascii) == "WAVE")
         #expect(String(data: data[12..<16], encoding: .ascii) == "fmt ")
-        #expect(uint32(data, at: 16) == 16) // fmt chunk size
-        #expect(int16(data, at: 20) == 1) // PCM
-        #expect(int16(data, at: 22) == 1) // channels
-        #expect(uint32(data, at: 24) == 44_100) // sample rate
-        #expect(uint32(data, at: 28) == 88_200) // byte rate
-        #expect(int16(data, at: 32) == 2) // block align
-        #expect(int16(data, at: 34) == 16) // bits per sample
+        #expect(uint32(data, at: 16) == 16)  // fmt chunk size
+        #expect(int16(data, at: 20) == 1)  // PCM
+        #expect(int16(data, at: 22) == 1)  // channels
+        #expect(uint32(data, at: 24) == 44_100)  // sample rate
+        #expect(uint32(data, at: 28) == 88_200)  // byte rate
+        #expect(int16(data, at: 32) == 2)  // block align
+        #expect(int16(data, at: 34) == 16)  // bits per sample
         #expect(String(data: data[36..<40], encoding: .ascii) == "data")
     }
 
@@ -60,9 +61,10 @@ struct APRadarSoundSynthesizerTests {
 
     @Test("presets are distinct tones")
     func presetsDiffer() {
-        let clips = Dictionary(uniqueKeysWithValues: APRadarSoundPreset.allCases.map {
-            ($0, APRadarSoundSynthesizer.makeWAVData(preset: $0))
-        })
+        let clips = Dictionary(
+            uniqueKeysWithValues: APRadarSoundPreset.allCases.map {
+                ($0, APRadarSoundSynthesizer.makeWAVData(preset: $0))
+            })
         for lhs in APRadarSoundPreset.allCases {
             for rhs in APRadarSoundPreset.allCases where rhs != lhs {
                 #expect(clips[lhs] != clips[rhs], "\(lhs) and \(rhs) produced identical audio")
@@ -99,30 +101,30 @@ struct APRadarSoundSynthesizerTests {
     }
 }
 
-    // MARK: - Geiger hiss
+// MARK: - Geiger hiss
 
-    @Test("geiger hiss renders a seamless, non-silent noise loop")
-    func geigerHissIsSeamlessNoise() {
-        let samples = APRadarSoundSynthesizer.makeHissSamples()
-        #expect(!samples.isEmpty)
-        #expect(samples.count == Int(0.5 * Double(APRadarSoundSynthesizer.sampleRate)))
+@Test("geiger hiss renders a seamless, non-silent noise loop")
+func geigerHissIsSeamlessNoise() {
+    let samples = APRadarSoundSynthesizer.makeHissSamples()
+    #expect(!samples.isEmpty)
+    #expect(samples.count == Int(0.5 * Double(APRadarSoundSynthesizer.sampleRate)))
 
-        #expect(samples.allSatisfy { $0.isFinite && abs($0) <= 1.0 })
+    #expect(samples.allSatisfy { $0.isFinite && abs($0) <= 1.0 })
 
-        let rms = sqrt(samples.reduce(0.0) { $0 + $1 * $1 } / Double(samples.count))
-        #expect(rms > 0.05, "hiss loop is effectively silent")
+    let rms = sqrt(samples.reduce(0.0) { $0 + $1 * $1 } / Double(samples.count))
+    #expect(rms > 0.05, "hiss loop is effectively silent")
 
-        // The loop point must not click: the first and last samples are the
-        // boundary of the infinite loop, so they should be close together.
-        let boundaryJump = abs(samples[0] - samples[samples.count - 1])
-        #expect(boundaryJump < 0.8)
-    }
+    // The loop point must not click: the first and last samples are the
+    // boundary of the infinite loop, so they should be close together.
+    let boundaryJump = abs(samples[0] - samples[samples.count - 1])
+    #expect(boundaryJump < 0.8)
+}
 
-    @Test("geiger hiss WAV is a valid mono PCM clip of the expected length")
-    func geigerHissWAVIsValid() {
-        let data = APRadarSoundSynthesizer.makeHissWAVData()
-        #expect(String(data: data[0..<4], encoding: .ascii) == "RIFF")
-        #expect(String(data: data[8..<12], encoding: .ascii) == "WAVE")
-        let expectedPayload = Int(0.5 * Double(APRadarSoundSynthesizer.sampleRate)) * 2
-        #expect(data.count == 44 + expectedPayload)
-    }
+@Test("geiger hiss WAV is a valid mono PCM clip of the expected length")
+func geigerHissWAVIsValid() {
+    let data = APRadarSoundSynthesizer.makeHissWAVData()
+    #expect(String(data: data[0..<4], encoding: .ascii) == "RIFF")
+    #expect(String(data: data[8..<12], encoding: .ascii) == "WAVE")
+    let expectedPayload = Int(0.5 * Double(APRadarSoundSynthesizer.sampleRate)) * 2
+    #expect(data.count == 44 + expectedPayload)
+}

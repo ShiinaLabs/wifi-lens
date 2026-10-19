@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -71,13 +72,14 @@ extension NetworkDiagnosticsTests {
 
         var typedStore = NetworkDiagnosticsLogStore()
         for index in 0..<501 {
-            typedStore.append(NetworkDiagnosticEvent(
-                runID: UUID(),
-                elapsedMilliseconds: Int64(index),
-                kind: .checkFinished,
-                checkID: .path,
-                reasonCode: nil
-            ))
+            typedStore.append(
+                NetworkDiagnosticEvent(
+                    runID: UUID(),
+                    elapsedMilliseconds: Int64(index),
+                    kind: .checkFinished,
+                    checkID: .path,
+                    reasonCode: nil
+                ))
         }
         #expect(typedStore.lines.count == NetworkDiagnosticsLogStore.capacity)
         #expect(typedStore.events.count == NetworkDiagnosticsLogStore.capacity - 1)
@@ -116,17 +118,18 @@ extension NetworkDiagnosticsTests {
         #expect(viewModel.logText.contains("Run 1"))
         #expect(viewModel.logText.contains("Summary: Network normal"))
         #expect(!viewModel.logText.contains("finished"))
-        #expect(viewModel.logStore.events.map(\.kind) == [
-            .sessionStarted,
-            .runStarted,
-            .checkStarted,
-            .checkFinished,
-            .checkStarted,
-            .checkFinished,
-            .checkStarted,
-            .checkFinished,
-            .completed,
-        ])
+        #expect(
+            viewModel.logStore.events.map(\.kind) == [
+                .sessionStarted,
+                .runStarted,
+                .checkStarted,
+                .checkFinished,
+                .checkStarted,
+                .checkFinished,
+                .checkStarted,
+                .checkFinished,
+                .completed,
+            ])
 
         viewModel.clearLogs()
         #expect(viewModel.logText.isEmpty)
@@ -159,57 +162,63 @@ extension NetworkDiagnosticsTests {
         let completion = viewModel.logStore.events.first { $0.kind == .checkFinished }
         #expect(completion?.durationMilliseconds != nil)
         #expect(completion?.runNumber == 1)
-        #expect(viewModel.logStore.lines.allSatisfy {
-            $0.range(of: #"^\d{2}:\d{2}:\d{2}\.\d{3}  "#, options: .regularExpression) != nil
-        })
+        #expect(
+            viewModel.logStore.lines.allSatisfy {
+                $0.range(of: #"^\d{2}:\d{2}:\d{2}\.\d{3}  "#, options: .regularExpression) != nil
+            })
     }
 
     @Test("diagnostic evidence preserves uncertainty and final proxy egress")
     func diagnosticEvidenceSemantics() {
-        let gateway = DiagnosticLogResult(.init(
-            id: .gatewayReachability, status: .indeterminate, summary: "",
-            evidence: [.init(code: "gateway.no-response", value: "private-address")]
-        ))
+        let gateway = DiagnosticLogResult(
+            .init(
+                id: .gatewayReachability, status: .indeterminate, summary: "",
+                evidence: [.init(code: "gateway.no-response", value: "private-address")]
+            ))
         #expect(gateway.details.contains { $0.contains("No ICMP reply") && $0.contains("does not prove") })
-        let blocked = DiagnosticLogResult(.init(
-            id: .dns, status: .blocked, summary: "",
-            evidence: [.init(code: "blocked.by", value: "path")]
-        ))
+        let blocked = DiagnosticLogResult(
+            .init(
+                id: .dns, status: .blocked, summary: "",
+                evidence: [.init(code: "blocked.by", value: "path")]
+            ))
         #expect(blocked.details == ["Not tested because Network Path failed"])
-        let ipv6 = DiagnosticLogResult(.init(
-            id: .ipv6, status: .skipped, summary: "",
-            evidence: [.init(code: "ipv6.no-global-address", value: nil)]
-        ))
+        let ipv6 = DiagnosticLogResult(
+            .init(
+                id: .ipv6, status: .skipped, summary: "",
+                evidence: [.init(code: "ipv6.no-global-address", value: nil)]
+            ))
         #expect(ipv6.details == ["No global IPv6 address; probe skipped"])
-        let proxy = DiagnosticLogResult(.init(
-            id: .proxy, status: .normal, summary: "",
-            evidence: [
-                .init(code: "proxy.https.candidate-index", value: "0"),
-                .init(code: "proxy.https.endpoint-status", value: "unavailable"),
-                .init(code: "proxy.https.candidate-index", value: "1"),
-                .init(code: "proxy.https.egress-status", value: "200"),
-            ],
-            proxyFacts: .init(http: .unavailable, https: .available)
-        ))
+        let proxy = DiagnosticLogResult(
+            .init(
+                id: .proxy, status: .normal, summary: "",
+                evidence: [
+                    .init(code: "proxy.https.candidate-index", value: "0"),
+                    .init(code: "proxy.https.endpoint-status", value: "unavailable"),
+                    .init(code: "proxy.https.candidate-index", value: "1"),
+                    .init(code: "proxy.https.egress-status", value: "200"),
+                ],
+                proxyFacts: .init(http: .unavailable, https: .available)
+            ))
         #expect(proxy.details.contains("Proxy HTTPS candidate 2"))
         #expect(proxy.details.suffix(2) == ["Final HTTP egress: unavailable", "Final HTTPS egress: available"])
     }
 
     @Test("diagnostic evidence excludes addresses, arbitrary payloads and injected log lines")
     func diagnosticEvidencePrivacy() {
-        let projection = DiagnosticLogResult(.init(
-            id: .dns, status: .indeterminate, summary: "secret summary", detail: "secret detail",
-            evidence: [
-                .init(code: "path.local-ip", value: "secret-address"),
-                .init(code: "path.interface", value: "en0\nsecret"),
-                .init(code: "dns.sample.secret", value: "resolved"),
-                .init(code: "dns.sample.apple", value: "secret"),
-                .init(code: "https.metrics.connect-ms", value: "nan"),
-                .init(code: "proxy.https.egress-status", value: "secret"),
-                .init(code: "https.transport-error", value: "secret"),
-                .init(code: "dns.sample.microsoft", value: "failed"),
-            ]
-        ))
+        let projection = DiagnosticLogResult(
+            .init(
+                id: .dns, status: .indeterminate, summary: "secret summary", detail: "secret detail",
+                evidence: [
+                    .init(code: "path.local-ip", value: "secret-address"),
+                    .init(code: "path.interface", value: "en0\nsecret"),
+                    .init(code: "dns.sample.secret", value: "resolved"),
+                    .init(code: "dns.sample.apple", value: "secret"),
+                    .init(code: "https.metrics.connect-ms", value: "nan"),
+                    .init(code: "proxy.https.egress-status", value: "secret"),
+                    .init(code: "https.transport-error", value: "secret"),
+                    .init(code: "dns.sample.microsoft", value: "failed"),
+                ]
+            ))
         #expect(!projection.details.joined().contains("secret"))
         #expect(!projection.details.joined().contains("nan"))
         #expect(!projection.details.joined().contains("\n"))
@@ -218,8 +227,10 @@ extension NetworkDiagnosticsTests {
 
     @Test("diagnostic timestamps include milliseconds and timeout summaries name unfinished checks")
     func diagnosticTimestampAndTimeoutSummary() {
-        let timestamp = Calendar.current.date(from: DateComponents(year: 2026, month: 9, day: 10,
-                                                                   hour: 14, minute: 32, second: 8))!
+        let timestamp = Calendar.current.date(
+            from: DateComponents(
+                year: 2026, month: 9, day: 10,
+                hour: 14, minute: 32, second: 8))!
             .addingTimeInterval(0.125)
         let event = NetworkDiagnosticEvent(
             runID: UUID(), elapsedMilliseconds: 30_000, kind: .timedOut, checkID: nil, reasonCode: nil,
@@ -312,7 +323,7 @@ extension NetworkDiagnosticsTests {
                     result: .init(id: .path, status: .normal, summary: "network"),
                     rerunPolicy: .networkSensitive,
                     probe: probe
-                ),
+                )
             ],
             fingerprintMonitor: fingerprintMonitor,
             onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
@@ -376,10 +387,11 @@ extension NetworkDiagnosticsTests {
 
         await clock.waitForSleeperCount(1)
         await clock.set(base.advanced(by: .milliseconds(400)))
-        #expect(await controller.observe(
-            second,
-            at: base.advanced(by: .milliseconds(400))
-        ))
+        #expect(
+            await controller.observe(
+                second,
+                at: base.advanced(by: .milliseconds(400))
+            ))
 
         await clock.waitForSleeperCount(1)
         await clock.set(base.advanced(by: .milliseconds(800)))
@@ -689,18 +701,20 @@ extension NetworkDiagnosticsTests {
     @Test("VPN and TUN interface names are classified without VPN manager access")
     func tunnelInterfaceClassification() {
         let tunnels = NetworkTunnelInterfaceClassifier.tunnelInterfaces(from: [
-            "en0", "utun3", "ipsec0", "ppp0", "bridge0", "utun2"
+            "en0", "utun3", "ipsec0", "ppp0", "bridge0", "utun2",
         ])
 
         #expect(tunnels == ["ipsec0", "ppp0", "utun2", "utun3"])
-        #expect(NetworkTunnelInterfaceClassifier.routedTunnelInterface(
-            activeInterfaceName: "utun3",
-            tunnelInterfaces: tunnels
-        ) == "utun3")
-        #expect(NetworkTunnelInterfaceClassifier.routedTunnelInterface(
-            activeInterfaceName: "en0",
-            tunnelInterfaces: tunnels
-        ) == nil)
+        #expect(
+            NetworkTunnelInterfaceClassifier.routedTunnelInterface(
+                activeInterfaceName: "utun3",
+                tunnelInterfaces: tunnels
+            ) == "utun3")
+        #expect(
+            NetworkTunnelInterfaceClassifier.routedTunnelInterface(
+                activeInterfaceName: "en0",
+                tunnelInterfaces: tunnels
+            ) == nil)
     }
 
     @Test("tunnel presence and routed interface changes are fingerprint changes")

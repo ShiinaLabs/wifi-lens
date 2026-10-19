@@ -1,7 +1,7 @@
+import AppKit
+import CoreWLAN
 import Foundation
 import Observation
-import CoreWLAN
-import AppKit
 
 public enum TestState: Equatable {
     case idle
@@ -109,7 +109,9 @@ public final class RoamingTestViewModel {
             guard readinessGeneration == requestGeneration else { return }
             guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else {
                 clearCurrentConnection()
-                errorMessage = String(localized: "roaming.error.no_connection", comment: "Error when trying to start roaming test without Wi-Fi")
+                errorMessage = String(
+                    localized: "roaming.error.no_connection",
+                    comment: "Error when trying to start roaming test without Wi-Fi")
                 return
             }
             gatewayLatency = nil
@@ -194,7 +196,8 @@ public final class RoamingTestViewModel {
 
         // Close current segment
         if currentSegmentIndex >= 0, currentSegmentIndex < segments.count {
-            let lastSampleTime = segments[currentSegmentIndex].samples.last?.timestamp
+            let lastSampleTime =
+                segments[currentSegmentIndex].samples.last?.timestamp
                 ?? segments[currentSegmentIndex].startTime
             segments[currentSegmentIndex].endTime = lastSampleTime
         }
@@ -244,7 +247,8 @@ public final class RoamingTestViewModel {
         guard state == .running, generation == sampleGeneration else { return }
 
         guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
-              isNewerProbe(status) else {
+            isNewerProbe(status)
+        else {
             recordProbe(status)
             return
         }
@@ -255,18 +259,22 @@ public final class RoamingTestViewModel {
         recordProbe(status)
         guard state == .running, generation == sampleGeneration else { return }
         if let cycleID = status.interfaceSnapshotCycleID,
-           let target = WiFiGatewayProbeTarget.make(from: status, cycleID: cycleID),
-           let boundMeasurer = latencyProvider as? WiFiBoundGatewayMeasuring {
+            let target = WiFiGatewayProbeTarget.make(from: status, cycleID: cycleID),
+            let boundMeasurer = latencyProvider as? WiFiBoundGatewayMeasuring
+        {
             let result = await boundMeasurer.measure(target: target)
             guard state == .running, generation == sampleGeneration,
-                  lastProcessedProbeTimestamp == status.timestamp else { return }
-            let latency = WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target)
+                lastProcessedProbeTimestamp == status.timestamp
+            else { return }
+            let latency =
+                WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target)
                 ? result.latencyMs
                 : nil
             gatewayLatency = latency
             if currentSegmentIndex >= 0,
-               currentSegmentIndex < segments.count,
-               let sampleIndex = segments[currentSegmentIndex].samples.indices.last {
+                currentSegmentIndex < segments.count,
+                let sampleIndex = segments[currentSegmentIndex].samples.indices.last
+            {
                 segments[currentSegmentIndex].samples[sampleIndex].gatewayLatency = latency
             }
         }
@@ -309,15 +317,16 @@ public final class RoamingTestViewModel {
             if currentSegmentIndex >= 0, currentSegmentIndex < segments.count {
                 segments[currentSegmentIndex].endTime = status.timestamp
             }
-            transitions.append(APTransitionEvent(
-                timestamp: status.timestamp,
-                fromBSSID: oldBSSID,
-                toBSSID: bssid,
-                rssiBefore: lastRSSI,
-                rssiAfter: verifiedRSSI,
-                channelBefore: lastChannel,
-                channelAfter: verifiedChannel
-            ))
+            transitions.append(
+                APTransitionEvent(
+                    timestamp: status.timestamp,
+                    fromBSSID: oldBSSID,
+                    toBSSID: bssid,
+                    rssiBefore: lastRSSI,
+                    rssiAfter: verifiedRSSI,
+                    channelBefore: lastChannel,
+                    channelAfter: verifiedChannel
+                ))
             segments.append(RoamingSegment(bssid: bssid, startTime: status.timestamp))
             currentSegmentIndex = segments.count - 1
         } else if !continuous {
@@ -345,23 +354,29 @@ public final class RoamingTestViewModel {
             currentSegmentIndex = -1
             return
         }
-        let lastTrustedSampleTime = segments[currentSegmentIndex].samples.last?.timestamp
+        let lastTrustedSampleTime =
+            segments[currentSegmentIndex].samples.last?.timestamp
             ?? segments[currentSegmentIndex].startTime
         segments[currentSegmentIndex].endTime = lastTrustedSampleTime
         currentSegmentIndex = -1
     }
 
-    private static func isContinuousAssociation(from previous: WiFiCurrentStatus, to current: WiFiCurrentStatus) -> Bool {
+    private static func isContinuousAssociation(from previous: WiFiCurrentStatus, to current: WiFiCurrentStatus) -> Bool
+    {
         guard WiFiLinkEvidenceValidator.assessment(for: previous)?.state == .associated,
-              WiFiLinkEvidenceValidator.assessment(for: current)?.state == .associated,
-              let oldInterface = previous.interfaceName, !oldInterface.isEmpty,
-              oldInterface == current.interfaceName,
-              let oldSSID = previous.ssid, !oldSSID.isEmpty,
-              oldSSID == current.ssid,
-              previous.bssid != nil, current.bssid != nil else { return false }
+            WiFiLinkEvidenceValidator.assessment(for: current)?.state == .associated,
+            let oldInterface = previous.interfaceName, !oldInterface.isEmpty,
+            oldInterface == current.interfaceName,
+            let oldSSID = previous.ssid, !oldSSID.isEmpty,
+            oldSSID == current.ssid,
+            previous.bssid != nil, current.bssid != nil
+        else { return false }
         if let previousIndex = previous.interfaceIndex, previousIndex != 0,
-           let currentIndex = current.interfaceIndex, currentIndex != 0,
-           previousIndex != currentIndex { return false }
+            let currentIndex = current.interfaceIndex, currentIndex != 0,
+            previousIndex != currentIndex
+        {
+            return false
+        }
         let gap = current.timestamp.timeIntervalSince(previous.timestamp)
         return gap > 0 && gap <= maximumProbeContinuityGap
     }
@@ -456,7 +471,8 @@ public final class RoamingTestViewModel {
             let data = try encoder.encode(record)
             try data.write(to: url)
         } catch {
-            errorMessage = String(localized: "roaming.error.save_failed", comment: "Error message when session save fails")
+            errorMessage = String(
+                localized: "roaming.error.save_failed", comment: "Error message when session save fails")
         }
     }
 
@@ -486,7 +502,8 @@ public final class RoamingTestViewModel {
             state = .stopped
             errorMessage = nil
         } catch {
-            errorMessage = String(localized: "roaming.error.load_failed", comment: "Error message when session load fails")
+            errorMessage = String(
+                localized: "roaming.error.load_failed", comment: "Error message when session load fails")
         }
     }
 

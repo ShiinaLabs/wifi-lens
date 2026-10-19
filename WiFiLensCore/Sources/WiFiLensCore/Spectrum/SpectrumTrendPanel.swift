@@ -7,16 +7,21 @@ struct SpectrumTrendPanel: View {
     var body: some View {
         Group {
             if let selID = selectedNetworkID,
-               let snaps = viewModel.snapshots(for: selID),
-               let color = selectedNetworkColor(for: selID),
-               snaps.count >= 2 {
+                let snaps = viewModel.snapshots(for: selID),
+                let color = selectedNetworkColor(for: selID),
+                snaps.count >= 2
+            {
                 TrendChartView(snapshots: snaps, color: color)
             } else {
                 VStack {
                     Spacer()
-                    Text(String(localized: "spectrum.panel.select_network_for_trend", comment: "Placeholder when no network is selected for trend chart"))
-                        .foregroundColor(.secondary)
-                        .font(.caption)
+                    Text(
+                        String(
+                            localized: "spectrum.panel.select_network_for_trend",
+                            comment: "Placeholder when no network is selected for trend chart")
+                    )
+                    .foregroundColor(.secondary)
+                    .font(.caption)
                     Spacer()
                 }
             }

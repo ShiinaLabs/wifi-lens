@@ -26,7 +26,7 @@ final class MACVendorDownloadByteBudget: @unchecked Sendable {
     func consume(_ byteCount: Int) throws {
         try lock.withLock {
             guard byteCount >= 0,
-                  byteCount <= maximumBytes - consumedBytes
+                byteCount <= maximumBytes - consumedBytes
             else {
                 throw MACVendorHTTPTransportError.totalBytesExceeded(maximumBytes)
             }
@@ -148,7 +148,7 @@ struct MACVendorDatabaseDownloader: Sendable {
             } catch is CancellationError {
                 group.cancelAll()
                 throw CancellationError()
-            } catch where Task.isCancelled {
+            } catch  where Task.isCancelled {
                 group.cancelAll()
                 throw CancellationError()
             } catch {
@@ -177,7 +177,7 @@ struct MACVendorDatabaseDownloader: Sendable {
             )
         } catch is CancellationError {
             throw CancellationError()
-        } catch where Task.isCancelled {
+        } catch  where Task.isCancelled {
             throw CancellationError()
         } catch MACVendorHTTPTransportError.maximumBytesExceeded {
             throw MACVendorDatabaseError.fileTooLarge(
@@ -227,7 +227,8 @@ struct MACVendorDatabaseDownloader: Sendable {
     }
 
     private static let userAgent: String = {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let version =
+            Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? "unknown"
         return "WiFiLens/\(version) (+https://github.com/SHIINASAMA/wifi-lens)"
     }()

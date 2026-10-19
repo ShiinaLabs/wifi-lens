@@ -131,7 +131,9 @@ struct APSelectionView: View {
 
     private var selectionSummary: String {
         String(
-            format: String(localized: "apRadar.summary.available", comment: "Summary of APs visible to the selector, e.g. 12 access points available"),
+            format: String(
+                localized: "apRadar.summary.available",
+                comment: "Summary of APs visible to the selector, e.g. 12 access points available"),
             options.count
         )
     }
@@ -153,11 +155,15 @@ struct APSelectionView: View {
             Text(String(localized: "apRadar.empty.title", comment: "Empty state when no access points were found"))
                 .font(.headline)
 
-            Text(String(localized: "apRadar.empty.description", comment: "Empty state guidance when no access points were found"))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 320)
+            Text(
+                String(
+                    localized: "apRadar.empty.description",
+                    comment: "Empty state guidance when no access points were found")
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 320)
 
             Button {
                 onRescan()
@@ -229,22 +235,30 @@ private struct APSelectionRow: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(isSelected ? Color.green.opacity(0.06) : Color.primary.opacity(isHovering ? 0.05 : 0.025))
             )
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(isSelected ? Color.green.opacity(0.35) : Color.primary.opacity(isHovering ? 0.12 : 0.06), lineWidth: 1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(
+                        isSelected ? Color.green.opacity(0.35) : Color.primary.opacity(isHovering ? 0.12 : 0.06),
+                        lineWidth: 1))
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
         .accessibilityLabel(accessibilityLabel)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(String(localized: "apRadar.selection.hint", comment: "VoiceOver hint explaining that tapping an access point starts tracking it"))
+        .accessibilityHint(
+            String(
+                localized: "apRadar.selection.hint",
+                comment: "VoiceOver hint explaining that tapping an access point starts tracking it")
+        )
         .accessibilityIdentifier("ap-radar-option-\(option.bssid)")
     }
 
     private var ssidLabel: String {
-        option.ssid ?? String(
-            localized: "apRadar.target.hiddenNetwork",
-            comment: "Label for an access point that hides its SSID"
-        )
+        option.ssid
+            ?? String(
+                localized: "apRadar.target.hiddenNetwork",
+                comment: "Label for an access point that hides its SSID"
+            )
     }
 
     private var channelLabel: String {
@@ -282,7 +296,8 @@ private struct APSelectionRow: View {
             quality = String(localized: "overview.signal.weak", comment: "Weak signal level label")
         }
         let rssiText = String(
-            format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"),
+            format: String(
+                localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"),
             option.rssi,
             quality
         )

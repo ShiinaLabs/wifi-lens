@@ -1,15 +1,18 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct SpectrumHeatmapComputeBackendTests {
     private let input = SpectrumHeatmapComputeInput(
-        envelopes: [SpectrumHeatmapEnvelope(
-            leftX: 3,
-            rightX: 7,
-            peakRSSI: -50,
-            baselineRSSI: -100
-        )],
+        envelopes: [
+            SpectrumHeatmapEnvelope(
+                leftX: 3,
+                rightX: 7,
+                peakRSSI: -50,
+                baselineRSSI: -100
+            )
+        ],
         domain: SpectrumHeatmapChannelDomain(
             minChannelCoordinate: 1,
             maxChannelCoordinate: 9

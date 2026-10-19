@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import WiFiLensCore
+
 @testable import WiFiLensCore
 
 @MainActor
@@ -133,7 +134,10 @@ struct APRadarViewModelTests {
         scheduler: FakePulseScheduler = FakePulseScheduler(),
         defaults: UserDefaults? = nil,
         clock: ControlledAPRadarClock? = nil
-    ) -> (viewModel: APRadarViewModel, runtime: WiFiObservationRuntime, audio: FakeAudioPlayer, scheduler: FakePulseScheduler, defaults: UserDefaults) {
+    ) -> (
+        viewModel: APRadarViewModel, runtime: WiFiObservationRuntime, audio: FakeAudioPlayer,
+        scheduler: FakePulseScheduler, defaults: UserDefaults
+    ) {
         let runtime = WiFiObservationRuntime(store: WiFiObservationStore())
         let resolvedDefaults = defaults ?? makeDefaults()
         let resolvedClock = clock
@@ -287,7 +291,8 @@ struct APRadarViewModelTests {
             makeObservation(timestamp: t0, networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -60)])
         )
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: 5)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: 5)])
         )
         let snapshot = trackingSnapshot(harness.viewModel)
         #expect(snapshot?.rawRSSI == -60)
@@ -305,9 +310,11 @@ struct APRadarViewModelTests {
         let t0 = Date(timeIntervalSince1970: 100)
 
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0, networks: [
-                makeNetwork(ssid: nil, bssid: "AA:BB:CC:DD:EE:FF", rssi: -53, channel: 149, band: .band5GHz)
-            ])
+            makeObservation(
+                timestamp: t0,
+                networks: [
+                    makeNetwork(ssid: nil, bssid: "AA:BB:CC:DD:EE:FF", rssi: -53, channel: 149, band: .band5GHz)
+                ])
         )
         let snapshot = trackingSnapshot(harness.viewModel)
         #expect(snapshot?.rawRSSI == -53)
@@ -328,9 +335,11 @@ struct APRadarViewModelTests {
         activateAndSelect(harness.viewModel, bssid: "AA:BB:CC:DD:EE:FF", ssid: "Home Wi-Fi")
         let t0 = Date(timeIntervalSince1970: 100)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0, networks: [
-                makeNetwork(ssid: "", bssid: "AA:BB:CC:DD:EE:FF", rssi: -53)
-            ])
+            makeObservation(
+                timestamp: t0,
+                networks: [
+                    makeNetwork(ssid: "", bssid: "AA:BB:CC:DD:EE:FF", rssi: -53)
+                ])
         )
         let snapshot = trackingSnapshot(harness.viewModel)
         #expect(snapshot?.target.currentSSID == "Home Wi-Fi")
@@ -377,7 +386,8 @@ struct APRadarViewModelTests {
         #expect(lostSnapshot(harness.viewModel) == nil)
 
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(9), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -49)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(9), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -49)])
         )
         #expect(!harness.viewModel.isAwaitingFreshScan)
         #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -49)
@@ -433,16 +443,19 @@ struct APRadarViewModelTests {
         let t0 = Date(timeIntervalSince1970: 100)
 
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0, networks: [makeNetwork(ssid: "Shared SSID", bssid: "AA:BB:CC:DD:EE:FF", rssi: -60)])
+            makeObservation(
+                timestamp: t0, networks: [makeNetwork(ssid: "Shared SSID", bssid: "AA:BB:CC:DD:EE:FF", rssi: -60)])
         )
         try await harness.viewModel.consume(makeObservation(timestamp: t0.addingTimeInterval(9)))
         #expect(lostSnapshot(harness.viewModel) != nil)
 
         // Another AP with the same SSID appears; the target BSSID is still absent.
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(10), networks: [
-                makeNetwork(ssid: "Shared SSID", bssid: "11:22:33:44:55:66", rssi: -40)
-            ])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(10),
+                networks: [
+                    makeNetwork(ssid: "Shared SSID", bssid: "11:22:33:44:55:66", rssi: -40)
+                ])
         )
         #expect(lostSnapshot(harness.viewModel) != nil)
     }
@@ -457,14 +470,16 @@ struct APRadarViewModelTests {
             makeObservation(timestamp: t0, networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -60)])
         )
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
         )
         try await harness.viewModel.consume(makeObservation(timestamp: t0.addingTimeInterval(9)))
         #expect(lostSnapshot(harness.viewModel) != nil)
 
         // 16 seconds after loss (> 15s): the first new sample is the baseline.
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(25), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -80)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(25), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -80)])
         )
         #expect(trackingSnapshot(harness.viewModel)?.smoothedRSSI == -80)
     }
@@ -479,14 +494,16 @@ struct APRadarViewModelTests {
             makeObservation(timestamp: t0, networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -60)])
         )
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
         )
         try await harness.viewModel.consume(makeObservation(timestamp: t0.addingTimeInterval(9)))
         #expect(lostSnapshot(harness.viewModel) != nil)
 
         // 1 second after loss (< 15s): EMA continues from -57.
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(10), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -80)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(10), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -80)])
         )
         let smoothed = trackingSnapshot(harness.viewModel)?.smoothedRSSI ?? .nan
         #expect(abs(smoothed - (-63.9)) < 0.0001)
@@ -503,7 +520,9 @@ struct APRadarViewModelTests {
 
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
 
         #expect(harness.viewModel.state.isTracking)
@@ -520,7 +539,9 @@ struct APRadarViewModelTests {
 
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
         #expect(harness.scheduler.startCount == 0)
 
@@ -535,7 +556,9 @@ struct APRadarViewModelTests {
         let harness = makeHarness()
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
         #expect(harness.scheduler.startCount == 1)
 
@@ -563,7 +586,8 @@ struct APRadarViewModelTests {
 
         // Tracking continues and updates with later samples.
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -60)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -60)])
         )
         let smoothed = trackingSnapshot(harness.viewModel)?.smoothedRSSI ?? .nan
         #expect(abs(smoothed - (-55.8)) < 0.0001)
@@ -578,7 +602,9 @@ struct APRadarViewModelTests {
         let harness = makeHarness()
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
         #expect(harness.scheduler.startCount == 1)
 
@@ -595,7 +621,9 @@ struct APRadarViewModelTests {
         let harness = makeHarness()
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
 
         #expect(harness.runtime.diagnostics().count == 1)
@@ -623,7 +651,9 @@ struct APRadarViewModelTests {
         let harness = makeHarness()
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
 
         harness.viewModel.setActive(false)
@@ -638,7 +668,9 @@ struct APRadarViewModelTests {
         let harness = makeHarness()
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
 
         harness.viewModel.handleAppBackground()
@@ -649,7 +681,9 @@ struct APRadarViewModelTests {
         // resumes the session.
         harness.viewModel.handleAppActive()
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 101), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 101),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
         )
         #expect(trackingSnapshot(harness.viewModel) != nil)
     }
@@ -670,7 +704,8 @@ struct APRadarViewModelTests {
         // A fresh sample while backgrounded must not clear the suspension or
         // re-arm the pulse loop (the app could still be in the background).
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(1), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -50)])
         )
         #expect(harness.scheduler.startCount == schedulerStarts)
         #expect(harness.audio.playCallCount == playCalls)
@@ -680,7 +715,8 @@ struct APRadarViewModelTests {
         // Returning to active allows the next sample to resume tracking.
         harness.viewModel.handleAppActive()
         try await harness.viewModel.consume(
-            makeObservation(timestamp: t0.addingTimeInterval(2), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -48)])
+            makeObservation(
+                timestamp: t0.addingTimeInterval(2), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -48)])
         )
         #expect(trackingSnapshot(harness.viewModel)?.rawRSSI == -48)
         #expect(harness.scheduler.startCount > schedulerStarts)
@@ -693,7 +729,9 @@ struct APRadarViewModelTests {
         let harness = makeHarness()
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
         // Audio is prepared once the first valid sample arrives.
         #expect(harness.audio.prepareCallCount >= 1)
@@ -755,7 +793,9 @@ struct APRadarViewModelTests {
 
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
 
         #expect(harness.scheduler.startCount == 1)
@@ -771,7 +811,9 @@ struct APRadarViewModelTests {
 
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
 
         #expect(harness.scheduler.startCount == 1)
@@ -783,7 +825,9 @@ struct APRadarViewModelTests {
         let harness = makeHarness()
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
         #expect(harness.scheduler.startCount == 1)
         #expect(harness.scheduler.lastStochastic == false)
@@ -805,7 +849,9 @@ struct APRadarViewModelTests {
 
         activateAndSelect(harness.viewModel)
         try await harness.viewModel.consume(
-            makeObservation(timestamp: Date(timeIntervalSince1970: 100), networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
+            makeObservation(
+                timestamp: Date(timeIntervalSince1970: 100),
+                networks: [makeNetwork(bssid: "AA:BB:CC:DD:EE:FF", rssi: -54)])
         )
         #expect(harness.scheduler.lastStochastic == true)
 

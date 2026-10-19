@@ -44,13 +44,16 @@ enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable, Sendab
         case .path:
             String(localized: "network_diagnostics.check.path.title", comment: "Network system path check title")
         case .gatewayReachability:
-            String(localized: "network_diagnostics.check.gateway_reachability.title", comment: "Gateway reachability check title")
+            String(
+                localized: "network_diagnostics.check.gateway_reachability.title",
+                comment: "Gateway reachability check title")
         case .dns:
             String(localized: "network_diagnostics.check.dns.title", comment: "DNS resolution check title")
         case .internet:
             String(localized: "network_diagnostics.check.internet.title", comment: "Internet access check title")
         case .ipv6:
-            String(localized: "network_diagnostics.check.ipv6.title", comment: "Optional forced IPv6 access check title")
+            String(
+                localized: "network_diagnostics.check.ipv6.title", comment: "Optional forced IPv6 access check title")
         case .proxy:
             String(localized: "network_diagnostics.check.proxy.title", comment: "System proxy check title")
         }
@@ -134,7 +137,8 @@ extension NetworkDiagnosticStatus {
         case .abnormal:
             .init(labelKey: "network_diagnostics.status.abnormal", icon: "xmark.circle.fill", tone: .error)
         case .indeterminate:
-            .init(labelKey: "network_diagnostics.status.indeterminate", icon: "questionmark.circle.fill", tone: .caution)
+            .init(
+                labelKey: "network_diagnostics.status.indeterminate", icon: "questionmark.circle.fill", tone: .caution)
         case .blocked:
             .init(labelKey: "network_diagnostics.status.blocked", icon: "lock.fill", tone: .informational)
         case .skipped:
@@ -183,55 +187,56 @@ struct NetworkDiagnosticRemediation: Equatable, Sendable {
                 codes.remove("proxy.https.egress-unavailable")
             }
         }
-        let base: (String, String, String) = if codes.contains("proxy.authentication-required") {
-            (
-                "network_diagnostics.remediation.proxy_authentication.detection",
-                "network_diagnostics.remediation.proxy_authentication.cause",
-                "network_diagnostics.remediation.proxy_authentication.action"
-            )
-        } else if codes.contains("captive-portal.suspected") || codes.contains("captive-portal.redirect") {
-            (
-                "network_diagnostics.remediation.captive_portal.detection",
-                "network_diagnostics.remediation.captive_portal.cause",
-                "network_diagnostics.remediation.captive_portal.action"
-            )
-        } else if codes.contains("https.certificate-time-error") {
-            (
-                "network_diagnostics.remediation.certificate_time.detection",
-                "network_diagnostics.remediation.certificate_time.cause",
-                "network_diagnostics.remediation.certificate_time.action"
-            )
-        } else if codes.contains("proxy.endpoint-unavailable") || codes.contains("proxy.egress-unavailable") {
-            (
-                "network_diagnostics.remediation.proxy_unavailable.detection",
-                "network_diagnostics.remediation.proxy_unavailable.cause",
-                "network_diagnostics.remediation.proxy_unavailable.action"
-            )
-        } else if result.id == .dns && result.status == .abnormal {
-            (
-                "network_diagnostics.remediation.dns_unavailable.detection",
-                "network_diagnostics.remediation.dns_unavailable.cause",
-                "network_diagnostics.remediation.dns_unavailable.action"
-            )
-        } else if result.id == .path && result.status == .abnormal {
-            (
-                "network_diagnostics.remediation.path_unavailable.detection",
-                "network_diagnostics.remediation.path_unavailable.cause",
-                "network_diagnostics.remediation.path_unavailable.action"
-            )
-        } else if result.status == .indeterminate {
-            (
-                "network_diagnostics.remediation.indeterminate.detection",
-                "network_diagnostics.remediation.indeterminate.cause",
-                "network_diagnostics.remediation.indeterminate.action"
-            )
-        } else {
-            (
-                "network_diagnostics.remediation.generic.detection",
-                "network_diagnostics.remediation.generic.cause",
-                "network_diagnostics.remediation.generic.action"
-            )
-        }
+        let base: (String, String, String) =
+            if codes.contains("proxy.authentication-required") {
+                (
+                    "network_diagnostics.remediation.proxy_authentication.detection",
+                    "network_diagnostics.remediation.proxy_authentication.cause",
+                    "network_diagnostics.remediation.proxy_authentication.action"
+                )
+            } else if codes.contains("captive-portal.suspected") || codes.contains("captive-portal.redirect") {
+                (
+                    "network_diagnostics.remediation.captive_portal.detection",
+                    "network_diagnostics.remediation.captive_portal.cause",
+                    "network_diagnostics.remediation.captive_portal.action"
+                )
+            } else if codes.contains("https.certificate-time-error") {
+                (
+                    "network_diagnostics.remediation.certificate_time.detection",
+                    "network_diagnostics.remediation.certificate_time.cause",
+                    "network_diagnostics.remediation.certificate_time.action"
+                )
+            } else if codes.contains("proxy.endpoint-unavailable") || codes.contains("proxy.egress-unavailable") {
+                (
+                    "network_diagnostics.remediation.proxy_unavailable.detection",
+                    "network_diagnostics.remediation.proxy_unavailable.cause",
+                    "network_diagnostics.remediation.proxy_unavailable.action"
+                )
+            } else if result.id == .dns && result.status == .abnormal {
+                (
+                    "network_diagnostics.remediation.dns_unavailable.detection",
+                    "network_diagnostics.remediation.dns_unavailable.cause",
+                    "network_diagnostics.remediation.dns_unavailable.action"
+                )
+            } else if result.id == .path && result.status == .abnormal {
+                (
+                    "network_diagnostics.remediation.path_unavailable.detection",
+                    "network_diagnostics.remediation.path_unavailable.cause",
+                    "network_diagnostics.remediation.path_unavailable.action"
+                )
+            } else if result.status == .indeterminate {
+                (
+                    "network_diagnostics.remediation.indeterminate.detection",
+                    "network_diagnostics.remediation.indeterminate.cause",
+                    "network_diagnostics.remediation.indeterminate.action"
+                )
+            } else {
+                (
+                    "network_diagnostics.remediation.generic.detection",
+                    "network_diagnostics.remediation.generic.cause",
+                    "network_diagnostics.remediation.generic.action"
+                )
+            }
 
         return .init(
             detectionKey: base.0,

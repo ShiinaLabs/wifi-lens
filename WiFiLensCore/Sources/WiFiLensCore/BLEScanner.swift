@@ -8,12 +8,14 @@ public enum BLEBluetoothState: Sendable, Equatable {
 
     public var label: String {
         switch self {
-        case .unknown:      String(localized: "common.label.unknown", comment: "Generic unknown value label")
-        case .resetting:    String(localized: "ble.state.resetting", comment: "BLE state: adapter is resetting")
-        case .unsupported:  String(localized: "ble.state.unsupported", comment: "BLE state: hardware does not support BLE")
-        case .poweredOff:   String(localized: "ble.state.bluetooth_off", comment: "BLE state: Bluetooth is off")
-        case .poweredOn:    String(localized: "common.label.ready", comment: "Ready state indicator")
-        case .unauthorized: String(localized: "ble.state.permission_denied", comment: "BLE state: permission was denied")
+        case .unknown: String(localized: "common.label.unknown", comment: "Generic unknown value label")
+        case .resetting: String(localized: "ble.state.resetting", comment: "BLE state: adapter is resetting")
+        case .unsupported:
+            String(localized: "ble.state.unsupported", comment: "BLE state: hardware does not support BLE")
+        case .poweredOff: String(localized: "ble.state.bluetooth_off", comment: "BLE state: Bluetooth is off")
+        case .poweredOn: String(localized: "common.label.ready", comment: "Ready state indicator")
+        case .unauthorized:
+            String(localized: "ble.state.permission_denied", comment: "BLE state: permission was denied")
         }
     }
 }
@@ -297,15 +299,16 @@ private final class BLEScannerDelegate: NSObject, CBCentralManagerDelegate, @unc
     // MARK: - CBCentralManagerDelegate
 
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        let state: BLEBluetoothState = switch central.state {
-        case .unknown:      .unknown
-        case .resetting:    .resetting
-        case .unsupported:  .unsupported
-        case .unauthorized: .unauthorized
-        case .poweredOff:   .poweredOff
-        case .poweredOn:    .poweredOn
-        @unknown default:   .unknown
-        }
+        let state: BLEBluetoothState =
+            switch central.state {
+            case .unknown: .unknown
+            case .resetting: .resetting
+            case .unsupported: .unsupported
+            case .unauthorized: .unauthorized
+            case .poweredOff: .poweredOff
+            case .poweredOn: .poweredOn
+            @unknown default: .unknown
+            }
 
         delegateLock.lock()
         let onStateChangeHandler = onStateChange

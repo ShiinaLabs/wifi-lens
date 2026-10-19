@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -15,15 +16,18 @@ extension NetworkDiagnosticsTests {
             )
         }
 
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(path: .abnormal, dns: .normal, internet: .normal, proxy: .normal)
-        ) == .networkUnavailable)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(path: .normal, dns: .abnormal, internet: .normal, proxy: .normal)
-        ) == .needsAttention)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(path: .normal, dns: .normal, internet: .normal, proxy: .abnormal)
-        ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(path: .abnormal, dns: .normal, internet: .normal, proxy: .normal)
+            ) == .networkUnavailable)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(path: .normal, dns: .abnormal, internet: .normal, proxy: .normal)
+            ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(path: .normal, dns: .normal, internet: .normal, proxy: .abnormal)
+            ) == .needsAttention)
 
         let gatewayFailure = makeResults(
             path: .normal,
@@ -59,10 +63,12 @@ extension NetworkDiagnosticsTests {
             id: .internet,
             status: .abnormal,
             summary: "internet",
-            evidence: [.init(
-                code: "https.connectivity-error",
-                value: String(URLError.notConnectedToInternet.rawValue)
-            )]
+            evidence: [
+                .init(
+                    code: "https.connectivity-error",
+                    value: String(URLError.notConnectedToInternet.rawValue)
+                )
+            ]
         )
         directWithoutEgress[5] = NetworkDiagnosticResult(
             id: .proxy,
@@ -71,9 +77,10 @@ extension NetworkDiagnosticsTests {
             evidence: [.init(code: "proxy.https.egress-status", value: "base-check")]
         )
         #expect(NetworkDiagnosticConclusion.evaluate(directWithoutEgress) == .needsAttention)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(path: .normal, dns: .normal, internet: .normal, proxy: .abnormal)
-        ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(path: .normal, dns: .normal, internet: .normal, proxy: .abnormal)
+            ) == .needsAttention)
 
         let captivePortal = [
             NetworkDiagnosticResult(id: .path, status: .normal, summary: "path"),
@@ -94,15 +101,18 @@ extension NetworkDiagnosticsTests {
         #expect(NetworkDiagnosticConclusion.evaluate(captivePortal) == .needsAttention)
         #expect(assessment(for: captivePortal).primaryIssue?.id == .internet)
 
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(path: .normal, dns: .indeterminate, internet: .normal, proxy: .normal)
-        ) == .needsAttention)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(path: .normal, dns: .normal, internet: .normal, proxy: .normal)
-        ) == .networkNormal)
-        #expect(NetworkDiagnosticConclusion.evaluate([
-            NetworkDiagnosticResult(id: .path, status: .normal, summary: "ok"),
-        ]) == nil)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(path: .normal, dns: .indeterminate, internet: .normal, proxy: .normal)
+            ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(path: .normal, dns: .normal, internet: .normal, proxy: .normal)
+            ) == .networkNormal)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate([
+                NetworkDiagnosticResult(id: .path, status: .normal, summary: "ok")
+            ]) == nil)
 
         var directRoute = makeResults(
             path: .normal,
@@ -220,4 +230,3 @@ extension NetworkDiagnosticsTests {
         #expect(recoveredAssessment.primaryIssue == nil)
     }
 }
-

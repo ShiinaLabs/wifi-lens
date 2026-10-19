@@ -64,9 +64,9 @@ struct APFilterService: Sendable {
 
     private func compare(_ lhs: Int, _ rhs: Int, comparator: Comparator) -> Bool {
         switch comparator {
-        case .eq:  return lhs == rhs
-        case .gt:  return lhs > rhs
-        case .lt:  return lhs < rhs
+        case .eq: return lhs == rhs
+        case .gt: return lhs > rhs
+        case .lt: return lhs < rhs
         case .gte: return lhs >= rhs
         case .lte: return lhs <= rhs
         }

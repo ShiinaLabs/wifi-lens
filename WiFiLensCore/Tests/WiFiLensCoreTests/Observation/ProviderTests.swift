@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite("Observation Providers")
@@ -104,24 +105,26 @@ struct ProviderTests {
         let snapshot = NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
-            interfaces: [NetworkInterfaceInfo(
-                interfaceName: "en0",
-                hardwareMAC: nil,
-                isWiFiInterface: true,
-                wifiLinkEvidence: evidence,
-                ipv4Addresses: ["192.0.2.2"],
-                subnetMasks: ["255.255.255.0"],
-                router: "192.0.2.1",
-                dnsServers: ["192.0.2.1"],
-                ssid: "Deterministic",
-                bssid: "AA:BB:CC:DD:EE:FF",
-                channel: 36,
-                band: .band5GHz,
-                rssi: -48,
-                txRate: 866,
-                phyMode: "ax",
-                security: "WPA3"
-            )]
+            interfaces: [
+                NetworkInterfaceInfo(
+                    interfaceName: "en0",
+                    hardwareMAC: nil,
+                    isWiFiInterface: true,
+                    wifiLinkEvidence: evidence,
+                    ipv4Addresses: ["192.0.2.2"],
+                    subnetMasks: ["255.255.255.0"],
+                    router: "192.0.2.1",
+                    dnsServers: ["192.0.2.1"],
+                    ssid: "Deterministic",
+                    bssid: "AA:BB:CC:DD:EE:FF",
+                    channel: 36,
+                    band: .band5GHz,
+                    rssi: -48,
+                    txRate: 866,
+                    phyMode: "ax",
+                    security: "WPA3"
+                )
+            ]
         )
         let status = await provider.fetchCurrentStatus(from: snapshot)
 
@@ -145,13 +148,15 @@ struct ProviderTests {
         let snapshot = NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
-            interfaces: [NetworkInterfaceInfo(
-                interfaceName: "en0",
-                interfaceIndex: 4,
-                isWiFiInterface: true,
-                wifiLinkEvidence: evidence,
-                router: "192.0.2.1"
-            )]
+            interfaces: [
+                NetworkInterfaceInfo(
+                    interfaceName: "en0",
+                    interfaceIndex: 4,
+                    isWiFiInterface: true,
+                    wifiLinkEvidence: evidence,
+                    router: "192.0.2.1"
+                )
+            ]
         )
 
         let status = await WiFiCurrentConnectionProvider().fetchCurrentStatus(from: snapshot)
@@ -211,12 +216,14 @@ struct ProviderTests {
             return NetworkInterfaceSnapshot(
                 cycleID: cycleID,
                 capturedAt: capturedAt,
-                interfaces: [NetworkInterfaceInfo(
-                    interfaceName: "en0",
-                    isWiFiInterface: true,
-                    wifiLinkEvidence: evidence,
-                    ssid: "Visible but unverified"
-                )]
+                interfaces: [
+                    NetworkInterfaceInfo(
+                        interfaceName: "en0",
+                        isWiFiInterface: true,
+                        wifiLinkEvidence: evidence,
+                        ssid: "Visible but unverified"
+                    )
+                ]
             )
         }
 
@@ -242,11 +249,13 @@ struct ProviderTests {
             return NetworkInterfaceSnapshot(
                 cycleID: cycleID,
                 capturedAt: capturedAt,
-                interfaces: [NetworkInterfaceInfo(
-                    interfaceName: "en0",
-                    isWiFiInterface: true,
-                    wifiLinkEvidence: evidence
-                )]
+                interfaces: [
+                    NetworkInterfaceInfo(
+                        interfaceName: "en0",
+                        isWiFiInterface: true,
+                        wifiLinkEvidence: evidence
+                    )
+                ]
             )
         }
 
@@ -271,11 +280,13 @@ struct ProviderTests {
         let snapshot = NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
-            interfaces: [NetworkInterfaceInfo(
-                interfaceName: "en0",
-                isWiFiInterface: true,
-                wifiLinkEvidence: evidence
-            )]
+            interfaces: [
+                NetworkInterfaceInfo(
+                    interfaceName: "en0",
+                    isWiFiInterface: true,
+                    wifiLinkEvidence: evidence
+                )
+            ]
         )
 
         let status = await WiFiCurrentConnectionProvider().fetchCurrentStatus(from: snapshot)
@@ -368,10 +379,12 @@ struct ProviderTests {
     @Test("ping process outcomes require a valid exit-specific interpretation")
     func pingProcessOutcomeMapping() {
         let noReplyOutput = "1 packets transmitted, 0 packets received, 100.0% packet loss"
-        #expect(GatewayPinger.interpret(.exited(
-            status: 0,
-            output: "64 bytes from 192.0.2.1: icmp_seq=0 ttl=64 time=12.5 ms"
-        )) == .replied(milliseconds: 12.5))
+        #expect(
+            GatewayPinger.interpret(
+                .exited(
+                    status: 0,
+                    output: "64 bytes from 192.0.2.1: icmp_seq=0 ttl=64 time=12.5 ms"
+                )) == .replied(milliseconds: 12.5))
         #expect(GatewayPinger.interpret(.exited(status: 0, output: "unparseable")) == .executionFailed)
         #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=-1 ms")) == .executionFailed)
         #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=nan ms")) == .executionFailed)
@@ -379,10 +392,12 @@ struct ProviderTests {
 
         #expect(GatewayPinger.interpret(.exited(status: 2, output: noReplyOutput)) == .noReply)
         #expect(GatewayPinger.interpret(.exited(status: 2, output: "")) == .executionFailed)
-        #expect(GatewayPinger.interpret(.exited(
-            status: 2,
-            output: "0 packets received, 100.0% packet loss"
-        )) == .executionFailed)
+        #expect(
+            GatewayPinger.interpret(
+                .exited(
+                    status: 2,
+                    output: "0 packets received, 100.0% packet loss"
+                )) == .executionFailed)
         for localError in [
             "sendto: No buffer space available",
             "sendmsg: Network is unreachable",
@@ -395,16 +410,20 @@ struct ProviderTests {
             "message too long",
             "invalid argument",
         ] {
-            #expect(GatewayPinger.interpret(.exited(
-                status: 2,
-                output: localError + "\n" + noReplyOutput
-            )) == .executionFailed)
+            #expect(
+                GatewayPinger.interpret(
+                    .exited(
+                        status: 2,
+                        output: localError + "\n" + noReplyOutput
+                    )) == .executionFailed)
         }
         for status: Int32 in [1, 64, 68] {
-            #expect(GatewayPinger.interpret(.exited(
-                status: status,
-                output: noReplyOutput
-            )) == .executionFailed)
+            #expect(
+                GatewayPinger.interpret(
+                    .exited(
+                        status: status,
+                        output: noReplyOutput
+                    )) == .executionFailed)
         }
 
         #expect(GatewayPinger.interpret(.failedToLaunch) == .executionFailed)
@@ -449,10 +468,12 @@ struct ProviderTests {
         #expect(await first.value == .cancelled)
         #expect(await runner.cancelledInvocationIDs == [firstID])
 
-        await runner.complete(secondID, with: .exited(
-            status: 0,
-            output: "64 bytes from 192.0.2.2: icmp_seq=0 ttl=64 time=4.5 ms"
-        ))
+        await runner.complete(
+            secondID,
+            with: .exited(
+                status: 0,
+                output: "64 bytes from 192.0.2.2: icmp_seq=0 ttl=64 time=4.5 ms"
+            ))
         #expect(await second.value == .replied(milliseconds: 4.5))
         #expect(await runner.cancelledInvocationIDs == [firstID])
     }
@@ -466,10 +487,12 @@ struct ProviderTests {
         await runner.waitUntilInvocationCount(1)
 
         let finish = Task {
-            await runner.complete(attemptID, with: .exited(
-                status: 2,
-                output: "1 packets transmitted, 0 packets received, 100.0% packet loss"
-            ))
+            await runner.complete(
+                attemptID,
+                with: .exited(
+                    status: 2,
+                    output: "1 packets transmitted, 0 packets received, 100.0% packet loss"
+                ))
         }
         task.cancel()
         await finish.value

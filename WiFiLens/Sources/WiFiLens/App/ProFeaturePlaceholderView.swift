@@ -51,7 +51,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
         self.campaign = campaign
         self.customSkeleton = customSkeleton
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -62,7 +62,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
                     startPoint: .top, endPoint: .bottom
                 )
                 .ignoresSafeArea()
-                
+
                 VStack(spacing: 18) {
                     customSkeleton()
                         .accessibilityHidden(true)
@@ -73,19 +73,19 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
                         Text(featureName)
                             .font(.title2)
                             .fontWeight(.semibold)
-                        
+
                         Text(featureDescription)
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
-                    
+
                     HStack(spacing: 6) {
                         Text("PRO")
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                        
+
                         Image(systemName: "lock.fill")
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.8))
@@ -99,7 +99,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
                         )
                     )
                     .clipShape(Capsule())
-                    
+
                     Button {
                         openAppStore()
                     } label: {
@@ -118,9 +118,12 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(String(format: String(localized: "pro.accessibility.feature_fmt", comment: "Pro feature accessibility label"), featureName))
+        .accessibilityLabel(
+            String(
+                format: String(localized: "pro.accessibility.feature_fmt", comment: "Pro feature accessibility label"),
+                featureName))
     }
-    
+
     private func openAppStore() {
         guard let url = ExternalLinks.url(for: campaign) else { return }
         NSWorkspace.shared.open(url)
@@ -150,8 +153,10 @@ struct MenuBarFeaturePreviewRow: View {
                     .foregroundColor(.blue)
                     .frame(width: 20)
 
-                Text(String(localized: "settings.features.menubar_label", comment: "Menu bar icon feature toggle label"))
-                    .font(.body)
+                Text(
+                    String(localized: "settings.features.menubar_label", comment: "Menu bar icon feature toggle label")
+                )
+                .font(.body)
 
                 Spacer()
 
@@ -162,9 +167,12 @@ struct MenuBarFeaturePreviewRow: View {
                 ProBadge()
             }
 
-            Text(String(localized: "settings.features.menubar_description", comment: "Description of menu bar icon feature"))
-                .font(.callout)
-                .foregroundColor(.secondary)
+            Text(
+                String(
+                    localized: "settings.features.menubar_description", comment: "Description of menu bar icon feature")
+            )
+            .font(.callout)
+            .foregroundColor(.secondary)
 
             Button {
                 guard let url = ExternalLinks.url(for: .appStore) else { return }
@@ -263,33 +271,33 @@ struct TimelineSkeletonView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-            VStack(alignment: .leading, spacing: 0) {
-                // Section 1 header
-                sectionHeader
-                
-                // Section 1 rows
-                timelineRow(titleWidth: 0.65, subtitleWidth: 0.48, markerOpacity: 0.30)
-                timelineRow(titleWidth: 0.55, subtitleWidth: 0.40, markerOpacity: 0.22, showBadge: true)
-                
-                Spacer().frame(height: 12)
+        VStack(alignment: .leading, spacing: 0) {
+            // Section 1 header
+            sectionHeader
 
-                // Section 2 header
-                sectionHeader
-                
-                // Section 2 rows
-                timelineRow(titleWidth: 0.70, subtitleWidth: 0.52, markerOpacity: 0.18)
-                timelineRow(titleWidth: 0.60, subtitleWidth: 0.44, markerOpacity: 0.30)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.primary.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-                    )
-            )
+            // Section 1 rows
+            timelineRow(titleWidth: 0.65, subtitleWidth: 0.48, markerOpacity: 0.30)
+            timelineRow(titleWidth: 0.55, subtitleWidth: 0.40, markerOpacity: 0.22, showBadge: true)
+
+            Spacer().frame(height: 12)
+
+            // Section 2 header
+            sectionHeader
+
+            // Section 2 rows
+            timelineRow(titleWidth: 0.70, subtitleWidth: 0.52, markerOpacity: 0.18)
+            timelineRow(titleWidth: 0.60, subtitleWidth: 0.44, markerOpacity: 0.30)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.primary.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                )
+        )
     }
 
     private var sectionHeader: some View {

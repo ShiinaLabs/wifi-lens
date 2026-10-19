@@ -13,12 +13,16 @@ enum DiagnosticEvaluator {
         }
         let metricsVerified = currentStatus.metricsAttribution == .verified
         let rssi = metricsVerified ? currentStatus.rssi : nil
-        let chScore = metricsVerified ? channelAnalysis?
-            .first(where: { $0.isCurrentChannel })?
-            .qualityScore : nil
-        let apCount = metricsVerified ? channelAnalysis?
-            .first(where: { $0.isCurrentChannel })?
-            .apCount ?? 0 : 0
+        let chScore =
+            metricsVerified
+            ? channelAnalysis?
+                .first(where: { $0.isCurrentChannel })?
+                .qualityScore : nil
+        let apCount =
+            metricsVerified
+            ? channelAnalysis?
+                .first(where: { $0.isCurrentChannel })?
+                .apCount ?? 0 : 0
         let sec = metricsVerified ? currentStatus.security ?? "" : ""
         let phy = metricsVerified ? currentStatus.phyMode ?? "" : ""
 
@@ -28,7 +32,8 @@ enum DiagnosticEvaluator {
             return DiagnosticResult(
                 icon: "star.fill",
                 title: String(localized: "observation.diagnosis.excellent.title", comment: "Excellent connection"),
-                message: String(localized: "observation.diagnosis.excellent.message", comment: "Excellent connection message"),
+                message: String(
+                    localized: "observation.diagnosis.excellent.message", comment: "Excellent connection message"),
                 severity: .excellent
             )
         }
@@ -48,7 +53,10 @@ enum DiagnosticEvaluator {
             return DiagnosticResult(
                 icon: "antenna.radiowaves.left.and.right",
                 title: String(localized: "observation.diagnosis.congested.title", comment: "Congested channel"),
-                message: String(format: String(localized: "observation.diagnosis.congested.message_fmt", comment: "Congested channel with details"), channelNum, apCount, recList),
+                message: String(
+                    format: String(
+                        localized: "observation.diagnosis.congested.message_fmt",
+                        comment: "Congested channel with details"), channelNum, apCount, recList),
                 severity: .warning
             )
         }
@@ -57,7 +65,8 @@ enum DiagnosticEvaluator {
             return DiagnosticResult(
                 icon: "antenna.radiowaves.left.and.right",
                 title: String(localized: "observation.diagnosis.mediocre.title", comment: "Mediocre channel"),
-                message: String(localized: "observation.diagnosis.mediocre.message", comment: "Mediocre channel advice"),
+                message: String(
+                    localized: "observation.diagnosis.mediocre.message", comment: "Mediocre channel advice"),
                 severity: .warning
             )
         }
@@ -66,7 +75,10 @@ enum DiagnosticEvaluator {
             return DiagnosticResult(
                 icon: "lock.open.fill",
                 title: String(localized: "observation.diagnosis.security.title", comment: "Weak security"),
-                message: String(format: String(localized: "observation.diagnosis.security.message_fmt", comment: "Security advice with type"), sec),
+                message: String(
+                    format: String(
+                        localized: "observation.diagnosis.security.message_fmt", comment: "Security advice with type"),
+                    sec),
                 severity: .warning
             )
         }
@@ -76,7 +88,9 @@ enum DiagnosticEvaluator {
             return DiagnosticResult(
                 icon: "speedometer",
                 title: String(localized: "observation.diagnosis.old_phy.title", comment: "Older Wi-Fi generation"),
-                message: String(format: String(localized: "observation.diagnosis.old_phy.message_fmt", comment: "PHY upgrade advice"), version),
+                message: String(
+                    format: String(
+                        localized: "observation.diagnosis.old_phy.message_fmt", comment: "PHY upgrade advice"), version),
                 severity: .warning
             )
         }

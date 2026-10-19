@@ -1,6 +1,6 @@
 import Foundation
-import Observation
 import Logging
+import Observation
 
 private let apRadarLogger = Logger(label: "apRadar")
 
@@ -71,7 +71,9 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     // MARK: - Init
 
     public convenience init(observationRuntime: WiFiObservationRuntime) {
-        self.init(observationRuntime: observationRuntime, audioPlayer: APRadarAudioPlayer(), scheduler: APRadarPulseScheduler())
+        self.init(
+            observationRuntime: observationRuntime, audioPlayer: APRadarAudioPlayer(),
+            scheduler: APRadarPulseScheduler())
     }
 
     init(
@@ -290,7 +292,8 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     private func resumeSoundIfNeeded() {
         guard isActive, !isSuspended, state.isTracking,
-              signalProcessor.smoothedRSSI != nil else { return }
+            signalProcessor.smoothedRSSI != nil
+        else { return }
         if !audioAvailable {
             prepareAudio()
             guard audioAvailable else { return }
@@ -330,9 +333,10 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     private var canPulse: Bool {
         guard isActive, !isSuspended, !isAwaitingFreshScan, soundEnabled, audioAvailable,
-              state.isTracking, signalProcessor.smoothedRSSI != nil,
-              let lastSeenAt,
-              now().timeIntervalSince(lastSeenAt) < Double(lossTimeout.components.seconds) else {
+            state.isTracking, signalProcessor.smoothedRSSI != nil,
+            let lastSeenAt,
+            now().timeIntervalSince(lastSeenAt) < Double(lossTimeout.components.seconds)
+        else {
             return false
         }
         return true
@@ -372,7 +376,8 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     public func consume(_ observation: WiFiObservation) async throws {
         guard isActive else { return }
         guard let environment = observation.environmentSnapshot,
-              environment.error == nil else {
+            environment.error == nil
+        else {
             scanFailed = observation.environmentSnapshot?.error != nil
             invalidateLiveSignal()
             return
@@ -428,13 +433,14 @@ public final class APRadarViewModel: WiFiObservationConsuming {
             lostAt = nil
             scheduleSignalFreshnessExpiry(from: timestamp)
 
-            state = .tracking(APRadarSnapshot(
-                target: updatedTarget,
-                rawRSSI: matched.rssi,
-                smoothedRSSI: smoothed,
-                trend: signalProcessor.trend(at: timestamp),
-                lastSeenAt: timestamp
-            ))
+            state = .tracking(
+                APRadarSnapshot(
+                    target: updatedTarget,
+                    rawRSSI: matched.rssi,
+                    smoothedRSSI: smoothed,
+                    trend: signalProcessor.trend(at: timestamp),
+                    lastSeenAt: timestamp
+                ))
             if wasLost {
                 apRadarLogger.info("AP Radar signal restored")
             }
@@ -484,7 +490,8 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         signalFreshnessTask = Task { @MainActor [weak self] in
             do { try await sleep(delay) } catch { return }
             guard let self, signalFreshnessGeneration == generation,
-                  lastSeenAt == timestamp, isActive, !isSuspended, state.isTracking else { return }
+                lastSeenAt == timestamp, isActive, !isSuspended, state.isTracking
+            else { return }
             guard expireSignalIfStale(at: now()) else {
                 scheduleSignalFreshnessExpiry(from: timestamp)
                 return
@@ -495,8 +502,9 @@ public final class APRadarViewModel: WiFiObservationConsuming {
     @discardableResult
     func expireSignalIfStale(at date: Date) -> Bool {
         guard let lastSeenAt,
-              date.timeIntervalSince(lastSeenAt) >= Double(lossTimeout.components.seconds),
-              !isAwaitingFreshScan, state.isTracking else { return false }
+            date.timeIntervalSince(lastSeenAt) >= Double(lossTimeout.components.seconds),
+            !isAwaitingFreshScan, state.isTracking
+        else { return false }
         // No scan result arrived before the freshness deadline. Stop using
         // the old RSSI without claiming that the target AP disappeared.
         invalidateLiveSignal()
@@ -511,11 +519,12 @@ public final class APRadarViewModel: WiFiObservationConsuming {
         stopPulseAndAudio()
         cancelSignalFreshnessExpiry()
         lostAt = date
-        state = .signalLost(APRadarLostSnapshot(
-            target: target,
-            lastRSSI: signalProcessor.smoothedRSSI,
-            lastSeenAt: lastSeenAt
-        ))
+        state = .signalLost(
+            APRadarLostSnapshot(
+                target: target,
+                lastRSSI: signalProcessor.smoothedRSSI,
+                lastSeenAt: lastSeenAt
+            ))
         apRadarLogger.info("AP Radar signal lost")
     }
 
@@ -523,7 +532,8 @@ public final class APRadarViewModel: WiFiObservationConsuming {
 
     private func updateNetworks(from observation: WiFiObservation) {
         guard let environment = observation.environmentSnapshot,
-              environment.error == nil else { return }
+            environment.error == nil
+        else { return }
         let networks = environment.networks
         var deduplicated: [String: WiFiNetworkObservation] = [:]
         for network in networks {

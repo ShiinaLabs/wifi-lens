@@ -65,7 +65,10 @@ public struct SecondaryToolbarCapsule: NSViewRepresentable {
         Self.update(nsView, with: descriptor, selection: selection)
     }
 
-    private static func update(_ control: SecondaryToolbarSegmentedControl, with descriptor: SecondaryToolbarDescriptor, selection: SecondaryToolbarItemID) {
+    private static func update(
+        _ control: SecondaryToolbarSegmentedControl, with descriptor: SecondaryToolbarDescriptor,
+        selection: SecondaryToolbarItemID
+    ) {
         if control.segmentCount != descriptor.items.count {
             control.segmentCount = descriptor.items.count
         }
@@ -175,8 +178,8 @@ private final class SecondaryToolbarSegmentAccessibilityElement: NSAccessibility
         let segmentIndex = self.segmentIndex
         return MainActor.assumeIsolated { [control, segmentIndex] in
             guard let control,
-                  control.isEnabled,
-                  segmentIndex < control.segmentCount
+                control.isEnabled,
+                segmentIndex < control.segmentCount
             else { return false }
 
             control.selectedSegment = segmentIndex

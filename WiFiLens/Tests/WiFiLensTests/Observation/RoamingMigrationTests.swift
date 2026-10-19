@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -130,8 +131,10 @@ struct RoamingMigrationTests {
         )
         vm.recordProbe(unverified)
         vm.recordProbe(connectedStatus(bssid: "AA:BB:CC:DD:EE:02", timestamp: start.addingTimeInterval(3)))
-        vm.recordProbe(connectedStatus(bssid: "AA:BB:CC:DD:EE:03", timestamp: start.addingTimeInterval(4), interfaceName: "en1"))
-        vm.recordProbe(connectedStatus(ssid: "OtherNet", bssid: "AA:BB:CC:DD:EE:04", timestamp: start.addingTimeInterval(5)))
+        vm.recordProbe(
+            connectedStatus(bssid: "AA:BB:CC:DD:EE:03", timestamp: start.addingTimeInterval(4), interfaceName: "en1"))
+        vm.recordProbe(
+            connectedStatus(ssid: "OtherNet", bssid: "AA:BB:CC:DD:EE:04", timestamp: start.addingTimeInterval(5)))
         vm.recordProbe(connectedStatus(bssid: "AA:BB:CC:DD:EE:05", timestamp: start.addingTimeInterval(9)))
         #expect(vm.transitions.count == 1)
         vm.stopTest(userInitiated: false)

@@ -182,14 +182,15 @@ public enum WiFiLinkInterpreter {
             return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
         }
         guard evidence.captureStartedAt <= evidence.capturedAt,
-              evidence.capturedAt <= evidence.captureEndedAt else {
+            evidence.capturedAt <= evidence.captureEndedAt
+        else {
             return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
         }
         if let rawMode = evidence.coreWLANModeRawValue {
             switch evidence.mode {
             case .station where rawMode != 1,
-                 .none where rawMode != 0,
-                 .noneOrReadFailure where rawMode != 0:
+                .none where rawMode != 0,
+                .noneOrReadFailure where rawMode != 0:
                 return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
             case .other(let interpretedRawValue) where interpretedRawValue != rawMode:
                 return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
@@ -205,8 +206,9 @@ public enum WiFiLinkInterpreter {
                 return WiFiLinkAssessment(state: .unknown, reason: .unsupportedMode)
             }
             if evidence.mode == .none || evidence.mode == .noneOrReadFailure,
-               evidence.radio == .reportedOn,
-               evidence.linkActive == false {
+                evidence.radio == .reportedOn,
+                evidence.linkActive == false
+            {
                 return WiFiLinkAssessment(
                     state: .unknown,
                     reason: .disconnectCandidate,
@@ -233,16 +235,50 @@ public enum WiFiLinkInterpreter {
 }
 
 public struct WiFiCurrentStatus: Equatable, Sendable {
-    public init(timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil, interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil, band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil, security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool, linkEvidence: WiFiLinkRawEvidence? = nil, linkAssessment: WiFiLinkAssessment? = nil, metricsAttribution: WiFiMetricsAttribution = .unverified) {
-        self.init(timestamp: timestamp, interfaceSnapshotCycleID: interfaceSnapshotCycleID, interfaceName: interfaceName, interfaceIndex: interfaceIndex, ssid: ssid, bssid: bssid, channel: channel, band: band, rssi: rssi, noise: noise, txRate: txRate, phyMode: phyMode, security: security, routerIP: routerIP, isConnected: isConnected, isWiFiPowerOn: isWiFiPowerOn, error: nil, linkEvidence: linkEvidence, linkAssessment: linkAssessment, metricsAttribution: metricsAttribution)
+    public init(
+        timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil,
+        interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil,
+        band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil,
+        security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool,
+        linkEvidence: WiFiLinkRawEvidence? = nil, linkAssessment: WiFiLinkAssessment? = nil,
+        metricsAttribution: WiFiMetricsAttribution = .unverified
+    ) {
+        self.init(
+            timestamp: timestamp, interfaceSnapshotCycleID: interfaceSnapshotCycleID, interfaceName: interfaceName,
+            interfaceIndex: interfaceIndex, ssid: ssid, bssid: bssid, channel: channel, band: band, rssi: rssi,
+            noise: noise, txRate: txRate, phyMode: phyMode, security: security, routerIP: routerIP,
+            isConnected: isConnected, isWiFiPowerOn: isWiFiPowerOn, error: nil, linkEvidence: linkEvidence,
+            linkAssessment: linkAssessment, metricsAttribution: metricsAttribution)
     }
 
-    init(timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil, interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil, band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil, security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool, error: WiFiObservationError?, linkEvidence: WiFiLinkRawEvidence? = nil, linkAssessment: WiFiLinkAssessment? = nil, metricsAttribution: WiFiMetricsAttribution = .unverified) {
-        self.timestamp = timestamp; self.interfaceSnapshotCycleID = interfaceSnapshotCycleID; self.interfaceName = interfaceName; self.interfaceIndex = interfaceIndex
-        self.ssid = ssid; self.bssid = bssid; self.channel = channel; self.band = band; self.rssi = rssi; self.noise = noise
-        self.txRate = txRate; self.phyMode = phyMode; self.security = security; self.routerIP = routerIP
-        self.isConnected = isConnected; self.isWiFiPowerOn = isWiFiPowerOn; self.error = error
-        self.linkEvidence = linkEvidence; self.linkAssessment = linkAssessment; self.metricsAttribution = metricsAttribution
+    init(
+        timestamp: Date, interfaceSnapshotCycleID: UUID? = nil, interfaceName: String? = nil,
+        interfaceIndex: UInt32? = nil, ssid: String? = nil, bssid: String? = nil, channel: Int? = nil,
+        band: ChannelBand? = nil, rssi: Int? = nil, noise: Int? = nil, txRate: Double? = nil, phyMode: String? = nil,
+        security: String? = nil, routerIP: String? = nil, isConnected: Bool, isWiFiPowerOn: Bool,
+        error: WiFiObservationError?, linkEvidence: WiFiLinkRawEvidence? = nil,
+        linkAssessment: WiFiLinkAssessment? = nil, metricsAttribution: WiFiMetricsAttribution = .unverified
+    ) {
+        self.timestamp = timestamp
+        self.interfaceSnapshotCycleID = interfaceSnapshotCycleID
+        self.interfaceName = interfaceName
+        self.interfaceIndex = interfaceIndex
+        self.ssid = ssid
+        self.bssid = bssid
+        self.channel = channel
+        self.band = band
+        self.rssi = rssi
+        self.noise = noise
+        self.txRate = txRate
+        self.phyMode = phyMode
+        self.security = security
+        self.routerIP = routerIP
+        self.isConnected = isConnected
+        self.isWiFiPowerOn = isWiFiPowerOn
+        self.error = error
+        self.linkEvidence = linkEvidence
+        self.linkAssessment = linkAssessment
+        self.metricsAttribution = metricsAttribution
     }
     public var timestamp: Date
     public var interfaceSnapshotCycleID: UUID? = nil
@@ -271,14 +307,15 @@ public struct WiFiCurrentStatus: Equatable, Sendable {
 public enum WiFiLinkEvidenceValidator {
     public static func assessment(for status: WiFiCurrentStatus) -> WiFiLinkAssessment? {
         guard let cycleID = status.interfaceSnapshotCycleID,
-              let interfaceName = status.interfaceName,
-              let evidence = status.linkEvidence,
-              evidence.snapshotCycleID == cycleID,
-              evidence.capturedAt == status.timestamp,
-              evidence.interfaceName == interfaceName,
-              evidence.ssid == status.ssid,
-              evidence.bssid == status.bssid,
-              indexesMatch(evidence.interfaceIndex, status.interfaceIndex) else {
+            let interfaceName = status.interfaceName,
+            let evidence = status.linkEvidence,
+            evidence.snapshotCycleID == cycleID,
+            evidence.capturedAt == status.timestamp,
+            evidence.interfaceName == interfaceName,
+            evidence.ssid == status.ssid,
+            evidence.bssid == status.bssid,
+            indexesMatch(evidence.interfaceIndex, status.interfaceIndex)
+        else {
             return nil
         }
 
@@ -293,7 +330,8 @@ public enum WiFiLinkEvidenceValidator {
 
     private static func indexesMatch(_ evidenceIndex: UInt32?, _ statusIndex: UInt32?) -> Bool {
         guard let evidenceIndex, evidenceIndex != 0,
-              let statusIndex, statusIndex != 0 else { return true }
+            let statusIndex, statusIndex != 0
+        else { return true }
         return evidenceIndex == statusIndex
     }
 }

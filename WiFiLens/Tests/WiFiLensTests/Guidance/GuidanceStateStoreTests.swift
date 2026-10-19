@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -178,7 +179,8 @@ struct GuidanceStateStoreTests {
 
     @Test func storeLoadRepairsDamagedActiveDays() {
         let defaults = makeDefaults(suite: "GuidanceStateStoreTests.damagedLoad")
-        defaults.set(["2026-07-03", "garbage", "2026-07-01", "2026-07-01", "2026-02-30"], forKey: "guidance.activeDays")
+        defaults.set(
+            ["2026-07-03", "garbage", "2026-07-01", "2026-07-01", "2026-02-30"], forKey: "guidance.activeDays")
         defaults.set(999, forKey: "guidance.completionCount")
 
         let state = UserDefaultsGuidanceStateStore(defaults: defaults).load()

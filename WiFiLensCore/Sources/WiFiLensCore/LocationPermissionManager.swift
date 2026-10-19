@@ -1,5 +1,5 @@
-import CoreLocation
 import AppKit
+import CoreLocation
 import Logging
 import Observation
 

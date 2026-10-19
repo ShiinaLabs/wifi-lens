@@ -6,7 +6,7 @@ public enum GlassStyle {
     case clear
 }
 
-public extension View {
+extension View {
     /// Apply a glass background that uses `glassEffect` on macOS 26+ and falls back to
     /// the given Material on older systems.
     ///
@@ -14,18 +14,20 @@ public extension View {
     ///   - style: `.regular` (maps to `.regularMaterial`) or `.clear` (maps to `.thinMaterial`)
     ///   - shape: The shape to clip the background to
     @ViewBuilder
-    func glassBackground(_ style: GlassStyle = .regular, in shape: some Shape = Rectangle()) -> some View {
+    public func glassBackground(_ style: GlassStyle = .regular, in shape: some Shape = Rectangle()) -> some View {
         if #available(macOS 26, *) {
-            let glass: Glass = switch style {
-            case .regular: .regular
-            case .clear:   .clear
-            }
+            let glass: Glass =
+                switch style {
+                case .regular: .regular
+                case .clear: .clear
+                }
             glassEffect(glass, in: shape)
         } else {
-            let material: Material = switch style {
-            case .regular: .regularMaterial
-            case .clear:   .thinMaterial
-            }
+            let material: Material =
+                switch style {
+                case .regular: .regularMaterial
+                case .clear: .thinMaterial
+                }
             background(material, in: shape)
         }
     }

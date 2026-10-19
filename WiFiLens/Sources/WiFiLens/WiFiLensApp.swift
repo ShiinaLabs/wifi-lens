@@ -1,7 +1,8 @@
 import SwiftUI
 import WiFiLensCore
+
 #if OSS
-import Sparkle
+    import Sparkle
 #endif
 
 /// Main-window sizing policy.
@@ -113,7 +114,6 @@ private struct AppRootView: View {
         }
     }
 
-
     private var detailNavigationTitle: String {
         guard selectedPage != .overview else { return "" }
         // A page whose subviews are switched from the secondary toolbar normally
@@ -130,12 +130,10 @@ private struct AppRootView: View {
         updateMainWindowRoute(sceneState.id, newPage)
     }
 
-
-
     @ToolbarContentBuilder
     private var secondaryToolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            if selectedPage == .overview, (BuildConfig.current == .oss || !hideTitleBadge) {
+            if selectedPage == .overview, BuildConfig.current == .oss || !hideTitleBadge {
                 TitleBadge(identity: EditionAssemblyProvider.configuration.identity)
                     .fixedSize()
             }
@@ -185,7 +183,8 @@ private struct AppRootView: View {
                 openLocationPreferences: viewModel.locationManager.openLocationPreferences
             )
         } else if !UITestMode.isActive && !EditionAppShell.isControlledDemoSession
-                    && selectedPage.requiresWiFi && !viewModel.isWiFiAvailable {
+            && selectedPage.requiresWiFi && !viewModel.isWiFiAvailable
+        {
             WiFiOffView()
         } else {
             // Pages stay mounted to preserve page-local state. GeometryReader keeps their
@@ -198,20 +197,21 @@ private struct AppRootView: View {
                         .allowsHitTesting(selectedPage == .overview)
                         .accessibilityIdentifier("page-overview")
 
-                    EditionAssemblyProvider.configuration.detailContribution(EditionCompositionContext(
-                        mainWindowID: sceneState.id,
-                        mainWindowState: sceneState.editionWindowState,
-                        scannerViewModel: viewModel,
-                        macVendorDatabaseManager: macVendorDatabaseManager,
-                        isMACVendorDatabaseAvailable: macVendorDatabaseSummary != nil,
-                        selectedPage: Binding(
-                            get: { sceneState.selectedPage },
-                            set: { sceneState.selectedPage = $0 }
-                        ),
-                        secondaryToolbarSelections: $secondaryToolbarSelections,
-                        bleEnabled: $bleEnabled,
-                        openMainWindow: { _ in }
-                    ))
+                    EditionAssemblyProvider.configuration.detailContribution(
+                        EditionCompositionContext(
+                            mainWindowID: sceneState.id,
+                            mainWindowState: sceneState.editionWindowState,
+                            scannerViewModel: viewModel,
+                            macVendorDatabaseManager: macVendorDatabaseManager,
+                            isMACVendorDatabaseAvailable: macVendorDatabaseSummary != nil,
+                            selectedPage: Binding(
+                                get: { sceneState.selectedPage },
+                                set: { sceneState.selectedPage = $0 }
+                            ),
+                            secondaryToolbarSelections: $secondaryToolbarSelections,
+                            bleEnabled: $bleEnabled,
+                            openMainWindow: { _ in }
+                        ))
 
                     EditionAppShell.channelsPageContent {
                         ChannelQualityView(
@@ -219,9 +219,9 @@ private struct AppRootView: View {
                             mode: channelViewMode
                         )
                     }
-                        .opacity(selectedPage == .channels ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .channels)
-                        .accessibilityIdentifier("page-channels")
+                    .opacity(selectedPage == .channels ? 1 : 0)
+                    .allowsHitTesting(selectedPage == .channels)
+                    .accessibilityIdentifier("page-channels")
 
                     if selectedPage == .interfaces {
                         InterfacesView(
@@ -230,24 +230,24 @@ private struct AppRootView: View {
                             throughputMonitor: viewModel.throughputMonitor,
                             mode: interfaceViewMode
                         )
-                            .accessibilityIdentifier("page-interfaces")
+                        .accessibilityIdentifier("page-interfaces")
                     }
 
                     NetworkDiagnosticsView(
                         viewModel: networkDiagnosticsViewModel,
                         guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
                     )
-                        .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .networkDiagnostics)
-                        .accessibilityIdentifier("page-networkDiagnostics")
+                    .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
+                    .allowsHitTesting(selectedPage == .networkDiagnostics)
+                    .accessibilityIdentifier("page-networkDiagnostics")
 
                     EditionAppShell.roamingPageContent {
                         RoamingTestView(viewModel: roamingViewModel)
                     }
-                        .accessibilityElement(children: .contain)
-                        .accessibilityIdentifier("page-roaming")
-                        .opacity(selectedPage == .roaming ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .roaming)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("page-roaming")
+                    .opacity(selectedPage == .roaming ? 1 : 0)
+                    .allowsHitTesting(selectedPage == .roaming)
 
                     EditionAppShell.apRadarPageContent {
                         APRadarView(
@@ -256,9 +256,9 @@ private struct AppRootView: View {
                             onRescan: { viewModel.requestImmediateRescan() }
                         )
                     }
-                        .opacity(selectedPage == .apRadar ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .apRadar)
-                        .accessibilityElement(children: .contain)
+                    .opacity(selectedPage == .apRadar ? 1 : 0)
+                    .allowsHitTesting(selectedPage == .apRadar)
+                    .accessibilityElement(children: .contain)
 
                     BLEScannerView(viewModel: bleViewModel, bleEnabled: bleEnabled)
                         .opacity(selectedPage == .bleScanner ? 1 : 0)
@@ -285,9 +285,9 @@ private struct AppRootView: View {
                         onRegulatoryRegionChange: viewModel.handleRegulatoryRegionOverrideChange,
                         isActive: selectedPage == .settings
                     )
-                        .opacity(selectedPage == .settings ? 1 : 0)
-                        .allowsHitTesting(selectedPage == .settings)
-                        .accessibilityIdentifier("page-settings")
+                    .opacity(selectedPage == .settings ? 1 : 0)
+                    .allowsHitTesting(selectedPage == .settings)
+                    .accessibilityIdentifier("page-settings")
 
                 }
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: selectedPage)
@@ -315,14 +315,14 @@ private struct AppRootView: View {
                 configuration: EditionAssemblyProvider.configuration,
                 isUITestMode: UITestMode.isActive
             )
-                .navigationSplitViewColumnWidth(min: 160, ideal: 180)
-                .background(
-                    GeometryReader { _ in
-                        Color.clear.onAppear {
-                            BandChartViewModel.reduceMotion = reduceMotion
-                        }
+            .navigationSplitViewColumnWidth(min: 160, ideal: 180)
+            .background(
+                GeometryReader { _ in
+                    Color.clear.onAppear {
+                        BandChartViewModel.reduceMotion = reduceMotion
                     }
-                )
+                }
+            )
         } detail: {
             Group {
                 detailContent
@@ -336,20 +336,37 @@ private struct AppRootView: View {
                     apRadarViewModel.handleWiFiPowerStateChange(newState)
                 }
             }
-            .alert(String(localized: "permission.crash_detected_title", comment: "Alert title when previous crash is detected on launch"), isPresented: $showCrashLog) {
-                Button(String(localized: "common.action.dismiss", comment: "Dismiss/close alert button"), role: .cancel) {}
+            .alert(
+                String(
+                    localized: "permission.crash_detected_title",
+                    comment: "Alert title when previous crash is detected on launch"), isPresented: $showCrashLog
+            ) {
+                Button(String(localized: "common.action.dismiss", comment: "Dismiss/close alert button"), role: .cancel)
+                {}
             } message: {
                 ScrollView { Text(crashLogText).font(.caption.monospaced()).textSelection(.enabled) }
                     .frame(maxHeight: 200)
             }
             .navigationTitle(detailNavigationTitle)
-            .alert(String(localized: "permission.location.services_required_title", comment: "Alert title: Location Services permission needed"), isPresented: $viewModel.locationManager.showDeniedAlert) {
-                Button(String(localized: "common.action.open_system_settings", comment: "Button to open macOS System Settings")) {
+            .alert(
+                String(
+                    localized: "permission.location.services_required_title",
+                    comment: "Alert title: Location Services permission needed"),
+                isPresented: $viewModel.locationManager.showDeniedAlert
+            ) {
+                Button(
+                    String(
+                        localized: "common.action.open_system_settings", comment: "Button to open macOS System Settings"
+                    )
+                ) {
                     viewModel.locationManager.openLocationPreferences()
                 }
                 Button(String(localized: "common.action.cancel", comment: "Cancel button label"), role: .cancel) {}
             } message: {
-                Text(String(localized: "permission.location.services_required_message", comment: "Alert message explaining why Location Services is required"))
+                Text(
+                    String(
+                        localized: "permission.location.services_required_message",
+                        comment: "Alert message explaining why Location Services is required"))
             }
         }
         .listStyle(.sidebar)
@@ -377,7 +394,8 @@ private struct AppRootView: View {
                 if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
                     var welcomedOnThisLaunch = false
                     if !UITestMode.isActive,
-                       EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled {
+                        EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled
+                    {
                         welcomedOnThisLaunch = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
                     }
                     if !welcomedOnThisLaunch && !EditionAppShell.isControlledDemoSession {
@@ -396,17 +414,19 @@ private struct AppRootView: View {
                 updateMCPServer()
             }
         }
-        .sheet(isPresented: Binding(
-            get: {
-                EditionAssemblyProvider.configuration.shouldStartObservationRuntime
-                    && onboardingCoordinator.welcomeHostID == sceneState.id
-            },
-            set: { isPresented in
-                if !isPresented, onboardingCoordinator.welcomeHostID == sceneState.id {
-                    onboardingCoordinator.releaseWelcome(hostID: sceneState.id)
+        .sheet(
+            isPresented: Binding(
+                get: {
+                    EditionAssemblyProvider.configuration.shouldStartObservationRuntime
+                        && onboardingCoordinator.welcomeHostID == sceneState.id
+                },
+                set: { isPresented in
+                    if !isPresented, onboardingCoordinator.welcomeHostID == sceneState.id {
+                        onboardingCoordinator.releaseWelcome(hostID: sceneState.id)
+                    }
                 }
-            }
-        )) {
+            )
+        ) {
             WelcomeView(
                 configuration: EditionAssemblyProvider.configuration.onboardingConfiguration,
                 coordinator: onboardingCoordinator,
@@ -419,31 +439,34 @@ private struct AppRootView: View {
                 }
             )
         }
-#if DEBUG
-        .onChange(of: onboardingCoordinator.debugShowRequested) { _, requested in
-            guard requested,
-                  onboardingCoordinator.consumeDebugShowRequest(),
-                  EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled,
-                  !UITestMode.isActive,
-                  !ProcessInfo.processInfo.isRunningUnderTestHost else {
-                return
+        #if DEBUG
+            .onChange(of: onboardingCoordinator.debugShowRequested) { _, requested in
+                guard requested,
+                    onboardingCoordinator.consumeDebugShowRequest(),
+                    EditionAssemblyProvider.configuration.onboardingConfiguration.welcomeEnabled,
+                    !UITestMode.isActive,
+                    !ProcessInfo.processInfo.isRunningUnderTestHost
+                else {
+                    return
+                }
+                _ = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
             }
-            _ = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
-        }
-#endif
+        #endif
         .onDisappear {
             onboardingCoordinator.releaseWelcome(hostID: sceneState.id)
         }
-        .sheet(isPresented: Binding(
-            get: {
-                EditionAssemblyProvider.configuration.shouldStartObservationRuntime
-                    && (whatsNewCoordinator.shouldShowSheet || whatsNewCoordinator.showSheetFromBadge)
-            },
-            set: { if !$0 { whatsNewCoordinator.dismiss() } }
-        )) {
+        .sheet(
+            isPresented: Binding(
+                get: {
+                    EditionAssemblyProvider.configuration.shouldStartObservationRuntime
+                        && (whatsNewCoordinator.shouldShowSheet || whatsNewCoordinator.showSheetFromBadge)
+                },
+                set: { if !$0 { whatsNewCoordinator.dismiss() } }
+            )
+        ) {
             WhatsNewSheetView(
                 coordinator: whatsNewCoordinator,
-                onDismiss: { }
+                onDismiss: {}
             )
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -466,11 +489,11 @@ private struct AppRootView: View {
     }
 }
 
-private extension ProcessInfo {
+extension ProcessInfo {
     /// True while the app process hosts a unit test bundle. `xcodebuild test`
     /// sets this environment variable for the injected test host, so app
     /// startup must not begin real scanning or observation in that process.
-    var isRunningUnderTestHost: Bool {
+    fileprivate var isRunningUnderTestHost: Bool {
         environment["XCTestConfigurationFilePath"] != nil
     }
 }
@@ -513,12 +536,14 @@ private struct WindowAccessor: NSViewRepresentable {
         // case where a saved frame + content-driven sizing pushed the main window
         // behind the Dock and broke full-screen transitions. We always normalize
         // against the current screen's visibleFrame before the user sees the window.
-        guard WindowFramePolicy.shouldNormalizeLiveWindowFrame(
-            currentFrame: window.frame,
-            screenFrame: window.screen?.frame ?? NSScreen.main?.frame,
-            visibleFrame: visibleFrame,
-            isFullScreen: window.styleMask.contains(.fullScreen)
-        ) else {
+        guard
+            WindowFramePolicy.shouldNormalizeLiveWindowFrame(
+                currentFrame: window.frame,
+                screenFrame: window.screen?.frame ?? NSScreen.main?.frame,
+                visibleFrame: visibleFrame,
+                isFullScreen: window.styleMask.contains(.fullScreen)
+            )
+        else {
             return
         }
 
@@ -546,7 +571,8 @@ final class MainWindowSceneState {
         selectedPage: SidebarPage? = nil
     ) {
         self.id = id
-        self.editionWindowState = editionWindowState ?? EditionAssemblyProvider.configuration.shellHooks.makeMainWindowState()
+        self.editionWindowState =
+            editionWindowState ?? EditionAssemblyProvider.configuration.shellHooks.makeMainWindowState()
         self.selectedPage = selectedPage ?? EditionAssemblyProvider.configuration.initialMainWindowRoute
     }
 
@@ -673,9 +699,10 @@ final class MainWindowLifecycleCoordinator {
     @discardableResult
     func complete(_ claim: MainWindowRegistrationClaim) -> Bool {
         guard claim.outcome != .rejected, let key = claim.key,
-              let registrationID = claim.registrationID,
-              let registration = registrations[key],
-              registration.registrationID == registrationID else { return false }
+            let registrationID = claim.registrationID,
+            let registration = registrations[key],
+            registration.registrationID == registrationID
+        else { return false }
         guard !registration.isCommitted else { return true }
         if let route = pendingRoute, let sceneState = registration.sceneState {
             pendingRoute = nil
@@ -690,10 +717,11 @@ final class MainWindowLifecycleCoordinator {
 
     func abort(_ claim: MainWindowRegistrationClaim) {
         guard claim.outcome == .new, let key = claim.key,
-              let registrationID = claim.registrationID,
-              let registration = registrations[key],
-              registration.registrationID == registrationID,
-              !registration.isCommitted else { return }
+            let registrationID = claim.registrationID,
+            let registration = registrations[key],
+            registration.registrationID == registrationID,
+            !registration.isCommitted
+        else { return }
         removeRegistration(for: key)
     }
 
@@ -752,15 +780,21 @@ final class MainWindowLifecycleCoordinator {
             self.activateRegistration(for: key, window: window)
         }
         registration.observers = [
-            NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { _ in
+            NotificationCenter.default.addObserver(
+                forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main
+            ) { _ in
                 MainActor.assumeIsolated { activate() }
             },
-            NotificationCenter.default.addObserver(forName: NSWindow.didBecomeMainNotification, object: window, queue: .main) { _ in
+            NotificationCenter.default.addObserver(
+                forName: NSWindow.didBecomeMainNotification, object: window, queue: .main
+            ) { _ in
                 MainActor.assumeIsolated { activate() }
             },
-            NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
+            NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification, object: window, queue: .main
+            ) { [weak self] _ in
                 MainActor.assumeIsolated { self?.closeRegistration(for: key) }
-            }
+            },
         ]
     }
 
@@ -895,12 +929,14 @@ final class MainWindowRouteResourceCoordinator {
         let stopBLE = stopBLE
         bleStartTask = Task { @MainActor [weak self] in
             guard let self, !Task.isCancelled,
-                  self.hasBLELease,
-                  self.bleResourceID == resourceID else { return }
+                self.hasBLELease,
+                self.bleResourceID == resourceID
+            else { return }
             await startBLE()
             guard !Task.isCancelled,
-                  self.hasBLELease,
-                  self.bleResourceID == resourceID else {
+                self.hasBLELease,
+                self.bleResourceID == resourceID
+            else {
                 stopBLE()
                 return
             }
@@ -1071,8 +1107,9 @@ struct WiFiLensApp: App {
     private let onboardingCoordinator: OnboardingCoordinator = {
         let coordinator = EditionAssemblyProvider.onboardingCoordinator
         if !UITestMode.isActive,
-           !EditionAppShell.isControlledDemoSession,
-           ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+            !EditionAppShell.isControlledDemoSession,
+            ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
+        {
             coordinator.migrateExistingInstallationIfNeeded()
         }
         return coordinator
@@ -1103,17 +1140,20 @@ struct WiFiLensApp: App {
         let vendorResolver = MACVendorResolver(database: database)
         let databaseSummary = database?.summary
         macVendorDatabaseSummary = databaseSummary
-        let observationRuntime = EditionAssemblyProvider.configuration.shellHooks.makeObservationRuntime(WiFiObservationStore.shared)
+        let observationRuntime = EditionAssemblyProvider.configuration.shellHooks.makeObservationRuntime(
+            WiFiObservationStore.shared)
         let scannerViewModel = ScannerViewModel(
             observationRuntime: observationRuntime,
             vendorResolver: vendorResolver,
             requiresLiveWiFiAuthorization: EditionAssemblyProvider.configuration.requiresLiveWiFiAuthorization
         )
         _viewModel = State(initialValue: scannerViewModel)
-        _roamingViewModel = State(initialValue: EditionAssemblyProvider.configuration.shellHooks.makeRoamingViewModel(scannerViewModel))
-        _apRadarViewModel = State(initialValue: APRadarViewModel(
-            observationRuntime: observationRuntime
-        ))
+        _roamingViewModel = State(
+            initialValue: EditionAssemblyProvider.configuration.shellHooks.makeRoamingViewModel(scannerViewModel))
+        _apRadarViewModel = State(
+            initialValue: APRadarViewModel(
+                observationRuntime: observationRuntime
+            ))
         _macVendorDatabaseManager = State(
             initialValue: MACVendorDatabaseManager(
                 resolver: vendorResolver,
@@ -1129,7 +1169,8 @@ struct WiFiLensApp: App {
             _crashLogText = State(initialValue: log)
             _showCrashLog = State(initialValue: true)
         }
-        let bleOn = UserDefaults.standard.bool(forKey: "bleEnabled")
+        let bleOn =
+            UserDefaults.standard.bool(forKey: "bleEnabled")
             && EditionAssemblyProvider.configuration.shouldStartObservationRuntime
             && !EditionAppShell.isControlledDemoSession
             && !UITestMode.isActive
@@ -1140,9 +1181,10 @@ struct WiFiLensApp: App {
         )
         AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
         if EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
-           !EditionAppShell.isControlledDemoSession,
-           !UITestMode.isActive,
-           !ProcessInfo.processInfo.isRunningUnderTestHost {
+            !EditionAppShell.isControlledDemoSession,
+            !UITestMode.isActive,
+            !ProcessInfo.processInfo.isRunningUnderTestHost
+        {
             Task { await WiFiLinkStateCenter.shared.start() }
         }
     }
@@ -1151,152 +1193,177 @@ struct WiFiLensApp: App {
 
     var body: some Scene {
         WindowGroup(AppEnvironment.current.displayName, id: Self.mainWindowSceneID) { mainWindowContent }
-        // Keep a default launch size only. The app window must remain a normal
-        // resizable macOS window; do not add `.windowResizability(.contentSize)`.
-        .defaultSize(
-            width: MainWindowSizing.defaultSize.width,
-            height: MainWindowSizing.defaultSize.height
-        )
-        .onChange(of: appearance) { _, newValue in
-            let target: NSAppearance?
-            switch newValue {
-            case "light": target = NSAppearance(named: .aqua)
-            case "dark":  target = NSAppearance(named: .darkAqua)
-            default:
-                let name = NSApp.effectiveAppearance.name
-                target = name == .darkAqua || name == .vibrantDark
-                    ? NSAppearance(named: .darkAqua)
-                    : NSAppearance(named: .aqua)
-            }
-            guard let target else { return }
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.4
-                ctx.allowsImplicitAnimation = true
-                for window in NSApp.windows {
-                    window.animator().appearance = target
-                }
-            }
-        }
-        .onChange(of: bleEnabled) { _, enabled in
-            guard EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
-                  !EditionAppShell.isControlledDemoSession else { return }
-            if enabled {
-                bleViewModel = BLEViewModel()
-            } else {
-                bleViewModel?.stopScanning()
-                bleViewModel = nil
-            }
-            routeResources.bind(
-                spectrumViewModels: viewModel.allBandViewModels,
-                bleViewModel: bleViewModel
+            // Keep a default launch size only. The app window must remain a normal
+            // resizable macOS window; do not add `.windowResizability(.contentSize)`.
+            .defaultSize(
+                width: MainWindowSizing.defaultSize.width,
+                height: MainWindowSizing.defaultSize.height
             )
-        }
-        .onChange(of: mcpEnabled) { _, enabled in
-            if EditionAssemblyProvider.configuration.shouldStartObservationRuntime { updateMCPServer() }
-        }
-        .onChange(of: mcpPort) { _, _ in
-            if EditionAssemblyProvider.configuration.shouldStartObservationRuntime, mcpEnabled { updateMCPServer() }
-        }
-        .commands {
-            CommandGroup(before: .toolbar) {
-                Button(String(localized: "nav.overview", comment: "Navigate to Overview page")) {
-                    showMainWindow(route: .overview)
+            .onChange(of: appearance) { _, newValue in
+                let target: NSAppearance?
+                switch newValue {
+                case "light": target = NSAppearance(named: .aqua)
+                case "dark": target = NSAppearance(named: .darkAqua)
+                default:
+                    let name = NSApp.effectiveAppearance.name
+                    target =
+                        name == .darkAqua || name == .vibrantDark
+                        ? NSAppearance(named: .darkAqua)
+                        : NSAppearance(named: .aqua)
                 }
-                .keyboardShortcut("1", modifiers: .command)
-
-                Button(String(localized: "nav.spectrum", comment: "Navigate to Spectrum page")) {
-                    showMainWindow(route: .spectrum)
-                }
-                .keyboardShortcut("2", modifiers: .command)
-
-                Button(String(localized: "nav.channels", comment: "Navigate to Channels page")) {
-                    showMainWindow(route: .channels)
-                }
-                .keyboardShortcut("3", modifiers: .command)
-
-                Button(String(localized: "nav.interfaces", comment: "Navigate to Interfaces page")) {
-                    showMainWindow(route: .interfaces)
-                }
-                .keyboardShortcut("4", modifiers: .command)
-
-                Button(String(localized: "nav.roaming_test", comment: "Navigate to Roaming page")) {
-                    showMainWindow(route: .roaming)
-                }
-                .keyboardShortcut("5", modifiers: .command)
-
-                Button(String(localized: "nav.ble_scanner", comment: "Navigate to BLE Scanner page")) {
-                    showMainWindow(route: .bleScanner)
-                }
-                .keyboardShortcut("6", modifiers: .command)
-
-                Button(String(localized: "nav.timeline", comment: "Navigate to Timeline page")) {
-                    showMainWindow(route: .timeline)
-                }
-                .keyboardShortcut("7", modifiers: .command)
-            }
-
-            CommandGroup(after: .toolbar) {
-                Menu(String(localized: "common.action.export", comment: "Export menu item or button")) {
-                    Button(String(localized: "export.snapshot_image", comment: "Export chart snapshot as single PNG image")) {
-                        exportSnapshotImage()
+                guard let target else { return }
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.4
+                    ctx.allowsImplicitAnimation = true
+                    for window in NSApp.windows {
+                        window.animator().appearance = target
                     }
-                    .keyboardShortcut("e", modifiers: [.command, .shift])
+                }
+            }
+            .onChange(of: bleEnabled) { _, enabled in
+                guard EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
+                    !EditionAppShell.isControlledDemoSession
+                else { return }
+                if enabled {
+                    bleViewModel = BLEViewModel()
+                } else {
+                    bleViewModel?.stopScanning()
+                    bleViewModel = nil
+                }
+                routeResources.bind(
+                    spectrumViewModels: viewModel.allBandViewModels,
+                    bleViewModel: bleViewModel
+                )
+            }
+            .onChange(of: mcpEnabled) { _, enabled in
+                if EditionAssemblyProvider.configuration.shouldStartObservationRuntime { updateMCPServer() }
+            }
+            .onChange(of: mcpPort) { _, _ in
+                if EditionAssemblyProvider.configuration.shouldStartObservationRuntime, mcpEnabled { updateMCPServer() }
+            }
+            .commands {
+                CommandGroup(before: .toolbar) {
+                    Button(String(localized: "nav.overview", comment: "Navigate to Overview page")) {
+                        showMainWindow(route: .overview)
+                    }
+                    .keyboardShortcut("1", modifiers: .command)
 
-                    switch EditionAssemblyProvider.configuration.markdownExportCommandContribution {
-                    case .available(let export):
-                        Button(String(localized: "export.snapshot_markdown", comment: "Export as self-contained Markdown report")) {
-                            export(viewModel)
+                    Button(String(localized: "nav.spectrum", comment: "Navigate to Spectrum page")) {
+                        showMainWindow(route: .spectrum)
+                    }
+                    .keyboardShortcut("2", modifiers: .command)
+
+                    Button(String(localized: "nav.channels", comment: "Navigate to Channels page")) {
+                        showMainWindow(route: .channels)
+                    }
+                    .keyboardShortcut("3", modifiers: .command)
+
+                    Button(String(localized: "nav.interfaces", comment: "Navigate to Interfaces page")) {
+                        showMainWindow(route: .interfaces)
+                    }
+                    .keyboardShortcut("4", modifiers: .command)
+
+                    Button(String(localized: "nav.roaming_test", comment: "Navigate to Roaming page")) {
+                        showMainWindow(route: .roaming)
+                    }
+                    .keyboardShortcut("5", modifiers: .command)
+
+                    Button(String(localized: "nav.ble_scanner", comment: "Navigate to BLE Scanner page")) {
+                        showMainWindow(route: .bleScanner)
+                    }
+                    .keyboardShortcut("6", modifiers: .command)
+
+                    Button(String(localized: "nav.timeline", comment: "Navigate to Timeline page")) {
+                        showMainWindow(route: .timeline)
+                    }
+                    .keyboardShortcut("7", modifiers: .command)
+                }
+
+                CommandGroup(after: .toolbar) {
+                    Menu(String(localized: "common.action.export", comment: "Export menu item or button")) {
+                        Button(
+                            String(
+                                localized: "export.snapshot_image", comment: "Export chart snapshot as single PNG image"
+                            )
+                        ) {
+                            exportSnapshotImage()
                         }
-                        .keyboardShortcut("m", modifiers: [.command, .shift])
-                    case .lockedPreview:
-                        Button {
-                        } label: {
-                            Label {
-                                Text(String(localized: "export.snapshot_markdown", comment: "Export as Markdown report"))
-                            } icon: {
-                                Image(systemName: "lock.fill")
-                                    .foregroundStyle(.yellow)
+                        .keyboardShortcut("e", modifiers: [.command, .shift])
+
+                        switch EditionAssemblyProvider.configuration.markdownExportCommandContribution {
+                        case .available(let export):
+                            Button(
+                                String(
+                                    localized: "export.snapshot_markdown",
+                                    comment: "Export as self-contained Markdown report")
+                            ) {
+                                export(viewModel)
+                            }
+                            .keyboardShortcut("m", modifiers: [.command, .shift])
+                        case .lockedPreview:
+                            Button {
+                            } label: {
+                                Label {
+                                    Text(
+                                        String(
+                                            localized: "export.snapshot_markdown", comment: "Export as Markdown report")
+                                    )
+                                } icon: {
+                                    Image(systemName: "lock.fill")
+                                        .foregroundStyle(.yellow)
+                                }
+                            }
+                            .disabled(true)
+                            .help(
+                                String(
+                                    localized: "pro.markdown.unavailable",
+                                    comment: "Tooltip for unavailable Markdown export"))
+                        }
+
+                        Divider()
+
+                        ForEach(viewModel.bandViewModels, id: \.band.id) { vm in
+                            Button(
+                                String(
+                                    format: String(
+                                        localized: "spectrum.export.csv_fmt",
+                                        comment: "CSV export menu item with band name"), vm.band.displayName)
+                            ) {
+                                exportCSV(for: vm)
                             }
                         }
-                        .disabled(true)
-                        .help(String(localized: "pro.markdown.unavailable", comment: "Tooltip for unavailable Markdown export"))
                     }
+                    .disabled(viewModel.bandViewModels.isEmpty)
+                }
 
-                    Divider()
+                CommandGroup(replacing: .appSettings) {
+                    Button {
+                        showMainWindow(route: .settings)
+                    } label: {
+                        Label(
+                            String(localized: "common.action.settings", comment: "Settings button or menu item"),
+                            systemImage: "gearshape")
+                    }
+                    .keyboardShortcut(",", modifiers: .command)
+                }
 
-                    ForEach(viewModel.bandViewModels, id: \.band.id) { vm in
-                        Button(String(format: String(localized: "spectrum.export.csv_fmt", comment: "CSV export menu item with band name"), vm.band.displayName)) {
-                            exportCSV(for: vm)
+                #if OSS
+                    CommandGroup(after: .appInfo) {
+                        Button(
+                            String(localized: "common.action.check_for_updates", comment: "Check for updates menu item")
+                        ) {
+                            sparkleUpdater.checkForUpdates()
                         }
                     }
-                }
-                .disabled(viewModel.bandViewModels.isEmpty)
+                #endif
+
+                #if DEBUG
+                    EditionAppShell.debugCommands(
+                        showMainWindow: { showMainWindow(route: $0) }
+                    )
+                #endif
+
             }
-
-            CommandGroup(replacing: .appSettings) {
-                Button {
-                    showMainWindow(route: .settings)
-                } label: {
-                    Label(String(localized: "common.action.settings", comment: "Settings button or menu item"), systemImage: "gearshape")
-                }
-                .keyboardShortcut(",", modifiers: .command)
-            }
-
-#if OSS
-            CommandGroup(after: .appInfo) {
-                Button(String(localized: "common.action.check_for_updates", comment: "Check for updates menu item")) {
-                    sparkleUpdater.checkForUpdates()
-                }
-            }
-#endif
-
-#if DEBUG
-            EditionAppShell.debugCommands(
-                showMainWindow: { showMainWindow(route: $0) }
-            )
-#endif
-
-        }
 
         EditionAppShell.menuBarScene(
             openMainWindow: { route in showMainWindow(route: route, source: .menuBar) },
@@ -1332,14 +1399,16 @@ struct WiFiLensApp: App {
     private var colorScheme: ColorScheme? {
         switch appearance {
         case "light": return .light
-        case "dark":  return .dark
-        default:      return systemColorScheme
+        case "dark": return .dark
+        default: return systemColorScheme
         }
     }
 
     private var systemColorScheme: ColorScheme {
         let name = NSApp.effectiveAppearance.name
-        if name == .darkAqua || name == .vibrantDark || name == .accessibilityHighContrastDarkAqua || name == .accessibilityHighContrastVibrantDark {
+        if name == .darkAqua || name == .vibrantDark || name == .accessibilityHighContrastDarkAqua
+            || name == .accessibilityHighContrastVibrantDark
+        {
             return .dark
         }
         return .light
@@ -1373,9 +1442,8 @@ struct WiFiLensApp: App {
         }
 
         let hasExistingMainWindow = mainWindowLifecycle.hasWindows
-        pendingResolvedMainWindowFocus = (
-            resolvedWindowFocusIntent(hasExistingMainWindow: hasExistingMainWindow) == .focusResolvedWindow
-        )
+        pendingResolvedMainWindowFocus =
+            (resolvedWindowFocusIntent(hasExistingMainWindow: hasExistingMainWindow) == .focusResolvedWindow)
 
         NSApp.activate(ignoringOtherApps: true)
 
@@ -1413,10 +1481,12 @@ struct WiFiLensApp: App {
             sceneState: sceneState,
             registerEdition: {
                 routeResources.register(windowID: sceneState.id, route: sceneState.selectedPage)
-                guard EditionAssemblyProvider.configuration.shellHooks.registerMainWindowState(
-                    sceneState.editionWindowState,
-                    sceneState.id
-                ) else {
+                guard
+                    EditionAssemblyProvider.configuration.shellHooks.registerMainWindowState(
+                        sceneState.editionWindowState,
+                        sceneState.id
+                    )
+                else {
                     routeResources.release(windowID: sceneState.id)
                     return false
                 }
@@ -1520,7 +1590,8 @@ struct WiFiLensApp: App {
 
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.commaSeparatedText]
-        panel.nameFieldStringValue = "\(vm.band.displayName.lowercased().replacingOccurrences(of: " ", with: "-"))_wifi.csv"
+        panel.nameFieldStringValue =
+            "\(vm.band.displayName.lowercased().replacingOccurrences(of: " ", with: "-"))_wifi.csv"
         panel.begin { response in
             if response == .OK, let url = panel.url {
                 try? data.write(to: url)
