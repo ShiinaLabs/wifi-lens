@@ -119,12 +119,14 @@ public struct WiFiLensEditionShellHooks {
 public struct WiFiLensEditionConfiguration {
     public let identity: WiFiLensEditionIdentity
     public let capabilities: Set<WiFiLensEditionCapability>
+    public let analysisSidebarPages: [SidebarPage]
     public let shouldStartObservationRuntime: Bool
     public let requiresLiveWiFiAuthorization: Bool
     public let isTimelineLockedPreview: Bool
     public let initialMainWindowRoute: SidebarPage
     public let timelineToolbarDescriptor: SecondaryToolbarDescriptor?
     public let spectrumToolbarDescriptor: SecondaryToolbarDescriptor
+    public let networkExperienceToolbarDescriptor: SecondaryToolbarDescriptor?
     public let exportSuccessPresentation: ExportSuccessPresentation
     public let onboardingConfiguration: OnboardingConfiguration
     public let guidanceConfiguration: GuidanceConfiguration
@@ -150,8 +152,9 @@ public struct WiFiLensEditionConfiguration {
         }
     }
 
-    var analysisSidebarBadgeStyle: SidebarBadge.Style {
-        capabilities.contains(.analysis) ? .preview : .pro
+    var analysisSidebarBadgeStyle: SidebarBadge.Style? {
+        guard analysisSidebarPages.contains(.statistics) || analysisSidebarPages.contains(.insights) else { return nil }
+        return capabilities.contains(.analysis) ? .preview : .pro
     }
 
     public init(
@@ -168,16 +171,20 @@ public struct WiFiLensEditionConfiguration {
         guidanceConfiguration: GuidanceConfiguration,
         guidanceCoordinator: GuidanceCoordinator,
         shellHooks: WiFiLensEditionShellHooks,
-        menuBarWindowManagementEnabled: Bool
+        menuBarWindowManagementEnabled: Bool,
+        analysisSidebarPages: [SidebarPage] = [.timeline, .statistics, .insights],
+        networkExperienceToolbarDescriptor: SecondaryToolbarDescriptor? = nil
     ) {
         self.identity = identity
         self.capabilities = capabilities
+        self.analysisSidebarPages = analysisSidebarPages
         self.shouldStartObservationRuntime = shouldStartObservationRuntime
         self.requiresLiveWiFiAuthorization = requiresLiveWiFiAuthorization
         self.isTimelineLockedPreview = isTimelineLockedPreview
         self.initialMainWindowRoute = initialMainWindowRoute
         self.timelineToolbarDescriptor = timelineToolbarDescriptor
         self.spectrumToolbarDescriptor = spectrumToolbarDescriptor
+        self.networkExperienceToolbarDescriptor = networkExperienceToolbarDescriptor
         self.exportSuccessPresentation = exportSuccessPresentation
         self.onboardingConfiguration = onboardingConfiguration
         self.guidanceConfiguration = guidanceConfiguration

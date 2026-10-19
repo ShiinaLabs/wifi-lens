@@ -121,7 +121,7 @@ public struct SidebarView: View {
             }
             Section {
                 sidebarGroupTitle(.analysis)
-                ForEach(SidebarPage.analysisPages, id: \.self) { page in
+                ForEach(configuration.analysisSidebarPages, id: \.self) { page in
                     sidebarRow(for: page)
                         .tag(page)
                         .accessibilityIdentifier("sidebar-\(page.rawValue)")

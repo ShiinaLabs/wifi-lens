@@ -45,9 +45,6 @@ public struct APRadarView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            pageHeader
-            Divider()
-
             // State pages animate in/out so entering or leaving scan mode
             // feels like the radar powers up/down instead of an instant swap.
             ZStack {
@@ -121,22 +118,6 @@ public struct APRadarView: View {
                 }
             }
         }
-    }
-
-    // MARK: - Header
-
-    private var pageHeader: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "dot.radiowaves.left.and.right")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
-                .accessibilityHidden(true)
-            Text(String(localized: "nav.apRadar", comment: "AP Radar sidebar navigation item"))
-                .font(.title3.weight(.semibold))
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
     }
 
     /// Adaptive layout metrics for the page. `regular` is the comfortable

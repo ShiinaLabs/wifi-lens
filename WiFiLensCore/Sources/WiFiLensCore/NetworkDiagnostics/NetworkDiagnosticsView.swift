@@ -216,20 +216,12 @@ public struct NetworkDiagnosticsView: View {
     }
 
     private var commandIdentity: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Label {
-                Text(String(localized: "nav.network_diagnostics", comment: "Network Self-Check page title"))
-                    .font(.headline)
-            } icon: {
-                Image(systemName: "stethoscope")
-                    .foregroundStyle(Color.accentColor)
-            }
-
-            Text(String(localized: "network_diagnostics.description", comment: "Network self-check page description"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-        }
+        Text(String(localized: "network_diagnostics.description", comment: "Network self-check page description"))
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: 440, alignment: .leading)
     }
 
     @ViewBuilder

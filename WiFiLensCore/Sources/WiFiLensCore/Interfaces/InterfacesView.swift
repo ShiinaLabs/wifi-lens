@@ -486,8 +486,8 @@ public struct InterfacesView: View {
                                     .frame(width: 72, alignment: .trailing)
                                     .lineLimit(1)
                             } else {
-                                Text("—").font(.callout).foregroundColor(.secondary).frame(width: 72)
-                                Text("—").font(.callout).foregroundColor(.secondary).frame(width: 72)
+                                Text(verbatim: "—").font(.callout).foregroundColor(.secondary).frame(width: 72)
+                                Text(verbatim: "—").font(.callout).foregroundColor(.secondary).frame(width: 72)
                             }
                         }
                         .padding(.horizontal, 16)

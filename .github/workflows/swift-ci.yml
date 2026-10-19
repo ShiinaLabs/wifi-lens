@@ -51,6 +51,12 @@ jobs:
       - name: Check public project ownership
         run: python3 scripts/check-public-project-boundary.py
 
+      - name: Check string catalog formatting
+        run: python3 scripts/format_xcstrings.py --check
+
+      - name: Test formatter and staged-file safety
+        run: python3 -m unittest discover -s scripts/tests -p 'test_format_xcstrings.py'
+
       - name: Build
         run: |
           xcodebuild -project WiFiLens.xcodeproj \

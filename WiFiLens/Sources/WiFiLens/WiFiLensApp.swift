@@ -86,7 +86,8 @@ private struct AppRootView: View {
         SecondaryToolbarDescriptor.forPage(
             page,
             spectrum: EditionAssemblyProvider.configuration.spectrumToolbarDescriptor,
-            timeline: EditionAssemblyProvider.configuration.timelineToolbarDescriptor
+            timeline: EditionAssemblyProvider.configuration.timelineToolbarDescriptor,
+            networkExperience: EditionAssemblyProvider.configuration.networkExperienceToolbarDescriptor
         )
     }
 
@@ -115,6 +116,13 @@ private struct AppRootView: View {
 
     private var detailNavigationTitle: String {
         guard selectedPage != .overview else { return "" }
+        // A page whose subviews are switched from the secondary toolbar normally
+        // drops the navigation title because the toolbar capsule takes that
+        // space. Network Experience keeps its single page-level title: its
+        // subviews are two halves of one page, not interchangeable view modes.
+        if selectedPage == .networkExperience, activeSecondaryToolbarDescriptor != nil {
+            return selectedPage.label
+        }
         return activeSecondaryToolbarDescriptor == nil ? selectedPage.label : ""
     }
 
@@ -149,6 +157,13 @@ private struct AppRootView: View {
                     descriptor: secondaryToolbarDescriptor(for: .spectrum)!,
                     selection: $secondaryToolbarSelections.spectrum
                 )
+            case .networkExperience:
+                if let descriptor = secondaryToolbarDescriptor(for: .networkExperience) {
+                    SecondaryToolbarCapsule(
+                        descriptor: descriptor,
+                        selection: $secondaryToolbarSelections.networkExperience
+                    )
+                }
             case .timeline:
                 if let descriptor = secondaryToolbarDescriptor(for: .timeline) {
                     SecondaryToolbarCapsule(

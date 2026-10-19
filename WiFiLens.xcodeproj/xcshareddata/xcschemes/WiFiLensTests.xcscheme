@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2700"
+   LastUpgradeVersion = "2710"
    version = "1.8">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -36,15 +36,6 @@
             </BuildableReference>
          </TestableReference>
       </Testables>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4815C3B026D255EF85C56198"
-            BuildableName = "WiFi Lens.app"
-            BlueprintName = "WiFiLens"
-            ReferencedContainer = "container:WiFiLens.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

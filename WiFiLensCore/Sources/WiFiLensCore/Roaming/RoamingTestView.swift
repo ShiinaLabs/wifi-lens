@@ -193,7 +193,7 @@ public struct RoamingTestView: View {
                             .truncationMode(.tail)
                     }
                     if let phy = viewModel.currentPhyMode {
-                        Text("·")
+                        Text(verbatim: "·")
                             .foregroundColor(.secondary)
                         Text(phy)
                             .font(.caption)
