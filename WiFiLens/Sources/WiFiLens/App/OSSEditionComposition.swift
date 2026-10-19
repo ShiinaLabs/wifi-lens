@@ -9,7 +9,7 @@ enum OSSEditionAssembly {
         capabilities: [.ble],
         shouldStartObservationRuntime: true,
         requiresLiveWiFiAuthorization: true,
-        isTimelineLockedPreview: true,
+        analysisSidebarIsLockedPreview: true,
         initialMainWindowRoute: .overview,
         timelineToolbarDescriptor: nil,
         spectrumToolbarDescriptor: .spectrum(recordingLocked: true),
@@ -145,7 +145,7 @@ enum OSSEditionAssembly {
     @MainActor
     static func unregisterMainWindowState(_ state: AnyObject, for windowID: UUID) {}
 
-    static let isTimelineLockedPreview = true
+    static let analysisSidebarIsLockedPreview = true
 
     static var timelineToolbarDescriptor: SecondaryToolbarDescriptor? { nil }
 
@@ -176,33 +176,22 @@ enum OSSEditionAssembly {
             )
             .accessibilityIdentifier("page-spectrum")
             .accessibilityElement(children: .contain)
-        case .timeline:
+        case .networkExperience:
             ProFeaturePlaceholderView(
-                featureName: String(localized: "pro.timeline.title", comment: "Pro timeline feature title"),
-                featureDescription: String(localized: "pro.timeline.description", comment: "Pro timeline feature description"),
-                featureIcon: SidebarPage.timeline.icon,
-                campaign: .appStoreCampaignPreviewTimeline,
-                customSkeleton: { TimelineSkeletonView() }
+                featureName: SidebarPage.networkExperience.label,
+                featureDescription: String(localized: "pro.network_experience.description", comment: "Pro Network Experience feature description"),
+                featureIcon: SidebarPage.networkExperience.icon,
+                customSkeleton: { NetworkExperienceSkeletonView() }
             )
-            .accessibilityIdentifier("page-timeline")
-        case .statistics:
+            .accessibilityIdentifier("page-networkExperience")
+        case .problemHistory:
             ProFeaturePlaceholderView(
-                featureName: String(localized: "pro.statistics.title", comment: "Pro Statistics feature title"),
-                featureDescription: String(localized: "pro.statistics.description", comment: "Pro Statistics feature description"),
-                featureIcon: SidebarPage.statistics.icon,
-                campaign: .appStoreCampaignPreviewStatistics,
-                customSkeleton: { StatisticsSkeletonView() }
+                featureName: SidebarPage.problemHistory.label,
+                featureDescription: String(localized: "pro.problem_history.description", comment: "Pro Problem History feature description"),
+                featureIcon: SidebarPage.problemHistory.icon,
+                customSkeleton: { ProblemHistorySkeletonView() }
             )
-            .accessibilityIdentifier("page-statistics")
-        case .insights:
-            ProFeaturePlaceholderView(
-                featureName: String(localized: "pro.insights.title", comment: "Pro Insights feature title"),
-                featureDescription: String(localized: "pro.insights.description", comment: "Pro Insights feature description"),
-                featureIcon: SidebarPage.insights.icon,
-                campaign: .appStoreCampaignPreviewInsights,
-                customSkeleton: { InsightsSkeletonView() }
-            )
-            .accessibilityIdentifier("page-insights")
+            .accessibilityIdentifier("page-problemHistory")
         case .wifiCallingTest:
             ProFeaturePlaceholderView(
                 featureName: String(localized: "pro.wifi_calling_test.title", comment: "Pro Wi-Fi Calling Test feature title"),

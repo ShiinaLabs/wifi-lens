@@ -76,7 +76,9 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         }
     }
 
-    static let analysisPages: [SidebarPage] = [.timeline, .statistics, .insights]
+    /// Default Analysis destinations. An edition that does not implement them
+    /// presents each one as an invitation to the edition that does.
+    static let analysisPages: [SidebarPage] = [.networkExperience, .problemHistory]
 }
 
 public enum SecondaryToolbarItemID: String, Hashable, Sendable {

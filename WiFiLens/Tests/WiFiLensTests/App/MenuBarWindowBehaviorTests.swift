@@ -114,7 +114,7 @@ struct MenuBarWindowBehaviorTests {
     func analysisRoutesHaveStableIdentitiesAndOrder() {
         #expect(SidebarPage.statistics.rawValue == "statistics")
         #expect(SidebarPage.insights.rawValue == "insights")
-        #expect(SidebarPage.analysisPages == [.timeline, .statistics, .insights])
+        #expect(SidebarPage.analysisPages == [.networkExperience, .problemHistory])
         #expect(EditionAssemblyProvider.configuration.analysisSidebarPages == SidebarPage.analysisPages)
         #expect(SidebarPage.timeline.rawValue == "timeline")
         #expect(!SidebarPage.statistics.requiresLocationAuthorization)
@@ -133,7 +133,7 @@ struct MenuBarWindowBehaviorTests {
     @Test("Analysis group badge reflects Timeline preview semantics")
     @MainActor
     func analysisBadgesReflectTimelinePreviewSemantics() {
-        for page in [SidebarPage.timeline, .statistics, .insights] {
+        for page in [SidebarPage.networkExperience, .problemHistory] {
             #expect(EditionAssemblyProvider.configuration.sidebarBadgeStyle(for: page) == nil)
         }
         #expect(EditionAssemblyProvider.configuration.analysisSidebarBadgeStyle == .pro)

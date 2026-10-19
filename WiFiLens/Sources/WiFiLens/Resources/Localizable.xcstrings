@@ -18087,6 +18087,59 @@
         }
       }
     },
+    "common.badge.deprecated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veraltet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deprecated"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obsoleto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obsolète"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非推奨"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Устарело"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "弃用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "棄用"
+          }
+        }
+      }
+    },
     "common.badge.experimental" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -37362,6 +37415,112 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "選單列圖像"
+          }
+        }
+      }
+    },
+    "pro.network_experience.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verfolge, wie sich dein Netzwerk über die Zeit verhalten hat und wann die Erfahrung beeinträchtigt war."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See how your network behaved over time and when experience was affected."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Observa cómo se comportó tu red con el tiempo y cuándo se vio afectada la experiencia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivez le comportement de votre réseau dans le temps et les périodes où l’expérience a été affectée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネットワークが時間とともにどう推移し、いつ体験が損なわれたかを確認できます。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Смотрите, как сеть вела себя со временем и когда качество связи страдало."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看网络体验随时间的变化，以及哪些时段受到影响。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢視網路體驗隨時間的變化，以及哪些時段受到影響。"
+          }
+        }
+      }
+    },
+    "pro.problem_history.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfe gespeicherte Netzwerkprobleme, die zugrunde liegenden Belege und die nächsten Prüfschritte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review saved network problems, the evidence behind them, and what to check next."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa los problemas de red guardados, las pruebas que los respaldan y qué comprobar a continuación."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consultez les problèmes réseau enregistrés, les preuves associées et les vérifications à effectuer ensuite."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されたネットワークの問題、その根拠、次に確認すべき項目を振り返ります。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Просматривайте сохранённые проблемы сети, подтверждающие их данные и следующие шаги проверки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回顾已保存的网络问题、支撑证据，以及接下来该检查什么。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回顧已儲存的網路問題、支撐證據，以及接下來該檢查什麼。"
           }
         }
       }

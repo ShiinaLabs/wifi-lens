@@ -278,7 +278,7 @@ struct EditionCompositionTests {
     @MainActor
     func ossTimelineContributionIsLockedPreview() {
         #expect(EditionAssemblyProvider.configuration.timelineToolbarDescriptor == nil)
-        #expect(EditionAssemblyProvider.configuration.isTimelineLockedPreview)
+        #expect(EditionAssemblyProvider.configuration.analysisSidebarIsLockedPreview)
     }
 
     @Test("OSS recording segment remains locked")
