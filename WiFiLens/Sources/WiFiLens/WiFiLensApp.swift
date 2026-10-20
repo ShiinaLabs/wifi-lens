@@ -194,7 +194,7 @@ private struct AppRootView: View {
                         store: viewModel.store,
                         guidance: EditionAssemblyProvider.configuration.guidanceConfiguration.localMarketingPolicyEnabled
                             ? EditionAssemblyProvider.configuration.guidanceCoordinator : nil,
-                        isInvitationHostActive: selectedPage == .overview && hostWindow?.isKeyWindow == true,
+                        isInvitationHostActive: selectedPage == .overview,
                         hostWindow: hostWindow,
                         invitationOwnerWindowID: sceneState.id
                     )
@@ -241,7 +241,7 @@ private struct AppRootView: View {
                     NetworkDiagnosticsView(
                         viewModel: networkDiagnosticsViewModel,
                         guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
-                        isInvitationHostActive: selectedPage == .networkDiagnostics && hostWindow?.isKeyWindow == true,
+                        isInvitationHostActive: selectedPage == .networkDiagnostics,
                         hostWindow: hostWindow,
                         ownerWindowID: sceneState.id
                     )
@@ -312,7 +312,6 @@ private struct AppRootView: View {
                     if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
                         ExportSuccessBanner(
                             guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
-                            isInvitationHostActive: hostWindow?.isKeyWindow == true,
                             hostWindow: hostWindow,
                             ownerWindowID: sceneState.id
                         )

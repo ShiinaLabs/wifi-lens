@@ -141,12 +141,16 @@ public final class GuidanceCoordinator {
         if moment == .diagnosticsCompleted || moment == .exportSucceeded,
            let invitation = pendingInvitation,
            invitation.moment == .appReturnedAfterUse,
-           invitation.ownerWindowID == ownerWindowID,
            !confirmedPresentedInvitationIDs.contains(invitation.id) {
             // A passive return prompt may wait below the Overview viewport. A
             // completed diagnostic/export has higher priority and must not be
-            // blocked by a prompt the user has not actually seen.
-            pendingInvitation = nil
+            // blocked by a prompt the user has not actually seen. The pending
+            // slot is global, so pre-empt regardless of which window owns the
+            // prompt; otherwise a second window's diagnostic would be dropped
+            // as `.invitationAlreadyPending` for as long as the unseen prompt
+            // stays pending. Routing through the cancel path also grants the
+            // one-retry-per-day allowance the cancellation semantics promise.
+            endInvitationPresentation(id: invitation.id, ownerWindowID: invitation.ownerWindowID)
         }
 
         switch moment {
@@ -347,9 +351,18 @@ public final class GuidanceCoordinator {
 
     // MARK: - Export feedback
 
+    /// Feedback published without a resolved owning window belongs to whichever
+    /// window renders the banner. Without this, an export that completed while
+    /// no window could be resolved would publish feedback that no host can ever
+    /// match, silently dropping the success confirmation.
+    private func feedbackOwnerMatches(_ owner: UUID?, _ windowID: UUID?) -> Bool {
+        guard let owner else { return true }
+        return owner == windowID
+    }
+
     func matchingExportFeedback(ownerWindowID: UUID?) -> ExportFeedback? {
         guard let exportFeedback,
-              exportFeedback.ownerWindowID == ownerWindowID else { return nil }
+              feedbackOwnerMatches(exportFeedback.ownerWindowID, ownerWindowID) else { return nil }
         return exportFeedback
     }
 
@@ -365,12 +378,15 @@ public final class GuidanceCoordinator {
     }
 
     func dismissExportFeedback(ownerWindowID: UUID? = nil) {
-        guard exportFeedback?.ownerWindowID == ownerWindowID else { return }
-        exportFeedback = nil
+        guard let exportFeedback,
+              feedbackOwnerMatches(exportFeedback.ownerWindowID, ownerWindowID) else { return }
+        self.exportFeedback = nil
+        // Only the invitation published alongside this feedback may be ended,
+        // so a window cannot end another window's export invitation.
         if let invitation = pendingInvitation,
            invitation.moment == .exportSucceeded,
-           invitation.ownerWindowID == ownerWindowID {
-            endInvitationPresentation(id: invitation.id, ownerWindowID: ownerWindowID)
+           invitation.ownerWindowID == exportFeedback.ownerWindowID {
+            endInvitationPresentation(id: invitation.id, ownerWindowID: invitation.ownerWindowID)
         }
     }
 

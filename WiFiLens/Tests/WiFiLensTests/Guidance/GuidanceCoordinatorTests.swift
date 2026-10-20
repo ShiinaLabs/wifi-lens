@@ -292,6 +292,37 @@ final class GuidanceCoordinatorTests {
         #expect(store.load().invitationDismissalCount == 1)
     }
 
+    /// An export that could not resolve an owning window publishes unowned
+    /// feedback. It must stay visible in whichever window renders the banner
+    /// instead of being dropped because no host can match `nil`.
+    @Test func unownedExportFeedbackIsVisibleAndDismissableFromAnyWindow() {
+        let anyWindow = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        coordinator.handleExportSucceeded(ownerWindowID: nil)
+
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: anyWindow) != nil)
+        coordinator.dismissExportFeedback(ownerWindowID: anyWindow)
+        #expect(coordinator.exportFeedback == nil)
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: anyWindow) == nil)
+    }
+
+    @Test func ownedExportFeedbackStaysScopedToItsOwningWindow() {
+        let owner = UUID()
+        let otherWindow = UUID()
+        let coordinator = makeCoordinator(state: invitationState())
+        coordinator.handleExportSucceeded(ownerWindowID: owner)
+
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: otherWindow) == nil)
+        coordinator.dismissExportFeedback(ownerWindowID: otherWindow)
+        #expect(coordinator.exportFeedback != nil)
+        #expect(coordinator.pendingInvitation != nil)
+
+        #expect(coordinator.matchingExportFeedback(ownerWindowID: owner) != nil)
+        coordinator.dismissExportFeedback(ownerWindowID: owner)
+        #expect(coordinator.exportFeedback == nil)
+        #expect(coordinator.pendingInvitation == nil)
+    }
+
     @Test func inactiveOrClosedWindowCannotScheduleLateInvitation() {
         let owner = UUID()
         let otherWindow = UUID()
@@ -834,6 +865,47 @@ final class GuidanceCoordinatorTests {
         #expect(coordinator.pendingInvitation?.moment == moment)
         coordinator.invitationPresented(id: returnID)
         #expect(store.load().invitationPresentationCount == 0)
+    }
+
+    /// The pending slot is global, so an unseen return prompt parked by one
+    /// window must not starve another window's higher-priority invitation.
+    @Test(arguments: [GuidanceValueMoment.diagnosticsCompleted, .exportSucceeded])
+    func unseenReturnInvitationOwnedByAnotherWindowDoesNotBlockHigherPriorityEntry(
+        _ moment: GuidanceValueMoment
+    ) {
+        let returnOwner = UUID()
+        let actingWindow = UUID()
+        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse, ownerWindowID: returnOwner)
+        let returnID = coordinator.pendingInvitation!.id
+
+        #expect(coordinator.recordAndReturnDecision(moment, ownerWindowID: actingWindow) == .showProInvitation)
+        #expect(coordinator.pendingInvitation?.moment == moment)
+        #expect(coordinator.pendingInvitation?.ownerWindowID == actingWindow)
+        #expect(events(named: "guidance.invitation.cancelled").count == 1)
+        #expect(events(named: "guidance.invitation.dismissed").isEmpty)
+        #expect(store.load().invitationDismissalCount == 0)
+        coordinator.invitationPresented(id: returnID)
+        #expect(store.load().invitationPresentationCount == 0)
+    }
+
+    /// A return prompt the user has actually seen is legitimately occupying the
+    /// global slot, so it still blocks a second window's invitation.
+    @Test(arguments: [GuidanceValueMoment.diagnosticsCompleted, .exportSucceeded])
+    func presentedReturnInvitationStillBlocksHigherPriorityEntryFromAnotherWindow(
+        _ moment: GuidanceValueMoment
+    ) {
+        let returnOwner = UUID()
+        let actingWindow = UUID()
+        let coordinator = makeCoordinator(state: invitationState(completionCount: 0))
+        _ = coordinator.recordAndReturnDecision(.appReturnedAfterUse, ownerWindowID: returnOwner)
+        let returnID = coordinator.pendingInvitation!.id
+        coordinator.invitationPresented(id: returnID, ownerWindowID: returnOwner)
+
+        #expect(coordinator.recordAndReturnDecision(moment, ownerWindowID: actingWindow)
+                == .none(.invitationAlreadyPending))
+        #expect(coordinator.pendingInvitation?.id == returnID)
+        #expect(store.load().invitationPresentationCount == 1)
     }
 
     @Test func previewAndSuccessfulStoreOpenPersistOnlyLocalInterestData() {

@@ -8,6 +8,10 @@ import SwiftUI
 struct ProInvitationCard: View {
     let invitation: GuidanceCoordinator.InvitationPresentation
     let guidance: GuidanceCoordinator
+    /// Whether the host's own page is the active one. Pass SwiftUI-observable
+    /// state only: window focus, occlusion and sheet state are read live inside
+    /// the presentation poll below, so baking an `NSWindow` read into this value
+    /// would freeze a snapshot that no state change can refresh.
     var isHostVisible = true
     var isInVisibleArea = true
     var hostWindow: NSWindow?
