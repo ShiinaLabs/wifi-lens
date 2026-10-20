@@ -649,6 +649,128 @@ final class GuidanceCoordinatorTests {
         #expect(events(named: "guidance.invitation.disabled").count == 1)
     }
 
+    // MARK: - Badge bar
+
+    @Test func badgeBarShowsWhenTheRollBeatsTheProbability() {
+        let coordinator = makeCoordinator(
+            configuration: badgeBarConfig(),
+            random: { 0.1 }
+        )
+
+        let presentation = coordinator.evaluateBadgeBarOnLaunch()
+
+        #expect(presentation == BadgeBarPresentation(offersRepositoryStar: true))
+        #expect(store.load().lastBadgeBarPromptDate == now)
+        #expect(events(named: "guidance.badge_bar.presented").count == 1)
+    }
+
+    @Test func badgeBarIsSuppressedWhenTheRollLoses() {
+        let coordinator = makeCoordinator(
+            configuration: badgeBarConfig(),
+            random: { 0.9 }
+        )
+
+        #expect(coordinator.evaluateBadgeBarOnLaunch() == nil)
+        #expect(store.load().lastBadgeBarPromptDate == nil)
+
+        let suppression = events(named: "guidance.badge_bar.no_action").first
+        #expect(suppression?.suppressionReason == .badgeBarProbability)
+    }
+
+    @Test func badgeBarIsSuppressedInsideTheCooldown() {
+        let coordinator = makeCoordinator(
+            configuration: badgeBarConfig(),
+            state: GuidanceState(lastBadgeBarPromptDate: daysAgo(3)),
+            random: { 0 }
+        )
+
+        #expect(coordinator.evaluateBadgeBarOnLaunch() == nil)
+        #expect(events(named: "guidance.badge_bar.no_action").first?.suppressionReason == .badgeBarCooldown)
+    }
+
+    @Test func badgeBarIsEligibleOnTheCooldownBoundary() {
+        let coordinator = makeCoordinator(
+            configuration: badgeBarConfig(),
+            state: GuidanceState(lastBadgeBarPromptDate: daysAgo(7)),
+            random: { 0 }
+        )
+
+        #expect(coordinator.evaluateBadgeBarOnLaunch() != nil)
+    }
+
+    @Test func badgeBarRollsOnlyOncePerLaunch() {
+        let coordinator = makeCoordinator(
+            configuration: badgeBarConfig(),
+            random: { 0.1 }
+        )
+
+        #expect(coordinator.evaluateBadgeBarOnLaunch() != nil)
+        #expect(coordinator.evaluateBadgeBarOnLaunch() == nil)
+        #expect(events(named: "guidance.badge_bar.presented").count == 1)
+    }
+
+    @Test func badgeBarIsSuppressedWhenTheEditionDisablesIt() {
+        let coordinator = makeCoordinator(configuration: GuidanceConfiguration(), random: { 0 })
+
+        #expect(coordinator.evaluateBadgeBarOnLaunch() == nil)
+        #expect(events(named: "guidance.badge_bar.no_action").first?.suppressionReason == .badgeBarDisabled)
+    }
+
+    @Test func badgeBarDismissalRefreshesTheCooldown() {
+        let coordinator = makeCoordinator(configuration: badgeBarConfig(), random: { 0 })
+
+        coordinator.badgeBarDidDismiss()
+
+        #expect(store.load().lastBadgeBarPromptDate == now)
+        #expect(events(named: "guidance.badge_bar.dismissed").count == 1)
+    }
+
+    @Test func badgeBarStopsOfferingTheRepositoryStarAfterItIsOpened() {
+        let coordinator = makeCoordinator(configuration: badgeBarConfig(), random: { 0 })
+
+        coordinator.badgeBarDidOpenRepository()
+
+        #expect(store.load().hasOpenedRepository)
+        #expect(coordinator.badgeBarPresentation() == BadgeBarPresentation(offersRepositoryStar: false))
+        #expect(events(named: "guidance.badge_bar.repository_opened").count == 1)
+    }
+
+    @Test func manualBadgeTapIgnoresTheCooldownAndTheRoll() {
+        let coordinator = makeCoordinator(
+            configuration: badgeBarConfig(),
+            state: GuidanceState(lastBadgeBarPromptDate: now),
+            random: { 0.9 }
+        )
+
+        #expect(coordinator.badgeBarPresentation() == BadgeBarPresentation(offersRepositoryStar: true))
+    }
+
+    @Test func manualBadgeTapIsUnavailableWhenTheEditionDisablesIt() {
+        let coordinator = makeCoordinator(configuration: GuidanceConfiguration())
+
+        #expect(coordinator.badgeBarPresentation() == nil)
+    }
+
+    #if DEBUG
+        @Test func debugBadgeBarRequestIsConsumedOnce() {
+            let coordinator = makeCoordinator(configuration: badgeBarConfig())
+
+            coordinator.debugRequestBadgeBar()
+            #expect(coordinator.debugBadgeBarRequested)
+            #expect(coordinator.consumeDebugBadgeBarRequest())
+            #expect(coordinator.consumeDebugBadgeBarRequest() == false)
+        }
+
+        @Test func debugBadgeBarRequestIsRefusedWhenDisabled() {
+            let coordinator = makeCoordinator(configuration: GuidanceConfiguration())
+
+            coordinator.debugRequestBadgeBar()
+
+            #expect(coordinator.debugBadgeBarRequested == false)
+            #expect(events(named: "guidance.debug.refused").count == 1)
+        }
+    #endif
+
     // MARK: - Invitation card copy
 
     @Test func invitationCardCopySelectsPerMoment() {
@@ -1062,7 +1184,8 @@ final class GuidanceCoordinatorTests {
     private func makeCoordinator(
         configuration: GuidanceConfiguration? = nil,
         state: GuidanceState = GuidanceState(),
-        appVersion: String = "2.1.0"
+        appVersion: String = "2.1.0",
+        random: @escaping () -> Double = { 0 }
     ) -> GuidanceCoordinator {
         store = InMemoryGuidanceStateStore(initial: state)
         collectedEvents = []
@@ -1073,6 +1196,7 @@ final class GuidanceCoordinatorTests {
             calendar: calendar,
             appVersion: { appVersion },
             isProAppInstalled: { false },
+            random: random,
             eventSink: { self.collectedEvents.append($0) }
         )
         self.coordinator = coordinator
@@ -1097,6 +1221,14 @@ final class GuidanceCoordinatorTests {
     private func reviewConfig() -> GuidanceConfiguration {
         var config = GuidanceConfiguration()
         config.reviewEnabled = true
+        return config
+    }
+
+    private func badgeBarConfig() -> GuidanceConfiguration {
+        var config = GuidanceConfiguration()
+        config.badgeBarEnabled = true
+        config.badgeBarProbability = 0.25
+        config.badgeBarCooldownDays = 7
         return config
     }
 

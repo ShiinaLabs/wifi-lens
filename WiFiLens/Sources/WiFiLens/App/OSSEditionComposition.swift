@@ -94,6 +94,7 @@ enum OSSEditionAssembly {
         config.invitationCooldownDays = 7
         config.maxAutomaticInvitations = .max
         config.localMarketingPolicyEnabled = true
+        config.badgeBarEnabled = true
         return config
     }
 
@@ -283,6 +284,10 @@ enum OSSEditionAssembly {
                         } else {
                             showMainWindow(.overview)
                         }
+                    }
+                    Button("Trigger Badge Bar") {
+                        OSSEditionAssembly.guidanceCoordinator.debugRequestBadgeBar()
+                        showMainWindow(.overview)
                     }
                     Picker(
                         "Pro Installation Override",

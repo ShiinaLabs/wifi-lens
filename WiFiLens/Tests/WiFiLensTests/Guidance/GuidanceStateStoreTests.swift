@@ -28,6 +28,8 @@ struct GuidanceStateStoreTests {
         #expect(state.lastAcceleratedFollowUpDate == nil)
         #expect(state.lastAcceleratedFollowUpExplorationDate == nil)
         #expect(state.proInterestVisits.isEmpty)
+        #expect(state.lastBadgeBarPromptDate == nil)
+        #expect(state.hasOpenedRepository == false)
     }
 
     @Test func fullRoundTripOfEveryField() {
@@ -51,7 +53,9 @@ struct GuidanceStateStoreTests {
             proInterestVisits: [
                 ProInterestVisit(category: .longTermMonitoring, day: "2026-08-01"),
                 ProInterestVisit(category: .longTermMonitoring, day: "2026-08-03"),
-            ]
+            ],
+            lastBadgeBarPromptDate: date(2026, 8, 4, hour: 9, calendar: utcCalendar),
+            hasOpenedRepository: true
         )
 
         store.save(original)
@@ -79,7 +83,9 @@ struct GuidanceStateStoreTests {
                 firstLaunchDate: date(2026, 7, 1, calendar: utcCalendar),
                 lastInvitationDate: date(2026, 7, 15, calendar: utcCalendar),
                 lastReviewRequestDate: date(2026, 8, 1, calendar: utcCalendar),
-                lastReviewRequestVersion: "2.1.0"
+                lastReviewRequestVersion: "2.1.0",
+                lastBadgeBarPromptDate: date(2026, 8, 4, calendar: utcCalendar),
+                hasOpenedRepository: true
             )
         )
 
@@ -90,6 +96,8 @@ struct GuidanceStateStoreTests {
         #expect(loaded.lastInvitationDate == nil)
         #expect(loaded.lastReviewRequestDate == nil)
         #expect(loaded.lastReviewRequestVersion == nil)
+        #expect(loaded.lastBadgeBarPromptDate == nil)
+        #expect(loaded.hasOpenedRepository == false)
         #expect(loaded.meaningfulCompletionCount == 3)
     }
 

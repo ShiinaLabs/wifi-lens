@@ -31,6 +31,8 @@ struct GuidanceState: Equatable, Sendable {
     var lastAcceleratedFollowUpDate: Date?
     var lastAcceleratedFollowUpExplorationDate: Date?
     var proInterestVisits: [ProInterestVisit]
+    var lastBadgeBarPromptDate: Date?
+    var hasOpenedRepository: Bool
     var lastReviewRequestDate: Date?
     var lastReviewRequestVersion: String?
 
@@ -52,7 +54,9 @@ struct GuidanceState: Equatable, Sendable {
         lastPurchaseExplorationDate: Date? = nil,
         lastAcceleratedFollowUpDate: Date? = nil,
         lastAcceleratedFollowUpExplorationDate: Date? = nil,
-        proInterestVisits: [ProInterestVisit] = []
+        proInterestVisits: [ProInterestVisit] = [],
+        lastBadgeBarPromptDate: Date? = nil,
+        hasOpenedRepository: Bool = false
     ) {
         self.firstLaunchDate = firstLaunchDate
         self.activeDays = Self.normalizedActiveDays(activeDays)
@@ -67,6 +71,8 @@ struct GuidanceState: Equatable, Sendable {
         self.lastAcceleratedFollowUpDate = lastAcceleratedFollowUpDate
         self.lastAcceleratedFollowUpExplorationDate = lastAcceleratedFollowUpExplorationDate
         self.proInterestVisits = Self.normalizedInterestVisits(proInterestVisits)
+        self.lastBadgeBarPromptDate = lastBadgeBarPromptDate
+        self.hasOpenedRepository = hasOpenedRepository
         self.lastReviewRequestDate = lastReviewRequestDate
         self.lastReviewRequestVersion = lastReviewRequestVersion
     }

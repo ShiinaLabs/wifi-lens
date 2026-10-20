@@ -11,6 +11,12 @@ public struct GuidanceConfiguration: Equatable, Sendable {
     public var invitationCooldownDays = 30
     public var maxAutomaticInvitations = 3
     public var localMarketingPolicyEnabled = false
+    /// Title-badge callout. Off unless an edition opts in; OSS turns it on.
+    public var badgeBarEnabled = false
+    /// Chance that a given launch shows the badge bar, once the cooldown allows it.
+    public var badgeBarProbability = 0.25
+    /// Minimum whole local days between badge-bar prompts.
+    public var badgeBarCooldownDays = 7
     var minimumReviewCompletions = 5
     var minimumReviewActiveDays = 3
     var minimumReviewAgeDays = 7
@@ -45,6 +51,9 @@ enum GuidanceSuppressionReason: String, Equatable, Sendable {
     case invitationRecentlyDeferred
     case invitationHostInactive
     case acceleratedFollowUpUnavailable
+    case badgeBarDisabled
+    case badgeBarCooldown
+    case badgeBarProbability
     case firstLaunchAgeNotMet
     case reviewCooldown
     case reviewAlreadyRequestedForVersion
@@ -59,4 +68,21 @@ enum GuidanceDecision: Equatable, Sendable {
     case none(GuidanceSuppressionReason)
     case showProInvitation
     case requestReview
+}
+
+enum BadgeBarDecision: Equatable, Sendable {
+    case none(GuidanceSuppressionReason)
+    case show
+}
+
+/// What the badge-bar callout should offer when it is shown. Kept separate from
+/// the invitation card: this surface is anchored to the title badge rather than
+/// to a value moment, and its actions are independent of invitation pacing.
+public struct BadgeBarPresentation: Equatable, Sendable {
+    /// False once the repository page has been opened, so the row stops nagging.
+    public let offersRepositoryStar: Bool
+
+    public init(offersRepositoryStar: Bool) {
+        self.offersRepositoryStar = offersRepositoryStar
+    }
 }

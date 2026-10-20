@@ -74,6 +74,8 @@ private struct AppRootView: View {
             )
         }
     )
+    @State private var isBadgeBarPresented = false
+    @State private var badgeBarPresentation: BadgeBarPresentation?
 
     private var selectedPage: SidebarPage { sceneState.selectedPage }
 
@@ -141,12 +143,49 @@ private struct AppRootView: View {
         updateMainWindowRoute(sceneState.id, newPage)
     }
 
+    /// Opens the launch-time badge-bar callout when the policy allows it. The
+    /// badge only exists on Overview, so the roll is skipped entirely on a
+    /// launch that resolves to another page rather than left pending against a
+    /// missing anchor.
+    private func presentBadgeBarIfDue() {
+        guard selectedPage == .overview,
+            let presentation = EditionAssemblyProvider.configuration.guidanceCoordinator
+                .evaluateBadgeBarOnLaunch()
+        else { return }
+        badgeBarPresentation = presentation
+        isBadgeBarPresented = true
+    }
+
+    /// Opens the callout for the manual paths — the badge tap and the Debug
+    /// menu. Both bypass launch pacing, so the badge stays a permanent
+    /// affordance instead of a one-shot prompt.
+    private func openBadgeBar() {
+        guard
+            let presentation = EditionAssemblyProvider.configuration.guidanceCoordinator
+                .badgeBarPresentation()
+        else { return }
+        badgeBarPresentation = presentation
+        isBadgeBarPresented = true
+    }
+
     @ToolbarContentBuilder
     private var secondaryToolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
             if selectedPage == .overview, BuildConfig.current == .oss || !hideTitleBadge {
-                TitleBadge(identity: EditionAssemblyProvider.configuration.identity)
-                    .fixedSize()
+                TitleBadge(
+                    identity: EditionAssemblyProvider.configuration.identity,
+                    onTap: { openBadgeBar() }
+                )
+                .fixedSize()
+                .popover(isPresented: $isBadgeBarPresented, arrowEdge: .bottom) {
+                    if let badgeBarPresentation {
+                        BadgeBarView(
+                            presentation: badgeBarPresentation,
+                            guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
+                            onClose: { isBadgeBarPresented = false }
+                        )
+                    }
+                }
             }
         }
         ToolbarItem(placement: .principal) {
@@ -439,6 +478,7 @@ private struct AppRootView: View {
                     if !EditionAppShell.isControlledDemoSession {
                         EditionAssemblyProvider.configuration.guidanceCoordinator.recordAppActive()
                     }
+                    presentBadgeBarIfDue()
                     await viewModel.start()
                     roamingViewModel.handleWiFiPowerStateChange(viewModel.wifiPowerState)
                 }
@@ -512,6 +552,18 @@ private struct AppRootView: View {
                     return
                 }
                 _ = onboardingCoordinator.claimWelcome(hostID: sceneState.id)
+            }
+            .onChange(
+                of: EditionAssemblyProvider.configuration.guidanceCoordinator.debugBadgeBarRequested
+            ) { _, requested in
+                guard requested,
+                    EditionAssemblyProvider.configuration.guidanceCoordinator
+                    .consumeDebugBadgeBarRequest(),
+                    !ProcessInfo.processInfo.isRunningUnderTestHost
+                else {
+                    return
+                }
+                openBadgeBar()
             }
         #endif
         .onDisappear {

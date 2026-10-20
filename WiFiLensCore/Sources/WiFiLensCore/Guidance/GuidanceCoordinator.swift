@@ -52,6 +52,7 @@ public final class GuidanceCoordinator {
     private let isProAppInstalled: () -> Bool
     private let eventSink: (GuidanceEvent) -> Void
     private let campaignURL: (GuidanceValueMoment) -> URL?
+    private let random: () -> Double
 
     /// Invitation tokens whose first real `onAppear` was confirmed. Memory-only,
     /// used to make `invitationPresented(id:)` and `endInvitationPresentation(id:)`
@@ -65,6 +66,16 @@ public final class GuidanceCoordinator {
     private var eligibleForegroundSeconds: TimeInterval = 0
     private var activeHostWindowID: UUID?
     private var closedHostWindowIDs: Set<UUID> = []
+
+    /// The badge bar rolls its probability once per launch. The launch `.task`
+    /// re-runs whenever the single window is closed and reopened, so this
+    /// memory-only flag keeps a relaunch from re-rolling within the same process.
+    private var hasEvaluatedBadgeBarThisLaunch = false
+
+    /// Debug-only force-show request for the badge bar. Process-memory only.
+    #if DEBUG
+        public private(set) var debugBadgeBarRequested = false
+    #endif
 
     public convenience init(
         configuration: GuidanceConfiguration,
@@ -98,6 +109,7 @@ public final class GuidanceCoordinator {
         },
         isProAppInstalled: @escaping () -> Bool = { false },
         campaignURL: @escaping (GuidanceValueMoment) -> URL? = { _ in nil },
+        random: @escaping () -> Double = { Double.random(in: 0..<1) },
         eventSink: @escaping (GuidanceEvent) -> Void = { event in
             var metadata = Logging.Logger.Metadata()
             for (key, value) in event.metadata {
@@ -113,6 +125,7 @@ public final class GuidanceCoordinator {
         self.appVersion = appVersion
         self.isProAppInstalled = isProAppInstalled
         self.campaignURL = campaignURL
+        self.random = random
         self.eventSink = eventSink
     }
 
@@ -496,6 +509,65 @@ public final class GuidanceCoordinator {
         emit("guidance.review.request_invoked", moment: request.moment, tokenID: id)
     }
 
+    // MARK: - Badge bar
+
+    /// Paced launch-time decision for the title-badge callout. Returns nil when
+    /// the edition disables it, the cooldown still holds, or this launch lost
+    /// the probability roll. A returned presentation is already recorded, so the
+    /// caller only has to render it.
+    ///
+    /// The roll happens at most once per process: the single main window's
+    /// launch `.task` re-runs whenever that window is closed and reopened, and a
+    /// second roll would turn a 25% prompt into an every-reopen prompt.
+    public func evaluateBadgeBarOnLaunch() -> BadgeBarPresentation? {
+        guard !hasEvaluatedBadgeBarThisLaunch else { return nil }
+        hasEvaluatedBadgeBarThisLaunch = true
+        var state = stateStore.load()
+        let decision = GuidancePolicy.badgeBarDecision(
+            state: state,
+            config: configuration,
+            now: now(),
+            calendar: calendar,
+            roll: random()
+        )
+        guard case .show = decision else {
+            if case .none(let reason) = decision {
+                emit("guidance.badge_bar.no_action", suppressionReason: reason)
+            }
+            return nil
+        }
+        state.lastBadgeBarPromptDate = now()
+        stateStore.save(state)
+        emit("guidance.badge_bar.presented")
+        return BadgeBarPresentation(offersRepositoryStar: !state.hasOpenedRepository)
+    }
+
+    /// Unpaced presentation for the manual badge tap. The badge is a permanent
+    /// affordance, so tapping it always opens the callout; only the automatic
+    /// launch path is paced. Returns nil only when the edition disables the bar.
+    public func badgeBarPresentation() -> BadgeBarPresentation? {
+        guard configuration.badgeBarEnabled else { return nil }
+        return BadgeBarPresentation(offersRepositoryStar: !stateStore.load().hasOpenedRepository)
+    }
+
+    /// Records that the callout was dismissed, refreshing the cooldown so the
+    /// next launch stays quiet for `badgeBarCooldownDays`.
+    public func badgeBarDidDismiss() {
+        var state = stateStore.load()
+        state.lastBadgeBarPromptDate = now()
+        stateStore.save(state)
+        emit("guidance.badge_bar.dismissed")
+    }
+
+    /// Records that the repository page was opened, so the callout stops
+    /// offering the star on later openings.
+    public func badgeBarDidOpenRepository() {
+        var state = stateStore.load()
+        state.hasOpenedRepository = true
+        stateStore.save(state)
+        emit("guidance.badge_bar.repository_opened")
+    }
+
     // MARK: - Events
 
     private func emit(
@@ -541,9 +613,27 @@ public final class GuidanceCoordinator {
             pendingReviewRequest = nil
             confirmedPresentedInvitationIDs.removeAll()
             exportFeedback = nil
+            debugBadgeBarRequested = false
             GuidanceDebugOverrides.clearDiagnosticsStaging()
             stateStore.save(GuidanceState())
             emit("guidance.debug.state_reset")
+        }
+
+        /// Requests the badge-bar callout regardless of the probability roll and
+        /// the cooldown. The real view path still renders it; the first main
+        /// window consumes the request.
+        public func debugRequestBadgeBar() {
+            guard configuration.badgeBarEnabled else {
+                emit("guidance.debug.refused", metadata: ["reason": "badge_bar_disabled"])
+                return
+            }
+            debugBadgeBarRequested = true
+        }
+
+        public func consumeDebugBadgeBarRequest() -> Bool {
+            guard debugBadgeBarRequested else { return false }
+            debugBadgeBarRequested = false
+            return true
         }
 
         /// Clears review-eligibility state (persisted review fields, completion

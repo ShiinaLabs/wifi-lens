@@ -113,6 +113,29 @@ enum GuidancePolicy {
         return .showProInvitation
     }
 
+    /// Pure badge-bar eligibility. The probability roll is supplied by the
+    /// caller so this stays free of randomness and deterministic in tests.
+    static func badgeBarDecision(
+        state: GuidanceState,
+        config: GuidanceConfiguration,
+        now: Date,
+        calendar: Calendar,
+        roll: Double
+    ) -> BadgeBarDecision {
+        guard config.badgeBarEnabled else {
+            return .none(.badgeBarDisabled)
+        }
+        if let lastPrompt = state.lastBadgeBarPromptDate,
+            daysSince(lastPrompt, now: now, calendar: calendar) < config.badgeBarCooldownDays
+        {
+            return .none(.badgeBarCooldown)
+        }
+        guard roll < config.badgeBarProbability else {
+            return .none(.badgeBarProbability)
+        }
+        return .show
+    }
+
     private static func reviewDecision(
         state: GuidanceState,
         config: GuidanceConfiguration,

@@ -1,23 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "—" : {
-      "shouldTranslate" : false
-    },
-    "%@" : {
-      "shouldTranslate" : false
-    },
-    "%@ – %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ – %2$@"
-          }
-        }
-      },
-      "shouldTranslate" : false
-    },
     "%@ — %@" : {
       "extractionState" : "manual",
       "generatesSymbol" : false,
@@ -50,28 +33,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ — %2$@"
-          }
-        }
-      },
-      "shouldTranslate" : false
-    },
-    "%@ · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · %2$@"
-          }
-        }
-      },
-      "shouldTranslate" : false
-    },
-    "%@ %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ %2$@"
           }
         }
       },
@@ -130,17 +91,6 @@
           }
         }
       }
-    },
-    "%@: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@: %2$@"
-          }
-        }
-      },
-      "shouldTranslate" : false
     },
     "analysis.insight.action.open_timeline" : {
       "extractionState" : "manual",
@@ -21872,6 +21822,324 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 秒前"
+          }
+        }
+      }
+    },
+    "guidance.badge_bar.dismiss" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じる"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрыть"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉"
+          }
+        }
+      }
+    },
+    "guidance.badge_bar.pro.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behalte den Netzwerkverlauf, zeichne Spektrum-Aktivitäten auf und verfolge Änderungen über die Zeit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep network history, record Spectrum activity, and track changes over time."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserva el historial de red, graba la actividad del espectro y sigue los cambios a lo largo del tiempo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserve l’historique réseau, enregistre l’activité du spectre et suis les changements dans le temps."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネットワークの履歴を保持し、Spectrum のアクティビティを記録して、時間の経過による変化を追跡できます。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохраняйте историю сети, записывайте работу Спектра и отслеживайте изменения во времени."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留网络历史记录、录制 Spectrum 活动，并追踪随时间发生的变化。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留網路歷史記錄、錄製 Spectrum 活動，並追蹤隨時間發生的變化。"
+          }
+        }
+      }
+    },
+    "guidance.badge_bar.pro.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr mit WiFi Lens Pro"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock more with WiFi Lens Pro"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desbloquea más con WiFi Lens Pro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débloque plus de fonctionnalités avec WiFi Lens Pro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens Pro でもっと活用"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Больше возможностей с WiFi Lens Pro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 WiFi Lens Pro 解锁更多功能"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 WiFi Lens Pro 解鎖更多功能"
+          }
+        }
+      }
+    },
+    "guidance.badge_bar.star.action" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf GitHub mit Stern markieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Star on GitHub"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dar estrella en GitHub"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter une étoile sur GitHub"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub でスターを付ける"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поставить звезду на GitHub"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 GitHub 上加星标"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 GitHub 上加星號"
+          }
+        }
+      }
+    },
+    "guidance.badge_bar.star.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens ist Open Source. Ein Stern auf GitHub hilft mehr Menschen, es zu finden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens is open source. A star on GitHub helps more people find it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens es de código abierto. Una estrella en GitHub ayuda a que más gente lo encuentre."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens est open source. Une étoile sur GitHub aide davantage de personnes à le découvrir."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens はオープンソースです。GitHub でスターを付けると、より多くの人に見つけてもらいやすくなります。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens — проект с открытым исходным кодом. Звезда на GitHub поможет большему числу людей найти его."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens 是开源项目。在 GitHub 上加星标，能帮助更多人发现它。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WiFi Lens 是開源專案。在 GitHub 上加星號，能幫助更多人發現它。"
+          }
+        }
+      }
+    },
+    "guidance.badge_bar.star.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterstütze das Open-Source-Projekt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support the open-source project"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apoya el proyecto de código abierto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soutiens le projet open source"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オープンソースプロジェクトを応援"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поддержите проект с открытым кодом"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支持这个开源项目"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支持這個開源專案"
           }
         }
       }
@@ -58379,9 +58647,6 @@
           }
         }
       }
-    },
-    "WiFi Lens" : {
-      "shouldTranslate" : false
     },
     "wifi_calling.boundary" : {
       "extractionState" : "manual",

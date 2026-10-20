@@ -25,6 +25,8 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
         static let lastAcceleratedFollowUpDate = "guidance.lastAcceleratedFollowUpDate"
         static let lastAcceleratedFollowUpExplorationDate = "guidance.lastAcceleratedFollowUpExplorationDate"
         static let proInterestVisits = "guidance.proInterestVisits"
+        static let lastBadgeBarPromptDate = "guidance.lastBadgeBarPromptDate"
+        static let hasOpenedRepository = "guidance.hasOpenedRepository"
         static let lastReviewRequestDate = "guidance.lastReviewRequestDate"
         static let lastReviewRequestVersion = "guidance.lastReviewRequestVersion"
     }
@@ -54,7 +56,9 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
                 as? Date,
             proInterestVisits: (defaults.data(forKey: Key.proInterestVisits).flatMap {
                 try? JSONDecoder().decode([ProInterestVisit].self, from: $0)
-            }) ?? []
+            }) ?? [],
+            lastBadgeBarPromptDate: defaults.object(forKey: Key.lastBadgeBarPromptDate) as? Date,
+            hasOpenedRepository: defaults.bool(forKey: Key.hasOpenedRepository)
         )
     }
 
@@ -76,6 +80,8 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
         }
         defaults.set(state.lastReviewRequestDate, forKey: Key.lastReviewRequestDate)
         defaults.set(state.lastReviewRequestVersion, forKey: Key.lastReviewRequestVersion)
+        defaults.set(state.lastBadgeBarPromptDate, forKey: Key.lastBadgeBarPromptDate)
+        defaults.set(state.hasOpenedRepository, forKey: Key.hasOpenedRepository)
     }
 }
 
