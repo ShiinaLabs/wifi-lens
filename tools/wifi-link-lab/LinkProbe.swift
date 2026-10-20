@@ -1,9 +1,9 @@
 import AppKit
 import CoreWLAN
+import Darwin
 import Foundation
 import Network
 import SystemConfiguration
-import Darwin
 
 private let schemaVersion = 1
 private let maximumRuntime: TimeInterval = 900
@@ -43,7 +43,8 @@ private final class JSONLWriter {
     }
 
     func append(_ record: [String: Any], to filename: String, synchronize: Bool = true) {
-        guard let data = try? JSONSerialization.data(withJSONObject: record, options: [.sortedKeys, .fragmentsAllowed]) else { return }
+        guard let data = try? JSONSerialization.data(withJSONObject: record, options: [.sortedKeys, .fragmentsAllowed])
+        else { return }
         lock.lock()
         defer { lock.unlock() }
         guard let handle = handles[filename] else { return }
@@ -167,7 +168,8 @@ private final class Collector: NSObject, CWEventDelegate {
 
         for signalNumber in [SIGINT, SIGTERM] {
             signal(signalNumber, SIG_IGN)
-            let signalSource = DispatchSource.makeSignalSource(signal: signalNumber, queue: DispatchQueue.global(qos: .utility))
+            let signalSource = DispatchSource.makeSignalSource(
+                signal: signalNumber, queue: DispatchQueue.global(qos: .utility))
             signalSource.setEventHandler { [weak self] in self?.stop() }
             signalSources.append(signalSource)
             signalSource.resume()
@@ -199,7 +201,7 @@ private final class Collector: NSObject, CWEventDelegate {
             "sampleIntervalMilliseconds": Int(sampleInterval * 1000),
             "maximumRuntimeSeconds": Int(maximumRuntime),
             "startedAt": utcTimestamp(startedAt),
-            "monotonicNanoseconds": monotonicNanoseconds()
+            "monotonicNanoseconds": monotonicNanoseconds(),
         ]
         let url = writerDirectory().appendingPathComponent("environment.json")
         if let data = try? JSONSerialization.data(withJSONObject: record, options: [.prettyPrinted, .sortedKeys]) {
@@ -215,7 +217,7 @@ private final class Collector: NSObject, CWEventDelegate {
             (.ssidDidChange, "ssidDidChange"),
             (.bssidDidChange, "bssidDidChange"),
             (.linkDidChange, "linkDidChange"),
-            (.modeDidChange, "modeDidChange")
+            (.modeDidChange, "modeDidChange"),
         ]
         for (type, name) in events {
             var success = false
@@ -234,55 +236,77 @@ private final class Collector: NSObject, CWEventDelegate {
                 errorDescription = error.localizedDescription
             }
             if success { registeredEvents.append(type) }
-            logEvent(source: "coreWLAN", eventType: "registration", interfaceName: nil,
-                     fields: ["registeredEvent": name, "success": success,
-                              "registrationStatus": success ? "registered" : "registrationDeniedOrUnavailable",
-                              "errorDomain": errorDomain,
-                              "errorCode": errorCode,
-                              "errorDescription": errorDescription])
+            logEvent(
+                source: "coreWLAN", eventType: "registration", interfaceName: nil,
+                fields: [
+                    "registeredEvent": name, "success": success,
+                    "registrationStatus": success ? "registered" : "registrationDeniedOrUnavailable",
+                    "errorDomain": errorDomain,
+                    "errorCode": errorCode,
+                    "errorDescription": errorDescription,
+                ])
         }
     }
 
     private func setupDynamicStore() {
-        var context = SCDynamicStoreContext(version: 0, info: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), retain: nil, release: nil, copyDescription: nil)
+        var context = SCDynamicStoreContext(
+            version: 0, info: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), retain: nil,
+            release: nil, copyDescription: nil)
         let callback: SCDynamicStoreCallBack = { _, changedKeys, info in
             let observation = EventObservation.capture()
             guard let info else { return }
             let collector = Unmanaged<Collector>.fromOpaque(info).takeUnretainedValue()
             let keys = (changedKeys as? [String]) ?? []
-            collector.enqueueEvent(source: "systemConfiguration", eventType: "dynamicStoreChanged",
-                                   interfaceName: collector.activeInterfaceName(changedKeys: keys),
-                                   fields: ["changedKeys": keys], observation: observation)
+            collector.enqueueEvent(
+                source: "systemConfiguration", eventType: "dynamicStoreChanged",
+                interfaceName: collector.activeInterfaceName(changedKeys: keys),
+                fields: ["changedKeys": keys], observation: observation)
             collector.enqueueSample(trigger: "notification")
         }
         guard let createdStore = SCDynamicStoreCreate(nil, "WiFiLens-LinkProbe" as CFString, callback, &context) else {
             let code = SCError()
-            logEvent(source: "systemConfiguration", eventType: "registration", interfaceName: nil,
-                     fields: ["registeredEvent": "Link-IPv4-IPv6", "success": false,
-                              "errorCode": code, "errorDescription": String(cString: SCErrorString(code))])
+            logEvent(
+                source: "systemConfiguration", eventType: "registration", interfaceName: nil,
+                fields: [
+                    "registeredEvent": "Link-IPv4-IPv6", "success": false,
+                    "errorCode": code, "errorDescription": String(cString: SCErrorString(code)),
+                ])
             return
         }
         store = createdStore
-        let patterns = ["State:/Network/Interface/.*/Link", "State:/Network/Interface/.*/IPv4", "State:/Network/Interface/.*/IPv6"] as CFArray
+        let patterns =
+            [
+                "State:/Network/Interface/.*/Link", "State:/Network/Interface/.*/IPv4",
+                "State:/Network/Interface/.*/IPv6",
+            ] as CFArray
         guard SCDynamicStoreSetNotificationKeys(createdStore, nil, patterns) else {
             let code = SCError()
-            logEvent(source: "systemConfiguration", eventType: "registration", interfaceName: nil,
-                     fields: ["registeredEvent": "Link-IPv4-IPv6", "success": false,
-                              "errorCode": code, "errorDescription": String(cString: SCErrorString(code))])
+            logEvent(
+                source: "systemConfiguration", eventType: "registration", interfaceName: nil,
+                fields: [
+                    "registeredEvent": "Link-IPv4-IPv6", "success": false,
+                    "errorCode": code, "errorDescription": String(cString: SCErrorString(code)),
+                ])
             store = nil
             return
         }
         guard SCDynamicStoreSetDispatchQueue(createdStore, workQueue) else {
             let code = SCError()
-            logEvent(source: "systemConfiguration", eventType: "registration", interfaceName: nil,
-                     fields: ["registeredEvent": "Link-IPv4-IPv6", "success": false,
-                              "errorCode": code, "errorDescription": String(cString: SCErrorString(code))])
+            logEvent(
+                source: "systemConfiguration", eventType: "registration", interfaceName: nil,
+                fields: [
+                    "registeredEvent": "Link-IPv4-IPv6", "success": false,
+                    "errorCode": code, "errorDescription": String(cString: SCErrorString(code)),
+                ])
             store = nil
             return
         }
-        logEvent(source: "systemConfiguration", eventType: "registration", interfaceName: nil,
-                 fields: ["registeredEvent": "Link-IPv4-IPv6", "success": true,
-                          "errorCode": NSNull(), "errorDescription": NSNull()])
+        logEvent(
+            source: "systemConfiguration", eventType: "registration", interfaceName: nil,
+            fields: [
+                "registeredEvent": "Link-IPv4-IPv6", "success": true,
+                "errorCode": NSNull(), "errorDescription": NSNull(),
+            ])
     }
 
     private func interfaceName(from key: String) -> String? {
@@ -303,21 +327,26 @@ private final class Collector: NSObject, CWEventDelegate {
             guard let self else { return }
             let interfaces = path.availableInterfaces.filter { path.usesInterfaceType($0.type) }.map(\.name).sorted()
             let names = interfaces.isEmpty ? nil : interfaces
-            let state = PathState(status: self.pathStatus(path.status), usesWiFi: path.usesInterfaceType(.wifi), interfaceNames: names)
+            let state = PathState(
+                status: self.pathStatus(path.status), usesWiFi: path.usesInterfaceType(.wifi), interfaceNames: names)
             self.pathLock.lock()
             self.pathState = state
             self.pathLock.unlock()
             let uniqueInterfaceName = names?.count == 1 ? names?.first : nil
-            self.enqueueEvent(source: "networkPath", eventType: "pathUpdate", interfaceName: uniqueInterfaceName,
-                              fields: ["nwPathStatus": state.status as Any? ?? NSNull(),
-                                       "nwPathUsesWiFi": state.usesWiFi.map { $0 as Any } ?? NSNull(),
-                                       "nwPathInterfaceNames": names as Any? ?? NSNull(),
-                                       "nwPathInterfaceNameAmbiguous": (names?.count ?? 0) > 1], observation: observation)
+            self.enqueueEvent(
+                source: "networkPath", eventType: "pathUpdate", interfaceName: uniqueInterfaceName,
+                fields: [
+                    "nwPathStatus": state.status as Any? ?? NSNull(),
+                    "nwPathUsesWiFi": state.usesWiFi.map { $0 as Any } ?? NSNull(),
+                    "nwPathInterfaceNames": names as Any? ?? NSNull(),
+                    "nwPathInterfaceNameAmbiguous": (names?.count ?? 0) > 1,
+                ], observation: observation)
         }
         pathMonitor = monitor
         monitor.start(queue: pathQueue)
-        logEvent(source: "networkPath", eventType: "registration", interfaceName: nil,
-                 fields: ["registeredEvent": "requiredInterfaceType.wifi", "success": true])
+        logEvent(
+            source: "networkPath", eventType: "registration", interfaceName: nil,
+            fields: ["registeredEvent": "requiredInterfaceType.wifi", "success": true])
     }
 
     private func pathStatus(_ status: NWPath.Status) -> String {
@@ -331,16 +360,19 @@ private final class Collector: NSObject, CWEventDelegate {
 
     private func setupPowerNotifications() {
         let center = NSWorkspace.shared.notificationCenter
-        sleepObserver = center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: nil) { [weak self] _ in
+        sleepObserver = center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: nil) {
+            [weak self] _ in
             self?.enqueueEvent(source: "appKit", eventType: "willSleep", interfaceName: nil, fields: [:])
             self?.enqueueSample(trigger: "notification")
         }
-        wakeObserver = center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: nil) { [weak self] _ in
+        wakeObserver = center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: nil) {
+            [weak self] _ in
             self?.enqueueEvent(source: "appKit", eventType: "didWake", interfaceName: nil, fields: [:])
             self?.enqueueSample(trigger: "notification")
         }
-        logEvent(source: "appKit", eventType: "registration", interfaceName: nil,
-                 fields: ["registeredEvent": "sleepWake", "success": true])
+        logEvent(
+            source: "appKit", eventType: "registration", interfaceName: nil,
+            fields: ["registeredEvent": "sleepWake", "success": true])
     }
 
     private func recordInterfaceState(_ latest: String?) {
@@ -349,11 +381,13 @@ private final class Collector: NSObject, CWEventDelegate {
         hasReportedInterfaceState = true
         currentInterfaceName = latest
         if let latest {
-            logEvent(source: "coreWLAN", eventType: "interfaceChanged", interfaceName: latest,
-                     fields: ["previousInterfaceName": previous as Any? ?? NSNull()])
+            logEvent(
+                source: "coreWLAN", eventType: "interfaceChanged", interfaceName: latest,
+                fields: ["previousInterfaceName": previous as Any? ?? NSNull()])
         } else {
-            logEvent(source: "coreWLAN", eventType: "interfaceUnavailable", interfaceName: nil,
-                     fields: ["previousInterfaceName": previous as Any? ?? NSNull()])
+            logEvent(
+                source: "coreWLAN", eventType: "interfaceUnavailable", interfaceName: nil,
+                fields: ["previousInterfaceName": previous as Any? ?? NSNull()])
         }
     }
 
@@ -385,9 +419,14 @@ private final class Collector: NSObject, CWEventDelegate {
         }
     }
 
-    private func enqueueEvent(source: String, eventType: String, interfaceName: String?, fields: [String: Any], observation: EventObservation = .capture()) {
+    private func enqueueEvent(
+        source: String, eventType: String, interfaceName: String?, fields: [String: Any],
+        observation: EventObservation = .capture()
+    ) {
         workQueue.async { [weak self] in
-            self?.logEvent(source: source, eventType: eventType, interfaceName: interfaceName, fields: fields, observation: observation)
+            self?.logEvent(
+                source: source, eventType: eventType, interfaceName: interfaceName, fields: fields,
+                observation: observation)
         }
     }
 
@@ -423,7 +462,9 @@ private final class Collector: NSObject, CWEventDelegate {
                 mode = Self.modeName(value)
             }
             measure("powerOn", durations: &durations, errors: &errors) { power = interface.powerOn() }
-            measure("serviceActive", durations: &durations, errors: &errors) { serviceActive = interface.serviceActive() }
+            measure("serviceActive", durations: &durations, errors: &errors) {
+                serviceActive = interface.serviceActive()
+            }
             measure("ssid", durations: &durations, errors: &errors) {
                 let tagged = tagger.ssid(interface.ssid())
                 ssidRead = tagged.readable
@@ -494,12 +535,13 @@ private final class Collector: NSObject, CWEventDelegate {
             "nwPathStatus": path.status as Any? ?? NSNull(),
             "nwPathUsesWiFi": path.usesWiFi.map { $0 as Any } ?? NSNull(),
             "nwPathInterfaceNames": path.interfaceNames as Any? ?? NSNull(),
-            "errorsByField": errors
+            "errorsByField": errors,
         ]
         writer.append(record, to: "observations.jsonl", synchronize: true)
     }
 
-    private func measure(_ field: String, durations: inout [String: Any], errors: inout [String: Any], body: () -> Void) {
+    private func measure(_ field: String, durations: inout [String: Any], errors: inout [String: Any], body: () -> Void)
+    {
         let start = DispatchTime.now().uptimeNanoseconds
         body()
         let end = DispatchTime.now().uptimeNanoseconds
@@ -507,7 +549,9 @@ private final class Collector: NSObject, CWEventDelegate {
         _ = errors
     }
 
-    private func systemConfigurationState(interfaceName: String?, errors: inout [String: Any]) -> (linkPresent: Any, linkActive: Any, linkDetaching: Any, ipv4Present: Any, ipv6Present: Any) {
+    private func systemConfigurationState(interfaceName: String?, errors: inout [String: Any]) -> (
+        linkPresent: Any, linkActive: Any, linkDetaching: Any, ipv4Present: Any, ipv6Present: Any
+    ) {
         guard let interfaceName, let store else {
             return (NSNull(), NSNull(), NSNull(), NSNull(), NSNull())
         }
@@ -519,8 +563,10 @@ private final class Collector: NSObject, CWEventDelegate {
         func presence(_ result: (value: CFPropertyList?, status: Int32), field: String) -> Any {
             if result.value != nil { return true }
             if result.status == Int32(kSCStatusNoKey) { return false }
-            errors[field] = ["errorCode": result.status,
-                             "errorDescription": String(cString: SCErrorString(result.status))]
+            errors[field] = [
+                "errorCode": result.status,
+                "errorDescription": String(cString: SCErrorString(result.status)),
+            ]
             return NSNull()
         }
         let linkResult = read("Link")
@@ -531,14 +577,18 @@ private final class Collector: NSObject, CWEventDelegate {
         let ipv4Presence = presence(ipv4Result, field: "systemConfiguration.IPv4")
         let ipv6Presence = presence(ipv6Result, field: "systemConfiguration.IPv6")
         if let link {
-            return (linkPresence, link["Active"] as? Bool as Any? ?? NSNull(),
-                    link["Detaching"] as? Bool as Any? ?? NSNull(), ipv4Presence, ipv6Presence)
+            return (
+                linkPresence, link["Active"] as? Bool as Any? ?? NSNull(),
+                link["Detaching"] as? Bool as Any? ?? NSNull(), ipv4Presence, ipv6Presence
+            )
         }
         return (linkPresence, NSNull(), NSNull(), ipv4Presence, ipv6Presence)
     }
 
     private func interfaceFlags(interfaceName: String?, errors: inout [String: Any]) -> InterfaceState {
-        guard let interfaceName else { return InterfaceState(enumerated: nil, up: nil, running: nil, ipv4: nil, ipv6: nil, conflict: nil) }
+        guard let interfaceName else {
+            return InterfaceState(enumerated: nil, up: nil, running: nil, ipv4: nil, ipv6: nil, conflict: nil)
+        }
         var addressList: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&addressList) == 0, let first = addressList else {
             errors["getifaddrs"] = "failed"
@@ -552,8 +602,11 @@ private final class Collector: NSObject, CWEventDelegate {
             if let address = entry.ifa_name, String(cString: address) == interfaceName {
                 let flags = Int32(entry.ifa_flags)
                 let family = entry.ifa_addr.map { Int32($0.pointee.sa_family) }
-                matching.append((flags & IFF_UP != 0, flags & IFF_RUNNING != 0,
-                                 family == AF_INET, family == AF_INET6))
+                matching.append(
+                    (
+                        flags & IFF_UP != 0, flags & IFF_RUNNING != 0,
+                        family == AF_INET, family == AF_INET6
+                    ))
             }
             cursor = entry.ifa_next
         }
@@ -568,11 +621,15 @@ private final class Collector: NSObject, CWEventDelegate {
         let up = consistent(matching.map(\.up))
         let running = consistent(matching.map(\.running))
         let conflict = up.conflict || running.conflict
-        return InterfaceState(enumerated: true, up: up.value, running: running.value,
-                              ipv4: matching.contains(where: \.ipv4), ipv6: matching.contains(where: \.ipv6), conflict: conflict)
+        return InterfaceState(
+            enumerated: true, up: up.value, running: running.value,
+            ipv4: matching.contains(where: \.ipv4), ipv6: matching.contains(where: \.ipv6), conflict: conflict)
     }
 
-    private func logEvent(source: String, eventType: String, interfaceName: String?, fields: [String: Any], observation: EventObservation = .capture()) {
+    private func logEvent(
+        source: String, eventType: String, interfaceName: String?, fields: [String: Any],
+        observation: EventObservation = .capture()
+    ) {
         var record: [String: Any] = [
             "schemaVersion": schemaVersion,
             "kind": "event",
@@ -580,7 +637,7 @@ private final class Collector: NSObject, CWEventDelegate {
             "eventType": eventType,
             "time": utcTimestamp(observation.date),
             "monotonicNanoseconds": observation.monotonicNanoseconds,
-            "interfaceName": interfaceName as Any? ?? NSNull()
+            "interfaceName": interfaceName as Any? ?? NSNull(),
         ]
         for (key, value) in fields { record[key] = value }
         writer.append(record, to: "events.jsonl", synchronize: true)
@@ -630,25 +687,36 @@ private final class Collector: NSObject, CWEventDelegate {
                 errorDomain = "unknown"
                 errorDescription = error.localizedDescription
             }
-            logEvent(source: "coreWLAN", eventType: "unregistration", interfaceName: nil,
-                     fields: ["success": success, "eventTypeRaw": type.rawValue,
-                              "errorDomain": errorDomain, "errorCode": errorCode,
-                              "errorDescription": errorDescription])
+            logEvent(
+                source: "coreWLAN", eventType: "unregistration", interfaceName: nil,
+                fields: [
+                    "success": success, "eventTypeRaw": type.rawValue,
+                    "errorDomain": errorDomain, "errorCode": errorCode,
+                    "errorDescription": errorDescription,
+                ])
         }
         registeredEvents.removeAll()
         let center = NSWorkspace.shared.notificationCenter
-        if let sleepObserver { center.removeObserver(sleepObserver); self.sleepObserver = nil }
-        if let wakeObserver { center.removeObserver(wakeObserver); self.wakeObserver = nil }
-        writer.append(["schemaVersion": schemaVersion, "kind": "event", "source": "collector", "eventType": "stopped",
-                       "time": utcTimestamp(), "monotonicNanoseconds": monotonicNanoseconds(), "interfaceName": NSNull()],
-                      to: "events.jsonl", synchronize: true)
+        if let sleepObserver {
+            center.removeObserver(sleepObserver)
+            self.sleepObserver = nil
+        }
+        if let wakeObserver {
+            center.removeObserver(wakeObserver)
+            self.wakeObserver = nil
+        }
+        writer.append(
+            [
+                "schemaVersion": schemaVersion, "kind": "event", "source": "collector", "eventType": "stopped",
+                "time": utcTimestamp(), "monotonicNanoseconds": monotonicNanoseconds(), "interfaceName": NSNull(),
+            ],
+            to: "events.jsonl", synchronize: true)
         writer.close()
         lifecycleLock.lock()
         finalized = true
         lifecycleLock.unlock()
         CFRunLoopWakeUp(CFRunLoopGetMain())
     }
-
 
     private static func modeName(_ mode: CWInterfaceMode) -> String {
         switch mode.rawValue {
@@ -670,11 +738,21 @@ private final class Collector: NSObject, CWEventDelegate {
         enqueueSample(trigger: "notification")
     }
 
-    func powerStateDidChangeForWiFiInterface(withName interfaceName: String) { measureEvent("powerDidChange", interfaceName: interfaceName) }
-    func ssidDidChangeForWiFiInterface(withName interfaceName: String) { measureEvent("ssidDidChange", interfaceName: interfaceName) }
-    func bssidDidChangeForWiFiInterface(withName interfaceName: String) { measureEvent("bssidDidChange", interfaceName: interfaceName) }
-    func linkDidChangeForWiFiInterface(withName interfaceName: String) { measureEvent("linkDidChange", interfaceName: interfaceName) }
-    func modeDidChangeForWiFiInterface(withName interfaceName: String) { measureEvent("modeDidChange", interfaceName: interfaceName) }
+    func powerStateDidChangeForWiFiInterface(withName interfaceName: String) {
+        measureEvent("powerDidChange", interfaceName: interfaceName)
+    }
+    func ssidDidChangeForWiFiInterface(withName interfaceName: String) {
+        measureEvent("ssidDidChange", interfaceName: interfaceName)
+    }
+    func bssidDidChangeForWiFiInterface(withName interfaceName: String) {
+        measureEvent("bssidDidChange", interfaceName: interfaceName)
+    }
+    func linkDidChangeForWiFiInterface(withName interfaceName: String) {
+        measureEvent("linkDidChange", interfaceName: interfaceName)
+    }
+    func modeDidChangeForWiFiInterface(withName interfaceName: String) {
+        measureEvent("modeDidChange", interfaceName: interfaceName)
+    }
 }
 
 let outputPath = CommandLine.arguments.dropFirst().first ?? FileManager.default.currentDirectoryPath

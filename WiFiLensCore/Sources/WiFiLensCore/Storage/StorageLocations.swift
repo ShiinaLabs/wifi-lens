@@ -57,14 +57,16 @@ public struct StorageLocations: Sendable {
 
     public static let current: StorageLocations = {
         let fileManager = FileManager.default
-        let applicationSupportDirectory = fileManager.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first ?? fileManager.temporaryDirectory
-        let cachesDirectory = fileManager.urls(
-            for: .cachesDirectory,
-            in: .userDomainMask
-        ).first ?? fileManager.temporaryDirectory
+        let applicationSupportDirectory =
+            fileManager.urls(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask
+            ).first ?? fileManager.temporaryDirectory
+        let cachesDirectory =
+            fileManager.urls(
+                for: .cachesDirectory,
+                in: .userDomainMask
+            ).first ?? fileManager.temporaryDirectory
 
         return StorageLocations(
             environment: .current,

@@ -82,7 +82,10 @@ struct SpectrumHeatmapRenderKey: Hashable, Sendable {
     let rssiRange: ClosedRange<Double>
     let resolution: SpectrumHeatmapResolution
 
-    init(model: SpectrumHeatmapModel, domain: SpectrumHeatmapChannelDomain, rssiRange: ClosedRange<Double>, resolution: SpectrumHeatmapResolution) {
+    init(
+        model: SpectrumHeatmapModel, domain: SpectrumHeatmapChannelDomain, rssiRange: ClosedRange<Double>,
+        resolution: SpectrumHeatmapResolution
+    ) {
         self.model = model
         self.domain = domain
         self.rssiRange = rssiRange

@@ -1,6 +1,6 @@
-@testable import WiFiLensCore
-
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 struct OverviewVisualStyleTests {

@@ -1,7 +1,8 @@
-import SwiftUI
 import SplitView
+import SwiftUI
+
 #if os(macOS)
-import AppKit
+    import AppKit
 #endif
 
 struct SpectrumDashboardLayout {
@@ -119,7 +120,8 @@ public struct ContentView: View {
                 addPanel()
             } label: {
                 Label(
-                    String(localized: "spectrum.dashboard.add_panel", comment: "Button to add a spectrum dashboard panel"),
+                    String(
+                        localized: "spectrum.dashboard.add_panel", comment: "Button to add a spectrum dashboard panel"),
                     systemImage: "plus"
                 )
             }
@@ -155,13 +157,30 @@ public struct ContentView: View {
             ProgressView().scaleEffect(1.5)
             switch viewModel.accessState {
             case .waitingForAuthorization:
-                Text(String(localized: "permission.location.waiting", comment: "Status while waiting for Location Services authorization")).foregroundColor(.orange)
-                Button(String(localized: "common.action.open_system_settings", comment: "Button to open macOS System Settings")) { viewModel.locationManager.openLocationPreferences() }
+                Text(
+                    String(
+                        localized: "permission.location.waiting",
+                        comment: "Status while waiting for Location Services authorization")
+                ).foregroundColor(.orange)
+                Button(
+                    String(
+                        localized: "common.action.open_system_settings", comment: "Button to open macOS System Settings"
+                    )
+                ) { viewModel.locationManager.openLocationPreferences() }
             case .denied:
-                Text(String(localized: "permission.location.required_short", comment: "Short label: Location Services required")).foregroundColor(.secondary)
-                Button(String(localized: "common.action.open_location_preferences", comment: "Button to open Location Services preferences")) { viewModel.locationManager.openLocationPreferences() }
+                Text(
+                    String(
+                        localized: "permission.location.required_short",
+                        comment: "Short label: Location Services required")
+                ).foregroundColor(.secondary)
+                Button(
+                    String(
+                        localized: "common.action.open_location_preferences",
+                        comment: "Button to open Location Services preferences")
+                ) { viewModel.locationManager.openLocationPreferences() }
             case .scanFailed(let msg):
-                Text(String(localized: "common.error.scan_failed", comment: "Generic scan failure message")).foregroundColor(.secondary)
+                Text(String(localized: "common.error.scan_failed", comment: "Generic scan failure message"))
+                    .foregroundColor(.secondary)
                 Text(msg).font(.caption).foregroundColor(.secondary)
             default:
                 EmptyView()
@@ -277,11 +296,11 @@ private struct SpectrumSplitter: SplitDivider {
 
     private func updateCursor(isHovering: Bool) {
         #if os(macOS)
-        if isHovering {
-            NSCursor.resizeUpDown.set()
-        } else {
-            NSCursor.arrow.set()
-        }
+            if isHovering {
+                NSCursor.resizeUpDown.set()
+            } else {
+                NSCursor.arrow.set()
+            }
         #endif
     }
 }

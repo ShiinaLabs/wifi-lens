@@ -53,19 +53,19 @@ enum RecommendationReason: String, CaseIterable, Sendable {
     /// Stable string for the enum case, usable as a localization-key suffix.
     private var keySuffix: String {
         switch self {
-        case .clearSpectrum:    "clear_spectrum"
-        case .lowCongestion:    "low_congestion"
-        case .congested:        "congested"
-        case .lowOverlap:       "low_overlap"
-        case .highOverlap:      "high_overlap"
-        case .lowInterference:  "low_interference"
+        case .clearSpectrum: "clear_spectrum"
+        case .lowCongestion: "low_congestion"
+        case .congested: "congested"
+        case .lowOverlap: "low_overlap"
+        case .highOverlap: "high_overlap"
+        case .lowInterference: "low_interference"
         case .highInterference: "high_interference"
-        case .lessCrowdedBand:  "less_crowded_band"
-        case .dfsRequired:      "dfs_required"
-        case .indoorOnly:       "indoor_only"
-        case .cacRequired:      "cac_required"
-        case .radarSensitive:   "radar_sensitive"
-        case .currentChannel:   "current_channel"
+        case .lessCrowdedBand: "less_crowded_band"
+        case .dfsRequired: "dfs_required"
+        case .indoorOnly: "indoor_only"
+        case .cacRequired: "cac_required"
+        case .radarSensitive: "radar_sensitive"
+        case .currentChannel: "current_channel"
         case .currentlyOptimal: "currently_optimal"
         }
     }

@@ -42,9 +42,9 @@ public final class SignalHistoryStore {
         let curr = entries[entries.count - 1]
         let delta = curr - prev
         switch delta {
-        case 2...:      return (.up, delta)
-        case ...(-2):   return (.down, delta)
-        default:        return (.stable, delta)
+        case 2...: return (.up, delta)
+        case ...(-2): return (.down, delta)
+        default: return (.stable, delta)
         }
     }
 

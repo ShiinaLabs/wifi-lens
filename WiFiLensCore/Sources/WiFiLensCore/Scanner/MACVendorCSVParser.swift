@@ -9,9 +9,10 @@ enum MACVendorCSVParserCancellationPoint: Equatable, Sendable {
 }
 
 struct MACVendorCSVParser: Sendable {
-    typealias CancellationCheck = @Sendable (
-        MACVendorCSVParserCancellationPoint
-    ) throws -> Void
+    typealias CancellationCheck =
+        @Sendable (
+            MACVendorCSVParserCancellationPoint
+        ) throws -> Void
 
     static let productionMinimums: [MACVendorRegistry: Int] = [
         .maL: 1_000,
@@ -144,9 +145,10 @@ struct MACVendorCSVParser: Sendable {
         if csv.first == "\u{FEFF}" {
             csv.removeFirst()
         }
-        csv = String(csv.unicodeScalars.filter {
-            $0.properties.generalCategory != .format
-        })
+        csv = String(
+            csv.unicodeScalars.filter {
+                $0.properties.generalCategory != .format
+            })
 
         let rows = try CSVReader.parse(
             csv,
@@ -166,8 +168,8 @@ struct MACVendorCSVParser: Sendable {
             )
         }
         guard let registryIndex = header.firstIndex(of: "Registry"),
-              let assignmentIndex = header.firstIndex(of: "Assignment"),
-              let organizationIndex = header.firstIndex(of: "Organization Name")
+            let assignmentIndex = header.firstIndex(of: "Assignment"),
+            let organizationIndex = header.firstIndex(of: "Organization Name")
         else {
             throw MACVendorDatabaseError.malformedCSV(file: input.displayName)
         }
@@ -185,7 +187,7 @@ struct MACVendorCSVParser: Sendable {
                 continue
             }
             guard row.indices.contains(greatestIndex),
-                  let registry = MACVendorRegistry(rawValue: row[registryIndex])
+                let registry = MACVendorRegistry(rawValue: row[registryIndex])
             else {
                 throw MACVendorDatabaseError.mixedRegistries(file: input.displayName)
             }
@@ -195,14 +197,15 @@ struct MACVendorCSVParser: Sendable {
             fileRegistry = registry
 
             let assignment = row[assignmentIndex]
-            let normalizedAssignment = assignment
+            let normalizedAssignment =
+                assignment
                 .replacingOccurrences(of: ":", with: "")
                 .replacingOccurrences(of: "-", with: "")
                 .uppercased()
             guard normalizedAssignment.count == registry.prefixLength / 4,
-                  normalizedAssignment.allSatisfy({
-                      ("0"..."9").contains($0) || ("A"..."F").contains($0)
-                  })
+                normalizedAssignment.allSatisfy({
+                    ("0"..."9").contains($0) || ("A"..."F").contains($0)
+                })
             else {
                 throw MACVendorDatabaseError.invalidAssignment(
                     file: input.displayName,
@@ -211,10 +214,12 @@ struct MACVendorCSVParser: Sendable {
                 )
             }
 
-            guard let organization = try normalizeOrganization(
-                row[organizationIndex],
-                file: input.displayName
-            ) else {
+            guard
+                let organization = try normalizeOrganization(
+                    row[organizationIndex],
+                    file: input.displayName
+                )
+            else {
                 continue
             }
 
@@ -354,19 +359,19 @@ struct MACVendorCSVParser: Sendable {
     }
 }
 
-private extension MACVendorCSVParser {
-    struct AssignmentKey: Hashable {
+extension MACVendorCSVParser {
+    fileprivate struct AssignmentKey: Hashable {
         let prefix: String
         let prefixLength: Int
     }
 
-    struct ParsedRegistry {
+    fileprivate struct ParsedRegistry {
         let registry: MACVendorRegistry
         let entries: [MACVendorEntry]
         let sha256: String
     }
 
-    enum CSVReader {
+    fileprivate enum CSVReader {
         private static let maximumRows = 250_000
         private static let maximumFieldsPerRow = 16
         private static let maximumTotalFields = 1_000_000
@@ -387,7 +392,7 @@ private extension MACVendorCSVParser {
 
             func appendField() throws {
                 guard row.count < maximumFieldsPerRow,
-                      totalFields < maximumTotalFields
+                    totalFields < maximumTotalFields
                 else {
                     throw MACVendorDatabaseError.malformedCSV(file: file)
                 }
@@ -427,10 +432,10 @@ private extension MACVendorCSVParser {
                 }
 
                 if afterClosingQuote,
-                   character != ",",
-                   character != "\r",
-                   character != "\n",
-                   character != "\r\n"
+                    character != ",",
+                    character != "\r",
+                    character != "\n",
+                    character != "\r\n"
                 {
                     throw MACVendorDatabaseError.malformedCSV(file: file)
                 }

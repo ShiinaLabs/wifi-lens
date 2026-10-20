@@ -187,16 +187,19 @@ struct SystemProxyTunnelStateReader: ProxyTunnelStateReading {
             let name = String(cString: namePtr)
             let flags = ptr.pointee.ifa_flags
             var entry = byName[name] ?? (up: false, hasIPv4: false)
-            entry.up = entry.up
+            entry.up =
+                entry.up
                 || (flags & UInt32(IFF_UP) != 0 && flags & UInt32(IFF_RUNNING) != 0)
             if let addr = ptr.pointee.ifa_addr,
-               addr.pointee.sa_family == sa_family_t(AF_INET) {
+                addr.pointee.sa_family == sa_family_t(AF_INET)
+            {
                 entry.hasIPv4 = true
             }
             byName[name] = entry
         }
 
-        return byName
+        return
+            byName
             .filter { name, entry in
                 NetworkTunnelInterfaceClassifier.prefixes.contains { name.hasPrefix($0) }
                     && entry.up
@@ -410,8 +413,8 @@ struct SystemProxyEgressLoader: ProxyEgressLoading {
     }
 }
 
-private extension ProxyEndpoint {
-    var networkEndpoint: NWEndpoint? {
+extension ProxyEndpoint {
+    fileprivate var networkEndpoint: NWEndpoint? {
         guard let networkPort = NWEndpoint.Port(rawValue: port) else { return nil }
         return .hostPort(
             host: NWEndpoint.Host(host),
@@ -576,10 +579,11 @@ struct SystemProxyCheck: DiagnosticCheck {
             if candidate == .direct {
                 if let tunnelState {
                     evidence.append(.init(code: "\(evidencePrefix).tunnel-interface", value: tunnelState.interface))
-                    evidence.append(.init(
-                        code: "\(evidencePrefix).tunnel-detection-source",
-                        value: tunnelState.source.rawValue
-                    ))
+                    evidence.append(
+                        .init(
+                            code: "\(evidencePrefix).tunnel-detection-source",
+                            value: tunnelState.source.rawValue
+                        ))
                 }
                 evidence.append(.init(code: "\(evidencePrefix).endpoint-status", value: "not-required"))
                 evidence.append(.init(code: "\(evidencePrefix).authentication-status", value: "not-required"))
@@ -732,8 +736,10 @@ struct SystemProxyCheck: DiagnosticCheck {
         let statuses = routes.map(\.status)
         let evidence = routes.flatMap(\.evidence)
         let proxyFacts = DiagnosticProxyFacts(
-            http: routes.first(where: { $0.target.scheme?.lowercased() == "http" })?.diagnosticAvailability ?? .unverified,
-            https: routes.first(where: { $0.target.scheme?.lowercased() == "https" })?.diagnosticAvailability ?? .unverified
+            http: routes.first(where: { $0.target.scheme?.lowercased() == "http" })?.diagnosticAvailability
+                ?? .unverified,
+            https: routes.first(where: { $0.target.scheme?.lowercased() == "https" })?.diagnosticAvailability
+                ?? .unverified
         )
 
         if statuses.contains(.authenticationRequired) {
@@ -761,7 +767,8 @@ struct SystemProxyCheck: DiagnosticCheck {
             )
         }
         if statuses.allSatisfy({ $0 == .tunnel || $0 == .direct }),
-           statuses.contains(.tunnel) {
+            statuses.contains(.tunnel)
+        {
             let nwPathConfirmed = evidence.contains { evidence in
                 evidence.code.hasSuffix(".tunnel-detection-source")
                     && evidence.value == ProxyTunnelDetectionSource.nwpath.rawValue
@@ -815,8 +822,8 @@ struct SystemProxyCheck: DiagnosticCheck {
     }
 }
 
-private extension EffectiveProxy {
-    var routeType: String {
+extension EffectiveProxy {
+    fileprivate var routeType: String {
         switch self {
         case .direct:
             "direct"
@@ -831,7 +838,7 @@ private extension EffectiveProxy {
         }
     }
 
-    var endpoint: ProxyEndpoint? {
+    fileprivate var endpoint: ProxyEndpoint? {
         switch self {
         case .http(let endpoint), .https(let endpoint), .socks(let endpoint):
             endpoint
@@ -853,8 +860,8 @@ private final class ProxyEgressRedirectDelegate: NSObject, URLSessionTaskDelegat
     }
 }
 
-private extension Duration {
-    var proxyCheckTimeInterval: TimeInterval {
+extension Duration {
+    fileprivate var proxyCheckTimeInterval: TimeInterval {
         let components = self.components
         return max(
             0.001,

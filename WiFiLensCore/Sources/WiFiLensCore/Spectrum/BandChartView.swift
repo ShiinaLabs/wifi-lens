@@ -1,5 +1,5 @@
-import SwiftUI
 import ChartLens
+import SwiftUI
 
 public struct WiFiBandChart: View {
     let model: BandChartRenderModel
@@ -48,7 +48,8 @@ public struct WiFiBandChart: View {
                         .frame(width: 24, height: 24)
                 }
                 .help(String(localized: "common.action.reset_zoom", comment: "Reset chart zoom to default"))
-                .accessibilityLabel(String(localized: "common.action.reset_zoom", comment: "Reset chart zoom to default"))
+                .accessibilityLabel(
+                    String(localized: "common.action.reset_zoom", comment: "Reset chart zoom to default"))
             }
             Spacer()
         }
@@ -61,7 +62,9 @@ public struct WiFiBandChart: View {
     private var hasSelection: Bool { selectedNetworkID != nil }
     private func isSelected(_ s: ChartSeriesData) -> Bool { selectedNetworkID == s.id }
 
-    private func strokeStyle(for s: ChartSeriesData) -> (areaOpacity: Double, strokeOpacity: Double, strokeWidth: CGFloat) {
+    private func strokeStyle(for s: ChartSeriesData) -> (
+        areaOpacity: Double, strokeOpacity: Double, strokeWidth: CGFloat
+    ) {
         if isSelected(s) { return (0.55, 1.0, 2) }
         if hasSelection { return (0.10, 0.20, 1) }
         return (0.3, 0.6, 1)
@@ -120,10 +123,14 @@ public struct WiFiBandChart: View {
             axisTickStartChannel: model.axisTickStartChannel
         )
         var a = ChartAxisConfig()
-        a.xMin = xMin; a.xMax = xMax
-        a.yMin = model.yMin; a.yStep = 10; a.gridColor = .gray.opacity(0.15)
+        a.xMin = xMin
+        a.xMax = xMax
+        a.yMin = model.yMin
+        a.yStep = 10
+        a.gridColor = .gray.opacity(0.15)
         a.xTicks = tickValues.map { ChartAxisConfig.XTick(position: Double($0), label: "\($0)") }
-        a.xTickLabelOffset = 10; a.yTickLabelOffset = 14
+        a.xTickLabelOffset = 10
+        a.yTickLabelOffset = 14
         return a
     }
 
@@ -149,27 +156,45 @@ public struct WiFiBandChart: View {
                     Chart(series: buildSeries(), axis: axisConfig, style: chartStyle) { chartGeo, _ in
                         dataLabelOverlay(geo: chartGeo)
                     }
-                    .accessibilityLabel(String(localized: "spectrum.accessibility.chart_label", comment: "Spectrum chart accessibility label"))
+                    .accessibilityLabel(
+                        String(
+                            localized: "spectrum.accessibility.chart_label",
+                            comment: "Spectrum chart accessibility label")
+                    )
                     .onContinuousHover(coordinateSpace: .local) { phase in
                         switch phase {
                         case .active(let location):
                             isHovering = true
-                            if let (series, pt) = BandChartLayout.nearestSeries(at: location, in: visibleSeries, geometry: geo, radius: 14) {
-                                hoveredSeries = series; hoverPoint = pt
-                            } else { hoveredSeries = nil }
+                            if let (series, pt) = BandChartLayout.nearestSeries(
+                                at: location, in: visibleSeries, geometry: geo, radius: 14)
+                            {
+                                hoveredSeries = series
+                                hoverPoint = pt
+                            } else {
+                                hoveredSeries = nil
+                            }
                         case .ended:
-                            isHovering = false; hoveredSeries = nil
+                            isHovering = false
+                            hoveredSeries = nil
                         }
                     }
                     .onTapGesture { selectedNetworkID = hoveredSeries?.id }
                     .gesture(zoomGesture(in: geometry, geo: geo))
                     .overlay {
                         if isHovering, let series = hoveredSeries {
-                            ChartTooltip(ssid: series.displaySSID, rssi: series.rssi, channel: series.channel, bssid: series.bssid)
-                                .position(x: clampX(hoverPoint.x, in: geo.chartRect), y: max(hoverPoint.y - 22, 4))
+                            ChartTooltip(
+                                ssid: series.displaySSID, rssi: series.rssi, channel: series.channel,
+                                bssid: series.bssid
+                            )
+                            .position(x: clampX(hoverPoint.x, in: geo.chartRect), y: max(hoverPoint.y - 22, 4))
                         }
                     }
-                    .accessibilityLabel(String(format: String(localized: "spectrum.accessibility.chart_label_fmt", comment: "Chart accessibility label with network count"), model.visibleSeriesData.count))
+                    .accessibilityLabel(
+                        String(
+                            format: String(
+                                localized: "spectrum.accessibility.chart_label_fmt",
+                                comment: "Chart accessibility label with network count"), model.visibleSeriesData.count)
+                    )
                 }
             }
         }
@@ -264,35 +289,56 @@ public struct WiFiBandChart: View {
                     Chart(series: buildSeries(), axis: axisConfig, style: chartStyle) { chartGeo, _ in
                         dataLabelOverlay(geo: chartGeo)
                     }
-                    .accessibilityLabel(String(localized: "spectrum.accessibility.chart_label", comment: "Spectrum chart accessibility label"))
+                    .accessibilityLabel(
+                        String(
+                            localized: "spectrum.accessibility.chart_label",
+                            comment: "Spectrum chart accessibility label")
+                    )
                     .onContinuousHover(coordinateSpace: .local) { phase in
                         switch phase {
                         case .active(let location):
                             isHovering = true
-                            if let (series, pt) = BandChartLayout.nearestSeries(at: location, in: visibleSeries, geometry: geo, radius: 14) {
-                                hoveredSeries = series; hoverPoint = pt
-                            } else { hoveredSeries = nil }
+                            if let (series, pt) = BandChartLayout.nearestSeries(
+                                at: location, in: visibleSeries, geometry: geo, radius: 14)
+                            {
+                                hoveredSeries = series
+                                hoverPoint = pt
+                            } else {
+                                hoveredSeries = nil
+                            }
                         case .ended:
-                            isHovering = false; hoveredSeries = nil
+                            isHovering = false
+                            hoveredSeries = nil
                         }
                     }
                     .onTapGesture { selectedNetworkID = hoveredSeries?.id }
                     .gesture(zoomGesture(in: geometry, geo: geo))
                     .overlay {
                         if isHovering, let series = hoveredSeries {
-                            ChartTooltip(ssid: series.displaySSID, rssi: series.rssi, channel: series.channel, bssid: series.bssid)
-                                .position(x: clampX(hoverPoint.x, in: geo.chartRect), y: max(hoverPoint.y - 22, 4))
+                            ChartTooltip(
+                                ssid: series.displaySSID, rssi: series.rssi, channel: series.channel,
+                                bssid: series.bssid
+                            )
+                            .position(x: clampX(hoverPoint.x, in: geo.chartRect), y: max(hoverPoint.y - 22, 4))
                         }
                     }
-                    .accessibilityLabel(String(format: String(localized: "spectrum.accessibility.chart_label_fmt", comment: "Chart accessibility label with network count"), model.visibleSeriesData.count))
+                    .accessibilityLabel(
+                        String(
+                            format: String(
+                                localized: "spectrum.accessibility.chart_label_fmt",
+                                comment: "Chart accessibility label with network count"), model.visibleSeriesData.count)
+                    )
                 }
             }
             .padding()
-            Button { onToggleExpand() } label: {
+            Button {
+                onToggleExpand()
+            } label: {
                 Image(systemName: "xmark.circle.fill").font(.title).foregroundColor(.secondary)
             }
             .buttonStyle(.plain).padding(8)
-            .accessibilityLabel(String(localized: "spectrum.accessibility.close_expanded", comment: "Close expanded chart button"))
+            .accessibilityLabel(
+                String(localized: "spectrum.accessibility.close_expanded", comment: "Close expanded chart button"))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -303,11 +349,17 @@ typealias BandChartView = WiFiBandChart
 // MARK: - Chart Tooltip
 
 private struct ChartTooltip: View {
-    let ssid: String; let rssi: Int; let channel: Int; let bssid: String
+    let ssid: String
+    let rssi: Int
+    let channel: Int
+    let bssid: String
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(ssid).font(.caption.weight(.semibold)).foregroundColor(.primary)
-            Text(String(format: String(localized: "format.channel_rssi", comment: "Channel and RSSI values"), channel, rssi)).font(.caption2).foregroundColor(.secondary)
+            Text(
+                String(
+                    format: String(localized: "format.channel_rssi", comment: "Channel and RSSI values"), channel, rssi)
+            ).font(.caption2).foregroundColor(.secondary)
             Text(bssid).font(.caption2).foregroundColor(.secondary)
         }
         .padding(.horizontal, 6).padding(.vertical, 4)

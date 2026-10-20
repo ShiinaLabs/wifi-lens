@@ -1,7 +1,7 @@
-@testable import WiFiLensCore
-
 import Foundation
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor
@@ -18,16 +18,17 @@ final class GuidanceDebugTests {
     // MARK: - Reset
 
     @Test func debugResetStateClearsPersistedStateAndPendingTokens() throws {
-        let coordinator = makeCoordinator(state: GuidanceState(
-            firstLaunchDate: now,
-            activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: 4,
-            invitationPresentationCount: 2,
-            invitationDismissalCount: 1,
-            invitationsDisabled: true,
-            lastReviewRequestDate: now,
-            lastReviewRequestVersion: "2.1.0"
-        ))
+        let coordinator = makeCoordinator(
+            state: GuidanceState(
+                firstLaunchDate: now,
+                activeDays: ["2026-07-01", "2026-07-02"],
+                meaningfulCompletionCount: 4,
+                invitationPresentationCount: 2,
+                invitationDismissalCount: 1,
+                invitationsDisabled: true,
+                lastReviewRequestDate: now,
+                lastReviewRequestVersion: "2.1.0"
+            ))
         // The disabled flag suppresses the policy path, so schedule through
         // the debug API to get a real pending token to reset.
         coordinator.debugScheduleInvitation(for: .diagnosticsCompleted)
@@ -176,10 +177,11 @@ final class GuidanceDebugTests {
         #expect(GuidanceDebugOverrides.proInstallationOverride == .useRealDetection)
 
         // Coordinator with the production default detection closure.
-        let coordinator = makeCoordinatorWithDefaultDetection(state: GuidanceState(
-            activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: 2
-        ))
+        let coordinator = makeCoordinatorWithDefaultDetection(
+            state: GuidanceState(
+                activeDays: ["2026-07-01", "2026-07-02"],
+                meaningfulCompletionCount: 2
+            ))
 
         GuidanceDebugOverrides.setProInstallationOverride(.treatAsInstalled)
         #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .none(.proAppInstalled))
@@ -199,10 +201,11 @@ final class GuidanceDebugTests {
     // MARK: - State logging
 
     @Test func debugLogStateEmitsSanitizedSummary() throws {
-        let coordinator = makeCoordinator(state: GuidanceState(
-            activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: 2
-        ))
+        let coordinator = makeCoordinator(
+            state: GuidanceState(
+                activeDays: ["2026-07-01", "2026-07-02"],
+                meaningfulCompletionCount: 2
+            ))
         coordinator.debugScheduleInvitation(for: .diagnosticsCompleted)
 
         coordinator.debugLogState(edition: "OSS")

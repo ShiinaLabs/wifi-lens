@@ -384,22 +384,23 @@ private final class SystemPACCallbackExecution: PACCallbackExecution, @unchecked
             release: nil,
             copyDescription: nil
         )
-        let source: CFRunLoopSource = switch pacSource {
-        case .url(let pacURL):
-            CFNetworkExecuteProxyAutoConfigurationURL(
-                pacURL as CFURL,
-                targetURL as CFURL,
-                proxyAutoConfigurationCallback,
-                &clientContext
-            )
-        case .script(let script):
-            CFNetworkExecuteProxyAutoConfigurationScript(
-                script as CFString,
-                targetURL as CFURL,
-                proxyAutoConfigurationCallback,
-                &clientContext
-            )
-        }
+        let source: CFRunLoopSource =
+            switch pacSource {
+            case .url(let pacURL):
+                CFNetworkExecuteProxyAutoConfigurationURL(
+                    pacURL as CFURL,
+                    targetURL as CFURL,
+                    proxyAutoConfigurationCallback,
+                    &clientContext
+                )
+            case .script(let script):
+                CFNetworkExecuteProxyAutoConfigurationScript(
+                    script as CFString,
+                    targetURL as CFURL,
+                    proxyAutoConfigurationCallback,
+                    &clientContext
+                )
+            }
 
         lock.lock()
         guard !cancellationRequested, callback != nil else {
@@ -485,10 +486,11 @@ private final class PACResolutionContext: @unchecked Sendable {
         lock.lock()
         guard !cancellationRequested else {
             lock.unlock()
-            continuation.resume(returning: ProxyCandidateResolution(
-                candidates: [],
-                evidenceCodes: ["pac-cancelled"]
-            ))
+            continuation.resume(
+                returning: ProxyCandidateResolution(
+                    candidates: [],
+                    evidenceCodes: ["pac-cancelled"]
+                ))
             return
         }
         self.continuation = continuation
@@ -508,10 +510,11 @@ private final class PACResolutionContext: @unchecked Sendable {
             } catch {
                 return
             }
-            self?.finish(ProxyCandidateResolution(
-                candidates: [],
-                evidenceCodes: ["pac-timeout"]
-            ))
+            self?.finish(
+                ProxyCandidateResolution(
+                    candidates: [],
+                    evidenceCodes: ["pac-timeout"]
+                ))
         }
         install(timeoutTask)
     }
@@ -521,10 +524,11 @@ private final class PACResolutionContext: @unchecked Sendable {
         case .success(let resolution):
             finish(resolution)
         case .failure:
-            finish(ProxyCandidateResolution(
-                candidates: [],
-                evidenceCodes: ["pac-execution-failed"]
-            ))
+            finish(
+                ProxyCandidateResolution(
+                    candidates: [],
+                    evidenceCodes: ["pac-execution-failed"]
+                ))
         }
     }
 
@@ -534,10 +538,11 @@ private final class PACResolutionContext: @unchecked Sendable {
         let hasContinuation = continuation != nil
         lock.unlock()
         if hasContinuation {
-            finish(ProxyCandidateResolution(
-                candidates: [],
-                evidenceCodes: ["pac-cancelled"]
-            ))
+            finish(
+                ProxyCandidateResolution(
+                    candidates: [],
+                    evidenceCodes: ["pac-cancelled"]
+                ))
         }
     }
 

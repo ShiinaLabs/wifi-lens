@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -13,12 +14,15 @@ final class OnboardingEditionTests {
         #expect(config.startRoute == .overview)
         #expect(config.startToolbarSelection == nil)
         #expect(config.primaryActionKey == "onboarding.welcome.start")
-        #expect(config.highlights.map(\.titleKey) == [
-            "onboarding.welcome.highlight.live",
-            "onboarding.welcome.highlight.diagnostics",
-            "onboarding.welcome.highlight.export"
-        ])
-        #expect(config.proURL?.absoluteString == "https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=oss_welcome&mt=8")
+        #expect(
+            config.highlights.map(\.titleKey) == [
+                "onboarding.welcome.highlight.live",
+                "onboarding.welcome.highlight.diagnostics",
+                "onboarding.welcome.highlight.export",
+            ])
+        #expect(
+            config.proURL?.absoluteString
+                == "https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=oss_welcome&mt=8")
     }
 
     @Test func ossMigrationUsesSparkleMarker() {

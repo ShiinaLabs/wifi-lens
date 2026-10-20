@@ -73,7 +73,10 @@ public struct MACVendorDatabase: Codable, Equatable, Sendable {
     public let registries: [MACVendorRegistryMetadata]
     public let entries: [MACVendorEntry]
 
-    public init(schemaVersion: Int, createdAt: Date, source: MACVendorDatabaseSource, registries: [MACVendorRegistryMetadata], entries: [MACVendorEntry]) {
+    public init(
+        schemaVersion: Int, createdAt: Date, source: MACVendorDatabaseSource, registries: [MACVendorRegistryMetadata],
+        entries: [MACVendorEntry]
+    ) {
         self.schemaVersion = schemaVersion
         self.createdAt = createdAt
         self.source = source
@@ -97,7 +100,10 @@ public struct MACVendorDatabaseSummary: Equatable, Sendable {
     public let registryCounts: [MACVendorRegistry: Int]
     public let totalRecordCount: Int
 
-    public init(source: MACVendorDatabaseSource, createdAt: Date, registryCounts: [MACVendorRegistry: Int], totalRecordCount: Int) {
+    public init(
+        source: MACVendorDatabaseSource, createdAt: Date, registryCounts: [MACVendorRegistry: Int],
+        totalRecordCount: Int
+    ) {
         self.source = source
         self.createdAt = createdAt
         self.registryCounts = registryCounts

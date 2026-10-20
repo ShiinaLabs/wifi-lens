@@ -223,8 +223,9 @@ public struct RoamingChartScene {
 
         for transition in orderedTransitions {
             guard consumedEventIndices.insert(transition.eventIndex).inserted,
-                  segments.indices.contains(transition.fromSegmentIndex),
-                  segments.indices.contains(transition.toSegmentIndex) else {
+                segments.indices.contains(transition.fromSegmentIndex),
+                segments.indices.contains(transition.toSegmentIndex)
+            else {
                 continue
             }
 
@@ -233,17 +234,18 @@ public struct RoamingChartScene {
             let boundary = transition.event.timestamp
 
             guard samplesAreStrictlyIncreasing(previousSegment.samples),
-                  samplesAreStrictlyIncreasing(nextSegment.samples),
-                  let previousSample = previousSegment.samples.last(where: {
-                      $0.timestamp <= boundary
-                          && $0.rssi != nil
-                          && isWithinSegment($0.timestamp, previousSegment)
-                  }),
-                  let nextSample = nextSegment.samples.first(where: {
-                      $0.timestamp >= boundary
-                          && $0.rssi != nil
-                          && isWithinSegment($0.timestamp, nextSegment)
-                  }) else {
+                samplesAreStrictlyIncreasing(nextSegment.samples),
+                let previousSample = previousSegment.samples.last(where: {
+                    $0.timestamp <= boundary
+                        && $0.rssi != nil
+                        && isWithinSegment($0.timestamp, previousSegment)
+                }),
+                let nextSample = nextSegment.samples.first(where: {
+                    $0.timestamp >= boundary
+                        && $0.rssi != nil
+                        && isWithinSegment($0.timestamp, nextSegment)
+                })
+            else {
                 continue
             }
 
@@ -253,10 +255,11 @@ public struct RoamingChartScene {
             let afterSpan = end.timeIntervalSince(boundary)
             let totalSpan = end.timeIntervalSince(start)
             guard start < boundary,
-                  boundary <= end,
-                  beforeSpan <= maximumHandoffCollapseSpan,
-                  afterSpan <= maximumHandoffCollapseSpan,
-                  totalSpan <= maximumHandoffCollapseSpan else {
+                boundary <= end,
+                beforeSpan <= maximumHandoffCollapseSpan,
+                afterSpan <= maximumHandoffCollapseSpan,
+                totalSpan <= maximumHandoffCollapseSpan
+            else {
                 continue
             }
 
@@ -267,24 +270,25 @@ public struct RoamingChartScene {
                 $0.timestamp >= boundary && $0.timestamp <= end
             }
             guard !previousEvidence.isEmpty,
-                  !nextEvidence.isEmpty,
-                  previousEvidence.allSatisfy({
-                      $0.rssi != nil && isWithinSegment($0.timestamp, previousSegment)
-                  }),
-                  nextEvidence.allSatisfy({
-                      $0.rssi != nil && isWithinSegment($0.timestamp, nextSegment)
-                  }),
-                  !nextSegment.samples.contains(where: {
-                      $0.timestamp >= start && $0.timestamp < boundary
-                  }),
-                  !previousSegment.samples.contains(where: {
-                      $0.timestamp > boundary && $0.timestamp <= end
-                  }),
-                  !segments.enumerated().contains(where: { index, segment in
-                      index != transition.fromSegmentIndex
-                          && index != transition.toSegmentIndex
-                          && segment.samples.contains(where: { $0.timestamp >= start && $0.timestamp <= end })
-                  }) else {
+                !nextEvidence.isEmpty,
+                previousEvidence.allSatisfy({
+                    $0.rssi != nil && isWithinSegment($0.timestamp, previousSegment)
+                }),
+                nextEvidence.allSatisfy({
+                    $0.rssi != nil && isWithinSegment($0.timestamp, nextSegment)
+                }),
+                !nextSegment.samples.contains(where: {
+                    $0.timestamp >= start && $0.timestamp < boundary
+                }),
+                !previousSegment.samples.contains(where: {
+                    $0.timestamp > boundary && $0.timestamp <= end
+                }),
+                !segments.enumerated().contains(where: { index, segment in
+                    index != transition.fromSegmentIndex
+                        && index != transition.toSegmentIndex
+                        && segment.samples.contains(where: { $0.timestamp >= start && $0.timestamp <= end })
+                })
+            else {
                 continue
             }
 
@@ -293,8 +297,9 @@ public struct RoamingChartScene {
                 end: timeScale.elapsedTime(for: boundary)
             )
             guard interval.start < interval.end,
-                  interval.end - interval.start <= maximumHandoffCollapseSpan,
-                  accepted.last.map({ start >= $0.rawEnd && interval.start >= $0.interval.end }) ?? true else {
+                interval.end - interval.start <= maximumHandoffCollapseSpan,
+                accepted.last.map({ start >= $0.rawEnd && interval.start >= $0.interval.end }) ?? true
+            else {
                 continue
             }
             accepted.append((transition.eventIndex, start, boundary, interval))
@@ -310,9 +315,11 @@ public struct RoamingChartScene {
         let measuredSamples = signalRuns.flatMap { run in
             run.points.map { RoamingChartHoverSample(bssid: run.bssid, point: $0) }
         }
-        guard let nearest = measuredSamples.min(by: {
-            abs($0.point.elapsedTime - elapsedTime) < abs($1.point.elapsedTime - elapsedTime)
-        }) else {
+        guard
+            let nearest = measuredSamples.min(by: {
+                abs($0.point.elapsedTime - elapsedTime) < abs($1.point.elapsedTime - elapsedTime)
+            })
+        else {
             return []
         }
 
@@ -328,9 +335,10 @@ public struct RoamingChartScene {
         duration requestedDuration: TimeInterval,
         origin requestedOrigin: Date? = nil
     ) {
-        let timestamps = segments.flatMap { segment in
-            [segment.startTime, segment.endTime].compactMap { $0 } + segment.samples.map(\.timestamp)
-        } + sourceTransitions.map(\.timestamp)
+        let timestamps =
+            segments.flatMap { segment in
+                [segment.startTime, segment.endTime].compactMap { $0 } + segment.samples.map(\.timestamp)
+            } + sourceTransitions.map(\.timestamp)
         let origin = requestedOrigin ?? timestamps.min() ?? Date(timeIntervalSince1970: 0)
         self.origin = origin
         let timeScale = RoamingChartTimeScale(origin: origin)
@@ -390,13 +398,14 @@ public struct RoamingChartScene {
             regions[leftIndex].endEvidence = .confirmedTransition(eventIndex: match.eventIndex)
             regions[leftIndex + 1].start = boundary
             regions[leftIndex + 1].startEvidence = .confirmedTransition(eventIndex: match.eventIndex)
-            resolvedTransitions.append(RoamingChartTransition(
-                elapsedTime: boundary,
-                eventIndex: match.eventIndex,
-                fromSegmentIndex: leftIndex,
-                toSegmentIndex: leftIndex + 1,
-                event: match.event
-            ))
+            resolvedTransitions.append(
+                RoamingChartTransition(
+                    elapsedTime: boundary,
+                    eventIndex: match.eventIndex,
+                    fromSegmentIndex: leftIndex,
+                    toSegmentIndex: leftIndex + 1,
+                    event: match.event
+                ))
         }
 
         if regions.count > 1 {
@@ -408,12 +417,14 @@ public struct RoamingChartScene {
         }
         let signalRuns = segments.enumerated().flatMap { segmentIndex, segment in
             segment.rssiRuns.map { run in
-                RoamingSignalRun(segmentIndex: segmentIndex, bssid: segment.bssid, points: run.map { sample in
-                    RoamingChartSamplePoint(
-                        elapsedTime: elapsed(sample.timestamp),
-                        sample: sample
-                    )
-                })
+                RoamingSignalRun(
+                    segmentIndex: segmentIndex, bssid: segment.bssid,
+                    points: run.map { sample in
+                        RoamingChartSamplePoint(
+                            elapsedTime: elapsed(sample.timestamp),
+                            sample: sample
+                        )
+                    })
             }
         }
         let collapsedIntervals = Self.collapsedIntervals(
@@ -477,12 +488,13 @@ public struct RoamingChartScene {
         var previousSegmentIndex: Int?
         for region in self.regions {
             if region.start > cursor {
-                gaps.append(RoamingChartGap(
-                    start: cursor,
-                    end: region.start,
-                    previousSegmentIndex: previousSegmentIndex,
-                    nextSegmentIndex: region.segmentIndex
-                ))
+                gaps.append(
+                    RoamingChartGap(
+                        start: cursor,
+                        end: region.start,
+                        previousSegmentIndex: previousSegmentIndex,
+                        nextSegmentIndex: region.segmentIndex
+                    ))
             }
             cursor = max(cursor, region.end)
             previousSegmentIndex = region.segmentIndex
@@ -491,12 +503,13 @@ public struct RoamingChartScene {
         let latestEvidence = max(0, timestamps.map(elapsed).max() ?? 0)
         self.duration = max(0, displayedTime(max(requestedDuration, latestEvidence)))
         if self.duration > cursor {
-            gaps.append(RoamingChartGap(
-                start: cursor,
-                end: self.duration,
-                previousSegmentIndex: previousSegmentIndex,
-                nextSegmentIndex: nil
-            ))
+            gaps.append(
+                RoamingChartGap(
+                    start: cursor,
+                    end: self.duration,
+                    previousSegmentIndex: previousSegmentIndex,
+                    nextSegmentIndex: nil
+                ))
         }
         self.gaps = gaps
     }

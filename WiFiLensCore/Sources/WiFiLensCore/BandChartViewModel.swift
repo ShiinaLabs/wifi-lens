@@ -1,5 +1,5 @@
-import SwiftUI
 import ChartLens
+import SwiftUI
 
 @MainActor
 @Observable
@@ -54,13 +54,16 @@ public final class BandChartViewModel {
         self.band = band
     }
 
-    private func makeDisplayedSeriesData(from source: [ChartSeriesData], hiddenBands: Set<String>, hideHiddenSSIDs: Bool) -> [ChartSeriesData] {
+    private func makeDisplayedSeriesData(
+        from source: [ChartSeriesData], hiddenBands: Set<String>, hideHiddenSSIDs: Bool
+    ) -> [ChartSeriesData] {
         let needle = currentFilterQuery.trimmingCharacters(in: .whitespaces).lowercased()
         let bandHidden = hiddenBands.contains(band.id)
         return source.map { series in
             var series = series
             let sourceFilteredOut = series.isFilteredOut
-            let textFilter = needle.isEmpty
+            let textFilter =
+                needle.isEmpty
                 || series.ssid.lowercased().contains(needle)
                 || series.bssid.lowercased().contains(needle)
             let hiddenSSIDFilter = !hideHiddenSSIDs || !series.isHiddenSSID
@@ -84,7 +87,7 @@ public final class BandChartViewModel {
 
     public func snapshots(for selectedNetworkID: String?) -> [NetworkSnapshot]? {
         guard let selectedNetworkID,
-              let series = displayedSeriesData.first(where: { $0.id == selectedNetworkID })
+            let series = displayedSeriesData.first(where: { $0.id == selectedNetworkID })
         else { return nil }
         return allSnapshots[series.bssid]
     }
@@ -146,7 +149,10 @@ public final class BandChartViewModel {
 
 extension BandChartViewModel {
 
-    func updateNetworks(_ networks: [WiFiNetwork], colorHasher: SSIDColorHasher, displayStatesByID: [String: APDisplayState], trends: [String: (direction: TrendDirection, delta: Int)] = [:], snapshots: [String: [NetworkSnapshot]] = [:]) {
+    func updateNetworks(
+        _ networks: [WiFiNetwork], colorHasher: SSIDColorHasher, displayStatesByID: [String: APDisplayState],
+        trends: [String: (direction: TrendDirection, delta: Int)] = [:], snapshots: [String: [NetworkSnapshot]] = [:]
+    ) {
         var dataArray = ChannelSeriesDataBuilder.toSeriesData(
             networks,
             colorHasher: colorHasher,
@@ -181,8 +187,13 @@ extension BandChartViewModel {
         startAnimation()
     }
 
-    func updateNetworks(_ networks: [WiFiNetwork], colorHasher: SSIDColorHasher, filterQuery: String, trends: [String: (direction: TrendDirection, delta: Int)] = [:], snapshots: [String: [NetworkSnapshot]] = [:], hiddenBSSIDs: Set<String> = [], hiddenBands: Set<String> = [], hideHiddenSSIDs: Bool = false) {
-        var dataArray = ChannelSeriesDataBuilder.toSeriesData(networks, colorHasher: colorHasher, trends: trends, hiddenBSSIDs: hiddenBSSIDs)
+    func updateNetworks(
+        _ networks: [WiFiNetwork], colorHasher: SSIDColorHasher, filterQuery: String,
+        trends: [String: (direction: TrendDirection, delta: Int)] = [:], snapshots: [String: [NetworkSnapshot]] = [:],
+        hiddenBSSIDs: Set<String> = [], hiddenBands: Set<String> = [], hideHiddenSSIDs: Bool = false
+    ) {
+        var dataArray = ChannelSeriesDataBuilder.toSeriesData(
+            networks, colorHasher: colorHasher, trends: trends, hiddenBSSIDs: hiddenBSSIDs)
 
         let prevByID = Dictionary(uniqueKeysWithValues: allSeriesData.map { ($0.id, $0.displayRSSI) })
         for i in dataArray.indices {
@@ -211,22 +222,31 @@ extension BandChartViewModel {
         startAnimation()
     }
 
-    static func computeScore(rssi: Int, channelCount: Int, supportsK: Bool, supportsR: Bool, supportsV: Bool, channelWidth: String) -> Int {
+    static func computeScore(
+        rssi: Int, channelCount: Int, supportsK: Bool, supportsR: Bool, supportsV: Bool, channelWidth: String
+    ) -> Int {
         let rssiScore = max(0, min(100, Int(Double(rssi + 100) * 1.4)))
-        let congScore: Int = switch channelCount {
-        case 1: 100; case 2: 70; case 3: 50; case 4: 35; default: 20
-        }
+        let congScore: Int =
+            switch channelCount {
+            case 1: 100
+            case 2: 70
+            case 3: 50
+            case 4: 35
+            default: 20
+            }
         let protoCount = [supportsK, supportsR, supportsV].filter { $0 }.count
         let protoScore = [0, 40, 70, 100][protoCount]
-        let widthScore: Int = switch channelWidth {
-        // 80+80 has no scalar geometry in this model; score it like its
-        // single 80 MHz segment rather than implying a contiguous 160 MHz span.
-        case "160": 100
-        case "80", "80+80": 75
-        case "40": 50
-        default: 25
-        }
-        let total = Double(rssiScore) * 0.4 + Double(congScore) * 0.3 + Double(protoScore) * 0.2 + Double(widthScore) * 0.1
+        let widthScore: Int =
+            switch channelWidth {
+            // 80+80 has no scalar geometry in this model; score it like its
+            // single 80 MHz segment rather than implying a contiguous 160 MHz span.
+            case "160": 100
+            case "80", "80+80": 75
+            case "40": 50
+            default: 25
+            }
+        let total =
+            Double(rssiScore) * 0.4 + Double(congScore) * 0.3 + Double(protoScore) * 0.2 + Double(widthScore) * 0.1
         return Int(total.rounded())
     }
 
@@ -234,9 +254,11 @@ extension BandChartViewModel {
         interfaceName = name
     }
 
-    func applyFilter(_ filterQuery: String? = nil,
-                      hiddenBands: Set<String> = [],
-                      hideHiddenSSIDs: Bool = false) {
+    func applyFilter(
+        _ filterQuery: String? = nil,
+        hiddenBands: Set<String> = [],
+        hideHiddenSSIDs: Bool = false
+    ) {
         if let filterQuery {
             currentFilterQuery = filterQuery
         }
@@ -289,29 +311,29 @@ extension BandChartViewModel {
 }
 
 #if DEBUG
-extension BandChartViewModel {
-    public func debugInject(series: [ChartSeriesData]) {
-        var dataArray = series
-        let prevByID = Dictionary(uniqueKeysWithValues: allSeriesData.map { ($0.id, $0.displayRSSI) })
-        var occ: [Int: Int] = [:]
-        for i in dataArray.indices {
-            dataArray[i].displayRSSI = prevByID[dataArray[i].id] ?? Double(dataArray[i].rssi)
-            occ[dataArray[i].channel, default: 0] += 1
+    extension BandChartViewModel {
+        public func debugInject(series: [ChartSeriesData]) {
+            var dataArray = series
+            let prevByID = Dictionary(uniqueKeysWithValues: allSeriesData.map { ($0.id, $0.displayRSSI) })
+            var occ: [Int: Int] = [:]
+            for i in dataArray.indices {
+                dataArray[i].displayRSSI = prevByID[dataArray[i].id] ?? Double(dataArray[i].rssi)
+                occ[dataArray[i].channel, default: 0] += 1
+            }
+            channelOccupancy = occ
+            for i in dataArray.indices {
+                dataArray[i].qualityScore = Self.computeScore(
+                    rssi: dataArray[i].rssi,
+                    channelCount: occ[dataArray[i].channel] ?? 1,
+                    supportsK: dataArray[i].supportsK,
+                    supportsR: dataArray[i].supportsR,
+                    supportsV: dataArray[i].supportsV,
+                    channelWidth: dataArray[i].channelWidth
+                )
+            }
+            allSeriesData = dataArray
+            refreshRenderedState()
+            startAnimation()
         }
-        channelOccupancy = occ
-        for i in dataArray.indices {
-            dataArray[i].qualityScore = Self.computeScore(
-                rssi: dataArray[i].rssi,
-                channelCount: occ[dataArray[i].channel] ?? 1,
-                supportsK: dataArray[i].supportsK,
-                supportsR: dataArray[i].supportsR,
-                supportsV: dataArray[i].supportsV,
-                channelWidth: dataArray[i].channelWidth
-            )
-        }
-        allSeriesData = dataArray
-        refreshRenderedState()
-        startAnimation()
     }
-}
 #endif

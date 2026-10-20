@@ -1,9 +1,9 @@
-@testable import WiFiLensCore
-
 import AppKit
 import Foundation
 import SwiftUI
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor
@@ -53,7 +53,8 @@ final class GuidanceCoordinatorTests {
             #expect(campaign == routing.campaign)
         }
         let returnURL = try #require(coordinator.appStoreCampaignURL(for: .appReturnedAfterUse))
-        #expect(URLComponents(url: returnURL, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "ct" } == nil)
+        #expect(
+            URLComponents(url: returnURL, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "ct" } == nil)
     }
 
     @Test func presentationConsumesCountAndDateIdempotently() {
@@ -89,22 +90,26 @@ final class GuidanceCoordinatorTests {
     }
 
     @Test func returnInvitationConsumesCooldownOnlyWhenMeaningfullyInsideScrollViewport() {
-        #expect(GuidanceInvitationVisibility.isGenuinelyVisible(
-            card: CGRect(x: 20, y: 100, width: 300, height: 100),
-            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
-        ))
-        #expect(!GuidanceInvitationVisibility.isGenuinelyVisible(
-            card: CGRect(x: 20, y: 610, width: 300, height: 100),
-            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
-        ))
-        #expect(!GuidanceInvitationVisibility.isGenuinelyVisible(
-            card: CGRect(x: 20, y: 580, width: 300, height: 100),
-            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
-        ))
-        #expect(!GuidanceInvitationVisibility.isGenuinelyVisible(
-            card: CGRect(x: 390, y: 100, width: 300, height: 100),
-            viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
-        ))
+        #expect(
+            GuidanceInvitationVisibility.isGenuinelyVisible(
+                card: CGRect(x: 20, y: 100, width: 300, height: 100),
+                viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+            ))
+        #expect(
+            !GuidanceInvitationVisibility.isGenuinelyVisible(
+                card: CGRect(x: 20, y: 610, width: 300, height: 100),
+                viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+            ))
+        #expect(
+            !GuidanceInvitationVisibility.isGenuinelyVisible(
+                card: CGRect(x: 20, y: 580, width: 300, height: 100),
+                viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+            ))
+        #expect(
+            !GuidanceInvitationVisibility.isGenuinelyVisible(
+                card: CGRect(x: 390, y: 100, width: 300, height: 100),
+                viewport: CGRect(x: 0, y: 0, width: 400, height: 600)
+            ))
     }
 
     // MARK: - Token gates (reachable state sequences)
@@ -329,12 +334,14 @@ final class GuidanceCoordinatorTests {
         let coordinator = makeCoordinator(state: invitationState())
 
         coordinator.endInvitationOwnedByOtherHost(activeHostID: otherWindow)
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+        #expect(
+            coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
                 == .none(.invitationHostInactive))
         #expect(coordinator.pendingInvitation == nil)
 
         coordinator.closeInvitationHost(forHostID: owner)
-        #expect(coordinator.recordAndReturnDecision(.exportSucceeded, ownerWindowID: owner)
+        #expect(
+            coordinator.recordAndReturnDecision(.exportSucceeded, ownerWindowID: owner)
                 == .none(.invitationHostInactive))
         #expect(coordinator.pendingInvitation == nil)
         #expect(coordinator.exportFeedback == nil)
@@ -356,7 +363,8 @@ final class GuidanceCoordinatorTests {
         let owner = UUID()
         let coordinator = makeCoordinator(state: invitationState(invitationsDisabled: true))
 
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
+        #expect(
+            coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: owner)
                 == .none(.invitationsDisabledByUser))
         #expect(coordinator.pendingInvitation == nil)
         #expect(store.load().invitationsDisabled)
@@ -368,7 +376,8 @@ final class GuidanceCoordinatorTests {
         configuration.invitationEnabled = false
         let coordinator = makeCoordinator(configuration: configuration, state: invitationState())
 
-        #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: UUID())
+        #expect(
+            coordinator.recordAndReturnDecision(.diagnosticsCompleted, ownerWindowID: UUID())
                 == .none(.editionInvitationDisabled))
         #expect(coordinator.pendingInvitation == nil)
         #expect(store.load().invitationPresentationCount == 0)
@@ -531,8 +540,9 @@ final class GuidanceCoordinatorTests {
         coordinator.handleExportSucceeded(ownerWindowID: firstOwner)
 
         #expect(coordinator.matchingExportFeedback(ownerWindowID: firstOwner) != nil)
-        #expect(coordinator.matchingExportFeedback(ownerWindowID: firstOwner)
-            == coordinator.exportFeedback)
+        #expect(
+            coordinator.matchingExportFeedback(ownerWindowID: firstOwner)
+                == coordinator.exportFeedback)
         #expect(coordinator.matchingExportFeedback(ownerWindowID: secondOwner) == nil)
         #expect(coordinator.matchingExportFeedback(ownerWindowID: nil) == nil)
     }
@@ -601,7 +611,8 @@ final class GuidanceCoordinatorTests {
     }
 
     @Test func dismissExportFeedbackWithoutInvitationClearsFeedbackOnly() {
-        let coordinator = makeCoordinator(configuration: GuidanceConfiguration(), state: invitationState(completionCount: 0))
+        let coordinator = makeCoordinator(
+            configuration: GuidanceConfiguration(), state: invitationState(completionCount: 0))
         coordinator.handleExportSucceeded()
         #expect(coordinator.exportFeedback != nil)
         #expect(coordinator.pendingInvitation == nil)
@@ -649,10 +660,11 @@ final class GuidanceCoordinatorTests {
     }
 
     @Test func firstDiagnosticsCompletionCanInviteWithTwoActiveDays() {
-        let coordinator = makeCoordinator(state: GuidanceState(
-            activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: 0
-        ))
+        let coordinator = makeCoordinator(
+            state: GuidanceState(
+                activeDays: ["2026-07-01", "2026-07-02"],
+                meaningfulCompletionCount: 0
+            ))
 
         #expect(coordinator.recordAndReturnDecision(.diagnosticsCompleted) == .showProInvitation)
 
@@ -769,11 +781,12 @@ final class GuidanceCoordinatorTests {
 
     @Test func returnEvaluationWaitsForOverviewAndCanRetryOnLaterDays() {
         var current = now
-        store = InMemoryGuidanceStateStore(initial: GuidanceState(
-            activeDays: ["2026-07-01", "2026-07-02"],
-            meaningfulCompletionCount: 0,
-            invitationPresentationDates: [daysAgo(1), now]
-        ))
+        store = InMemoryGuidanceStateStore(
+            initial: GuidanceState(
+                activeDays: ["2026-07-01", "2026-07-02"],
+                meaningfulCompletionCount: 0,
+                invitationPresentationDates: [daysAgo(1), now]
+            ))
         let coordinator = GuidanceCoordinator(
             configuration: invitationConfig(), stateStore: store, now: { current }, calendar: calendar,
             appVersion: { "2.0.1" }, isProAppInstalled: { false }, eventSink: { _ in }
@@ -786,7 +799,7 @@ final class GuidanceCoordinatorTests {
         #expect(coordinator.pendingInvitation == nil)
 
         coordinator.recordForegroundUsageTick(isEligible: true, isOverviewSelected: true)
-        #expect(coordinator.pendingInvitation == nil) // Weekly cap suppresses today's return.
+        #expect(coordinator.pendingInvitation == nil)  // Weekly cap suppresses today's return.
 
         current = calendar.date(byAdding: .day, value: 7, to: current)!
         coordinator.recordForegroundUsageTick(isEligible: true, isOverviewSelected: true)
@@ -902,7 +915,8 @@ final class GuidanceCoordinatorTests {
         let returnID = coordinator.pendingInvitation!.id
         coordinator.invitationPresented(id: returnID, ownerWindowID: returnOwner)
 
-        #expect(coordinator.recordAndReturnDecision(moment, ownerWindowID: actingWindow)
+        #expect(
+            coordinator.recordAndReturnDecision(moment, ownerWindowID: actingWindow)
                 == .none(.invitationAlreadyPending))
         #expect(coordinator.pendingInvitation?.id == returnID)
         #expect(store.load().invitationPresentationCount == 1)
@@ -963,7 +977,8 @@ final class GuidanceCoordinatorTests {
     }
 
     @Test func exportBannerWithoutInvitationShowsFeedbackOnly() throws {
-        let coordinator = makeCoordinator(configuration: GuidanceConfiguration(), state: invitationState(completionCount: 0))
+        let coordinator = makeCoordinator(
+            configuration: GuidanceConfiguration(), state: invitationState(completionCount: 0))
         coordinator.handleExportSucceeded()
         #expect(coordinator.pendingInvitation == nil)
 

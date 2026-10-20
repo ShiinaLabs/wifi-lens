@@ -60,7 +60,8 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
             stageAssessment(stage, results: results)
         }
         guard complete,
-              Set(results.keys) == requiredIDs else {
+            Set(results.keys) == requiredIDs
+        else {
             return NetworkDiagnosticAssessment(
                 conclusion: nil,
                 stages: stages,
@@ -96,9 +97,10 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         if contributors.contains(where: { $0.status == .indeterminate }) {
             let nonProxyContributors = contributors.filter { $0.id != .proxy }
             if stage == .thisMac,
-               let proxy = results[.proxy],
-               isUnverifiedDirectRoute(proxy: proxy, internet: results[.internet]),
-               nonProxyContributors.allSatisfy({ $0.status == .normal }) {
+                let proxy = results[.proxy],
+                isUnverifiedDirectRoute(proxy: proxy, internet: results[.internet]),
+                nonProxyContributors.allSatisfy({ $0.status == .normal })
+            {
                 return .init(
                     stage: stage,
                     status: .normal,
@@ -106,13 +108,14 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 )
             }
             if stage == .lan,
-               let gateway = results[.gatewayReachability],
-               gateway.status == .indeterminate,
-               gateway.evidence.contains(where: { $0.code == "gateway.no-response" }),
-               hasExternalSuccess(
+                let gateway = results[.gatewayReachability],
+                gateway.status == .indeterminate,
+                gateway.evidence.contains(where: { $0.code == "gateway.no-response" }),
+                hasExternalSuccess(
                     internet: results[.internet],
                     proxy: results[.proxy]
-               ) {
+                )
+            {
                 return .init(
                     stage: stage,
                     status: .indeterminate,
@@ -138,9 +141,10 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
             return .networkUnavailable
         }
         if internet?.status == .abnormal,
-           !hasDirectHTTPS(internet),
-           !hasAvailableHTTPSProxy(proxy),
-           internet?.evidence.contains(where: { $0.code == "https.connectivity-error" }) == true {
+            !hasDirectHTTPS(internet),
+            !hasAvailableHTTPSProxy(proxy),
+            internet?.evidence.contains(where: { $0.code == "https.connectivity-error" }) == true
+        {
             return .needsAttention
         }
 
@@ -200,15 +204,17 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
             return .captivePortal
         }
         if result.id == .proxy,
-           let facts = result.proxyFacts,
-           facts.http == .authenticationRequired || facts.https == .authenticationRequired {
+            let facts = result.proxyFacts,
+            facts.http == .authenticationRequired || facts.https == .authenticationRequired
+        {
             return .proxyAuthentication
         }
         if codes.contains("https.certificate-time-error") {
             return .certificateTime
         }
         if result.id == .proxy,
-           codes.contains(where: { $0 == "proxy.endpoint-unavailable" || $0 == "proxy.egress-unavailable" }) {
+            codes.contains(where: { $0 == "proxy.endpoint-unavailable" || $0 == "proxy.egress-unavailable" })
+        {
             return .proxyRoute
         }
         if result.id == .dns {

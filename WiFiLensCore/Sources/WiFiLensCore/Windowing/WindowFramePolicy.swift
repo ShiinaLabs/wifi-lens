@@ -21,9 +21,8 @@ public enum WindowFramePolicy {
         guard let screenFrame else { return true }
 
         let likelyFullScreenRestore =
-            abs(currentFrame.width - screenFrame.width) <= 1 &&
-            abs(currentFrame.height - screenFrame.height) <= 1 &&
-            (currentFrame.width > visibleFrame.width || currentFrame.height > visibleFrame.height)
+            abs(currentFrame.width - screenFrame.width) <= 1 && abs(currentFrame.height - screenFrame.height) <= 1
+            && (currentFrame.width > visibleFrame.width || currentFrame.height > visibleFrame.height)
 
         return !likelyFullScreenRestore
     }
@@ -52,12 +51,8 @@ public enum WindowFramePolicy {
     }
 
     private static func isUsable(_ frame: CGRect) -> Bool {
-        frame.width >= 320 &&
-        frame.height >= 240 &&
-        frame.width.isFinite &&
-        frame.height.isFinite &&
-        frame.minX.isFinite &&
-        frame.minY.isFinite
+        frame.width >= 320 && frame.height >= 240 && frame.width.isFinite && frame.height.isFinite
+            && frame.minX.isFinite && frame.minY.isFinite
     }
 
     private static func clampedSize(_ size: CGSize, toFit limit: CGSize) -> CGSize {

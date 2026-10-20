@@ -51,33 +51,39 @@ final class SettingsPageTests: XCTestCase {
         let selectedThemeIndex = try XCTUnwrap(originalThemeIndex, "No selected theme option")
         let alternateThemeIndex = (selectedThemeIndex + 1) % themeButtons.count
         themeButtons.element(boundBy: alternateThemeIndex).click()
-        waitForValue(1,
-                     of: themeButtons.element(boundBy: alternateThemeIndex),
-                     message: "Alternate theme did not become selected")
+        waitForValue(
+            1,
+            of: themeButtons.element(boundBy: alternateThemeIndex),
+            message: "Alternate theme did not become selected")
         themeButtons.element(boundBy: selectedThemeIndex).click()
-        waitForValue(1,
-                     of: themeButtons.element(boundBy: selectedThemeIndex),
-                     message: "Original theme was not restored")
+        waitForValue(
+            1,
+            of: themeButtons.element(boundBy: selectedThemeIndex),
+            message: "Original theme was not restored")
 
         // Scan interval picker — pop-up button with menu items.
         let intervalPicker = app.popUpButtons["settings-scan-interval-picker"]
-        XCTAssertTrue(intervalPicker.waitForExistence(timeout: 3),
-                      "Scan interval picker not found")
+        XCTAssertTrue(
+            intervalPicker.waitForExistence(timeout: 3),
+            "Scan interval picker not found")
         intervalPicker.click()
         let intervalItem = intervalPicker.menuItems.firstMatch
-        XCTAssertTrue(intervalItem.waitForExistence(timeout: 2),
-                      "Scan interval menu did not open")
+        XCTAssertTrue(
+            intervalItem.waitForExistence(timeout: 2),
+            "Scan interval menu did not open")
         XCTAssertEqual(intervalPicker.menuItems.count, 5, "Expected 5 scan interval options")
         app.typeKey(.escape, modifierFlags: [])
 
         // Region picker.
         let regionPicker = app.popUpButtons["settings-region-picker"]
-        XCTAssertTrue(regionPicker.waitForExistence(timeout: 3),
-                      "Region picker not found")
+        XCTAssertTrue(
+            regionPicker.waitForExistence(timeout: 3),
+            "Region picker not found")
         regionPicker.click()
         let regionItem = regionPicker.menuItems.firstMatch
-        XCTAssertTrue(regionItem.waitForExistence(timeout: 2),
-                      "Region menu did not open")
+        XCTAssertTrue(
+            regionItem.waitForExistence(timeout: 2),
+            "Region menu did not open")
         XCTAssertEqual(regionPicker.menuItems.count, 5, "Expected 5 region options")
         app.typeKey(.escape, modifierFlags: [])
     }
@@ -101,8 +107,9 @@ final class SettingsPageTests: XCTestCase {
 
         // MCP toggle and port field.
         let mcpToggle = app.switches["settings-mcp-toggle"]
-        XCTAssertTrue(mcpToggle.waitForExistence(timeout: 3),
-                      "MCP toggle not found")
+        XCTAssertTrue(
+            mcpToggle.waitForExistence(timeout: 3),
+            "MCP toggle not found")
         let portField = app.textFields["settings-mcp-port-field"]
         XCTAssertTrue(portField.exists, "MCP port field not found")
     }
@@ -115,33 +122,39 @@ final class SettingsPageTests: XCTestCase {
 
         // Permission badges.
         let locationBadge = app.descendants(matching: .any)["permission-location-badge"]
-        XCTAssertTrue(locationBadge.waitForExistence(timeout: 3),
-                      "Location permission badge not found")
+        XCTAssertTrue(
+            locationBadge.waitForExistence(timeout: 3),
+            "Location permission badge not found")
 
         let bluetoothBadge = app.descendants(matching: .any)["permission-bluetooth-badge"]
-        XCTAssertTrue(bluetoothBadge.waitForExistence(timeout: 3),
-                      "Bluetooth permission badge not found")
+        XCTAssertTrue(
+            bluetoothBadge.waitForExistence(timeout: 3),
+            "Bluetooth permission badge not found")
 
         // Reveal logs button.
         let revealLogs = app.buttons["settings-reveal-logs-button"]
-        XCTAssertTrue(revealLogs.waitForExistence(timeout: 3),
-                      "Reveal logs button not found")
+        XCTAssertTrue(
+            revealLogs.waitForExistence(timeout: 3),
+            "Reveal logs button not found")
 
         // Privacy policy button.
         let privacyBtn = app.buttons["settings-privacy-policy-button"]
-        XCTAssertTrue(privacyBtn.waitForExistence(timeout: 3),
-                      "Privacy policy button not found")
+        XCTAssertTrue(
+            privacyBtn.waitForExistence(timeout: 3),
+            "Privacy policy button not found")
 
-#if OSS
-        // Auto-update toggle and check-now button (OSS only).
-        scrollSettings(byDeltaY: 200)
-        let autoCheckToggle = app.switches["settings-auto-check-toggle"]
-        XCTAssertTrue(autoCheckToggle.waitForExistence(timeout: 3),
-                      "Auto-check toggle not found")
+        #if OSS
+            // Auto-update toggle and check-now button (OSS only).
+            scrollSettings(byDeltaY: 200)
+            let autoCheckToggle = app.switches["settings-auto-check-toggle"]
+            XCTAssertTrue(
+                autoCheckToggle.waitForExistence(timeout: 3),
+                "Auto-check toggle not found")
 
-        let checkNowBtn = app.buttons["settings-check-now-button"]
-        XCTAssertTrue(checkNowBtn.waitForExistence(timeout: 3),
-                      "Check now button not found")
-#endif
+            let checkNowBtn = app.buttons["settings-check-now-button"]
+            XCTAssertTrue(
+                checkNowBtn.waitForExistence(timeout: 3),
+                "Check now button not found")
+        #endif
     }
 }

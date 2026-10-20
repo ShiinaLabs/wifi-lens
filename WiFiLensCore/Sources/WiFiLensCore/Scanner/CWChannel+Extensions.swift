@@ -16,8 +16,10 @@ extension CWChannel {
     /// The format is: `...channelWidth={NNNMHz(optional(+/-)1)?}...`
     var spanDirection: SpanDirection? {
         // Regex matches the channelWidth segment and captures the optional direction indicator
-        guard let match = try? /channelWidth=\{\d+MHz(?:\(([+-])1\))?\}/
-            .firstMatch(in: description) else { return nil }
+        guard
+            let match = try? /channelWidth=\{\d+MHz(?:\(([+-])1\))?\}/
+                .firstMatch(in: description)
+        else { return nil }
         let direction = match.output.1
         switch direction {
         case "+": return .upper

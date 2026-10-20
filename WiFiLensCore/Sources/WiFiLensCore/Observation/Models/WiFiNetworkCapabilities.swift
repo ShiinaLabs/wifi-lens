@@ -1,10 +1,22 @@
 import Foundation
 
 public struct WiFiNetworkCapabilities: Equatable, Sendable {
-    public init(phyMode: String, channelWidth: Int, supports80211k: Bool, supports80211r: Bool, supports80211v: Bool, supportsWPA3: Bool, countryCode: String? = nil, isHiddenSSID: Bool = false, mcs: String? = nil, nss: String? = nil, security: String? = nil) {
-        self.phyMode = phyMode; self.channelWidth = channelWidth; self.supports80211k = supports80211k; self.supports80211r = supports80211r
-        self.supports80211v = supports80211v; self.supportsWPA3 = supportsWPA3; self.countryCode = countryCode; self.isHiddenSSID = isHiddenSSID
-        self.mcs = mcs; self.nss = nss; self.security = security
+    public init(
+        phyMode: String, channelWidth: Int, supports80211k: Bool, supports80211r: Bool, supports80211v: Bool,
+        supportsWPA3: Bool, countryCode: String? = nil, isHiddenSSID: Bool = false, mcs: String? = nil,
+        nss: String? = nil, security: String? = nil
+    ) {
+        self.phyMode = phyMode
+        self.channelWidth = channelWidth
+        self.supports80211k = supports80211k
+        self.supports80211r = supports80211r
+        self.supports80211v = supports80211v
+        self.supportsWPA3 = supportsWPA3
+        self.countryCode = countryCode
+        self.isHiddenSSID = isHiddenSSID
+        self.mcs = mcs
+        self.nss = nss
+        self.security = security
     }
     public var phyMode: String
     public var channelWidth: Int

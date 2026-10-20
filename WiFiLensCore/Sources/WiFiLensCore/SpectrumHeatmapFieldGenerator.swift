@@ -21,10 +21,11 @@ struct CPUHeatmapFieldGenerator: SpectrumHeatmapFieldGenerating, Sendable {
     ) -> SpectrumHeatmapRaster {
         let storageCount = resolution.storageCount
         guard storageCount > 0,
-              domain.span > 0,
-              rssiRange.lowerBound.isFinite,
-              rssiRange.upperBound.isFinite,
-              rssiRange.lowerBound <= rssiRange.upperBound else {
+            domain.span > 0,
+            rssiRange.lowerBound.isFinite,
+            rssiRange.upperBound.isFinite,
+            rssiRange.lowerBound <= rssiRange.upperBound
+        else {
             return SpectrumHeatmapRaster(
                 width: resolution.width,
                 height: resolution.height,
@@ -37,18 +38,22 @@ struct CPUHeatmapFieldGenerator: SpectrumHeatmapFieldGenerating, Sendable {
         let parameters = SpectrumHeatmapFieldParameters.current
 
         for y in 0..<resolution.height {
-            guard let rssi = SpectrumHeatmapLayout.rssi(
-                forY: CGFloat(y) + 0.5,
-                in: rect,
-                rssiRange: rssiRange
-            ) else { continue }
+            guard
+                let rssi = SpectrumHeatmapLayout.rssi(
+                    forY: CGFloat(y) + 0.5,
+                    in: rect,
+                    rssiRange: rssiRange
+                )
+            else { continue }
 
             for x in 0..<resolution.width {
-                guard let channel = SpectrumHeatmapLayout.channelCoordinate(
-                    forX: CGFloat(x) + 0.5,
-                    domain: domain,
-                    in: rect
-                ) else { continue }
+                guard
+                    let channel = SpectrumHeatmapLayout.channelCoordinate(
+                        forX: CGFloat(x) + 0.5,
+                        domain: domain,
+                        in: rect
+                    )
+                else { continue }
 
                 var density = 0.0
                 for envelope in envelopes {
@@ -70,7 +75,8 @@ struct CPUHeatmapFieldGenerator: SpectrumHeatmapFieldGenerating, Sendable {
                     let depthDB = curve - rssi
                     if depthDB >= 0 {
                         let decay = exp(-depthDB / parameters.verticalDecayTauDB)
-                        let profile = parameters.verticalBodyFloor
+                        let profile =
+                            parameters.verticalBodyFloor
                             + (1 - parameters.verticalBodyFloor) * decay
                         density += horizontalSupport * profile
                     } else if depthDB >= -parameters.edgeFadeDB {

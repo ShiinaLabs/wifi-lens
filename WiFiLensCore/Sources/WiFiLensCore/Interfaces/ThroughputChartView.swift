@@ -1,5 +1,5 @@
-import SwiftUI
 import ChartLens
+import SwiftUI
 
 public struct ThroughputChartView: View {
     let samples: [ThroughputSample]
@@ -36,10 +36,13 @@ public struct ThroughputChartView: View {
 
             if samples.count < 2 {
                 Spacer()
-                Text(String(localized: "common.label.collecting_data", comment: "Status shown while collecting sensor data"))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                Text(
+                    String(
+                        localized: "common.label.collecting_data", comment: "Status shown while collecting sensor data")
+                )
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
                 Spacer()
             } else {
                 Chart(series: buildSeries(), axis: axisConfig, style: chartStyle)

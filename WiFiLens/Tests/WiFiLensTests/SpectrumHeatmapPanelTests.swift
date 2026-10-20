@@ -1,7 +1,8 @@
 import AppKit
 import Foundation
-import Testing
 import SwiftUI
+import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -48,21 +49,26 @@ import SwiftUI
         let model = SpectrumHeatmapModel(band: .band5GHz, channels: [36], envelopes: [])
 
         #expect(SpectrumHeatmapPanel.shouldShowEmptyState(for: model))
-        #expect(!SpectrumHeatmapPanel.shouldShowEmptyState(for: SpectrumHeatmapModel(
-            band: .band5GHz,
-            channels: [36],
-            envelopes: [SpectrumHeatmapEnvelope(
-                leftX: 34,
-                rightX: 38,
-                peakRSSI: -50,
-                baselineRSSI: -100
-            )]
-        )))
+        #expect(
+            !SpectrumHeatmapPanel.shouldShowEmptyState(
+                for: SpectrumHeatmapModel(
+                    band: .band5GHz,
+                    channels: [36],
+                    envelopes: [
+                        SpectrumHeatmapEnvelope(
+                            leftX: 34,
+                            rightX: 38,
+                            peakRSSI: -50,
+                            baselineRSSI: -100
+                        )
+                    ]
+                )))
     }
 
     @Test func currentBandAggregateAccessibilityLabelUsesRSSIContext() {
         let label = SpectrumHeatmapPanel.aggregateAccessibilityLabel(for: .band5GHz)
-        let normalized = label
+        let normalized =
+            label
             .replacingOccurrences(of: "−", with: "-")
             .replacingOccurrences(of: "дБм", with: "dBm")
 
@@ -74,7 +80,8 @@ import SwiftUI
 
     @Test func axesUseSpectrumRSSIRangeAndNoTimeLabels() {
         let range = SpectrumHeatmapLayout.rssiRange(for: [-45])
-        #expect(SpectrumHeatmapPanel.rssiAxisLabels(for: range) == ["-100", "-90", "-80", "-70", "-60", "-50", "-40 dBm"])
+        #expect(
+            SpectrumHeatmapPanel.rssiAxisLabels(for: range) == ["-100", "-90", "-80", "-70", "-60", "-50", "-40 dBm"])
         #expect(SpectrumHeatmapPanel.timeAxisLabels.isEmpty)
     }
 
@@ -90,10 +97,11 @@ import SwiftUI
             hasNetworks ? [makeNetwork(bssid: "aa:bb:cc:dd:ee:01")] : [],
             to: viewModel
         )
-        let controller = NSHostingController(rootView: SpectrumHeatmapPanel(
-            viewModel: viewModel,
-            band: .band24GHz
-        ))
+        let controller = NSHostingController(
+            rootView: SpectrumHeatmapPanel(
+                viewModel: viewModel,
+                band: .band24GHz
+            ))
         let window = NSWindow(contentViewController: controller)
         window.styleMask = [.titled, .resizable]
 
@@ -102,14 +110,15 @@ import SwiftUI
             CGSize(width: 1_200, height: 600),
             CGSize(width: 320, height: 100),
             CGSize(width: 700, height: 300),
-            CGSize(width: 320, height: 100)
+            CGSize(width: 320, height: 100),
         ] {
             window.setContentSize(size)
             window.layoutIfNeeded()
             let measured = controller.sizeThatFits(in: size)
             #expect(abs(measured.width - size.width) <= 1)
-            #expect(abs(measured.height - size.height) <= 1,
-                    "Heatmap must fill its panel without overflowing after a resize")
+            #expect(
+                abs(measured.height - size.height) <= 1,
+                "Heatmap must fill its panel without overflowing after a resize")
         }
     }
 
@@ -123,10 +132,11 @@ import SwiftUI
 
     @Test func currentScanProducesOneAnonymousEnvelopePerValidNetwork() {
         let viewModel = ScannerViewModel()
-        applyCurrentScan([
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:01", rssi: -45, channel: 1),
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:02", rssi: -90, channel: 11)
-        ], to: viewModel)
+        applyCurrentScan(
+            [
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:01", rssi: -45, channel: 1),
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:02", rssi: -90, channel: 11),
+            ], to: viewModel)
 
         let model = viewModel.heatmapModel(for: .band24GHz)
 
@@ -137,11 +147,12 @@ import SwiftUI
 
     @Test func currentScanEnvelopesRemainIsolatedByRequestedBand() {
         let viewModel = ScannerViewModel()
-        applyCurrentScan([
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:01", band: .band24GHz, channel: 6),
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:02", band: .band5GHz, channel: 36),
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:03", band: .band6GHz, channel: 5)
-        ], to: viewModel)
+        applyCurrentScan(
+            [
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:01", band: .band24GHz, channel: 6),
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:02", band: .band5GHz, channel: 36),
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:03", band: .band6GHz, channel: 5),
+            ], to: viewModel)
 
         #expect(viewModel.heatmapModel(for: .band24GHz).envelopes.map(\.leftX) == [4])
         #expect(viewModel.heatmapModel(for: .band5GHz).envelopes.map(\.leftX) == [34])
@@ -173,12 +184,13 @@ import SwiftUI
 
     @Test func malformedAndOtherBandNetworksAreSkipped() {
         let viewModel = ScannerViewModel()
-        applyCurrentScan([
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:01", channel: 6, widthMHz: 0),
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:02", channel: 999),
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:03", band: .band5GHz, channel: 36),
-            makeNetwork(bssid: "aa:bb:cc:dd:ee:04", channel: 11)
-        ], to: viewModel)
+        applyCurrentScan(
+            [
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:01", channel: 6, widthMHz: 0),
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:02", channel: 999),
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:03", band: .band5GHz, channel: 36),
+                makeNetwork(bssid: "aa:bb:cc:dd:ee:04", channel: 11),
+            ], to: viewModel)
 
         let envelopes = viewModel.heatmapModel(for: .band24GHz).envelopes
 
@@ -212,17 +224,23 @@ import SwiftUI
     }
 
     @Test func heatmapModelAndEnvelopesExposeNoAccessPointIdentityOrTimeline() {
-        let modelFields = Set(Mirror(reflecting: SpectrumHeatmapModel(
-            band: .band24GHz,
-            channels: [1],
-            envelopes: []
-        )).children.compactMap(\.label))
-        let envelopeFields = Set(Mirror(reflecting: SpectrumHeatmapEnvelope(
-            leftX: 4,
-            rightX: 8,
-            peakRSSI: -50,
-            baselineRSSI: -100
-        )).children.compactMap(\.label))
+        let modelFields = Set(
+            Mirror(
+                reflecting: SpectrumHeatmapModel(
+                    band: .band24GHz,
+                    channels: [1],
+                    envelopes: []
+                )
+            ).children.compactMap(\.label))
+        let envelopeFields = Set(
+            Mirror(
+                reflecting: SpectrumHeatmapEnvelope(
+                    leftX: 4,
+                    rightX: 8,
+                    peakRSSI: -50,
+                    baselineRSSI: -100
+                )
+            ).children.compactMap(\.label))
 
         #expect(modelFields == ["band", "channels", "envelopes"])
         #expect(envelopeFields == ["leftX", "rightX", "peakRSSI", "baselineRSSI"])

@@ -43,10 +43,12 @@ struct ProInvitationCard: View {
                     .foregroundStyle(Color.accentColor)
             }
 
-            Text(String(
-                localized: .init(stringLiteral: guidance.invitationMessageKey(for: invitation.moment)),
-                comment: "Invitation card body message"
-            ))
+            Text(
+                String(
+                    localized: .init(stringLiteral: guidance.invitationMessageKey(for: invitation.moment)),
+                    comment: "Invitation card body message"
+                )
+            )
             .font(.callout)
             .foregroundStyle(.secondary)
 
@@ -54,7 +56,10 @@ struct ProInvitationCard: View {
                 Button {
                     openAppStore()
                 } label: {
-                    Text(String(localized: "guidance.invitation.view_pro", comment: "Open the Pro product page in the App Store"))
+                    Text(
+                        String(
+                            localized: "guidance.invitation.view_pro",
+                            comment: "Open the Pro product page in the App Store"))
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!isOwnerWindow)
@@ -86,7 +91,8 @@ struct ProInvitationCard: View {
 
     private func openAppStore() {
         guard let url = guidance.appStoreCampaignURL(for: invitation.moment),
-              NSWorkspace.shared.open(url) else {
+            NSWorkspace.shared.open(url)
+        else {
             return
         }
         guidance.openInvitation(id: invitation.id, ownerWindowID: ownerWindowID)
@@ -108,13 +114,14 @@ struct ProInvitationCard: View {
 
     private var isActuallyVisible: Bool {
         guard isOwnerWindow,
-              isHostVisible,
-              NSApp.isActive,
-              let hostWindow,
-              hostWindow.isKeyWindow,
-              hostWindow.isVisible,
-              !hostWindow.isMiniaturized,
-              hostWindow.attachedSheet == nil else { return false }
+            isHostVisible,
+            NSApp.isActive,
+            let hostWindow,
+            hostWindow.isKeyWindow,
+            hostWindow.isVisible,
+            !hostWindow.isMiniaturized,
+            hostWindow.attachedSheet == nil
+        else { return false }
         return true
     }
 

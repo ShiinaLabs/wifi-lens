@@ -6,7 +6,8 @@ enum NetworkObservationAdapter {
         confirmedCurrentBSSID: String? = nil
     ) -> WiFiNetworkObservation {
         let ieData = network.ieData
-        let capabilities = ieData.map { IEParser.parse(data: $0) }
+        let capabilities =
+            ieData.map { IEParser.parse(data: $0) }
             .map { parseCapabilities($0, fallbackWidth: network.channel.channelWidthMHz) }
             ?? WiFiNetworkCapabilities.emptyWithWidth(network.channel.channelWidthMHz)
 
@@ -41,7 +42,8 @@ enum NetworkObservationAdapter {
 
         let channelWidth: Int = {
             if let operation = ie.operatingChannelWidth,
-               let widthMHz = operation.widthMHz {
+                let widthMHz = operation.widthMHz
+            {
                 return widthMHz
             }
             return fallbackWidth

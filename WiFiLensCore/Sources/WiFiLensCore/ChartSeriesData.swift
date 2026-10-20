@@ -1,6 +1,6 @@
-import SwiftUI
-import Foundation
 import ChartLens
+import Foundation
+import SwiftUI
 
 /// Shared, identity-free description of the Gaussian envelope used by every
 /// spectrum presentation. Callers provide their canonical X coordinate space.
@@ -44,7 +44,11 @@ public struct ChartSeriesDomainData: Identifiable {
     public let nss: String
     public let country: String
 
-    public init(id: String, ssid: String, bssid: String, channel: Int, left: Int, apex: Double, right: Int, rssi: Int, phyMode: String, channelWidth: String, supportsK: Bool, supportsR: Bool, supportsV: Bool, supportsWPA3: Bool, isHiddenSSID: Bool, security: String, mcs: String, nss: String, country: String) {
+    public init(
+        id: String, ssid: String, bssid: String, channel: Int, left: Int, apex: Double, right: Int, rssi: Int,
+        phyMode: String, channelWidth: String, supportsK: Bool, supportsR: Bool, supportsV: Bool, supportsWPA3: Bool,
+        isHiddenSSID: Bool, security: String, mcs: String, nss: String, country: String
+    ) {
         self.id = id
         self.ssid = ssid
         self.bssid = bssid
@@ -77,7 +81,10 @@ public struct ChartSeriesRenderState {
     public var trendArrow: String = ""
     public var trendDelta: Int = 0
 
-    public init(displayRSSI: Double = 0.0, color: Color = .gray, isFilteredOut: Bool = false, isVisible: Bool = true, visibilityLocked: Bool = false, qualityScore: Int = 0, trendArrow: String = "", trendDelta: Int = 0) {
+    public init(
+        displayRSSI: Double = 0.0, color: Color = .gray, isFilteredOut: Bool = false, isVisible: Bool = true,
+        visibilityLocked: Bool = false, qualityScore: Int = 0, trendArrow: String = "", trendDelta: Int = 0
+    ) {
         self.displayRSSI = displayRSSI
         self.color = color
         self.isFilteredOut = isFilteredOut

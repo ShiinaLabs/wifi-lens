@@ -16,6 +16,7 @@ technical knowledge organized for on-demand loading by task type.
 | `project/MCP.md` | The local MCP server, protocol, tools, data format, or integration |
 | `project/REGULATORY.md` | Region inference, regulatory filtering, channel scoring, or recommendations |
 | `project/TESTING.md` | Test targets, launch arguments, target registration, or test diagnostics |
+| `project/SWIFT_FORMATTING.md` | Swift formatting configuration, formatter commands, or formatting-only changes |
 | `project/WINDOWING.md` | Window sizing, restoration, activation, full screen, or multi-window policy |
 | `collaboration-rules.md` | Mandatory repository collaboration behavior and safety constraints |
 

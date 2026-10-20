@@ -1,6 +1,8 @@
 import CoreGraphics
 import Testing
+
 @testable import WiFiLensCore
+
 @Suite struct SpectrumHeatmapLayoutTests {
     private let rect = CGRect(x: 0, y: 0, width: 500, height: 200)
 
@@ -135,6 +137,9 @@ import Testing
     @Test func invalidGeometryReturnsNoMapping() {
         let domain = SpectrumHeatmapLayout.channelDomain(channels: [], band: .band5GHz)
         #expect(domain == nil)
-        #expect(SpectrumHeatmapLayout.channelCoordinate(forX: -1, domain: SpectrumHeatmapChannelDomain(minChannelCoordinate: 1, maxChannelCoordinate: 170), in: rect) == nil)
+        #expect(
+            SpectrumHeatmapLayout.channelCoordinate(
+                forX: -1, domain: SpectrumHeatmapChannelDomain(minChannelCoordinate: 1, maxChannelCoordinate: 170),
+                in: rect) == nil)
     }
 }

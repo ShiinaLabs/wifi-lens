@@ -50,22 +50,16 @@ public struct WiFiNetworkObservation: Identifiable, Equatable, Sendable {
             "\(channel.channelNumber)",
             channel.band.id,
             security ?? "",
-            phyMode ?? ""
+            phyMode ?? "",
         ]
         return "local-\(parts.joined(separator: "-"))"
     }
 
     public static func == (lhs: WiFiNetworkObservation, rhs: WiFiNetworkObservation) -> Bool {
-        lhs.id == rhs.id &&
-        lhs.ssid == rhs.ssid &&
-        lhs.bssid == rhs.bssid &&
-        lhs.rssi == rhs.rssi &&
-        lhs.channel.band == rhs.channel.band &&
-        lhs.channel.channelNumber == rhs.channel.channelNumber &&
-        lhs.channel.channelWidthMHz == rhs.channel.channelWidthMHz &&
-        lhs.isIBSS == rhs.isIBSS &&
-        lhs.capabilities == rhs.capabilities &&
-        lhs.rawIEData == rhs.rawIEData &&
-        lhs.isCurrentNetwork == rhs.isCurrentNetwork
+        lhs.id == rhs.id && lhs.ssid == rhs.ssid && lhs.bssid == rhs.bssid && lhs.rssi == rhs.rssi
+            && lhs.channel.band == rhs.channel.band && lhs.channel.channelNumber == rhs.channel.channelNumber
+            && lhs.channel.channelWidthMHz == rhs.channel.channelWidthMHz && lhs.isIBSS == rhs.isIBSS
+            && lhs.capabilities == rhs.capabilities && lhs.rawIEData == rhs.rawIEData
+            && lhs.isCurrentNetwork == rhs.isCurrentNetwork
     }
 }

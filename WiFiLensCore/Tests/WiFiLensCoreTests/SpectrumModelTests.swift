@@ -1,8 +1,10 @@
-import Testing
+import ChartLens
 import Foundation
 import SwiftUI
-import ChartLens
+import Testing
+
 @testable import WiFiLensCore
+
 // MARK: - NetworkSnapshot
 
 struct NetworkSnapshotTests {
@@ -66,10 +68,10 @@ struct NetworkSnapshotTests {
 
     @Test func decoderFallback_missingBSSID() throws {
         var json = """
-        {"timestamp":100,"ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ax",
-        "channelWidth":"80","mcs":"11","nss":"2","security":"WPA2","country":"US",
-        "supportsK":true,"supportsR":false,"supportsV":true,"supportsWPA3":false}
-        """
+            {"timestamp":100,"ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ax",
+            "channelWidth":"80","mcs":"11","nss":"2","security":"WPA2","country":"US",
+            "supportsK":true,"supportsR":false,"supportsV":true,"supportsWPA3":false}
+            """
         json = json.replacingOccurrences(of: "\n", with: "")
         let data = json.data(using: .utf8)!
         let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: data)
@@ -78,10 +80,10 @@ struct NetworkSnapshotTests {
 
     @Test func decoderFallback_missingSSID() throws {
         var json = """
-        {"timestamp":100,"bssid":"aa:bb:cc","rssi":-50,"channel":44,"band":"5","phyMode":"ax",
-        "channelWidth":"80","mcs":"11","nss":"2","security":"WPA2","country":"US",
-        "supportsK":true,"supportsR":false,"supportsV":true,"supportsWPA3":false}
-        """
+            {"timestamp":100,"bssid":"aa:bb:cc","rssi":-50,"channel":44,"band":"5","phyMode":"ax",
+            "channelWidth":"80","mcs":"11","nss":"2","security":"WPA2","country":"US",
+            "supportsK":true,"supportsR":false,"supportsV":true,"supportsWPA3":false}
+            """
         json = json.replacingOccurrences(of: "\n", with: "")
         let data = json.data(using: .utf8)!
         let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: data)
@@ -90,10 +92,10 @@ struct NetworkSnapshotTests {
 
     @Test func decoderFallback_missingIsHiddenSSID() throws {
         var json = """
-        {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ax",
-        "channelWidth":"80","mcs":"11","nss":"2","security":"WPA2","country":"US",
-        "supportsK":true,"supportsR":false,"supportsV":true,"supportsWPA3":false}
-        """
+            {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ax",
+            "channelWidth":"80","mcs":"11","nss":"2","security":"WPA2","country":"US",
+            "supportsK":true,"supportsR":false,"supportsV":true,"supportsWPA3":false}
+            """
         json = json.replacingOccurrences(of: "\n", with: "")
         let data = json.data(using: .utf8)!
         let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: data)
@@ -102,20 +104,20 @@ struct NetworkSnapshotTests {
 
     @Test func decoderFallback_missingChannelWidthMHzUsesLabel() throws {
         let json = """
-        {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ac",
-        "channelWidth":"80+80","mcs":"11","nss":"2","security":"WPA2","country":"US",
-        "supportsK":false,"supportsR":false,"supportsV":false,"supportsWPA3":false}
-        """
+            {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ac",
+            "channelWidth":"80+80","mcs":"11","nss":"2","security":"WPA2","country":"US",
+            "supportsK":false,"supportsR":false,"supportsV":false,"supportsWPA3":false}
+            """
         let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: Data(json.utf8))
         #expect(decoded.channelWidthMHz == 80)
     }
 
     @Test func decoderFallback_missingChannelWidthMHzUsesConservativeDefault() throws {
         let json = """
-        {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ac",
-        "channelWidth":"","mcs":"11","nss":"2","security":"WPA2","country":"US",
-        "supportsK":false,"supportsR":false,"supportsV":false,"supportsWPA3":false}
-        """
+            {"timestamp":100,"bssid":"aa:bb:cc","ssid":"Net","rssi":-50,"channel":44,"band":"5","phyMode":"ac",
+            "channelWidth":"","mcs":"11","nss":"2","security":"WPA2","country":"US",
+            "supportsK":false,"supportsR":false,"supportsV":false,"supportsWPA3":false}
+            """
         let decoded = try JSONDecoder().decode(NetworkSnapshot.self, from: Data(json.utf8))
         #expect(decoded.channelWidthMHz == 20)
     }
@@ -146,15 +148,18 @@ struct NetworkSnapshotTests {
 struct ChartSeriesDataTests {
 
     @Test func displaySSID() {
-        let d1 = ChartSeriesData(id: "1", ssid: "MyNet", bssid: "aa:bb:cc", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
+        let d1 = ChartSeriesData(
+            id: "1", ssid: "MyNet", bssid: "aa:bb:cc", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
         #expect(d1.displaySSID == "MyNet")
 
-        let d2 = ChartSeriesData(id: "2", ssid: "", bssid: "aa:bb:dd", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
+        let d2 = ChartSeriesData(
+            id: "2", ssid: "", bssid: "aa:bb:dd", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
         #expect(d2.displaySSID == "n/a")
     }
 
     @Test func computedID() {
-        let d = ChartSeriesData(id: "test-id", ssid: "Net", bssid: "aa:bb:cc", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
+        let d = ChartSeriesData(
+            id: "test-id", ssid: "Net", bssid: "aa:bb:cc", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
         #expect(d.id == "test-id")
         #expect(d.id == d.domain.id)
     }
@@ -181,7 +186,8 @@ struct ChartSeriesDataTests {
     }
 
     @Test func renderStateMutability() {
-        var d = ChartSeriesData(id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
+        var d = ChartSeriesData(
+            id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 1, left: 0, apex: 0.5, right: 1, rssi: -50)
         d.displayRSSI = -45.0
         d.qualityScore = 80
         d.trendArrow = "↑"
@@ -197,12 +203,14 @@ struct ChartSeriesDataTests {
     }
 
     @Test func curvePointsCount() {
-        let d = ChartSeriesData(id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 1.5, right: 3, rssi: -50)
+        let d = ChartSeriesData(
+            id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 1.5, right: 3, rssi: -50)
         #expect(d.curvePoints.count == 81)
     }
 
     @Test func curvePointsAgreeWithSharedGaussianEnvelope() {
-        let data = ChartSeriesData(id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 2, right: 4, rssi: -50)
+        let data = ChartSeriesData(
+            id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 2, right: 4, rssi: -50)
         let envelope = GaussianEnvelope(
             leftX: Double(data.left),
             rightX: Double(data.right),
@@ -238,7 +246,8 @@ struct ChartSeriesDataTests {
     }
 
     @Test func curvePointsCentered() {
-        let d = ChartSeriesData(id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 1.5, right: 4, rssi: -50)
+        let d = ChartSeriesData(
+            id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 1.5, right: 4, rssi: -50)
         let points = d.curvePoints
         let midIndex = points.count / 2
         // Center should be near (left+right)/2 = 2
@@ -250,7 +259,9 @@ struct ChartSeriesDataTests {
     }
 
     @Test func curvePointsRange() {
-        let d = ChartSeriesData(id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 2, apex: 4, right: 6, rssi: -50, displayRSSI: -60)
+        let d = ChartSeriesData(
+            id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 2, apex: 4, right: 6, rssi: -50, displayRSSI: -60
+        )
         let curve = d.curvePoints
         let display = d.displayCurvePoints
         // X range should cover [left, right]
@@ -261,7 +272,8 @@ struct ChartSeriesDataTests {
     }
 
     @Test func displayCurvePointsUsesDisplayRSSI() {
-        var d = ChartSeriesData(id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 1.5, right: 3, rssi: -50)
+        var d = ChartSeriesData(
+            id: "1", ssid: "Net", bssid: "aa:bb:cc", channel: 6, left: 0, apex: 1.5, right: 3, rssi: -50)
         d.displayRSSI = -40
         let points = d.displayCurvePoints
         let peakY = points.map(\.y).max()!
@@ -330,8 +342,14 @@ struct ChartSeriesDataTests {
 
     @Test func snapshotHistory() {
         let store = SignalHistoryStore(maxCount: 10)
-        let snap1 = NetworkSnapshot(timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -50, channel: 6, band: "24", phyMode: "n", channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false, supportsV: false, supportsWPA3: false, isHiddenSSID: false)
-        let snap2 = NetworkSnapshot(timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -60, channel: 6, band: "24", phyMode: "n", channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false, supportsV: false, supportsWPA3: false, isHiddenSSID: false)
+        let snap1 = NetworkSnapshot(
+            timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -50, channel: 6, band: "24", phyMode: "n",
+            channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false,
+            supportsV: false, supportsWPA3: false, isHiddenSSID: false)
+        let snap2 = NetworkSnapshot(
+            timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -60, channel: 6, band: "24", phyMode: "n",
+            channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false,
+            supportsV: false, supportsWPA3: false, isHiddenSSID: false)
         store.record(bssid: "aa:bb:cc", rssi: -50, snapshot: snap1)
         store.record(bssid: "aa:bb:cc", rssi: -60, snapshot: snap2)
         let history = store.snapshotHistory(for: "aa:bb:cc")
@@ -343,7 +361,10 @@ struct ChartSeriesDataTests {
 
     @Test func snapshotHistoryNilWithSingleEntry() {
         let store = SignalHistoryStore(maxCount: 10)
-        let snap = NetworkSnapshot(timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -50, channel: 6, band: "24", phyMode: "n", channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false, supportsV: false, supportsWPA3: false, isHiddenSSID: false)
+        let snap = NetworkSnapshot(
+            timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -50, channel: 6, band: "24", phyMode: "n",
+            channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false,
+            supportsV: false, supportsWPA3: false, isHiddenSSID: false)
         store.record(bssid: "aa:bb:cc", rssi: -50, snapshot: snap)
         #expect(store.snapshotHistory(for: "aa:bb:cc") == nil)
     }
@@ -375,7 +396,10 @@ struct ChartSeriesDataTests {
 
     @Test func allSnapshots() {
         let store = SignalHistoryStore(maxCount: 10)
-        let snap = NetworkSnapshot(timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -50, channel: 6, band: "24", phyMode: "n", channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false, supportsV: false, supportsWPA3: false, isHiddenSSID: false)
+        let snap = NetworkSnapshot(
+            timestamp: Date(), bssid: "aa:bb:cc", ssid: "Net", rssi: -50, channel: 6, band: "24", phyMode: "n",
+            channelWidth: "20", mcs: "7", nss: "1", security: "WPA2", country: "US", supportsK: false, supportsR: false,
+            supportsV: false, supportsWPA3: false, isHiddenSSID: false)
         store.record(bssid: "aa:bb:cc", rssi: -50, snapshot: snap)
         #expect(store.allSnapshots.keys.count == 1)
     }

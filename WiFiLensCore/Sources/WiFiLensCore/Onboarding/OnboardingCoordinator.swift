@@ -15,7 +15,7 @@ public final class OnboardingCoordinator {
 
     /// Debug-only force-show request. Process-memory only.
     #if DEBUG
-    public private(set) var debugShowRequested = false
+        public private(set) var debugShowRequested = false
     #endif
 
     private let store: any OnboardingStateStoring
@@ -58,9 +58,10 @@ public final class OnboardingCoordinator {
     /// can never re-migrate an incomplete clean install into "completed".
     public func migrateExistingInstallationIfNeeded() {
         guard !store.hasStoredState() else { return }
-        store.save(OnboardingState(
-            hasCompletedWelcome: existingInstallationDetector.hasExistingInstallationEvidence()
-        ))
+        store.save(
+            OnboardingState(
+                hasCompletedWelcome: existingInstallationDetector.hasExistingInstallationEvidence()
+            ))
     }
 
     // MARK: - Host claim (multi-window exclusivity)
@@ -118,44 +119,44 @@ public final class OnboardingCoordinator {
     // MARK: - Debug-only manual test entry points
 
     #if DEBUG
-    /// Clears only onboarding state: the completion flag, any in-memory host
-    /// claim, and any force-show request. Never touches guidance, Timeline,
-    /// or user settings.
-    public func debugReset() {
-        store.save(OnboardingState())
-        welcomeHostID = nil
-        debugShowRequested = false
-    }
+        /// Clears only onboarding state: the completion flag, any in-memory host
+        /// claim, and any force-show request. Never touches guidance, Timeline,
+        /// or user settings.
+        public func debugReset() {
+            store.save(OnboardingState())
+            welcomeHostID = nil
+            debugShowRequested = false
+        }
 
-    /// Requests the welcome regardless of completion or clean-install state.
-    /// The actual sheet still goes through the real host claim and the real
-    /// `WelcomeView`; the first visible main window consumes the request.
-    public func debugRequestShowWelcome() {
-        guard welcomeEnabled else { return }
-        store.save(OnboardingState())
-        welcomeHostID = nil
-        debugShowRequested = true
-    }
+        /// Requests the welcome regardless of completion or clean-install state.
+        /// The actual sheet still goes through the real host claim and the real
+        /// `WelcomeView`; the first visible main window consumes the request.
+        public func debugRequestShowWelcome() {
+            guard welcomeEnabled else { return }
+            store.save(OnboardingState())
+            welcomeHostID = nil
+            debugShowRequested = true
+        }
 
-    public func consumeDebugShowRequest() -> Bool {
-        guard debugShowRequested else { return false }
-        debugShowRequested = false
-        return true
-    }
+        public func consumeDebugShowRequest() -> Bool {
+            guard debugShowRequested else { return false }
+            debugShowRequested = false
+            return true
+        }
 
-    /// Emits a sanitized state summary. No UUIDs, tokens, SSIDs, URLs, or
-    /// user identity.
-    public func debugLogState(edition: String) {
-        let state = store.load()
-        let hasHost = welcomeHostID != nil
-        let hasExistingInstallation = existingInstallationDetector.hasExistingInstallationEvidence()
-        var metadata = Logging.Logger.Metadata()
-        metadata["edition"] = .string(edition)
-        metadata["completed"] = .string(String(state.hasCompletedWelcome))
-        metadata["pending"] = .string(String(hasHost))
-        metadata["hasHost"] = .string(String(hasHost))
-        metadata["existingInstallation"] = .string(String(hasExistingInstallation))
-        Logging.Logger(label: "guidance").info("onboarding.debug.state_summary", metadata: metadata)
-    }
+        /// Emits a sanitized state summary. No UUIDs, tokens, SSIDs, URLs, or
+        /// user identity.
+        public func debugLogState(edition: String) {
+            let state = store.load()
+            let hasHost = welcomeHostID != nil
+            let hasExistingInstallation = existingInstallationDetector.hasExistingInstallationEvidence()
+            var metadata = Logging.Logger.Metadata()
+            metadata["edition"] = .string(edition)
+            metadata["completed"] = .string(String(state.hasCompletedWelcome))
+            metadata["pending"] = .string(String(hasHost))
+            metadata["hasHost"] = .string(String(hasHost))
+            metadata["existingInstallation"] = .string(String(hasExistingInstallation))
+            Logging.Logger(label: "guidance").info("onboarding.debug.state_summary", metadata: metadata)
+        }
     #endif
 }

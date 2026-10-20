@@ -67,7 +67,7 @@ enum RegulatoryDatabase {
             100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144,
         ]
         let radarSensitive: Set<Int> = [52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128]
-        let indoorOnly5GHz: Set<Int> = [] // US has no indoor-only 5 GHz restriction after R&O
+        let indoorOnly5GHz: Set<Int> = []  // US has no indoor-only 5 GHz restriction after R&O
 
         var fiveMeta = [Int: RegulatoryChannelMeta]()
         for ch in dfsChannels {
@@ -94,8 +94,8 @@ enum RegulatoryDatabase {
 
         return [
             "24": BandRules(allowedChannels: Set(1...11), channelMeta: [:]),
-            "5":  BandRules(allowedChannels: us5GHzChannels, channelMeta: fiveMeta),
-            "6":  BandRules(allowedChannels: sixChannels, channelMeta: sixMeta),
+            "5": BandRules(allowedChannels: us5GHzChannels, channelMeta: fiveMeta),
+            "6": BandRules(allowedChannels: sixChannels, channelMeta: sixMeta),
         ]
     }()
 
@@ -128,14 +128,16 @@ enum RegulatoryDatabase {
         let sixChannels = Set(stride(from: 1, through: 93, by: 4))
 
         return [
-            "24": BandRules(allowedChannels: Set(1...14), channelMeta: [
-                14: RegulatoryChannelMeta(
-                    isDFS: false, isRadarSensitive: false, requiresCAC: false,
-                    forcedSwitchRisk: false, isIndoorOnly: false, maxEIRPDbm: nil,
-                    requiresAFC: false, wiFi6EAvailable: false, wiFi7Available: false,
-                    notes: "802.11b only in Japan"
-                ),
-            ]),
+            "24": BandRules(
+                allowedChannels: Set(1...14),
+                channelMeta: [
+                    14: RegulatoryChannelMeta(
+                        isDFS: false, isRadarSensitive: false, requiresCAC: false,
+                        forcedSwitchRisk: false, isIndoorOnly: false, maxEIRPDbm: nil,
+                        requiresAFC: false, wiFi6EAvailable: false, wiFi7Available: false,
+                        notes: "802.11b only in Japan"
+                    )
+                ]),
             "5": BandRules(
                 allowedChannels: Set(stride(from: 36, through: 144, by: 4)),
                 channelMeta: fiveMeta
@@ -151,8 +153,7 @@ enum RegulatoryDatabase {
             "24": BandRules(allowedChannels: Set(1...13), channelMeta: [:]),
             "5": BandRules(
                 allowedChannels: Set(
-                    Array(stride(from: 36, through: 48, by: 4)) +
-                    Array(stride(from: 149, through: 165, by: 4))
+                    Array(stride(from: 36, through: 48, by: 4)) + Array(stride(from: 149, through: 165, by: 4))
                 ),
                 channelMeta: [:]
             ),

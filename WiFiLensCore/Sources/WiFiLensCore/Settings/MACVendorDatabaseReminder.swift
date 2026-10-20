@@ -7,9 +7,9 @@ final class MACVendorDatabaseReminderPolicy {
         remindersEnabled: Bool
     ) -> Bool {
         guard !hasPresentedThisSession,
-              isSpectrum,
-              isDatabaseEmpty,
-              remindersEnabled
+            isSpectrum,
+            isDatabaseEmpty,
+            remindersEnabled
         else { return false }
 
         hasPresentedThisSession = true

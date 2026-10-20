@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -55,11 +56,12 @@ extension NetworkDiagnosticsTests {
     func dnsProbeTargets() {
         let check = DNSResolutionCheck(resolver: StubDNSResolver(.resolved))
 
-        #expect(check.probeTargets == [
-            "www.apple.com",
-            "www.microsoft.com",
-            "www.msftconnecttest.com",
-        ])
+        #expect(
+            check.probeTargets == [
+                "www.apple.com",
+                "www.microsoft.com",
+                "www.msftconnecttest.com",
+            ])
     }
 
     @Test("independent DNS samples start concurrently and aggregate in target order")
@@ -96,4 +98,3 @@ extension NetworkDiagnosticsTests {
         #expect(await resolver.invocationCount <= 3)
     }
 }
-

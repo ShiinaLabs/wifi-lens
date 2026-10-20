@@ -9,9 +9,9 @@ Codex, Claude Code, and OpenCode. Its contents are public/shared knowledge.
 - `references/` contains routed project knowledge and cross-workflow guidance.
   Start with `references/README.md`.
 - `references/project/` contains Agent-optimized technical references
-  (architecture, testing, accessibility, BLE, charts, MCP, regulatory, and
-  windowing). These are durable project facts organized for on-demand loading,
-  not step-by-step workflows.
+  (architecture, testing, accessibility, BLE, charts, MCP, regulatory,
+  windowing, and Swift formatting). These are durable project facts organized
+  for on-demand loading, not step-by-step workflows.
 - Skill-specific references, scripts, and assets stay inside that skill's
   directory.
 

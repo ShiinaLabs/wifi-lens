@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
+
 @testable import WiFi_Lens
 
 /// The main window must not shrink to the point where the detail column disappears and only the
@@ -23,7 +24,8 @@ struct MainWindowMinimumSizeTests {
             GeometryReader { _ in Color.clear }
         }
 
-        let rootView = applyingSwiftUIMinimum
+        let rootView =
+            applyingSwiftUIMinimum
             ? AnyView(root.mainWindowMinimumSize())
             : AnyView(root)
 

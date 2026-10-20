@@ -27,9 +27,10 @@ public enum RegulatoryDomain: String, CaseIterable, Codable, Sendable {
         case "JP": return .JP
         case "CN": return .CN
         case "GB", "DE", "FR", "IT", "ES", "NL", "BE", "SE", "DK", "FI",
-             "PT", "IE", "AT", "PL", "CZ", "SK", "HU", "RO", "BG", "HR",
-             "SI", "LT", "LV", "EE", "LU", "MT", "CY", "GR", "NO", "CH",
-             "IS", "LI": return .EU
+            "PT", "IE", "AT", "PL", "CZ", "SK", "HU", "RO", "BG", "HR",
+            "SI", "LT", "LV", "EE", "LU", "MT", "CY", "GR", "NO", "CH",
+            "IS", "LI":
+            return .EU
         default: return .unknown
         }
     }
@@ -44,9 +45,13 @@ enum InferenceConfidence: Comparable, Sendable {
 
     public var label: String {
         switch self {
-        case .high: String(localized: "wifi.inference.high_confidence", comment: "High confidence regulatory domain inference")
-        case .medium: String(localized: "wifi.inference.medium_confidence", comment: "Medium confidence regulatory domain inference")
-        case .low: String(localized: "wifi.inference.low_confidence", comment: "Low confidence regulatory domain inference")
+        case .high:
+            String(localized: "wifi.inference.high_confidence", comment: "High confidence regulatory domain inference")
+        case .medium:
+            String(
+                localized: "wifi.inference.medium_confidence", comment: "Medium confidence regulatory domain inference")
+        case .low:
+            String(localized: "wifi.inference.low_confidence", comment: "Low confidence regulatory domain inference")
         }
     }
 }
@@ -82,7 +87,10 @@ struct RegionConflict: Sendable {
 // MARK: - Inference Result
 
 struct RegionInferenceResult: Sendable {
-    public init(domain: RegulatoryDomain, confidence: InferenceConfidence, contributions: [RegionSource], conflicts: [RegionConflict]) {
+    public init(
+        domain: RegulatoryDomain, confidence: InferenceConfidence, contributions: [RegionSource],
+        conflicts: [RegionConflict]
+    ) {
         self.domain = domain
         self.confidence = confidence
         self.contributions = contributions
@@ -108,7 +116,10 @@ struct RegionInferenceResult: Sendable {
 // MARK: - Device PHY Capabilities
 
 public struct DevicePHYCapabilities: Sendable {
-    public init(supportsAX: Bool, supportsAC: Bool, supportsN: Bool, supportsBE: Bool, supports6GHz: Bool, supportsDFS: Bool, supports160MHz: Bool) {
+    public init(
+        supportsAX: Bool, supportsAC: Bool, supportsN: Bool, supportsBE: Bool, supports6GHz: Bool, supportsDFS: Bool,
+        supports160MHz: Bool
+    ) {
         self.supportsAX = supportsAX
         self.supportsAC = supportsAC
         self.supportsN = supportsN
@@ -145,8 +156,8 @@ public struct DevicePHYCapabilities: Sendable {
     }
 }
 
-public extension RegulatoryDomain {
-    func allowedChannels(forBand band: String) -> Set<Int>? {
+extension RegulatoryDomain {
+    public func allowedChannels(forBand band: String) -> Set<Int>? {
         RegulatoryDatabase.allowedChannels(for: self, band: band)
     }
 }

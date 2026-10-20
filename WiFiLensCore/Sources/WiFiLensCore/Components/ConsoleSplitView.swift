@@ -22,11 +22,13 @@ private final class ConsoleDividerAnimation {
     private var startTime: TimeInterval = 0
     private var timer: Timer?
 
-    init(splitView: NSSplitView,
-         dividerIndex: Int,
-         startPosition: CGFloat,
-         endPosition: CGFloat,
-         duration: TimeInterval) {
+    init(
+        splitView: NSSplitView,
+        dividerIndex: Int,
+        startPosition: CGFloat,
+        endPosition: CGFloat,
+        duration: TimeInterval
+    ) {
         self.splitView = splitView
         self.dividerIndex = dividerIndex
         self.startPosition = startPosition
@@ -55,7 +57,8 @@ private final class ConsoleDividerAnimation {
 
     private func tick() {
         let progress = min(max((CACurrentMediaTime() - startTime) / duration, 0), 1)
-        let easedProgress = progress < 0.5
+        let easedProgress =
+            progress < 0.5
             ? 2 * progress * progress
             : 1 - pow(-2 * progress + 2, 2) / 2
         apply(progress: easedProgress)
@@ -109,17 +112,19 @@ public final class ConsolePanelController: NSObject {
     func setBottomExtent(_ desired: CGFloat, animate: Bool = true) {
         guard let split else { return }
         let total = split.bounds.height
-        let bottom = min(max(desired, statusBarHeight),
-                         max(statusBarHeight, total - topMinimum))
+        let bottom = min(
+            max(desired, statusBarHeight),
+            max(statusBarHeight, total - topMinimum))
         let position = total - bottom
         if animate {
             dividerAnimation?.stop()
             let startPosition = split.arrangedSubviews.first?.frame.maxY ?? position
-            let animation = ConsoleDividerAnimation(splitView: split,
-                                                     dividerIndex: 0,
-                                                     startPosition: startPosition,
-                                                     endPosition: position,
-                                                     duration: 0.22)
+            let animation = ConsoleDividerAnimation(
+                splitView: split,
+                dividerIndex: 0,
+                startPosition: startPosition,
+                endPosition: position,
+                duration: 0.22)
             dividerAnimation = animation
             animation.start()
         } else {
@@ -185,15 +190,19 @@ public struct ConsoleSplitView<Content: View, Bottom: View>: NSViewRepresentable
         var statusBarHeight: CGFloat = 30
         var topMinimum: CGFloat = 240
 
-        public func splitView(_ splitView: NSSplitView,
-                       constrainMinCoordinate proposedMinimumPosition: CGFloat,
-                       ofSubviewAt dividerIndex: Int) -> CGFloat {
+        public func splitView(
+            _ splitView: NSSplitView,
+            constrainMinCoordinate proposedMinimumPosition: CGFloat,
+            ofSubviewAt dividerIndex: Int
+        ) -> CGFloat {
             dividerIndex == 0 ? topMinimum : proposedMinimumPosition
         }
 
-        public func splitView(_ splitView: NSSplitView,
-                       constrainMaxCoordinate proposedMaximumPosition: CGFloat,
-                       ofSubviewAt dividerIndex: Int) -> CGFloat {
+        public func splitView(
+            _ splitView: NSSplitView,
+            constrainMaxCoordinate proposedMaximumPosition: CGFloat,
+            ofSubviewAt dividerIndex: Int
+        ) -> CGFloat {
             guard dividerIndex == 0 else { return proposedMaximumPosition }
             return splitView.bounds.height - statusBarHeight
         }

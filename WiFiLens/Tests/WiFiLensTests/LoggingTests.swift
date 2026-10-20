@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFi_Lens
 
 @Suite @MainActor struct LogFileWriterTests {

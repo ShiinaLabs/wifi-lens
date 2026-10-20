@@ -49,8 +49,9 @@ struct SpectrumPanelContainer: View {
 
     private func normalizeBand() {
         guard !viewModel.supportedBands.isEmpty,
-              !viewModel.supportedBands.contains(descriptor.band),
-              let replacement = viewModel.supportedBands.min(by: { $0.rawValue < $1.rawValue }) else {
+            !viewModel.supportedBands.contains(descriptor.band),
+            let replacement = viewModel.supportedBands.min(by: { $0.rawValue < $1.rawValue })
+        else {
             return
         }
 

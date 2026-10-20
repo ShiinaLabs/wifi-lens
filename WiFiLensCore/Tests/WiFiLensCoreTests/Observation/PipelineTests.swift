@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite("WiFiObservationPipeline")
@@ -20,11 +21,12 @@ struct PipelineTests {
             routerIP: "192.0.2.1"
         )
         let currentProvider = TestCountingCurrentConnectionProvider(result: status)
-        let latencyProvider = TestRecordingGatewayLatencyProvider(result: GatewayLatencyResult(
-            timestamp: timestamp,
-            routerIP: "192.0.2.1",
-            latencyMs: 12
-        ))
+        let latencyProvider = TestRecordingGatewayLatencyProvider(
+            result: GatewayLatencyResult(
+                timestamp: timestamp,
+                routerIP: "192.0.2.1",
+                latencyMs: 12
+            ))
         let pipeline = makeCyclePipeline(
             currentProvider: currentProvider,
             latencyProvider: latencyProvider
@@ -39,12 +41,14 @@ struct PipelineTests {
             context: context
         )
 
-        #expect(result.observation.environmentSnapshot?.networks.first(where: {
-            $0.bssid == "AA:BB:CC:DD:EE:FF"
-        })?.isCurrentNetwork == true)
+        #expect(
+            result.observation.environmentSnapshot?.networks.first(where: {
+                $0.bssid == "AA:BB:CC:DD:EE:FF"
+            })?.isCurrentNetwork == true)
         #expect(result.observation.channelAnalysis?.allSatisfy { $0.band == "5" } == true)
         #expect(result.observation.channelAnalysis?.first(where: { $0.channel == 36 })?.isCurrentChannel == true)
-        #expect(result.observation.channelAnalysis?.first(where: { $0.channel == 36 })?.recommendationConfidence == .exact)
+        #expect(
+            result.observation.channelAnalysis?.first(where: { $0.channel == 36 })?.recommendationConfidence == .exact)
         #expect(await currentProvider.fetchCount == 1)
         #expect(await latencyProvider.measuredRouterIPs.isEmpty)
     }
@@ -79,18 +83,22 @@ struct PipelineTests {
             )
         )
 
-        #expect(result.observation.channelAnalysis?.first(where: {
-            $0.band == "6" && $0.channel == 5
-        })?.isCurrentChannel == true)
-        #expect(result.observation.channelAnalysis?.first(where: {
-            $0.band == "6" && $0.channel == 5
-        })?.recommendationState == .currentGoodEnough)
-        #expect(result.observation.channelAnalysis?.first(where: {
-            $0.band == "24" && $0.channel == 5
-        })?.isCurrentChannel == false)
-        #expect(result.observation.channelAnalysis?.first(where: {
-            $0.band == "24" && $0.channel == 5
-        })?.recommendationState == .notCandidate)
+        #expect(
+            result.observation.channelAnalysis?.first(where: {
+                $0.band == "6" && $0.channel == 5
+            })?.isCurrentChannel == true)
+        #expect(
+            result.observation.channelAnalysis?.first(where: {
+                $0.band == "6" && $0.channel == 5
+            })?.recommendationState == .currentGoodEnough)
+        #expect(
+            result.observation.channelAnalysis?.first(where: {
+                $0.band == "24" && $0.channel == 5
+            })?.isCurrentChannel == false)
+        #expect(
+            result.observation.channelAnalysis?.first(where: {
+                $0.band == "24" && $0.channel == 5
+            })?.recommendationState == .notCandidate)
     }
 
     @Test("produceCycle gives the explicit region override precedence over defaults")
@@ -148,15 +156,18 @@ struct PipelineTests {
             )
         )
 
-        #expect(supported.observation.channelRecommendation?.first(where: {
-            $0.band == "6" && $0.channel == 5
-        })?.deviceCompatible == true)
-        #expect(supported.observation.channelRecommendation?.first(where: {
-            $0.band == "6" && $0.channel == 9
-        })?.deviceCompatible == false)
-        #expect(unsupported.observation.channelRecommendation?.first(where: {
-            $0.band == "6" && $0.channel == 5
-        })?.deviceCompatible == false)
+        #expect(
+            supported.observation.channelRecommendation?.first(where: {
+                $0.band == "6" && $0.channel == 5
+            })?.deviceCompatible == true)
+        #expect(
+            supported.observation.channelRecommendation?.first(where: {
+                $0.band == "6" && $0.channel == 9
+            })?.deviceCompatible == false)
+        #expect(
+            unsupported.observation.channelRecommendation?.first(where: {
+                $0.band == "6" && $0.channel == 5
+            })?.deviceCompatible == false)
     }
 
     @Test("produceCycle returns one complete same-cycle observation")
@@ -248,10 +259,11 @@ struct PipelineTests {
         let environmentError = WiFiObservationError.environmentScanFailed("scan failed")
         let pipeline = makeCyclePipeline(
             currentProvider: TestCountingCurrentConnectionProvider(result: status),
-            latencyProvider: TestRecordingGatewayLatencyProvider(result: GatewayLatencyResult(
-                timestamp: Date(),
-                routerIP: "192.0.2.1"
-            ))
+            latencyProvider: TestRecordingGatewayLatencyProvider(
+                result: GatewayLatencyResult(
+                    timestamp: Date(),
+                    routerIP: "192.0.2.1"
+                ))
         )
 
         let result = await pipeline.produceCycle(
@@ -285,9 +297,12 @@ struct PipelineTests {
         let first = WiFiObservation(
             timestamp: t1,
             sourceCycleID: firstCycle,
-            currentStatus: WiFiCurrentStatus(timestamp: t1, interfaceName: "en0", ssid: "Known", isConnected: true, isWiFiPowerOn: true),
+            currentStatus: WiFiCurrentStatus(
+                timestamp: t1, interfaceName: "en0", ssid: "Known", isConnected: true, isWiFiPowerOn: true),
             environmentSnapshot: WiFiEnvironmentSnapshot(timestamp: t1, networks: [], sourceCycleID: firstCycle),
-            gatewayLatency: GatewayLatencyResult(timestamp: t1, routerIP: "192.0.2.1", latencyMs: 8, probeOutcome: .replied(milliseconds: 8), cycleID: firstCycle),
+            gatewayLatency: GatewayLatencyResult(
+                timestamp: t1, routerIP: "192.0.2.1", latencyMs: 8, probeOutcome: .replied(milliseconds: 8),
+                cycleID: firstCycle),
             quality: WiFiQualityResult(level: .good, signalLabel: "Good", latencyLabel: "Good", summary: "Current"),
             channelAnalysis: [],
             channelRecommendation: [],
@@ -297,9 +312,12 @@ struct PipelineTests {
         let second = WiFiObservation(
             timestamp: t2,
             sourceCycleID: secondCycle,
-            currentStatus: WiFiCurrentStatus(timestamp: t2, interfaceName: "en0", ssid: nil, isConnected: false, isWiFiPowerOn: true),
-            environmentSnapshot: WiFiEnvironmentSnapshot(timestamp: t2, networks: [], error: failure, sourceCycleID: secondCycle),
-            gatewayLatency: GatewayLatencyResult(timestamp: t2, routerIP: nil, probeOutcome: .notTested, cycleID: secondCycle),
+            currentStatus: WiFiCurrentStatus(
+                timestamp: t2, interfaceName: "en0", ssid: nil, isConnected: false, isWiFiPowerOn: true),
+            environmentSnapshot: WiFiEnvironmentSnapshot(
+                timestamp: t2, networks: [], error: failure, sourceCycleID: secondCycle),
+            gatewayLatency: GatewayLatencyResult(
+                timestamp: t2, routerIP: nil, probeOutcome: .notTested, cycleID: secondCycle),
             errors: [failure]
         )
 
@@ -352,12 +370,14 @@ struct PipelineTests {
         let original = WiFiObservation(
             sourceObservationID: identity,
             timestamp: timestamp,
-            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Home", isConnected: false, isWiFiPowerOn: true)
+            currentStatus: WiFiCurrentStatus(
+                timestamp: timestamp, ssid: "Home", isConnected: false, isWiFiPowerOn: true)
         )
         let conflict = WiFiObservation(
             sourceObservationID: identity,
             timestamp: timestamp,
-            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Office", isConnected: false, isWiFiPowerOn: true)
+            currentStatus: WiFiCurrentStatus(
+                timestamp: timestamp, ssid: "Office", isConnected: false, isWiFiPowerOn: true)
         )
 
         #expect(store.apply(original))

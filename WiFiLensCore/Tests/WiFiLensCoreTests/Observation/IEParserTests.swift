@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 /// Helper to build raw IE data in TLV format: each IE is [tag][length][value...].
@@ -24,7 +25,8 @@ private func rsnIE(
     rsnCapabilities: UInt16 = 0,
     oui: [UInt8] = [0x00, 0x0F, 0xAC]
 ) -> Data {
-    let body = u16le(1)
+    let body =
+        u16le(1)
         + rsnSuite(groupCipher, oui: oui)
         + u16le(UInt16(pairwiseCiphers.count))
         + pairwiseCiphers.flatMap { rsnSuite($0, oui: oui) }
@@ -54,16 +56,16 @@ private func heCapabilitiesPayload(
     phyByte6: UInt8 = 0,
     ppeHeader: UInt8? = nil
 ) -> [UInt8] {
-    var payload = [UInt8](repeating: 0, count: 17) // HE MAC (6) + PHY (11)
+    var payload = [UInt8](repeating: 0, count: 17)  // HE MAC (6) + PHY (11)
     payload[6] = phyByte0
     payload[12] = phyByte6
-    payload += [UInt8](repeating: 0, count: 4) // <= 80 MHz MCS/NSS
+    payload += [UInt8](repeating: 0, count: 4)  // <= 80 MHz MCS/NSS
 
     if (phyByte0 & 0x08) != 0 {
-        payload += [UInt8](repeating: 0, count: 4) // 160 MHz MCS/NSS
+        payload += [UInt8](repeating: 0, count: 4)  // 160 MHz MCS/NSS
     }
     if (phyByte0 & 0x10) != 0 {
-        payload += [UInt8](repeating: 0, count: 4) // 80+80 MHz MCS/NSS
+        payload += [UInt8](repeating: 0, count: 4)  // 80+80 MHz MCS/NSS
     }
 
     if (phyByte6 & 0x80) != 0, let ppeHeader {
@@ -82,7 +84,7 @@ private func heCapabilitiesPayload(
 
 struct IEParserSSIDTests {
     @Test func normalSSID() {
-        let data = singleIE(tag: 0, value: [0x4D, 0x79, 0x57, 0x69, 0x66, 0x69]) // "MyWifi"
+        let data = singleIE(tag: 0, value: [0x4D, 0x79, 0x57, 0x69, 0x66, 0x69])  // "MyWifi"
         let result = IEParser.parse(data: data)
         #expect(result.isHiddenSSID == false)
     }
@@ -98,19 +100,19 @@ struct IEParserSSIDTests {
 
 struct IEParserCountryTests {
     @Test func countryCode() {
-        let data = singleIE(tag: 7, value: [0x55, 0x53, 0x20]) // "US "
+        let data = singleIE(tag: 7, value: [0x55, 0x53, 0x20])  // "US "
         let result = IEParser.parse(data: data)
         #expect(result.countryCode == "US ")
     }
 
     @Test func countryCodeWithExtraData() {
-        let data = singleIE(tag: 7, value: [0x4A, 0x50, 0x20, 0x01, 0x0D]) // "JP " + extra
+        let data = singleIE(tag: 7, value: [0x4A, 0x50, 0x20, 0x01, 0x0D])  // "JP " + extra
         let result = IEParser.parse(data: data)
         #expect(result.countryCode == "JP ")
     }
 
     @Test func countryTooShort() {
-        let data = singleIE(tag: 7, value: [0x55, 0x53]) // only 2 bytes
+        let data = singleIE(tag: 7, value: [0x55, 0x53])  // only 2 bytes
         let result = IEParser.parse(data: data)
         #expect(result.countryCode == nil)
     }
@@ -161,8 +163,8 @@ struct IEParserHTCapabilitiesTests {
         body[4] = 0x10
         let data = singleIE(tag: 45, value: body)
         let result = IEParser.parse(data: data)
-        #expect(result.maxMCSIndex == 4)   // 12 % 8
-        #expect(result.spatialStreams == 2) // MCS 12 → 2 streams
+        #expect(result.maxMCSIndex == 4)  // 12 % 8
+        #expect(result.spatialStreams == 2)  // MCS 12 → 2 streams
     }
 
     @Test func mcsAndStreamsThreeStreams() {
@@ -173,8 +175,8 @@ struct IEParserHTCapabilitiesTests {
         body[5] = 0x80
         let data = singleIE(tag: 45, value: body)
         let result = IEParser.parse(data: data)
-        #expect(result.maxMCSIndex == 7)   // 23 % 8
-        #expect(result.spatialStreams == 3) // MCS 23 → 3 streams
+        #expect(result.maxMCSIndex == 7)  // 23 % 8
+        #expect(result.spatialStreams == 3)  // MCS 23 → 3 streams
     }
 
     @Test func htCapBodyTooShort() {
@@ -188,7 +190,7 @@ struct IEParserHTCapabilitiesTests {
 
     @Test func mcs32DoesNotInferMCSOrNSS() {
         var body = [UInt8](repeating: 0, count: 26)
-        body[7] = 0x01 // Global MCS 32, outside the simple 0...31 model.
+        body[7] = 0x01  // Global MCS 32, outside the simple 0...31 model.
         let result = IEParser.parse(data: singleIE(tag: 45, value: body))
         #expect(result.maxMCSIndex == nil)
         #expect(result.spatialStreams == nil)
@@ -196,7 +198,7 @@ struct IEParserHTCapabilitiesTests {
 
     @Test func mcs33PlusDoesNotInferMCSOrNSS() {
         var body = [UInt8](repeating: 0, count: 26)
-        body[7] = 0x06 // Global MCS 33 and 34 only.
+        body[7] = 0x06  // Global MCS 33 and 34 only.
         let result = IEParser.parse(data: singleIE(tag: 45, value: body))
         #expect(result.maxMCSIndex == nil)
         #expect(result.spatialStreams == nil)
@@ -291,7 +293,7 @@ struct IEParserHTOperationTests {
 
     @Test func capabilitiesCanSupport40MHzWhileOperationUses20MHz() {
         var htCapabilities = [UInt8](repeating: 0, count: 26)
-        htCapabilities[0] = 0x02 // HT Capabilities: 20/40 MHz capable.
+        htCapabilities[0] = 0x02  // HT Capabilities: 20/40 MHz capable.
         let htOperation = htOperationPayload(primaryChannel: 11, secondaryChannelOffset: 0)
         let data = singleIE(tag: 45, value: htCapabilities) + singleIE(tag: 61, value: htOperation)
         let result = IEParser.parse(data: data)
@@ -427,7 +429,7 @@ struct IEParserVHTOperationTests {
             [UInt8(0x01)],
             [UInt8(0x01), 42],
             [UInt8(0x01), 42, 0],
-            [UInt8(0x01), 42, 0, 0]
+            [UInt8(0x01), 42, 0, 0],
         ] {
             let result = IEParser.parse(data: singleIE(tag: 192, value: payload))
             #expect(result.vhtChannelOperation == nil)
@@ -446,7 +448,8 @@ struct IEParserVHTOperationTests {
         var htOperation = [UInt8](repeating: 0, count: 22)
         htOperation[0] = 36
         htOperation[1] = 0x05
-        let data = singleIE(tag: 61, value: htOperation)
+        let data =
+            singleIE(tag: 61, value: htOperation)
             + singleIE(tag: 192, value: vhtOperationPayload(channelWidth: 0))
         let result = IEParser.parse(data: data)
         #expect(result.vhtChannelOperation == .some(.useHT))
@@ -549,10 +552,11 @@ struct IEParserRSNTests {
     }
 
     @Test func truncatedPairwiseCountDoesNotProducePartialSecurity() {
-        let body = u16le(1)
+        let body =
+            u16le(1)
             + rsnSuite(0x04)
             + u16le(2)
-            + rsnSuite(0x04) // Only one pairwise suite is present.
+            + rsnSuite(0x04)  // Only one pairwise suite is present.
         let result = IEParser.parse(data: singleIE(tag: 48, value: body))
         #expect(result.groupCipher == nil)
         #expect(result.pairwiseCiphers.isEmpty)
@@ -562,12 +566,13 @@ struct IEParserRSNTests {
     }
 
     @Test func truncatedAKMCountDoesNotProduceWPA3OrFastTransition() {
-        let body = u16le(1)
+        let body =
+            u16le(1)
             + rsnSuite(0x04)
             + u16le(1)
             + rsnSuite(0x04)
             + u16le(2)
-            + rsnSuite(0x08) // SAE is present, but the declared second suite is missing.
+            + rsnSuite(0x08)  // SAE is present, but the declared second suite is missing.
         let result = IEParser.parse(data: singleIE(tag: 48, value: body))
         #expect(result.groupCipher == nil)
         #expect(result.pairwiseCiphers.isEmpty)
@@ -577,7 +582,8 @@ struct IEParserRSNTests {
     }
 
     @Test func zeroAKMCountDoesNotProduceSecurityCapability() {
-        let body = u16le(1)
+        let body =
+            u16le(1)
             + rsnSuite(0x04)
             + u16le(1)
             + rsnSuite(0x04)
@@ -647,7 +653,7 @@ struct IEParserExtendedCapabilitiesTests {
 
     @Test func standardIEsProvideKAndRSeparately() {
         var ec = [UInt8](repeating: 0, count: 3)
-        ec[2] = 1 << 3 // Extended Capabilities bit 19 → 802.11v
+        ec[2] = 1 << 3  // Extended Capabilities bit 19 → 802.11v
         let extCapabilities = singleIE(tag: 127, value: ec)
         let rmEnabled = singleIE(tag: 70, value: [0x01, 0x00, 0x00, 0x00, 0x00])
         let mobilityDomain = singleIE(tag: 54, value: [0x01, 0x02, 0x00])
@@ -856,7 +862,7 @@ struct IEParserCombinedTests {
         #expect(result.supports40MHz == true)
         #expect(result.vhtChannelOperation == .some(.eightyMHz))
         #expect(result.operatingChannelWidth == .some(.eightyMHz))
-        #expect(result.maxMCSIndex == 7)   // MCS 15 → per-stream MCS 7
+        #expect(result.maxMCSIndex == 7)  // MCS 15 → per-stream MCS 7
         #expect(result.spatialStreams == 2)
         #expect(result.supportsWPA3 == true)
         #expect(result.supports80211w == true)
@@ -896,49 +902,54 @@ struct IEParserCombinedTests {
 
 struct IEParserCipherAKMTests {
     @Test func knownCiphers() {
-        let result = IEParser.parse(data: rsnIE(
-            groupCipher: 0x02,
-            pairwiseCiphers: [0x08, 0x04],
-            akmSuites: [0x02]
-        ))
+        let result = IEParser.parse(
+            data: rsnIE(
+                groupCipher: 0x02,
+                pairwiseCiphers: [0x08, 0x04],
+                akmSuites: [0x02]
+            ))
 
         #expect(result.groupCipher == "TKIP")
         #expect(result.pairwiseCiphers == ["GCMP-128", "CCMP (AES)"])
     }
 
     @Test func cipherSelectorsSevenThroughThirteenUseStandardRSNMapping() {
-        let result = IEParser.parse(data: rsnIE(
-            pairwiseCiphers: [0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D],
-            akmSuites: [0x02]
-        ))
-        #expect(result.pairwiseCiphers == [
-            "No Group Addressed",
-            "GCMP-128",
-            "GCMP-256",
-            "CCMP-256",
-            "BIP-GMAC-128",
-            "BIP-GMAC-256",
-            "BIP-CMAC-256"
-        ])
+        let result = IEParser.parse(
+            data: rsnIE(
+                pairwiseCiphers: [0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D],
+                akmSuites: [0x02]
+            ))
+        #expect(
+            result.pairwiseCiphers == [
+                "No Group Addressed",
+                "GCMP-128",
+                "GCMP-256",
+                "CCMP-256",
+                "BIP-GMAC-128",
+                "BIP-GMAC-256",
+                "BIP-CMAC-256",
+            ])
     }
 
     @Test func legacyWPAOUIIsUnknownCipherInRSN() {
-        let result = IEParser.parse(data: rsnIE(
-            groupCipher: 0x04,
-            pairwiseCiphers: [0x04],
-            akmSuites: [0x02],
-            oui: [0x00, 0x50, 0xF2]
-        ))
+        let result = IEParser.parse(
+            data: rsnIE(
+                groupCipher: 0x04,
+                pairwiseCiphers: [0x04],
+                akmSuites: [0x02],
+                oui: [0x00, 0x50, 0xF2]
+            ))
         #expect(result.groupCipher == "Unknown")
         #expect(result.pairwiseCiphers == ["Unknown"])
     }
 
     @Test func knownAKMsUseStandardRSNNames() {
-        let result = IEParser.parse(data: rsnIE(
-            groupCipher: 0x02,
-            pairwiseCiphers: [0x02],
-            akmSuites: [0x01]
-        ))
+        let result = IEParser.parse(
+            data: rsnIE(
+                groupCipher: 0x02,
+                pairwiseCiphers: [0x02],
+                akmSuites: [0x01]
+            ))
         #expect(result.akmSuites == ["802.1X"])
         #expect(result.securitySummary == "802.1X (TKIP)")
     }
@@ -961,7 +972,7 @@ struct IEParserCipherAKMTests {
             (0x0F, "FILS-SHA384"),
             (0x10, "FT-FILS-SHA256"),
             (0x11, "FT-FILS-SHA384"),
-            (0x12, "OWE")
+            (0x12, "OWE"),
         ]
 
         for (selector, name) in expected {

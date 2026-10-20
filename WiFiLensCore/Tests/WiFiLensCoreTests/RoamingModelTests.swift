@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import WiFiLensCore
 
 // MARK: - RoamingSample
@@ -83,12 +84,14 @@ struct RoamingSegmentTests {
 
     @Test func missingRSSISamplesSplitRunsAndDoNotAffectMeasuredRange() {
         let start = Date(timeIntervalSince1970: 100)
-        let segment = RoamingSegment(bssid: "AP", startTime: start, samples: [
-            RoamingSample(timestamp: start, rssi: -50, channel: 36, txRate: 100),
-            RoamingSample(timestamp: start.addingTimeInterval(1), rssi: nil, channel: nil, txRate: nil),
-            RoamingSample(timestamp: start.addingTimeInterval(2), rssi: -70, channel: 44, txRate: 200),
-            RoamingSample(timestamp: start.addingTimeInterval(3), rssi: nil, channel: nil, txRate: nil),
-        ])
+        let segment = RoamingSegment(
+            bssid: "AP", startTime: start,
+            samples: [
+                RoamingSample(timestamp: start, rssi: -50, channel: 36, txRate: 100),
+                RoamingSample(timestamp: start.addingTimeInterval(1), rssi: nil, channel: nil, txRate: nil),
+                RoamingSample(timestamp: start.addingTimeInterval(2), rssi: -70, channel: 44, txRate: 200),
+                RoamingSample(timestamp: start.addingTimeInterval(3), rssi: nil, channel: nil, txRate: nil),
+            ])
 
         #expect(segment.rssiRuns.map { $0.compactMap(\.rssi) } == [[-50], [-70]])
         #expect(segment.rssiRange.min == -70)
@@ -97,9 +100,11 @@ struct RoamingSegmentTests {
 
     @Test func allMissingRSSIRangeUsesOnlyTheChartAxisFallback() {
         let now = Date()
-        let segment = RoamingSegment(bssid: "AP", startTime: now, samples: [
-            RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil),
-        ])
+        let segment = RoamingSegment(
+            bssid: "AP", startTime: now,
+            samples: [
+                RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil)
+            ])
         #expect(segment.rssiRuns.isEmpty)
         #expect(segment.rssiRange.min == -100)
         #expect(segment.rssiRange.max == -30)
@@ -130,9 +135,11 @@ struct RoamingSegmentTests {
 
     @Test func codableRoundTrip() throws {
         let now = Date()
-        let original = RoamingSegment(bssid: "aa:bb:cc:dd:ee:ff", startTime: now, endTime: now.addingTimeInterval(20), samples: [
-            RoamingSample(timestamp: now, rssi: -50, channel: 44, txRate: 300),
-        ])
+        let original = RoamingSegment(
+            bssid: "aa:bb:cc:dd:ee:ff", startTime: now, endTime: now.addingTimeInterval(20),
+            samples: [
+                RoamingSample(timestamp: now, rssi: -50, channel: 44, txRate: 300)
+            ])
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(RoamingSegment.self, from: data)
         #expect(decoded.bssid == original.bssid)
@@ -224,12 +231,16 @@ struct RoamingSessionRecordTests {
             channel: 36,
             duration: 300,
             segments: [
-                RoamingSegment(bssid: "aa:bb:cc:dd:ee:ff", startTime: now, samples: [
-                    RoamingSample(timestamp: now, rssi: -50, channel: 36, txRate: 433),
-                ]),
+                RoamingSegment(
+                    bssid: "aa:bb:cc:dd:ee:ff", startTime: now,
+                    samples: [
+                        RoamingSample(timestamp: now, rssi: -50, channel: 36, txRate: 433)
+                    ])
             ],
             transitions: [
-                APTransitionEvent(timestamp: now, fromBSSID: "aa:bb:01", toBSSID: "aa:bb:02", rssiBefore: -70, rssiAfter: -45, channelBefore: 36, channelAfter: 44),
+                APTransitionEvent(
+                    timestamp: now, fromBSSID: "aa:bb:01", toBSSID: "aa:bb:02", rssiBefore: -70, rssiAfter: -45,
+                    channelBefore: 36, channelAfter: 44)
             ]
         )
         let data = try JSONEncoder().encode(original)
@@ -241,7 +252,8 @@ struct RoamingSessionRecordTests {
     }
 
     @Test func versionOneJSONWithRequiredNumericMetricsStillDecodes() throws {
-        let json = #"{"version":1,"savedAt":0,"ssid":"Legacy","bssid":"AP-1","phyMode":"ax","channel":36,"duration":5,"segments":[{"bssid":"AP-1","startTime":0,"samples":[{"timestamp":0,"rssi":-60,"channel":36,"txRate":400}]}],"transitions":[{"timestamp":1,"fromBSSID":"AP-1","toBSSID":"AP-2","rssiBefore":-60,"rssiAfter":-50,"channelBefore":36,"channelAfter":44}]}"#
+        let json =
+            #"{"version":1,"savedAt":0,"ssid":"Legacy","bssid":"AP-1","phyMode":"ax","channel":36,"duration":5,"segments":[{"bssid":"AP-1","startTime":0,"samples":[{"timestamp":0,"rssi":-60,"channel":36,"txRate":400}]}],"transitions":[{"timestamp":1,"fromBSSID":"AP-1","toBSSID":"AP-2","rssiBefore":-60,"rssiAfter":-50,"channelBefore":36,"channelAfter":44}]}"#
         let record = try JSONDecoder().decode(RoamingSessionRecord.self, from: Data(json.utf8))
         #expect(record.version == 1)
         #expect(record.channel == 36)
@@ -261,13 +273,19 @@ struct RoamingSessionRecordTests {
         let record = RoamingSessionRecord(
             version: 2, savedAt: now, ssid: "Current", bssid: "AP-2", phyMode: nil,
             channel: nil, duration: 2,
-            segments: [RoamingSegment(bssid: "AP-2", startTime: now, samples: [
-                RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil),
-            ])],
-            transitions: [APTransitionEvent(
-                timestamp: now, fromBSSID: "AP-1", toBSSID: "AP-2",
-                rssiBefore: -60, rssiAfter: nil, channelBefore: 36, channelAfter: nil
-            )]
+            segments: [
+                RoamingSegment(
+                    bssid: "AP-2", startTime: now,
+                    samples: [
+                        RoamingSample(timestamp: now, rssi: nil, channel: nil, txRate: nil)
+                    ])
+            ],
+            transitions: [
+                APTransitionEvent(
+                    timestamp: now, fromBSSID: "AP-1", toBSSID: "AP-2",
+                    rssiBefore: -60, rssiAfter: nil, channelBefore: 36, channelAfter: nil
+                )
+            ]
         )
         let data = try JSONEncoder().encode(record)
         let decoded = try JSONDecoder().decode(RoamingSessionRecord.self, from: data)
@@ -298,20 +316,26 @@ struct RoamingSessionRecordTests {
             version: 2, savedAt: t10, ssid: "Home", bssid: "AP-B", phyMode: nil,
             channel: nil, duration: 10,
             segments: [
-                RoamingSegment(bssid: "AP-A", startTime: t0, endTime: t4, samples: [
-                    RoamingSample(timestamp: t0, rssi: -55, channel: 36, txRate: 100),
-                    RoamingSample(timestamp: t4, rssi: -60, channel: 36, txRate: 100),
-                ]),
-                RoamingSegment(bssid: "AP-B", startTime: t5, endTime: t10, samples: [
-                    RoamingSample(timestamp: t5, rssi: -50, channel: 44, txRate: 100),
-                    RoamingSample(timestamp: t7, rssi: -51, channel: 44, txRate: 100),
-                    RoamingSample(timestamp: t10, rssi: -53, channel: 44, txRate: 100),
-                ]),
+                RoamingSegment(
+                    bssid: "AP-A", startTime: t0, endTime: t4,
+                    samples: [
+                        RoamingSample(timestamp: t0, rssi: -55, channel: 36, txRate: 100),
+                        RoamingSample(timestamp: t4, rssi: -60, channel: 36, txRate: 100),
+                    ]),
+                RoamingSegment(
+                    bssid: "AP-B", startTime: t5, endTime: t10,
+                    samples: [
+                        RoamingSample(timestamp: t5, rssi: -50, channel: 44, txRate: 100),
+                        RoamingSample(timestamp: t7, rssi: -51, channel: 44, txRate: 100),
+                        RoamingSample(timestamp: t10, rssi: -53, channel: 44, txRate: 100),
+                    ]),
             ],
-            transitions: [APTransitionEvent(
-                timestamp: t5, fromBSSID: "AP-A", toBSSID: "AP-B",
-                rssiBefore: -60, rssiAfter: -50, channelBefore: 36, channelAfter: 44
-            )]
+            transitions: [
+                APTransitionEvent(
+                    timestamp: t5, fromBSSID: "AP-A", toBSSID: "AP-B",
+                    rssiBefore: -60, rssiAfter: -50, channelBefore: 36, channelAfter: 44
+                )
+            ]
         )
         let imported = try JSONDecoder().decode(
             RoamingSessionRecord.self,
@@ -392,11 +416,13 @@ struct RoamingChartSceneTests {
     }
 
     @Test func missingRSSIDoesNotBreakTrustedOwnershipOrConnectSignalRuns() {
-        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(4), samples: [
-            RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
-            RoamingSample(timestamp: date(2), rssi: nil, channel: nil, txRate: nil),
-            RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
-        ])
+        let segment = RoamingSegment(
+            bssid: "AP-A", startTime: date(0), endTime: date(4),
+            samples: [
+                RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+                RoamingSample(timestamp: date(2), rssi: nil, channel: nil, txRate: nil),
+                RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
+            ])
 
         let scene = RoamingChartScene(segments: [segment], transitions: [], duration: 4, origin: date(0))
 
@@ -409,12 +435,16 @@ struct RoamingChartSceneTests {
 
     @Test func unconfirmedAssociationGapRemainsUnfilled() {
         let segments = [
-            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(2), samples: [
-                RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
-            ]),
-            RoamingSegment(bssid: "AP-B", startTime: date(8), endTime: date(10), samples: [
-                RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100),
-            ]),
+            RoamingSegment(
+                bssid: "AP-A", startTime: date(0), endTime: date(2),
+                samples: [
+                    RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100)
+                ]),
+            RoamingSegment(
+                bssid: "AP-B", startTime: date(8), endTime: date(10),
+                samples: [
+                    RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100)
+                ]),
         ]
 
         let scene = RoamingChartScene(segments: segments, transitions: [], duration: 10, origin: date(0))
@@ -454,15 +484,19 @@ struct RoamingChartSceneTests {
 
     @Test func confirmedRoamingSharesBoundaryButKeepsRSSIRunsIndependent() {
         let segments = [
-            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(5), samples: [
-                RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
-                RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
-            ]),
-            RoamingSegment(bssid: "AP-B", startTime: date(5), endTime: date(10), samples: [
-                RoamingSample(timestamp: date(5), rssi: -50, channel: 44, txRate: 100),
-                RoamingSample(timestamp: date(7), rssi: -51, channel: 44, txRate: 100),
-                RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100),
-            ]),
+            RoamingSegment(
+                bssid: "AP-A", startTime: date(0), endTime: date(5),
+                samples: [
+                    RoamingSample(timestamp: date(0), rssi: -55, channel: 36, txRate: 100),
+                    RoamingSample(timestamp: date(4), rssi: -60, channel: 36, txRate: 100),
+                ]),
+            RoamingSegment(
+                bssid: "AP-B", startTime: date(5), endTime: date(10),
+                samples: [
+                    RoamingSample(timestamp: date(5), rssi: -50, channel: 44, txRate: 100),
+                    RoamingSample(timestamp: date(7), rssi: -51, channel: 44, txRate: 100),
+                    RoamingSample(timestamp: date(10), rssi: -53, channel: 44, txRate: 100),
+                ]),
         ]
         let scene = RoamingChartScene(
             segments: segments,
@@ -507,12 +541,16 @@ struct RoamingChartSceneTests {
         let handoffTimestamp = date(813_340_325.135256)
         let realRecordScene = RoamingChartScene(
             segments: [
-                RoamingSegment(bssid: "AP-A", startTime: origin, endTime: handoffTimestamp, samples: [
-                    RoamingSample(timestamp: oldTimestamp, rssi: -75, channel: 40, txRate: 162),
-                ]),
-                RoamingSegment(bssid: "AP-B", startTime: handoffTimestamp, endTime: handoffTimestamp, samples: [
-                    RoamingSample(timestamp: handoffTimestamp, rssi: -55, channel: 40, txRate: 1152),
-                ]),
+                RoamingSegment(
+                    bssid: "AP-A", startTime: origin, endTime: handoffTimestamp,
+                    samples: [
+                        RoamingSample(timestamp: oldTimestamp, rssi: -75, channel: 40, txRate: 162)
+                    ]),
+                RoamingSegment(
+                    bssid: "AP-B", startTime: handoffTimestamp, endTime: handoffTimestamp,
+                    samples: [
+                        RoamingSample(timestamp: handoffTimestamp, rssi: -55, channel: 40, txRate: 1152)
+                    ]),
             ],
             transitions: [transition(handoffTimestamp.timeIntervalSince1970, from: "AP-A", to: "AP-B")],
             duration: 80,
@@ -524,15 +562,19 @@ struct RoamingChartSceneTests {
     }
 
     @Test func handoffCollapseAlsoBoundsTheDisplayedTimestampSpan() {
-        let cases: [(start: TimeInterval, boundary: TimeInterval, expectedTransitionTime: TimeInterval, expectedDuration: TimeInterval)] = [
-            (60.8, 62.2, 62, 80),
-            (60.0, 61.4, 60, 79),
-            (60.128, 61.127, 60, 79),
-            (60.2, 60.9, 60, 80),
-            (60.0, 61.5, 60, 79),
-            (60.8, 62.3, 62, 80),
-            (60.0, 61.6, 61, 80),
-        ]
+        let cases:
+            [(
+                start: TimeInterval, boundary: TimeInterval, expectedTransitionTime: TimeInterval,
+                expectedDuration: TimeInterval
+            )] = [
+                (60.8, 62.2, 62, 80),
+                (60.0, 61.4, 60, 79),
+                (60.128, 61.127, 60, 79),
+                (60.2, 60.9, 60, 80),
+                (60.0, 61.5, 60, 79),
+                (60.8, 62.3, 62, 80),
+                (60.0, 61.6, 61, 80),
+            ]
 
         for testCase in cases {
             let scene = handoffScene(
@@ -553,15 +595,20 @@ struct RoamingChartSceneTests {
     @Test func multipleHandoffsAccumulateOnlyAcceptedDisplayedCollapseSpans() {
         let segments = [
             RoamingSegment(bssid: "AP-A", startTime: date(60), endTime: date(61.4), samples: [sample(60, rssi: -60)]),
-            RoamingSegment(bssid: "AP-B", startTime: date(61.4), endTime: date(64.2), samples: [
-                sample(61.4, rssi: -55),
-                sample(62.8, rssi: -54),
-            ]),
-            RoamingSegment(bssid: "AP-C", startTime: date(64.2), endTime: date(71.127), samples: [
-                sample(64.2, rssi: -50),
-                sample(70.128, rssi: -49),
-            ]),
-            RoamingSegment(bssid: "AP-D", startTime: date(71.127), endTime: date(90), samples: [sample(71.127, rssi: -45)]),
+            RoamingSegment(
+                bssid: "AP-B", startTime: date(61.4), endTime: date(64.2),
+                samples: [
+                    sample(61.4, rssi: -55),
+                    sample(62.8, rssi: -54),
+                ]),
+            RoamingSegment(
+                bssid: "AP-C", startTime: date(64.2), endTime: date(71.127),
+                samples: [
+                    sample(64.2, rssi: -50),
+                    sample(70.128, rssi: -49),
+                ]),
+            RoamingSegment(
+                bssid: "AP-D", startTime: date(71.127), endTime: date(90), samples: [sample(71.127, rssi: -45)]),
         ]
         let scene = RoamingChartScene(
             segments: segments,
@@ -577,9 +624,10 @@ struct RoamingChartSceneTests {
         #expect(scene.transitions.map(\.elapsedTime) == [60, 63, 69])
         #expect(scene.duration == 88)
         #expect(scene.samples.map(\.elapsedTime) == [60, 60, 61, 63, 69, 69])
-        #expect(zip(scene.samples, scene.samples.dropFirst()).allSatisfy { previous, next in
-            previous.elapsedTime <= next.elapsedTime
-        })
+        #expect(
+            zip(scene.samples, scene.samples.dropFirst()).allSatisfy { previous, next in
+                previous.elapsedTime <= next.elapsedTime
+            })
         #expect(segments.flatMap(\.samples).count == scene.samples.count)
     }
 
@@ -723,12 +771,16 @@ struct RoamingChartSceneTests {
 
     @Test func hoverAtCollapsedHandoffHighlightsBothRealRSSIPoints() {
         let segments = [
-            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(6), samples: [
-                RoamingSample(timestamp: date(5), rssi: -75, channel: 40, txRate: 204),
-            ]),
-            RoamingSegment(bssid: "AP-B", startTime: date(6), endTime: date(8), samples: [
-                RoamingSample(timestamp: date(6), rssi: -55, channel: 40, txRate: 1441),
-            ]),
+            RoamingSegment(
+                bssid: "AP-A", startTime: date(0), endTime: date(6),
+                samples: [
+                    RoamingSample(timestamp: date(5), rssi: -75, channel: 40, txRate: 204)
+                ]),
+            RoamingSegment(
+                bssid: "AP-B", startTime: date(6), endTime: date(8),
+                samples: [
+                    RoamingSample(timestamp: date(6), rssi: -55, channel: 40, txRate: 1441)
+                ]),
         ]
         let scene = RoamingChartScene(
             segments: segments,
@@ -747,9 +799,11 @@ struct RoamingChartSceneTests {
     }
 
     @Test func noRSSIStillProducesOwnershipRegionWithoutSignalRuns() {
-        let segment = RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(5), samples: [
-            RoamingSample(timestamp: date(1), rssi: nil, channel: nil, txRate: nil),
-        ])
+        let segment = RoamingSegment(
+            bssid: "AP-A", startTime: date(0), endTime: date(5),
+            samples: [
+                RoamingSample(timestamp: date(1), rssi: nil, channel: nil, txRate: nil)
+            ])
 
         let scene = RoamingChartScene(segments: [segment], transitions: [], duration: 5, origin: date(0))
 
@@ -785,19 +839,25 @@ struct RoamingChartSceneTests {
     @Test func runtimeAndHistoricalProjectionUseIdenticalSceneSemantics() {
         let origin = date(100)
         let segments = [
-            RoamingSegment(bssid: "AP-A", startTime: date(100), endTime: date(104), samples: [
-                RoamingSample(timestamp: date(100), rssi: -55, channel: 36, txRate: 100),
-                RoamingSample(timestamp: date(104), rssi: -60, channel: 36, txRate: 100),
-            ]),
-            RoamingSegment(bssid: "AP-B", startTime: date(107), endTime: date(110), samples: [
-                RoamingSample(timestamp: date(108), rssi: -50, channel: 44, txRate: 100),
-            ]),
+            RoamingSegment(
+                bssid: "AP-A", startTime: date(100), endTime: date(104),
+                samples: [
+                    RoamingSample(timestamp: date(100), rssi: -55, channel: 36, txRate: 100),
+                    RoamingSample(timestamp: date(104), rssi: -60, channel: 36, txRate: 100),
+                ]),
+            RoamingSegment(
+                bssid: "AP-B", startTime: date(107), endTime: date(110),
+                samples: [
+                    RoamingSample(timestamp: date(108), rssi: -50, channel: 44, txRate: 100)
+                ]),
         ]
         let events = [transition(106, from: "AP-A", to: "AP-B")]
         let liveScene = RoamingChartScene(segments: segments, transitions: events, duration: 10, origin: origin)
         let replayScene = RoamingChartScene(segments: segments, transitions: events, duration: 10, origin: origin)
         #expect(liveScene.regions == replayScene.regions)
-        #expect(liveScene.signalRuns.map { $0.points.map(\.elapsedTime) } == replayScene.signalRuns.map { $0.points.map(\.elapsedTime) })
+        #expect(
+            liveScene.signalRuns.map { $0.points.map(\.elapsedTime) }
+                == replayScene.signalRuns.map { $0.points.map(\.elapsedTime) })
         #expect(liveScene.transitions.map(\.elapsedTime) == replayScene.transitions.map(\.elapsedTime))
         #expect(liveScene.gaps == replayScene.gaps)
     }
@@ -821,12 +881,16 @@ struct RoamingChartSceneTests {
 
     @Test func confirmedTransitionWithoutBothMeasuredEndpointsDoesNotCreateSignalConnector() {
         let segments = [
-            RoamingSegment(bssid: "AP-A", startTime: date(0), endTime: date(4), samples: [
-                RoamingSample(timestamp: date(4), rssi: nil, channel: nil, txRate: nil),
-            ]),
-            RoamingSegment(bssid: "AP-B", startTime: date(6), endTime: date(8), samples: [
-                RoamingSample(timestamp: date(6), rssi: -50, channel: 44, txRate: 100),
-            ]),
+            RoamingSegment(
+                bssid: "AP-A", startTime: date(0), endTime: date(4),
+                samples: [
+                    RoamingSample(timestamp: date(4), rssi: nil, channel: nil, txRate: nil)
+                ]),
+            RoamingSegment(
+                bssid: "AP-B", startTime: date(6), endTime: date(8),
+                samples: [
+                    RoamingSample(timestamp: date(6), rssi: -50, channel: 44, txRate: 100)
+                ]),
         ]
         let scene = RoamingChartScene(
             segments: segments,
@@ -844,16 +908,22 @@ struct RoamingChartSceneTests {
         let oldLastSample = date(813_340_324.136174)
         let transitionTime = date(813_340_325.135256)
         let segments = [
-            RoamingSegment(bssid: "50:88:11:ba:05:67", startTime: origin, endTime: transitionTime, samples: [
-                RoamingSample(timestamp: oldLastSample, rssi: -75, channel: 40, txRate: 162),
-            ]),
-            RoamingSegment(bssid: "f4:87:c5:1d:03:bc", startTime: transitionTime, endTime: transitionTime, samples: [
-                RoamingSample(timestamp: transitionTime, rssi: -55, channel: 40, txRate: 1152),
-            ]),
+            RoamingSegment(
+                bssid: "50:88:11:ba:05:67", startTime: origin, endTime: transitionTime,
+                samples: [
+                    RoamingSample(timestamp: oldLastSample, rssi: -75, channel: 40, txRate: 162)
+                ]),
+            RoamingSegment(
+                bssid: "f4:87:c5:1d:03:bc", startTime: transitionTime, endTime: transitionTime,
+                samples: [
+                    RoamingSample(timestamp: transitionTime, rssi: -55, channel: 40, txRate: 1152)
+                ]),
         ]
         let scene = RoamingChartScene(
             segments: segments,
-            transitions: [transition(transitionTime.timeIntervalSince1970, from: "50:88:11:ba:05:67", to: "f4:87:c5:1d:03:bc")],
+            transitions: [
+                transition(transitionTime.timeIntervalSince1970, from: "50:88:11:ba:05:67", to: "f4:87:c5:1d:03:bc")
+            ],
             duration: transitionTime.timeIntervalSince(origin),
             origin: origin
         )
@@ -893,7 +963,8 @@ struct CurrentWiFiViewDataResolverTests {
     @Test func interfaceDetailsRequireCurrentAssociationAndUseOnlyVerifiedMetrics() {
         let status = resolverStatus(metricsAttribution: .verified)
         let observation = resolverObservation(status: status)
-        let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
+        let wifi = NetworkInterfaceInfo(
+            interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
 
         let resolved = InterfaceWiFiStatusResolver.resolve(
             interface: wifi, observation: observation, currentStatusValidity: .current
@@ -906,7 +977,8 @@ struct CurrentWiFiViewDataResolverTests {
         for attribution in [WiFiMetricsAttribution.unverified, .inconsistent] {
             let status = resolverStatus(metricsAttribution: attribution, rssi: nil, channel: nil)
             let observation = resolverObservation(status: status)
-            let wifi = NetworkInterfaceInfo(interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
+            let wifi = NetworkInterfaceInfo(
+                interfaceName: "en0", interfaceIndex: 4, isWiFiInterface: true, channel: 36, rssi: -55)
             let resolved = InterfaceWiFiStatusResolver.resolve(
                 interface: wifi, observation: observation, currentStatusValidity: .current
             )
@@ -923,27 +995,44 @@ struct CurrentWiFiViewDataResolverTests {
         let ethernet = NetworkInterfaceInfo(interfaceName: "en1", isWiFiInterface: false)
         let mismatchedCycle = WiFiObservation(timestamp: status.timestamp, sourceCycleID: UUID(), currentStatus: status)
 
-        #expect(InterfaceWiFiStatusResolver.resolve(interface: wifi, observation: observation, currentStatusValidity: .expired) == nil)
-        #expect(InterfaceWiFiStatusResolver.resolve(interface: ethernet, observation: observation, currentStatusValidity: .current) == nil)
-        #expect(InterfaceWiFiStatusResolver.resolve(interface: mismatchedIndex, observation: observation, currentStatusValidity: .current) == nil)
-        #expect(InterfaceWiFiStatusResolver.resolve(interface: wifi, observation: mismatchedCycle, currentStatusValidity: .current) == nil)
+        #expect(
+            InterfaceWiFiStatusResolver.resolve(
+                interface: wifi, observation: observation, currentStatusValidity: .expired) == nil)
+        #expect(
+            InterfaceWiFiStatusResolver.resolve(
+                interface: ethernet, observation: observation, currentStatusValidity: .current) == nil)
+        #expect(
+            InterfaceWiFiStatusResolver.resolve(
+                interface: mismatchedIndex, observation: observation, currentStatusValidity: .current) == nil)
+        #expect(
+            InterfaceWiFiStatusResolver.resolve(
+                interface: wifi, observation: mismatchedCycle, currentStatusValidity: .current) == nil)
     }
 
     @Test func overviewUsesOnlyTheObservationStatusAndItsRecommendations() {
         let status = resolverStatus(metricsAttribution: .verified)
-        let recommendation = ChannelRecommendation(from: ChannelQuality(
-            channel: 36, band: "5GHz", bandDisplay: "5 GHz", qualityScore: 80,
-            qualityLevel: .good, apCount: 1, coChannelCount: 0, adjacentCount: 0,
-            interferenceScore: 0, overlapLevel: .low, strongestNeighborRSSI: -80,
-            isCurrentChannel: true
-        ))
+        let recommendation = ChannelRecommendation(
+            from: ChannelQuality(
+                channel: 36, band: "5GHz", bandDisplay: "5 GHz", qualityScore: 80,
+                qualityLevel: .good, apCount: 1, coChannelCount: 0, adjacentCount: 0,
+                interferenceScore: 0, overlapLevel: .low, strongestNeighborRSSI: -80,
+                isCurrentChannel: true
+            ))
         let observation = resolverObservation(status: status, recommendations: [recommendation])
         let valid = resolverValidity(status: .current, recommendations: .current)
 
         #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: valid)?.ssid == "TestNet")
-        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: valid).map(\.channel) == [36])
-        #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: resolverValidity(status: .expired, recommendations: .current)) == nil)
-        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: resolverValidity(status: .current, recommendations: .expired)).isEmpty)
+        #expect(
+            OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: valid).map(
+                \.channel) == [36])
+        #expect(
+            OverviewWiFiDataResolver.currentStatus(
+                observation: observation, validity: resolverValidity(status: .expired, recommendations: .current))
+                == nil)
+        #expect(
+            OverviewWiFiDataResolver.currentChannelRecommendations(
+                observation: observation, validity: resolverValidity(status: .current, recommendations: .expired)
+            ).isEmpty)
     }
 
     @Test func overviewKeepsVerifiedAssociationWhenMetricsAreUnknown() {
@@ -952,7 +1041,9 @@ struct CurrentWiFiViewDataResolverTests {
         let validity = resolverValidity(status: .current, recommendations: .current)
 
         #expect(OverviewWiFiDataResolver.currentStatus(observation: observation, validity: validity)?.ssid == "TestNet")
-        #expect(OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: validity).isEmpty)
+        #expect(
+            OverviewWiFiDataResolver.currentChannelRecommendations(observation: observation, validity: validity).isEmpty
+        )
     }
 
     @Test func overviewKeepsAssociationWhenSSIDIsUnavailable() {

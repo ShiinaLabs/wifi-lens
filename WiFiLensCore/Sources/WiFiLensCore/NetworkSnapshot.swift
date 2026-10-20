@@ -74,7 +74,8 @@ public struct NetworkSnapshot: Codable {
         band = try container.decode(String.self, forKey: .band)
         phyMode = try container.decode(String.self, forKey: .phyMode)
         channelWidth = try container.decode(String.self, forKey: .channelWidth)
-        channelWidthMHz = try container.decodeIfPresent(Int.self, forKey: .channelWidthMHz)
+        channelWidthMHz =
+            try container.decodeIfPresent(Int.self, forKey: .channelWidthMHz)
             ?? Self.scalarWidth(for: channelWidth)
         mcs = try container.decode(String.self, forKey: .mcs)
         nss = try container.decode(String.self, forKey: .nss)

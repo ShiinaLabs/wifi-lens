@@ -1,5 +1,6 @@
 import CoreGraphics
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct SpectrumHeatmapFieldGeneratorTests {
@@ -34,7 +35,8 @@ import Testing
         )
     ) -> (x: Int, y: Int) {
         let rect = CGRect(x: 0, y: 0, width: resolution.width, height: resolution.height)
-        let x = Int((SpectrumHeatmapLayout.xPosition(forChannelCoordinate: channel, domain: domain, in: rect)! - 0.5).rounded())
+        let x = Int(
+            (SpectrumHeatmapLayout.xPosition(forChannelCoordinate: channel, domain: domain, in: rect)! - 0.5).rounded())
         let y = Int((SpectrumHeatmapLayout.yPosition(forRSSI: rssi, in: rect, rssiRange: rssiRange)! - 0.5).rounded())
         return (
             min(max(0, x), resolution.width - 1),
@@ -151,18 +153,22 @@ import Testing
         let gaussian = SpectrumHeatmapActivity.gaussianEnvelope(for: testEnvelope)
 
         for x in stride(from: 0, to: resolution.width, by: 37) {
-            guard let channel = SpectrumHeatmapLayout.channelCoordinate(
-                forX: CGFloat(x) + 0.5,
-                domain: singleRegionDomain,
-                in: rect
-            ) else { continue }
+            guard
+                let channel = SpectrumHeatmapLayout.channelCoordinate(
+                    forX: CGFloat(x) + 0.5,
+                    domain: singleRegionDomain,
+                    in: rect
+                )
+            else { continue }
             let curve = gaussian.value(atX: channel)
             for y in stride(from: 0, to: resolution.height, by: 11) {
-                guard let rssi = SpectrumHeatmapLayout.rssi(
-                    forY: CGFloat(y) + 0.5,
-                    in: rect,
-                    rssiRange: rssiRange
-                ) else { continue }
+                guard
+                    let rssi = SpectrumHeatmapLayout.rssi(
+                        forY: CGFloat(y) + 0.5,
+                        in: rect,
+                        rssiRange: rssiRange
+                    )
+                else { continue }
                 if rssi > curve + 3 {
                     #expect(raster.value(x: x, y: y) == 0)
                 }
@@ -236,7 +242,7 @@ import Testing
                 envelope(peakRSSI: peakRSSI),
                 envelope(peakRSSI: peakRSSI),
                 envelope(peakRSSI: peakRSSI),
-                envelope(peakRSSI: peakRSSI)
+                envelope(peakRSSI: peakRSSI),
             ],
             domain: singleRegionDomain,
             rssiRange: rssiRange,
@@ -252,7 +258,7 @@ import Testing
         let raster = generator.generate(
             envelopes: [
                 envelope(lower: 2, upper: 3),
-                envelope(lower: 7, upper: 8)
+                envelope(lower: 7, upper: 8),
             ],
             domain: domain,
             rssiRange: rssiRange,
@@ -300,18 +306,21 @@ import Testing
         )
         let rect = CGRect(x: 0, y: 0, width: resolution.width, height: resolution.height)
         let gapColumns = (0..<resolution.width).filter { x in
-            guard let channel = SpectrumHeatmapLayout.channelCoordinate(
-                forX: CGFloat(x) + 0.5,
-                domain: domain,
-                in: rect
-            ) else { return false }
+            guard
+                let channel = SpectrumHeatmapLayout.channelCoordinate(
+                    forX: CGFloat(x) + 0.5,
+                    domain: domain,
+                    in: rect
+                )
+            else { return false }
             return channel > 50 && channel < 149
         }
 
         #expect(!gapColumns.isEmpty)
-        #expect(gapColumns.allSatisfy { x in
-            (0..<resolution.height).allSatisfy { y in raster.value(x: x, y: y) == 0 }
-        })
+        #expect(
+            gapColumns.allSatisfy { x in
+                (0..<resolution.height).allSatisfy { y in raster.value(x: x, y: y) == 0 }
+            })
     }
 
     @Test func smoothingRemainsLocalAndClampsOutput() {

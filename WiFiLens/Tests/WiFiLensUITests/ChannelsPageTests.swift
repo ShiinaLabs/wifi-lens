@@ -30,7 +30,8 @@ final class ChannelsPageTests: XCTestCase {
         let simple = app.radioButtons["secondary-toolbar-channels-simple"]
         let table = app.radioButtons["secondary-toolbar-channels-table"]
         guard waitForElement(simple, message: "Simple channel mode not found", app: app),
-              waitForElement(table, message: "Table channel mode not found", app: app) else { return }
+            waitForElement(table, message: "Table channel mode not found", app: app)
+        else { return }
 
         XCTAssertEqual(simple.value as? Int, 1, "Simple mode should be selected by default")
         table.click()

@@ -1,6 +1,6 @@
 import AppKit
-import SwiftUI
 import SceneKit
+import SwiftUI
 
 private struct GuidanceInvitationFrames: Equatable {
     var viewport: CGRect?
@@ -59,14 +59,16 @@ public struct OverviewView: View {
 
     private var verifiedLinkState: VerifiedWiFiLinkState {
         guard let status = store.currentStatus,
-              status.error == nil,
-              store.validity(at: Date())?.currentStatus == .current else { return .unknown }
+            status.error == nil,
+            store.validity(at: Date())?.currentStatus == .current
+        else { return .unknown }
         return WiFiLinkEvidenceValidator.assessment(for: status)?.state ?? .unknown
     }
 
     private var currentChannelQuality: ChannelRecommendation? {
         guard verifiedWiFiStatus?.metricsAttribution == .verified,
-              verifiedWiFiStatus?.channel != nil else { return nil }
+            verifiedWiFiStatus?.channel != nil
+        else { return nil }
         return currentChannelRecommendations.first(where: { $0.isCurrentChannel })
     }
 
@@ -139,8 +141,9 @@ public struct OverviewView: View {
                             }
 
                             if let guidance,
-                               let invitation = guidance.pendingInvitation,
-                               invitation.moment == .appReturnedAfterUse {
+                                let invitation = guidance.pendingInvitation,
+                                invitation.moment == .appReturnedAfterUse
+                            {
                                 ProInvitationCard(
                                     invitation: invitation,
                                     guidance: guidance,
@@ -219,20 +222,22 @@ public struct OverviewView: View {
                     invitationInVisibleArea = false
                     return
                 }
-                invitationInVisibleArea = GuidanceInvitationVisibility.isGenuinelyVisible(card: card, viewport: viewport)
+                invitationInVisibleArea = GuidanceInvitationVisibility.isGenuinelyVisible(
+                    card: card, viewport: viewport)
             }
             .onChange(of: currentChannelQuality?.rfScore) { _, newRaw in
-            let raw = newRaw ?? 100
-            displayScore = stableScore.update(score: raw)
-            displayLevel = .from(score: displayScore)
-        }
-        } // ZStack
+                let raw = newRaw ?? 100
+                displayScore = stableScore.update(score: raw)
+                displayLevel = .from(score: displayScore)
+            }
+        }  // ZStack
     }
 
     // MARK: - Connection Hero
 
     private func connectionCard(_ status: WiFiCurrentStatus) -> some View {
-        let displaySSID = status.ssid.flatMap { $0.isEmpty ? nil : $0 }
+        let displaySSID =
+            status.ssid.flatMap { $0.isEmpty ? nil : $0 }
             ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")
         let metrics = status.metricsAttribution == .verified ? status : nil
         return VStack(spacing: 12) {
@@ -254,19 +259,29 @@ public struct OverviewView: View {
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                         if let ch = metrics?.channel {
-                            Text(String(format: String(localized: "format.band_channel_separator", comment: "Band and channel separator with values"), bandName(ch), ch))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
+                            Text(
+                                String(
+                                    format: String(
+                                        localized: "format.band_channel_separator",
+                                        comment: "Band and channel separator with values"), bandName(ch), ch)
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
                         }
                     }
                 }
                 Spacer(minLength: 12)
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(metrics?.rssi.map { String(format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"), $0) } ?? "—")
-                        .font(.caption.monospacedDigit())
-                        .foregroundColor(metrics?.rssi.map(rssiColor) ?? .secondary)
+                    Text(
+                        metrics?.rssi.map {
+                            String(
+                                format: String(localized: "format.rssi_dbm", comment: "RSSI value with dBm unit"), $0)
+                        } ?? "—"
+                    )
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(metrics?.rssi.map(rssiColor) ?? .secondary)
                     if let rssi = metrics?.rssi { signalBars(rssi) }
                 }
                 // Keep the RSSI cluster intact at its intrinsic width when the SSID
@@ -299,15 +314,18 @@ public struct OverviewView: View {
         return HStack(spacing: 10) {
             healthPill(
                 icon: "wave.3.right",
-                label: String(localized: "overview.health.signal_label", comment: "Signal strength health indicator label"),
-                value: rssi.map(signalLabel) ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
+                label: String(
+                    localized: "overview.health.signal_label", comment: "Signal strength health indicator label"),
+                value: rssi.map(signalLabel)
+                    ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
                 color: rssi.map(rssiColor) ?? .secondary
             )
 
             if currentChannelQuality != nil {
                 healthPill(
                     icon: "chart.bar.fill",
-                    label: String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"),
+                    label: String(
+                        localized: "overview.health.channel_label", comment: "Channel quality health indicator label"),
                     value: displayLevel.displayName,
                     color: Color(hex: displayLevel.color)
                 )
@@ -316,7 +334,8 @@ public struct OverviewView: View {
             healthPill(
                 icon: "lock.shield.fill",
                 label: String(localized: "overview.health.security_label", comment: "Security health indicator label"),
-                value: security.map(securityShort) ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
+                value: security.map(securityShort)
+                    ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"),
                 color: security.map { $0.contains("WPA3") ? .green : .orange } ?? .secondary
             )
         }
@@ -340,13 +359,18 @@ public struct OverviewView: View {
         .padding(.vertical, 12)
         .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(String(format: String(localized: "common.accessibility.metric_fmt", comment: "Label: value format for VoiceOver metric"), label, value))
+        .accessibilityLabel(
+            String(
+                format: String(
+                    localized: "common.accessibility.metric_fmt", comment: "Label: value format for VoiceOver metric"),
+                label, value))
     }
 
     // MARK: - Diagnostic Card
 
     private var diagnosticCard: some View {
-        let diag = store.validity(at: Date())?.diagnosis == .current
+        let diag =
+            store.validity(at: Date())?.diagnosis == .current
             ? (store.diagnosis ?? DiagnosticResult.unknown)
             : DiagnosticResult.unknown
 
@@ -369,8 +393,6 @@ public struct OverviewView: View {
         .padding(16)
         .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
     }
-
-
 
     // MARK: - Channel Advice
 
@@ -396,8 +418,10 @@ public struct OverviewView: View {
             HStack(spacing: 6) {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.yellow)
-                Text(String(localized: "overview.channel_advice.header", comment: "Header for recommended channels card"))
-                    .font(.callout.weight(.semibold))
+                Text(
+                    String(localized: "overview.channel_advice.header", comment: "Header for recommended channels card")
+                )
+                .font(.callout.weight(.semibold))
             }
 
             ForEach(recommendedChannels.prefix(2).filter { $0.channel != current.channel }) { ch in
@@ -420,14 +444,20 @@ public struct OverviewView: View {
                                 ReasonPopover(reasons: ch.recommendationReasons)
                             }
                         }
-                        Text(String(format: String(localized: "format.network_score_with_ap_count", comment: "Network score display with nearby AP count"), ch.recommendationScore, ch.apCount))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        Text(
+                            String(
+                                format: String(
+                                    localized: "format.network_score_with_ap_count",
+                                    comment: "Network score display with nearby AP count"), ch.recommendationScore,
+                                ch.apCount)
+                        )
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     }
                     Spacer()
                 }
                 .padding(10)
-//                .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 8))
+                //                .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 8))
             }
         }
         .padding(16)
@@ -438,13 +468,20 @@ public struct OverviewView: View {
 
     private var noConnectionCard: some View {
         VStack(spacing: 12) {
-            Text(String(localized: "overview.status.not_connected", comment: "Empty state when not connected to any Wi-Fi network"))
-                .font(.title3)
-                .fontWeight(.semibold)
-            Text(String(localized: "overview.status.connect_prompt", comment: "Prompt to connect to Wi-Fi for diagnostics"))
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            Text(
+                String(
+                    localized: "overview.status.not_connected",
+                    comment: "Empty state when not connected to any Wi-Fi network")
+            )
+            .font(.title3)
+            .fontWeight(.semibold)
+            Text(
+                String(
+                    localized: "overview.status.connect_prompt", comment: "Prompt to connect to Wi-Fi for diagnostics")
+            )
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.center)
         }
         .padding(32)
         .frame(maxWidth: .infinity)
@@ -456,10 +493,13 @@ public struct OverviewView: View {
             Text(String(localized: "common.label.unknown", comment: "Generic unknown value label"))
                 .font(.title3)
                 .fontWeight(.semibold)
-            Text(String(localized: "overview.status.connect_prompt", comment: "Prompt to connect to Wi-Fi for diagnostics"))
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            Text(
+                String(
+                    localized: "overview.status.connect_prompt", comment: "Prompt to connect to Wi-Fi for diagnostics")
+            )
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.center)
         }
         .padding(32)
         .frame(maxWidth: .infinity)
@@ -479,12 +519,20 @@ public struct OverviewView: View {
                 .font(.title2)
                 .foregroundColor(.orange)
             VStack(alignment: .leading, spacing: 4) {
-                Text(String(localized: "permission.location.services_required_title", comment: "Alert title: Location Services permission needed"))
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Text(String(localized: "permission.location.macos_requires", comment: "Explanation of macOS LS requirement with privacy reassurance"))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Text(
+                    String(
+                        localized: "permission.location.services_required_title",
+                        comment: "Alert title: Location Services permission needed")
+                )
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                Text(
+                    String(
+                        localized: "permission.location.macos_requires",
+                        comment: "Explanation of macOS LS requirement with privacy reassurance")
+                )
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
             Spacer()
             Button(String(localized: "common.action.authorize", comment: "Authorize/request permission button")) {
@@ -506,10 +554,15 @@ public struct OverviewView: View {
                 .foregroundColor(.accentColor)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(currentEnvironmentIsFresh
-                     ? String(format: String(localized: "overview.environment.summary_fmt", comment: "Banner showing count of detected networks"), totalNetworks)
-                     : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
-                    .font(.subheadline.weight(.semibold))
+                Text(
+                    currentEnvironmentIsFresh
+                        ? String(
+                            format: String(
+                                localized: "overview.environment.summary_fmt",
+                                comment: "Banner showing count of detected networks"), totalNetworks)
+                        : String(localized: "common.label.unknown", comment: "Generic unknown value label")
+                )
+                .font(.subheadline.weight(.semibold))
                 Text(currentEnvironmentIsFresh ? bandSummary : "")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -527,7 +580,9 @@ public struct OverviewView: View {
     // MARK: - Helpers
 
     private func hasBetterChannel(_ current: ChannelRecommendation) -> Bool {
-        recommendedChannels.contains(where: { $0.channel != current.channel && $0.recommendationScore > current.recommendationScore })
+        recommendedChannels.contains(where: {
+            $0.channel != current.channel && $0.recommendationScore > current.recommendationScore
+        })
     }
 
     private func rssiColor(_ rssi: Int) -> Color {
@@ -544,7 +599,9 @@ public struct OverviewView: View {
     private func signalLabel(_ rssi: Int) -> String {
         if rssi >= -55 { return String(localized: "overview.signal.strong", comment: "Strong signal level label") }
         if rssi >= -70 { return String(localized: "overview.signal.good", comment: "Good signal level label") }
-        if rssi >= -85 { return String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier") }
+        if rssi >= -85 {
+            return String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier")
+        }
         return String(localized: "overview.signal.weak", comment: "Weak signal level label")
     }
 
@@ -558,7 +615,11 @@ public struct OverviewView: View {
                     .accessibilityHidden(true)
             }
         }
-        .accessibilityLabel(String(format: String(localized: "roaming.accessibility.rssi_fmt", comment: "RSSI accessibility label with value and quality"), rssi, signalLabel(rssi)))
+        .accessibilityLabel(
+            String(
+                format: String(
+                    localized: "roaming.accessibility.rssi_fmt",
+                    comment: "RSSI accessibility label with value and quality"), rssi, signalLabel(rssi)))
     }
 
     private func bandName(_ ch: Int) -> String {
@@ -571,7 +632,9 @@ public struct OverviewView: View {
         if sec.contains("WPA3") { return "WPA3" }
         if sec.contains("WPA2") { return "WPA2" }
         if sec.contains("WPA") { return "WPA" }
-        if sec == "—" || sec == String(localized: "common.label.none", comment: "Generic none/empty value label") { return String(localized: "wifi.security.open", comment: "Open/no password security type") }
+        if sec == "—" || sec == String(localized: "common.label.none", comment: "Generic none/empty value label") {
+            return String(localized: "wifi.security.open", comment: "Open/no password security type")
+        }
         return sec
     }
 }
@@ -582,11 +645,12 @@ enum OverviewWiFiDataResolver {
         validity: WiFiObservationValidity?
     ) -> WiFiCurrentStatus? {
         guard let observation,
-              validity?.currentStatus == .current,
-              let status = observation.currentStatus,
-              status.error == nil,
-              status.interfaceSnapshotCycleID == observation.sourceCycleID,
-              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else { return nil }
+            validity?.currentStatus == .current,
+            let status = observation.currentStatus,
+            status.error == nil,
+            status.interfaceSnapshotCycleID == observation.sourceCycleID,
+            WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
+        else { return nil }
         return status
     }
 
@@ -595,10 +659,11 @@ enum OverviewWiFiDataResolver {
         validity: WiFiObservationValidity?
     ) -> [ChannelRecommendation] {
         guard let observation,
-              validity?.channelRecommendation == .current,
-              let status = currentStatus(observation: observation, validity: validity),
-              status.metricsAttribution == .verified,
-              status.channel != nil else { return [] }
+            validity?.channelRecommendation == .current,
+            let status = currentStatus(observation: observation, validity: validity),
+            status.metricsAttribution == .verified,
+            status.channel != nil
+        else { return [] }
         return observation.channelRecommendation ?? []
     }
 }
@@ -796,10 +861,10 @@ private struct EarthGlobeView: NSViewRepresentable {
         earth.segmentCount = 96
         let material = SCNMaterial()
         material.diffuse.contents = NSColor(red: 0.08, green: 0.12, blue: 0.35, alpha: 1)
-        
+
         let image = NSImage(named: "Earth")
         material.diffuse.contents = image
-        
+
         material.diffuse.mipFilter = .linear
         material.diffuse.maxAnisotropy = 4
         material.lightingModel = .constant
@@ -850,7 +915,8 @@ private struct EarthGlobeView: NSViewRepresentable {
 
         // lat/lon → unit 3D point
         func spherePoint(lat: CGFloat, lon: CGFloat) -> SCNVector3 {
-            let latR = lat * .pi / 180; let lonR = lon * .pi / 180
+            let latR = lat * .pi / 180
+            let lonR = lon * .pi / 180
             return SCNVector3(cos(latR) * cos(lonR), sin(latR), cos(latR) * sin(lonR))
         }
 
@@ -859,7 +925,7 @@ private struct EarthGlobeView: NSViewRepresentable {
             (37.4, -122.1), (40.7, -74.0), (51.5, -0.1), (35.7, 139.8),
             (1.3, 103.8), (50.1, 8.7), (-33.9, 151.2), (-23.5, -46.6),
         ]
-        let hubPairs: [(Int, Int)] = [(0,1),(1,2),(2,5),(3,4),(4,7),(5,3),(0,3),(6,4),(7,0),(2,3)]
+        let hubPairs: [(Int, Int)] = [(0, 1), (1, 2), (2, 5), (3, 4), (4, 7), (5, 3), (0, 3), (6, 4), (7, 0), (2, 3)]
         var tubeNodes: [SCNNode] = []
 
         // Create hub dots + store unit positions for tubes
@@ -880,12 +946,15 @@ private struct EarthGlobeView: NSViewRepresentable {
 
         // Connection tubes between hub pairs
         for (a, b) in hubPairs {
-            let fromU = hubUnitPos[a]; let toU = hubUnitPos[b]
+            let fromU = hubUnitPos[a]
+            let toU = hubUnitPos[b]
             let fromP = SCNVector3(fromU.x * arcRadius, fromU.y * arcRadius, fromU.z * arcRadius)
-            let toP   = SCNVector3(toU.x   * arcRadius, toU.y   * arcRadius, toU.z   * arcRadius)
-            let midP  = SCNVector3((fromP.x+toP.x)/2, (fromP.y+toP.y)/2, (fromP.z+toP.z)/2)
-            let dx = toP.x - fromP.x; let dy = toP.y - fromP.y; let dz = toP.z - fromP.z
-            let chordLen = sqrt(dx*dx + dy*dy + dz*dz)
+            let toP = SCNVector3(toU.x * arcRadius, toU.y * arcRadius, toU.z * arcRadius)
+            let midP = SCNVector3((fromP.x + toP.x) / 2, (fromP.y + toP.y) / 2, (fromP.z + toP.z) / 2)
+            let dx = toP.x - fromP.x
+            let dy = toP.y - fromP.y
+            let dz = toP.z - fromP.z
+            let chordLen = sqrt(dx * dx + dy * dy + dz * dz)
 
             let tube = SCNCylinder(radius: 0.0012, height: chordLen)
             tube.firstMaterial?.diffuse.contents = tubeColor
@@ -952,8 +1021,9 @@ private struct EarthGlobeView: NSViewRepresentable {
 
     private func startAnimations(on coordinator: Coordinator) {
         guard let earthNode = coordinator.earthNode,
-              let innerGlowNode = coordinator.innerGlowNode,
-              let glowNode = coordinator.glowNode else { return }
+            let innerGlowNode = coordinator.innerGlowNode,
+            let glowNode = coordinator.glowNode
+        else { return }
 
         // Remove any existing keys first so repeated start transitions can
         // never stack duplicate CAAnimation instances on the same node.
@@ -961,15 +1031,21 @@ private struct EarthGlobeView: NSViewRepresentable {
 
         for node in coordinator.hubNodes {
             let pulse = CABasicAnimation(keyPath: "opacity")
-            pulse.fromValue = 0.3; pulse.toValue = 1.0; pulse.duration = 1.2
-            pulse.autoreverses = true; pulse.repeatCount = .greatestFiniteMagnitude
+            pulse.fromValue = 0.3
+            pulse.toValue = 1.0
+            pulse.duration = 1.2
+            pulse.autoreverses = true
+            pulse.repeatCount = .greatestFiniteMagnitude
             node.addAnimation(pulse, forKey: "pulse")
         }
 
         for tube in coordinator.tubeNodes {
             let fade = CABasicAnimation(keyPath: "opacity")
-            fade.fromValue = 0.15; fade.toValue = 0.45; fade.duration = Double.random(in: 2...4)
-            fade.autoreverses = true; fade.repeatCount = .greatestFiniteMagnitude
+            fade.fromValue = 0.15
+            fade.toValue = 0.45
+            fade.duration = Double.random(in: 2...4)
+            fade.autoreverses = true
+            fade.repeatCount = .greatestFiniteMagnitude
             tube.addAnimation(fade, forKey: "flow")
         }
 

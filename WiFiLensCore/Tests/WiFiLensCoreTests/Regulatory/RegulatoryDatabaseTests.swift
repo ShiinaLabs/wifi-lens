@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct RegulatoryDatabaseTests {
@@ -67,8 +68,9 @@ import Testing
         guard let usRules = RegulatoryDatabase.rules[.US]?["5"] else { return }
         let nonDFSchannels: Set<Int> = [36, 40, 44, 48, 149, 153, 157, 161, 165]
         for ch in nonDFSchannels {
-            #expect(usRules.channelMeta[ch] == nil || usRules.channelMeta[ch]!.isDFS == false,
-                     "US channel \(ch) should not have DFS metadata")
+            #expect(
+                usRules.channelMeta[ch] == nil || usRules.channelMeta[ch]!.isDFS == false,
+                "US channel \(ch) should not have DFS metadata")
         }
     }
 
@@ -140,8 +142,9 @@ import Testing
             #expect(meta.isDFS, "EU channel \(ch) should be DFS")
         }
         // Channel 144 should NOT be in EU
-        #expect(rules.channelMeta[144] == nil || rules.channelMeta[144]!.isDFS == false,
-                 "EU should not have channel 144 as DFS")
+        #expect(
+            rules.channelMeta[144] == nil || rules.channelMeta[144]!.isDFS == false,
+            "EU should not have channel 144 as DFS")
     }
 
     @Test("JP 5 GHz includes channels 36-144 with DFS blocks")
@@ -165,8 +168,9 @@ import Testing
             #expect(Bool(false))
             return
         }
-        #expect(rules.allowedChannels == Set(stride(from: 1, through: 233, by: 4)),
-                "US 6 GHz LPI should allow all channels 1-233")
+        #expect(
+            rules.allowedChannels == Set(stride(from: 1, through: 233, by: 4)),
+            "US 6 GHz LPI should allow all channels 1-233")
         // U-NII-6 (97-117) and U-NII-8 (185-233) are LPI-eligible per 47 CFR 15.407(a)(5)
         for ch in [97, 101, 117, 185, 189, 233] {
             #expect(rules.allowedChannels.contains(ch), "US 6 GHz should allow LPI channel \(ch)")

@@ -1,7 +1,7 @@
-@testable import WiFiLensCore
-
 import Foundation
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 @MainActor
@@ -210,10 +210,11 @@ final class OnboardingCoordinatorTests {
 
     @Test func onboardingDoesNotTouchGuidanceState() {
         let coordinator = makeCoordinator(existingInstallation: true)
-        let guidanceStore = InMemoryGuidanceStateStore(initial: GuidanceState(
-            meaningfulCompletionCount: 7,
-            invitationPresentationCount: 2
-        ))
+        let guidanceStore = InMemoryGuidanceStateStore(
+            initial: GuidanceState(
+                meaningfulCompletionCount: 7,
+                invitationPresentationCount: 2
+            ))
 
         coordinator.migrateExistingInstallationIfNeeded()
         let host = UUID()

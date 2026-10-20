@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite("ThroughputMonitor")
@@ -77,8 +78,8 @@ struct ThroughputMonitorTests {
 
         let samples = monitor.samples(for: "en0")
         #expect(samples.count == 90)
-        #expect(samples.first?.rateIn == 5)   // indexes 0...4 dropped as the oldest
-        #expect(samples.last?.rateIn == 94)   // newest sample retained
+        #expect(samples.first?.rateIn == 5)  // indexes 0...4 dropped as the oldest
+        #expect(samples.last?.rateIn == 94)  // newest sample retained
     }
 
     // MARK: - Stale interface purging

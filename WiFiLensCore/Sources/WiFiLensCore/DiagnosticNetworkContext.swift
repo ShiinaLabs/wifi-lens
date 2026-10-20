@@ -66,8 +66,8 @@ struct SystemDiagnosticNetworkContextSource: DiagnosticNetworkContextSourcing {
     }
 }
 
-private extension ContinuousClock.Instant {
-    func remainingDuration() -> Duration {
+extension ContinuousClock.Instant {
+    fileprivate func remainingDuration() -> Duration {
         max(.zero, ContinuousClock.now.duration(to: self))
     }
 }

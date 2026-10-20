@@ -1,10 +1,22 @@
 import Foundation
 
 struct WiFiObservationCycleContext: Sendable {
-    public init(timestamp: Date, interfaceSnapshot: NetworkInterfaceSnapshot, interfaceName: String?, supportedBands: Set<ChannelBand>, supportedChannelsRaw: [(Int, Int)], deviceSupportedChannels: Set<String>, deviceCapabilities: DevicePHYCapabilities, userRegionOverride: RegulatoryDomain?, userDefaultsRegionOverride: RegulatoryDomain?, environmentError: WiFiObservationError?) {
-        self.timestamp = timestamp; self.interfaceSnapshot = interfaceSnapshot; self.interfaceName = interfaceName; self.supportedBands = supportedBands
-        self.supportedChannelsRaw = supportedChannelsRaw; self.deviceSupportedChannels = deviceSupportedChannels; self.deviceCapabilities = deviceCapabilities
-        self.userRegionOverride = userRegionOverride; self.userDefaultsRegionOverride = userDefaultsRegionOverride; self.environmentError = environmentError
+    public init(
+        timestamp: Date, interfaceSnapshot: NetworkInterfaceSnapshot, interfaceName: String?,
+        supportedBands: Set<ChannelBand>, supportedChannelsRaw: [(Int, Int)], deviceSupportedChannels: Set<String>,
+        deviceCapabilities: DevicePHYCapabilities, userRegionOverride: RegulatoryDomain?,
+        userDefaultsRegionOverride: RegulatoryDomain?, environmentError: WiFiObservationError?
+    ) {
+        self.timestamp = timestamp
+        self.interfaceSnapshot = interfaceSnapshot
+        self.interfaceName = interfaceName
+        self.supportedBands = supportedBands
+        self.supportedChannelsRaw = supportedChannelsRaw
+        self.deviceSupportedChannels = deviceSupportedChannels
+        self.deviceCapabilities = deviceCapabilities
+        self.userRegionOverride = userRegionOverride
+        self.userDefaultsRegionOverride = userDefaultsRegionOverride
+        self.environmentError = environmentError
     }
     public let timestamp: Date
     let interfaceSnapshot: NetworkInterfaceSnapshot
@@ -19,7 +31,10 @@ struct WiFiObservationCycleContext: Sendable {
 }
 
 struct WiFiObservationCycleResult: Sendable {
-    public init(observation: WiFiObservation, inferredRegion: RegionInferenceResult) { self.observation = observation; self.inferredRegion = inferredRegion }
+    public init(observation: WiFiObservation, inferredRegion: RegionInferenceResult) {
+        self.observation = observation
+        self.inferredRegion = inferredRegion
+    }
     public let observation: WiFiObservation
     let inferredRegion: RegionInferenceResult
 }
@@ -52,9 +67,10 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         let confirmedLink = WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
         let latency: GatewayLatencyResult
         if confirmedLink,
-           context.environmentError == nil,
-           let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
-           let boundMeasurer = gatewayLatencyProvider as? WiFiBoundGatewayMeasuring {
+            context.environmentError == nil,
+            let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
+            let boundMeasurer = gatewayLatencyProvider as? WiFiBoundGatewayMeasuring
+        {
             let measured = await boundMeasurer.measure(target: target)
             if Task.isCancelled {
                 latency = GatewayLatencyResult(
@@ -67,8 +83,9 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
                     interfaceBound: true
                 )
             } else {
-                if WiFiGatewayProbeTarget.isValidWiFiGatewayResult(measured, for: target) ||
-                    (WiFiGatewayProbeTarget.isAttributedToWiFiTarget(measured, target) && measured.latencyMs == nil) {
+                if WiFiGatewayProbeTarget.isValidWiFiGatewayResult(measured, for: target)
+                    || (WiFiGatewayProbeTarget.isAttributedToWiFiTarget(measured, target) && measured.latencyMs == nil)
+                {
                     latency = measured
                 } else {
                     latency = GatewayLatencyResult(
@@ -105,17 +122,18 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
             ssid: confirmedLink ? status.ssid : nil,
             channel: confirmedLink ? status.channel : nil
         )
-        let channelAnalysis: [ChannelQuality]? = if context.environmentError == nil {
-            ChannelOccupancyAnalyzer.analyze(
-                snapshot: snapshot,
-                currentChannel: confirmedLink ? status.channel : nil,
-                currentBand: confirmedLink ? status.band : nil,
-                supportedBands: Set(context.supportedBands.map(\.id)),
-                targetAP: targetAP
-            )
-        } else {
-            nil
-        }
+        let channelAnalysis: [ChannelQuality]? =
+            if context.environmentError == nil {
+                ChannelOccupancyAnalyzer.analyze(
+                    snapshot: snapshot,
+                    currentChannel: confirmedLink ? status.channel : nil,
+                    currentBand: confirmedLink ? status.band : nil,
+                    supportedBands: Set(context.supportedBands.map(\.id)),
+                    targetAP: targetAP
+                )
+            } else {
+                nil
+            }
         let inferredRegion = RegulatoryDomainResolver.resolve(
             userOverride: context.userRegionOverride,
             userDefaultsOverride: context.userDefaultsRegionOverride,
@@ -130,19 +148,21 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
                 deviceCapabilities: context.deviceCapabilities
             )
         }
-        let quality: WiFiQualityResult? = context.environmentError == nil && confirmedLink
+        let quality: WiFiQualityResult? =
+            context.environmentError == nil && confirmedLink
             ? WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: latency)
             : nil
-        let diagnosis: DiagnosticResult? = if let quality {
-            DiagnosticEvaluator.evaluate(
-                currentStatus: status,
-                quality: quality,
-                channelAnalysis: channelAnalysis,
-                channelRecommendations: channelRecommendation
-            )
-        } else {
-            nil
-        }
+        let diagnosis: DiagnosticResult? =
+            if let quality {
+                DiagnosticEvaluator.evaluate(
+                    currentStatus: status,
+                    quality: quality,
+                    channelAnalysis: channelAnalysis,
+                    channelRecommendations: channelRecommendation
+                )
+            } else {
+                nil
+            }
         let observation = WiFiObservation(
             timestamp: context.timestamp,
             sourceCycleID: context.interfaceSnapshot.cycleID,

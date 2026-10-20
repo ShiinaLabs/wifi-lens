@@ -1,6 +1,6 @@
 import Foundation
-import Observation
 import Logging
+import Observation
 
 /// Manages What's New version-gated presentation. Tracks whether the current
 /// version has been shown, and coordinates with Onboarding to avoid double-presentation
@@ -74,16 +74,16 @@ public final class WhatsNewCoordinator {
     }
 
     #if DEBUG
-    private var debugForceShow = false
+        private var debugForceShow = false
 
-    public func debugRequestShow() {
-        shouldShowSheet = true
-    }
+        public func debugRequestShow() {
+            shouldShowSheet = true
+        }
 
-    public func debugReset() {
-        store.save(WhatsNewState())
-        shouldShowSheet = false
-        showSheetFromBadge = false
-    }
+        public func debugReset() {
+            store.save(WhatsNewState())
+            shouldShowSheet = false
+            showSheetFromBadge = false
+        }
     #endif
 }

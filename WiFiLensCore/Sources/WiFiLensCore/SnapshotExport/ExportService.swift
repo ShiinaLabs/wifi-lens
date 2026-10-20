@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// Shared PNG snapshot export service used by both editions.
@@ -61,8 +61,8 @@ public enum ExportService {
 
         // Convert to PNG
         guard let tiff = composite.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiff),
-              let png = bitmap.representation(using: .png, properties: [:])
+            let bitmap = NSBitmapImageRep(data: tiff),
+            let png = bitmap.representation(using: .png, properties: [:])
         else {
             showError(String(localized: "export.error.encode_failed", comment: "PNG encoding failed"))
             return
@@ -71,7 +71,8 @@ public enum ExportService {
         // Present save panel
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.png]
-        panel.nameFieldStringValue = "\(String(localized: "export.default_image_filename", comment: "Default filename for image export"))_\(formattedTimestamp()).png"
+        panel.nameFieldStringValue =
+            "\(String(localized: "export.default_image_filename", comment: "Default filename for image export"))_\(formattedTimestamp()).png"
 
         panel.begin { [panel] response in
             guard response == .OK, let url = panel.url else { return }
@@ -93,12 +94,18 @@ public enum ExportService {
                                 .exportSucceeded,
                                 ownerWindowID: invitationOwnerWindowID
                             )
-                            showSuccess(String(localized: "export.image_saved_message", comment: "Chart image exported successfully"))
+                            showSuccess(
+                                String(
+                                    localized: "export.image_saved_message",
+                                    comment: "Chart image exported successfully"))
                         }
                     }
                 } catch {
                     await MainActor.run {
-                        showError(String(format: String(localized: "export.failed.message", comment: "Export failed error"), error.localizedDescription))
+                        showError(
+                            String(
+                                format: String(localized: "export.failed.message", comment: "Export failed error"),
+                                error.localizedDescription))
                     }
                 }
             }

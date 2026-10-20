@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -9,7 +10,8 @@ extension NetworkDiagnosticsTests {
     @Test("public app configurations use the same local-network privacy copy")
     func localNetworkUsageDescriptionIsUnifiedAcrossPublicAppConfigurations() throws {
         let descriptions = try appLocalNetworkUsageDescriptions()
-        let expectedDescription = "WiFi Lens uses local networking when you enable its MCP server and when Network Self-Check tests reachability of your configured network proxy. These checks do not collect or transmit your Wi-Fi scan data."
+        let expectedDescription =
+            "WiFi Lens uses local networking when you enable its MCP server and when Network Self-Check tests reachability of your configured network proxy. These checks do not collect or transmit your Wi-Fi scan data."
 
         #expect(descriptions.count == 2)
         #expect(Set(descriptions.map(\.baseConfiguration)) == ["OSS.xcconfig"])
@@ -21,7 +23,8 @@ extension NetworkDiagnosticsTests {
     @Test("production checks run path DNS HTTPS and proxy in dependency order")
     @MainActor
     func productionCheckOrder() {
-        #expect(NetworkDiagnosticsViewModel().checkIDs == [.path, .gatewayReachability, .dns, .internet, .proxy, .ipv6])
+        #expect(
+            NetworkDiagnosticsViewModel().checkIDs == [.path, .gatewayReachability, .dns, .internet, .proxy, .ipv6])
         #expect(NetworkDiagnosticCheckID.allCases == [.path, .gatewayReachability, .dns, .internet, .ipv6, .proxy])
         #expect(NetworkDiagnosticCheckID.path != .internet)
         #expect(Set(NetworkDiagnosticCheckID.allCases).count == 6)

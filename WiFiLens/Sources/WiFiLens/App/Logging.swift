@@ -1,7 +1,7 @@
+import AppKit
 import Foundation
 import Logging
 import OSLog
-import AppKit
 import WiFiLensCore
 
 // MARK: - AppLogger
@@ -22,24 +22,24 @@ enum AppLogger {
             // - Release builds: OSLog and file stay at .info; the console
             //   handler is compiled out entirely, so behavior is unchanged.
             #if DEBUG
-            var console = ConsoleLogHandler(label: label)
-            console.logLevel = .trace
-            handlers.append(console)
+                var console = ConsoleLogHandler(label: label)
+                console.logLevel = .trace
+                handlers.append(console)
             #endif
 
             var os = OSLogHandler(label: label)
             #if DEBUG
-            os.logLevel = .debug
+                os.logLevel = .debug
             #else
-            os.logLevel = .info
+                os.logLevel = .info
             #endif
             handlers.append(os)
 
             #if DEBUG
-            var file = FileLogHandler(label: label)
-            file.logLevel = .debug
+                var file = FileLogHandler(label: label)
+                file.logLevel = .debug
             #else
-            let file = FileLogHandler(label: label)
+                let file = FileLogHandler(label: label)
             #endif
             handlers.append(file)
 
@@ -49,19 +49,19 @@ enum AppLogger {
 
     // MARK: Categories
 
-    static let general    = Logging.Logger(label: "general")
-    static let scanner    = Logging.Logger(label: "scanner")
-    static let network    = Logging.Logger(label: "network")
-    static let ui         = Logging.Logger(label: "ui")
-#if OSS
-    static let sparkle    = Logging.Logger(label: "sparkle")
-#endif
-    static let mcp        = Logging.Logger(label: "mcp")
+    static let general = Logging.Logger(label: "general")
+    static let scanner = Logging.Logger(label: "scanner")
+    static let network = Logging.Logger(label: "network")
+    static let ui = Logging.Logger(label: "ui")
+    #if OSS
+        static let sparkle = Logging.Logger(label: "sparkle")
+    #endif
+    static let mcp = Logging.Logger(label: "mcp")
     static let throughput = Logging.Logger(label: "throughput")
-    static let location   = Logging.Logger(label: "location")
-    static let ble        = Logging.Logger(label: "ble")
-    static let guidance   = Logging.Logger(label: "guidance")
-    static let apRadar    = Logging.Logger(label: "apRadar")
+    static let location = Logging.Logger(label: "location")
+    static let ble = Logging.Logger(label: "ble")
+    static let guidance = Logging.Logger(label: "guidance")
+    static let apRadar = Logging.Logger(label: "apRadar")
 
     /// Backward-compatible alias for `AppLogger.app` call sites.
     static let app = general
@@ -134,12 +134,12 @@ private struct OSLogHandler: LogHandler {
     func log(event: LogEvent) {
         let logger = os.Logger(subsystem: Self.subsystem, category: label)
         switch event.level {
-        case .trace:    logger.trace("\(event.message)")
-        case .debug:    logger.debug("\(event.message)")
-        case .info:     logger.info("\(event.message)")
-        case .notice:   logger.notice("\(event.message)")
-        case .warning:  logger.warning("\(event.message)")
-        case .error:    logger.error("\(event.message)")
+        case .trace: logger.trace("\(event.message)")
+        case .debug: logger.debug("\(event.message)")
+        case .info: logger.info("\(event.message)")
+        case .notice: logger.notice("\(event.message)")
+        case .warning: logger.warning("\(event.message)")
+        case .error: logger.error("\(event.message)")
         case .critical: logger.fault("\(event.message)")
         }
     }
@@ -250,8 +250,9 @@ final class LogFileWriter: @unchecked Sendable {
             try? FileManager.default.removeItem(at: next)
             try? FileManager.default.moveItem(at: old, to: next)
         }
-        try? FileManager.default.moveItem(at: base.appendingPathExtension("log"),
-                                           to: base.appendingPathExtension("1.log"))
+        try? FileManager.default.moveItem(
+            at: base.appendingPathExtension("log"),
+            to: base.appendingPathExtension("1.log"))
         try? FileManager.default.removeItem(at: base.appendingPathExtension("\(maxFiles + 1).log"))
 
         let current = base.appendingPathExtension("log")
@@ -277,15 +278,15 @@ private let _fileLineFormatter: DateFormatter = {
 
 // MARK: - Level Short Descriptions
 
-private extension Logging.Logger.Level {
-    var short: String {
+extension Logging.Logger.Level {
+    fileprivate var short: String {
         switch self {
-        case .trace:    "TRC"
-        case .debug:    "DBG"
-        case .info:     "INF"
-        case .notice:   "NTC"
-        case .warning:  "WRN"
-        case .error:    "ERR"
+        case .trace: "TRC"
+        case .debug: "DBG"
+        case .info: "INF"
+        case .notice: "NTC"
+        case .warning: "WRN"
+        case .error: "ERR"
         case .critical: "CRT"
         }
     }

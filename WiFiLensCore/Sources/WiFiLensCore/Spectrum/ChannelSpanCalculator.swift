@@ -1,7 +1,5 @@
 import Foundation
 
-import Foundation
-
 /// Exact port of `series.py` channel span calculation logic.
 public enum ChannelSpanCalculator {
 
@@ -53,10 +51,10 @@ public enum ChannelSpanCalculator {
         if band == .band5GHz {
             if widthMHz == 40 {
                 switch primaryChannel {
-                case 36...40:  return (34, 42)
-                case 44...48:  return (42, 50)
-                case 52...56:  return (50, 58)
-                case 60...64:  return (58, 66)
+                case 36...40: return (34, 42)
+                case 44...48: return (42, 50)
+                case 52...56: return (50, 58)
+                case 60...64: return (58, 66)
                 case 100...104: return (98, 106)
                 case 108...112: return (106, 114)
                 case 116...120: return (114, 122)
@@ -71,8 +69,8 @@ public enum ChannelSpanCalculator {
                 }
             } else if widthMHz == 80 {
                 switch primaryChannel {
-                case 36...48:   return (34, 50)
-                case 52...64:   return (50, 66)
+                case 36...48: return (34, 50)
+                case 52...64: return (50, 66)
                 case 100...112: return (98, 114)
                 case 116...128: return (114, 130)
                 case 132...144: return (130, 146)
@@ -82,7 +80,7 @@ public enum ChannelSpanCalculator {
                 }
             } else if widthMHz == 160 {
                 switch primaryChannel {
-                case 36...64:   return (34, 66)
+                case 36...64: return (34, 66)
                 case 100...128: return (98, 130)
                 // No 160 MHz block between 132-144
                 case 149...177: return (147, 179)

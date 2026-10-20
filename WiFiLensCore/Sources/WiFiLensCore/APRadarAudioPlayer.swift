@@ -220,8 +220,8 @@ enum APRadarSoundSynthesizer {
         appendUInt32(36 + UInt32(dataSize), to: &data)
         data.append(contentsOf: Array("WAVE".utf8))
         data.append(contentsOf: Array("fmt ".utf8))
-        appendUInt32(16, to: &data) // fmt chunk size
-        appendUInt16(1, to: &data) // PCM
+        appendUInt32(16, to: &data)  // fmt chunk size
+        appendUInt16(1, to: &data)  // PCM
         appendUInt16(UInt16(channelCount), to: &data)
         appendUInt32(UInt32(sampleRate), to: &data)
         appendUInt32(UInt32(byteRate), to: &data)

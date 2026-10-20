@@ -79,7 +79,10 @@ struct APFilterQueryParser {
                 default:
                     if ch.isLetter || ch.isNumber || ch == "." || ch == "_" || ch == "-" {
                         let start = i
-                        while i < input.endIndex && (input[i].isLetter || input[i].isNumber || input[i] == "." || input[i] == "_" || input[i] == "-") {
+                        while i < input.endIndex
+                            && (input[i].isLetter || input[i].isNumber || input[i] == "." || input[i] == "_"
+                                || input[i] == "-")
+                        {
                             i = input.index(after: i)
                         }
                         let word = String(input[start..<i])

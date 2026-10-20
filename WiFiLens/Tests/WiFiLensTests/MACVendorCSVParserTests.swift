@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -111,7 +112,8 @@ struct MACVendorCSVParserTests {
         inputs[0] = MACVendorRegistryInput(
             displayName: "large.csv",
             data: Data(
-                "Registry,Assignment,Organization Name\nMA-L,001122,First\nMA-L,001122,Second\nMA-L,001123,Stable\n".utf8
+                "Registry,Assignment,Organization Name\nMA-L,001122,First\nMA-L,001122,Second\nMA-L,001123,Stable\n"
+                    .utf8
             )
         )
 
@@ -139,7 +141,8 @@ struct MACVendorCSVParserTests {
         inputs[0] = MACVendorRegistryInput(
             displayName: "oui.csv",
             data: Data(
-                "Registry,Assignment,Organization Name,Organization Address\nMA-L,48BCA6,\"\u{200B}ASUNG TECHNO CO.,Ltd\",\"\u{200C}Room 1\"\n".utf8
+                "Registry,Assignment,Organization Name,Organization Address\nMA-L,48BCA6,\"\u{200B}ASUNG TECHNO CO.,Ltd\",\"\u{200C}Room 1\"\n"
+                    .utf8
             )
         )
 
@@ -149,9 +152,10 @@ struct MACVendorCSVParserTests {
             createdAt: .distantPast
         )
 
-        #expect(database.entries.contains {
-            $0.prefix == "48BCA6" && $0.organization == "ASUNG TECHNO CO.,Ltd"
-        })
+        #expect(
+            database.entries.contains {
+                $0.prefix == "48BCA6" && $0.organization == "ASUNG TECHNO CO.,Ltd"
+            })
     }
 
     @Test func rejectsOversizedInputBeforeParsing() {
@@ -295,7 +299,8 @@ struct MACVendorCSVParserTests {
 
     @Test func rejectsRowsWithMoreThan16Fields() {
         var inputs = completeInputs()
-        let header = (["Registry", "Assignment", "Organization Name"]
+        let header =
+            (["Registry", "Assignment", "Organization Name"]
             + Array(repeating: "Unused", count: 14)).joined(separator: ",")
         let csv = "\(header)\nMA-L,001122,Example\n"
         inputs[0] = MACVendorRegistryInput(displayName: "large.csv", data: Data(csv.utf8))
@@ -308,7 +313,8 @@ struct MACVendorCSVParserTests {
     @Test func rejectsMoreThan1000000Fields() {
         var inputs = completeInputs()
         let empty16FieldRow = String(repeating: ",", count: 15)
-        let csv = "Registry,Assignment,Organization Name\n"
+        let csv =
+            "Registry,Assignment,Organization Name\n"
             + String(repeating: "\(empty16FieldRow)\n", count: 62_500)
             + "MA-L,001122,Example"
         inputs[0] = MACVendorRegistryInput(displayName: "large.csv", data: Data(csv.utf8))
@@ -320,7 +326,8 @@ struct MACVendorCSVParserTests {
 
     @Test func acceptsRowsWithExactly16Fields() throws {
         var inputs = completeInputs()
-        let header = (["Registry", "Assignment", "Organization Name"]
+        let header =
+            (["Registry", "Assignment", "Organization Name"]
             + Array(repeating: "Unused", count: 13)).joined(separator: ",")
         let row = "MA-L,001122,Example" + String(repeating: ",", count: 13)
         inputs[0] = MACVendorRegistryInput(
@@ -334,11 +341,13 @@ struct MACVendorCSVParserTests {
 
     @Test func acceptsExactly1000000Fields() throws {
         var inputs = completeInputs()
-        let header = (["Registry", "Assignment", "Organization Name"]
+        let header =
+            (["Registry", "Assignment", "Organization Name"]
             + Array(repeating: "Unused", count: 13)).joined(separator: ",")
         let empty16FieldRow = String(repeating: ",", count: 15)
         let valid16FieldRow = "MA-L,001122,Example" + String(repeating: ",", count: 13)
-        let csv = "\(header)\n"
+        let csv =
+            "\(header)\n"
             + String(repeating: "\(empty16FieldRow)\n", count: 62_498)
             + valid16FieldRow
         inputs[0] = MACVendorRegistryInput(displayName: "large.csv", data: Data(csv.utf8))
@@ -350,7 +359,8 @@ struct MACVendorCSVParserTests {
     @Test func acceptsExactly250000Rows() throws {
         var inputs = completeInputs()
         let emptyRow = ""
-        let csv = "Registry,Assignment,Organization Name\n"
+        let csv =
+            "Registry,Assignment,Organization Name\n"
             + String(repeating: "\(emptyRow)\n", count: 249_998)
             + "MA-L,001122,Example"
         inputs[0] = MACVendorRegistryInput(displayName: "large.csv", data: Data(csv.utf8))
@@ -391,16 +401,18 @@ struct MACVendorCSVParserTests {
         #expect(automatic.registries.map(\.registry) == manual.registries.map(\.registry))
         #expect(automatic.registries.map(\.validRecordCount) == manual.registries.map(\.validRecordCount))
         #expect(automatic.registries.map(\.sha256) == manual.registries.map(\.sha256))
-        #expect(automatic.registries.allSatisfy { metadata in
-            metadata.sha256.count == 64
-                && metadata.sha256.allSatisfy { "0123456789abcdef".contains($0) }
-        })
+        #expect(
+            automatic.registries.allSatisfy { metadata in
+                metadata.sha256.count == 64
+                    && metadata.sha256.allSatisfy { "0123456789abcdef".contains($0) }
+            })
         #expect(automatic.registries.allSatisfy { $0.sourceURL == $0.registry.downloadURL })
         #expect(manual.registries.allSatisfy { $0.sourceURL == nil })
     }
 
     @Test func parsesCurrentIEEERegistriesWhenFixtureDirectoryIsProvided() throws {
-        let directory = ProcessInfo.processInfo.environment["WIFI_LENS_IEEE_REGISTRY_DIR"]
+        let directory =
+            ProcessInfo.processInfo.environment["WIFI_LENS_IEEE_REGISTRY_DIR"]
             ?? "/private/tmp/wifi-lens-ieee-current"
         guard FileManager.default.fileExists(atPath: directory) else {
             return
@@ -422,12 +434,14 @@ struct MACVendorCSVParserTests {
         )
 
         #expect(database.registries.count == MACVendorRegistry.allCases.count)
-        #expect(database.registries.allSatisfy { metadata in
-            metadata.validRecordCount >= (MACVendorCSVParser.productionMinimums[metadata.registry] ?? 0)
-        })
-        #expect(database.entries.contains {
-            $0.prefix == "48BCA6" && $0.organization == "ASUNG TECHNO CO.,Ltd"
-        })
+        #expect(
+            database.registries.allSatisfy { metadata in
+                metadata.validRecordCount >= (MACVendorCSVParser.productionMinimums[metadata.registry] ?? 0)
+            })
+        #expect(
+            database.entries.contains {
+                $0.prefix == "48BCA6" && $0.organization == "ASUNG TECHNO CO.,Ltd"
+            })
     }
 
     @Test func cancellationBeforeValidationIsPreserved() async {

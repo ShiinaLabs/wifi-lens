@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 import WiFiLensCore
 
 struct GuidanceHostWindowKey: EnvironmentKey {
@@ -70,7 +70,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
         self.hostWindow = hostWindow
         self.customSkeleton = customSkeleton
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -81,7 +81,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
                     startPoint: .top, endPoint: .bottom
                 )
                 .ignoresSafeArea()
-                
+
                 VStack(spacing: 18) {
                     customSkeleton()
                         .accessibilityHidden(true)
@@ -92,19 +92,19 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
                         Text(featureName)
                             .font(.title2)
                             .fontWeight(.semibold)
-                        
+
                         Text(featureDescription)
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
-                    
+
                     HStack(spacing: 6) {
                         Text("PRO")
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                        
+
                         Image(systemName: "lock.fill")
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.8))
@@ -118,7 +118,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
                         )
                     )
                     .clipShape(Capsule())
-                    
+
                     Button {
                         openAppStore()
                     } label: {
@@ -137,7 +137,11 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(String(format: String(localized: "pro.accessibility.feature_fmt", comment: "Pro feature accessibility label"), featureName))
+        .accessibilityLabel(
+            String(
+                format: String(localized: "pro.accessibility.feature_fmt", comment: "Pro feature accessibility label"),
+                featureName)
+        )
         .task(id: scenePhase) {
             guard let interestCategory else { return }
             var visibleSeconds = 0
@@ -154,7 +158,7 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
             OSSEditionAssembly.guidanceCoordinator.recordProPreviewVisit(interestCategory)
         }
     }
-    
+
     private func openAppStore() {
         guard let url = ExternalLinks.url(for: campaign), NSWorkspace.shared.open(url) else { return }
         OSSEditionAssembly.guidanceCoordinator.recordSuccessfulStoreOpenIfMarketingEnabled()
@@ -162,12 +166,13 @@ struct ProFeaturePlaceholderView<CustomSkeleton: View>: View {
 
     private var isPreviewActuallyVisible: Bool {
         guard scenePhase == .active,
-              NSApp.isActive,
-              let window = hostWindow,
-              window.isKeyWindow,
-              window.isVisible,
-              !window.isMiniaturized,
-              window.attachedSheet == nil else { return false }
+            NSApp.isActive,
+            let window = hostWindow,
+            window.isKeyWindow,
+            window.isVisible,
+            !window.isMiniaturized,
+            window.attachedSheet == nil
+        else { return false }
         return true
     }
 }
@@ -202,8 +207,10 @@ struct MenuBarFeaturePreviewRow: View {
                     .foregroundColor(.blue)
                     .frame(width: 20)
 
-                Text(String(localized: "settings.features.menubar_label", comment: "Menu bar icon feature toggle label"))
-                    .font(.body)
+                Text(
+                    String(localized: "settings.features.menubar_label", comment: "Menu bar icon feature toggle label")
+                )
+                .font(.body)
 
                 Spacer()
 
@@ -214,9 +221,12 @@ struct MenuBarFeaturePreviewRow: View {
                 ProBadge()
             }
 
-            Text(String(localized: "settings.features.menubar_description", comment: "Description of menu bar icon feature"))
-                .font(.callout)
-                .foregroundColor(.secondary)
+            Text(
+                String(
+                    localized: "settings.features.menubar_description", comment: "Description of menu bar icon feature")
+            )
+            .font(.callout)
+            .foregroundColor(.secondary)
 
             Button {
                 guard let url = ExternalLinks.url(for: .appStore), NSWorkspace.shared.open(url) else { return }
@@ -237,11 +247,12 @@ struct MenuBarFeaturePreviewRow: View {
             var visibleSeconds = 0
             while visibleSeconds < 5 && !Task.isCancelled {
                 guard scenePhase == .active,
-                      NSApp.isActive,
-                      hostWindow.isKeyWindow,
-                      hostWindow.isVisible,
-                      !hostWindow.isMiniaturized,
-                      hostWindow.attachedSheet == nil else {
+                    NSApp.isActive,
+                    hostWindow.isKeyWindow,
+                    hostWindow.isVisible,
+                    !hostWindow.isMiniaturized,
+                    hostWindow.attachedSheet == nil
+                else {
                     visibleSeconds = 0
                     try? await Task.sleep(for: .seconds(1))
                     continue
@@ -339,33 +350,33 @@ struct TimelineSkeletonView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-            VStack(alignment: .leading, spacing: 0) {
-                // Section 1 header
-                sectionHeader
-                
-                // Section 1 rows
-                timelineRow(titleWidth: 0.65, subtitleWidth: 0.48, markerOpacity: 0.30)
-                timelineRow(titleWidth: 0.55, subtitleWidth: 0.40, markerOpacity: 0.22, showBadge: true)
-                
-                Spacer().frame(height: 12)
+        VStack(alignment: .leading, spacing: 0) {
+            // Section 1 header
+            sectionHeader
 
-                // Section 2 header
-                sectionHeader
-                
-                // Section 2 rows
-                timelineRow(titleWidth: 0.70, subtitleWidth: 0.52, markerOpacity: 0.18)
-                timelineRow(titleWidth: 0.60, subtitleWidth: 0.44, markerOpacity: 0.30)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.primary.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-                    )
-            )
+            // Section 1 rows
+            timelineRow(titleWidth: 0.65, subtitleWidth: 0.48, markerOpacity: 0.30)
+            timelineRow(titleWidth: 0.55, subtitleWidth: 0.40, markerOpacity: 0.22, showBadge: true)
+
+            Spacer().frame(height: 12)
+
+            // Section 2 header
+            sectionHeader
+
+            // Section 2 rows
+            timelineRow(titleWidth: 0.70, subtitleWidth: 0.52, markerOpacity: 0.18)
+            timelineRow(titleWidth: 0.60, subtitleWidth: 0.44, markerOpacity: 0.30)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.primary.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                )
+        )
     }
 
     private var sectionHeader: some View {
@@ -597,6 +608,159 @@ struct InsightsSkeletonView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(height: height)
+    }
+}
+
+/// Shared chrome for the invitation skeletons, so each placeholder draws the same
+/// silhouette vocabulary rather than restating opacities and corner radii.
+private enum ProSkeletonChrome {
+    /// Ratio-based line, matching `WiFiCallingSkeletonView`: the silhouette keeps its
+    /// proportions at any width instead of pinning to point sizes.
+    static func line(_ opacity: Double, widthRatio: CGFloat, height: CGFloat = 8) -> some View {
+        GeometryReader { geometry in
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.primary.opacity(opacity))
+                .frame(width: geometry.size.width * widthRatio, height: height)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(height: height)
+    }
+
+    static var card: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color.primary.opacity(0.04))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
+    }
+}
+
+/// Silhouette of the reliability chart plus its record list. Full-width stacked cards,
+/// matching the Wi-Fi Calling placeholder's size and construction.
+struct NetworkExperienceSkeletonView: View {
+    private static let barRatios: [CGFloat] = [0.42, 0.68, 0.30, 0.80, 0.55, 0.72, 0.36, 0.62]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            chartCard
+            recordsCard
+        }
+    }
+
+    private var chartCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ProSkeletonChrome.line(0.26, widthRatio: 0.30, height: 10)
+
+            HStack(alignment: .bottom, spacing: 6) {
+                ForEach(Array(Self.barRatios.enumerated()), id: \.offset) { _, ratio in
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.primary.opacity(0.18))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58 * ratio)
+                }
+            }
+            .frame(height: 58, alignment: .bottom)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
+    }
+
+    private var recordsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ProSkeletonChrome.line(0.26, widthRatio: 0.26, height: 10)
+            recordRow(opacity: 0.24)
+            recordRow(opacity: 0.14)
+            recordRow(opacity: 0.14)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
+    }
+
+    private func recordRow(opacity: Double) -> some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(Color.primary.opacity(0.16))
+                .frame(width: 8, height: 8)
+            ProSkeletonChrome.line(opacity, widthRatio: 0.42)
+            Spacer(minLength: 8)
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.primary.opacity(0.10))
+                .frame(width: 42, height: 8)
+        }
+    }
+}
+
+/// Silhouette of the record list beside a selected record's report. Full-width stacked cards,
+/// matching the Wi-Fi Calling placeholder's size and construction.
+struct ProblemHistorySkeletonView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            overviewCard
+            recordsCard
+            reportCard
+        }
+    }
+
+    private var overviewCard: some View {
+        HStack(spacing: 10) {
+            Image(systemName: SidebarPage.problemHistory.icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(Color.primary.opacity(0.10)))
+
+            VStack(alignment: .leading, spacing: 6) {
+                ProSkeletonChrome.line(0.28, widthRatio: 0.30, height: 10)
+                ProSkeletonChrome.line(0.14, widthRatio: 0.56)
+            }
+
+            Spacer(minLength: 8)
+
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.primary.opacity(0.10))
+                .frame(width: 58, height: 22)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
+    }
+
+    private var recordsCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            recordRow(isSelected: true)
+            recordRow(isSelected: false)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
+    }
+
+    private func recordRow(isSelected: Bool) -> some View {
+        HStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.primary.opacity(isSelected ? 0.22 : 0.14))
+                .frame(width: 12, height: 12)
+            ProSkeletonChrome.line(isSelected ? 0.26 : 0.16, widthRatio: 0.40)
+            Spacer(minLength: 8)
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.primary.opacity(0.10))
+                .frame(width: 42, height: 8)
+        }
+    }
+
+    private var reportCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ProSkeletonChrome.line(0.28, widthRatio: 0.36, height: 11)
+            ProSkeletonChrome.line(0.16, widthRatio: 0.74)
+            ProSkeletonChrome.line(0.16, widthRatio: 0.62)
+            ProSkeletonChrome.line(0.14, widthRatio: 0.68)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
     }
 }
 

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -72,7 +73,9 @@ import Testing
         #expect(vm.state == .stopped)
         #expect(guidance.store.load().meaningfulCompletionCount == 0)
         #expect(guidance.events.filter { $0.name == "guidance.value_moment" }.count == 1)
-        #expect(guidance.events.filter { $0.name == "guidance.no_action" }.first?.suppressionReason == .roamingPolicyNotEnabled)
+        #expect(
+            guidance.events.filter { $0.name == "guidance.no_action" }.first?.suppressionReason
+                == .roamingPolicyNotEnabled)
     }
 
     @Test func powerOffInterruptionNeverRecordsRoamingMoment() async {
@@ -229,7 +232,8 @@ import Testing
         #expect(vm.segments[1].samples.last?.channel == nil)
         #expect(vm.segments[1].samples.last?.txRate == nil)
 
-        let recovered = verifiedStatus(at: start.addingTimeInterval(2), bssid: "AA:00:00:00:00:03", rssi: -60, channel: 44)
+        let recovered = verifiedStatus(
+            at: start.addingTimeInterval(2), bssid: "AA:00:00:00:00:03", rssi: -60, channel: 44)
         vm.recordProbe(recovered)
         #expect(vm.transitions.count == 2)
         #expect(vm.transitions[1].rssiBefore == nil)
@@ -260,9 +264,10 @@ import Testing
 
     @Test("A probe released after stopping cannot append a roaming sample")
     func delayedProbeCannotMutateStoppedRun() async {
-        let provider = SuspendedRoamingProbeProvider(result: verifiedStatus(
-            at: Date(timeIntervalSince1970: 1_800_000_400), bssid: "AA:00:00:00:00:01"
-        ))
+        let provider = SuspendedRoamingProbeProvider(
+            result: verifiedStatus(
+                at: Date(timeIntervalSince1970: 1_800_000_400), bssid: "AA:00:00:00:00:01"
+            ))
         let vm = RoamingTestViewModel(roamingProvider: provider)
         vm.state = .running
 
@@ -365,15 +370,16 @@ private actor DelayedStartRoamingProvider: RoamingProbeProviding {
     }
 
     private func status(bssid: String) -> WiFiCurrentStatus {
-        verifiedRoamingStatus(from: WiFiCurrentStatus(
-            timestamp: Date(),
-            ssid: "TestNet",
-            bssid: bssid,
-            channel: 36,
-            rssi: -50,
-            isConnected: true,
-            isWiFiPowerOn: true
-        ))
+        verifiedRoamingStatus(
+            from: WiFiCurrentStatus(
+                timestamp: Date(),
+                ssid: "TestNet",
+                bssid: bssid,
+                channel: 36,
+                rssi: -50,
+                isConnected: true,
+                isWiFiPowerOn: true
+            ))
     }
 }
 
@@ -395,7 +401,8 @@ private func verifiedRoamingStatus(
         interfaceIndex: 4,
         radioPowerOnRaw: true
     )
-    let assessment = WiFiLinkInterpreter.evaluate(evidence, expectedCycleID: cycleID, expectedCapturedAt: original.timestamp)
+    let assessment = WiFiLinkInterpreter.evaluate(
+        evidence, expectedCycleID: cycleID, expectedCapturedAt: original.timestamp)
     return WiFiCurrentStatus(
         timestamp: original.timestamp,
         interfaceSnapshotCycleID: cycleID,
@@ -406,7 +413,7 @@ private func verifiedRoamingStatus(
         channel: original.channel,
         rssi: original.rssi,
         txRate: original.txRate,
-            routerIP: original.routerIP,
+        routerIP: original.routerIP,
         isConnected: true,
         isWiFiPowerOn: true,
         linkEvidence: evidence,
@@ -424,17 +431,18 @@ private func verifiedStatus(
     channel: Int? = 6,
     txRate: Double? = 200
 ) -> WiFiCurrentStatus {
-    verifiedRoamingStatus(from: WiFiCurrentStatus(
-        timestamp: timestamp,
-        ssid: "TestNet",
-        bssid: bssid,
-        channel: channel,
-        rssi: rssi,
-        txRate: txRate,
-        routerIP: routerIP,
-        isConnected: true,
-        isWiFiPowerOn: true
-    ), metricsAttribution: metricsAttribution)
+    verifiedRoamingStatus(
+        from: WiFiCurrentStatus(
+            timestamp: timestamp,
+            ssid: "TestNet",
+            bssid: bssid,
+            channel: channel,
+            rssi: rssi,
+            txRate: txRate,
+            routerIP: routerIP,
+            isConnected: true,
+            isWiFiPowerOn: true
+        ), metricsAttribution: metricsAttribution)
 }
 
 private actor SequenceRoamingProbeProvider: RoamingProbeProviding {
@@ -445,7 +453,9 @@ private actor SequenceRoamingProbeProvider: RoamingProbeProviding {
     }
 
     func fetchCurrentProbe() async -> WiFiCurrentStatus {
-        guard !statuses.isEmpty else { return WiFiCurrentStatus(timestamp: Date(), isConnected: false, isWiFiPowerOn: false) }
+        guard !statuses.isEmpty else {
+            return WiFiCurrentStatus(timestamp: Date(), isConnected: false, isWiFiPowerOn: false)
+        }
         return statuses.removeFirst()
     }
 }

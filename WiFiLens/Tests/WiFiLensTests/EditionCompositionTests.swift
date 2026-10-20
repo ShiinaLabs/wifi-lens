@@ -1,7 +1,7 @@
-@testable import WiFiLensCore
-
 import AppKit
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 struct EditionCompositionTests {
@@ -118,12 +118,13 @@ struct EditionCompositionTests {
             defer: false
         )
         let originalScene = MainWindowSceneState()
-        #expect(lifecycle.register(
-            window,
-            sceneState: originalScene,
-            registerEdition: { true },
-            rollbackEdition: {}
-        ) == .registered)
+        #expect(
+            lifecycle.register(
+                window,
+                sceneState: originalScene,
+                registerEdition: { true },
+                rollbackEdition: {}
+            ) == .registered)
 
         NotificationCenter.default.post(name: NSWindow.willCloseNotification, object: window)
         lifecycle.requestMainWindow(route: .timeline)
@@ -137,12 +138,13 @@ struct EditionCompositionTests {
             defer: false
         )
         let replacementScene = MainWindowSceneState()
-        #expect(lifecycle.register(
-            replacementWindow,
-            sceneState: replacementScene,
-            registerEdition: { true },
-            rollbackEdition: {}
-        ) == .registered)
+        #expect(
+            lifecycle.register(
+                replacementWindow,
+                sceneState: replacementScene,
+                registerEdition: { true },
+                rollbackEdition: {}
+            ) == .registered)
         #expect(replacementScene.selectedPage == .timeline)
     }
 
@@ -278,7 +280,7 @@ struct EditionCompositionTests {
     @MainActor
     func ossTimelineContributionIsLockedPreview() {
         #expect(EditionAssemblyProvider.configuration.timelineToolbarDescriptor == nil)
-        #expect(EditionAssemblyProvider.configuration.isTimelineLockedPreview)
+        #expect(EditionAssemblyProvider.configuration.analysisSidebarIsLockedPreview)
     }
 
     @Test("OSS recording segment remains locked")
@@ -560,7 +562,8 @@ private func yieldDroppedBluetoothState(
     expected: BLEBluetoothState
 ) -> Bool {
     guard case .dropped(let event) = result,
-          case .bluetoothStateChanged(let state) = event else {
+        case .bluetoothStateChanged(let state) = event
+    else {
         return false
     }
     return isBluetoothState(state, expected)
@@ -569,11 +572,11 @@ private func yieldDroppedBluetoothState(
 private func isBluetoothState(_ lhs: BLEBluetoothState, _ rhs: BLEBluetoothState) -> Bool {
     switch (lhs, rhs) {
     case (.unknown, .unknown),
-         (.resetting, .resetting),
-         (.unsupported, .unsupported),
-         (.poweredOff, .poweredOff),
-         (.poweredOn, .poweredOn),
-         (.unauthorized, .unauthorized):
+        (.resetting, .resetting),
+        (.unsupported, .unsupported),
+        (.poweredOff, .poweredOff),
+        (.poweredOn, .poweredOn),
+        (.unauthorized, .unauthorized):
         true
     default:
         false

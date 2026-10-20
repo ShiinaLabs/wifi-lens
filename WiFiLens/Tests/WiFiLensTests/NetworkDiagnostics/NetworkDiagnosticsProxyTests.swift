@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -20,10 +21,11 @@ extension NetworkDiagnosticsTests {
             "SOCKSPort": 1080,
         ])
 
-        #expect(configuration.endpoints == [
-            ProxyEndpoint(host: "proxy.example", port: 8080),
-            ProxyEndpoint(host: "socks.example", port: 1080),
-        ])
+        #expect(
+            configuration.endpoints == [
+                ProxyEndpoint(host: "proxy.example", port: 8080),
+                ProxyEndpoint(host: "socks.example", port: 1080),
+            ])
         #expect(!configuration.hasInvalidExplicitProxy)
 
         let pacConfiguration = SystemProxyConfiguration(settings: [
@@ -40,22 +42,25 @@ extension NetworkDiagnosticsTests {
             proxyDictionary(type: kCFProxyTypeHTTP, host: "127.0.0.1", port: 7890),
             proxyDictionary(type: kCFProxyTypeNone),
         ])
-        #expect(staticCandidates == [
-            .http(.init(host: "127.0.0.1", port: 7890)),
-            .direct,
-        ])
+        #expect(
+            staticCandidates == [
+                .http(.init(host: "127.0.0.1", port: 7890)),
+                .direct,
+            ])
 
         let pacCandidates = SystemPACResolver.resolution(from: [
             proxyDictionary(type: kCFProxyTypeHTTP, host: "proxy.example", port: 8080),
             proxyDictionary(type: kCFProxyTypeNone),
         ])
-        #expect(pacCandidates == ProxyCandidateResolution(
-            candidates: [
-                .http(.init(host: "proxy.example", port: 8080)),
-                .direct,
-            ],
-            evidenceCodes: []
-        ))
+        #expect(
+            pacCandidates
+                == ProxyCandidateResolution(
+                    candidates: [
+                        .http(.init(host: "proxy.example", port: 8080)),
+                        .direct,
+                    ],
+                    evidenceCodes: []
+                ))
 
         let script = "function FindProxyForURL(url, host) { return 'DIRECT'; }"
         let dictionary: NSDictionary = [
@@ -63,13 +68,15 @@ extension NetworkDiagnosticsTests {
             kCFProxyAutoConfigurationJavaScriptKey as String: script,
         ]
         #expect(SystemProxyResolver.directive(from: dictionary) == .pacScript(script))
-        #expect(SystemProxyResolver.directive(from: proxyDictionary(
-            type: kCFProxyTypeHTTP,
-            host: " \n\t ",
-            port: 8080
-        )) == .unavailable("proxy-endpoint-invalid"))
+        #expect(
+            SystemProxyResolver.directive(
+                from: proxyDictionary(
+                    type: kCFProxyTypeHTTP,
+                    host: " \n\t ",
+                    port: 8080
+                )) == .unavailable("proxy-endpoint-invalid"))
         let directDictionary: NSDictionary = [
-            kCFProxyTypeKey as String: kCFProxyTypeNone,
+            kCFProxyTypeKey as String: kCFProxyTypeNone
         ]
         #expect(SystemProxyResolver.directive(from: directDictionary) == .direct)
     }
@@ -87,9 +94,10 @@ extension NetworkDiagnosticsTests {
         let resolution = await resolver.resolve(for: controlURL)
 
         #expect(resolution == ProxyCandidateResolution(candidates: [.direct], evidenceCodes: []))
-        #expect(await recorder.requests == [
-            .init(pacURL: pacURL, targetURL: controlURL, timeout: .milliseconds(25)),
-        ])
+        #expect(
+            await recorder.requests == [
+                .init(pacURL: pacURL, targetURL: controlURL, timeout: .milliseconds(25))
+            ])
     }
 
     @Test("inline PAC scripts execute at their ordered directive position")
@@ -226,10 +234,12 @@ extension NetworkDiagnosticsTests {
         let result = await check.run()
 
         #expect(result.status == .normal)
-        #expect(result.summary == String(
-            localized: "network_diagnostics.proxy.tunnel_routes.summary",
-            comment: "Network self-check tunneled proxy route result summary"
-        ))
+        #expect(
+            result.summary
+                == String(
+                    localized: "network_diagnostics.proxy.tunnel_routes.summary",
+                    comment: "Network self-check tunneled proxy route result summary"
+                ))
         #expect(result.evidence.contains(.init(code: "proxy.http.route-type", value: "tunnel")))
         #expect(result.evidence.contains(.init(code: "proxy.https.route-type", value: "tunnel")))
         #expect(result.evidence.contains(.init(code: "proxy.http.tunnel-interface", value: "utun98")))
@@ -249,26 +259,35 @@ extension NetworkDiagnosticsTests {
         ).run()
 
         #expect(activeResult.status == .normal)
-        #expect(activeResult.summary == String(
-            localized: "network_diagnostics.proxy.tunnel_routes_active.summary",
-            comment: "Network self-check active tunnel interface proxy route result summary"
-        ))
+        #expect(
+            activeResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.tunnel_routes_active.summary",
+                    comment: "Network self-check active tunnel interface proxy route result summary"
+                ))
         #expect(activeResult.evidence.contains(.init(code: "proxy.http.route-type", value: "tunnel")))
-        #expect(activeResult.evidence.contains(.init(code: "proxy.http.tunnel-detection-source", value: "active-interface")))
-        #expect(activeResult.evidence.contains(.init(code: "proxy.https.tunnel-detection-source", value: "active-interface")))
+        #expect(
+            activeResult.evidence.contains(.init(code: "proxy.http.tunnel-detection-source", value: "active-interface"))
+        )
+        #expect(
+            activeResult.evidence.contains(
+                .init(code: "proxy.https.tunnel-detection-source", value: "active-interface")))
 
-        #expect(SystemProxyTunnelStateReader.candidateTunnelState(
-            pathRouted: "utun3",
-            activeIPv4Tunnels: ["utun98"]
-        ) == ProxyTunnelState(interface: "utun3", source: .nwpath))
-        #expect(SystemProxyTunnelStateReader.candidateTunnelState(
-            pathRouted: nil,
-            activeIPv4Tunnels: ["utun98"]
-        ) == ProxyTunnelState(interface: "utun98", source: .activeInterface))
-        #expect(SystemProxyTunnelStateReader.candidateTunnelState(
-            pathRouted: nil,
-            activeIPv4Tunnels: []
-        ) == nil)
+        #expect(
+            SystemProxyTunnelStateReader.candidateTunnelState(
+                pathRouted: "utun3",
+                activeIPv4Tunnels: ["utun98"]
+            ) == ProxyTunnelState(interface: "utun3", source: .nwpath))
+        #expect(
+            SystemProxyTunnelStateReader.candidateTunnelState(
+                pathRouted: nil,
+                activeIPv4Tunnels: ["utun98"]
+            ) == ProxyTunnelState(interface: "utun98", source: .activeInterface))
+        #expect(
+            SystemProxyTunnelStateReader.candidateTunnelState(
+                pathRouted: nil,
+                activeIPv4Tunnels: []
+            ) == nil)
     }
 
     @Test("tunnel path wait returns nil when the timeout fires before any path")
@@ -403,10 +422,11 @@ extension NetworkDiagnosticsTests {
         #expect(result.status == .proxied)
         #expect(result.selectedCandidateIndex == 1)
         #expect(result.selectedProxy == secondProxy)
-        #expect(await connector.endpoints == [
-            .init(host: "first.example", port: 8080),
-            .init(host: "second.example", port: 8081),
-        ])
+        #expect(
+            await connector.endpoints == [
+                .init(host: "first.example", port: 8080),
+                .init(host: "second.example", port: 8081),
+            ])
         #expect(await connector.timeouts == [.seconds(1), .milliseconds(800)])
         #expect(await egressLoader.timeouts == [.milliseconds(750), .milliseconds(700)])
     }
@@ -475,10 +495,12 @@ extension NetworkDiagnosticsTests {
         #expect(resolvedURLs.count == 2)
         #expect(Set(resolvedURLs) == Set([httpURL.absoluteString, httpsURL.absoluteString]))
         #expect(result.status == .indeterminate)
-        #expect(result.summary == String(
-            localized: "network_diagnostics.proxy.mixed_routing.summary",
-            comment: "Network self-check mixed target proxy routing result summary"
-        ))
+        #expect(
+            result.summary
+                == String(
+                    localized: "network_diagnostics.proxy.mixed_routing.summary",
+                    comment: "Network self-check mixed target proxy routing result summary"
+                ))
     }
 
     @Test("proxy target routes preserve direct, proxied, and unresolved outcome states")
@@ -497,19 +519,24 @@ extension NetworkDiagnosticsTests {
         ).run()
 
         #expect(result.status == .indeterminate)
-        #expect(result.summary == String(
-            localized: "network_diagnostics.proxy.direct_routes.summary",
-            comment: "Network self-check direct target routes result summary"
-        ))
-        #expect(result.summary != String(
-            localized: "network_diagnostics.proxy.disabled.summary",
-            comment: "Network self-check system proxy disabled result summary"
-        ))
-        #expect(Set(await recorder.urls) == Set([
-            "http://www.msftconnecttest.com/connecttest.txt",
-            "https://www.apple.com/",
-        ]))
-
+        #expect(
+            result.summary
+                == String(
+                    localized: "network_diagnostics.proxy.direct_routes.summary",
+                    comment: "Network self-check direct target routes result summary"
+                ))
+        #expect(
+            result.summary
+                != String(
+                    localized: "network_diagnostics.proxy.disabled.summary",
+                    comment: "Network self-check system proxy disabled result summary"
+                ))
+        #expect(
+            Set(await recorder.urls)
+                == Set([
+                    "http://www.msftconnecttest.com/connecttest.txt",
+                    "https://www.apple.com/",
+                ]))
 
         let httpURL = URL(string: "http://www.msftconnecttest.com/connecttest.txt")!
         let httpsURL = URL(string: "https://www.apple.com/")!
@@ -533,10 +560,12 @@ extension NetworkDiagnosticsTests {
 
         #expect(proxiedResult.status == .normal)
         #expect(proxiedResult.proxyFacts == .init(http: .available, https: .available))
-        #expect(proxiedResult.summary == String(
-            localized: "network_diagnostics.proxy.routes_available.summary",
-            comment: "Network self-check proxy target routes available result summary"
-        ))
+        #expect(
+            proxiedResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.routes_available.summary",
+                    comment: "Network self-check proxy target routes available result summary"
+                ))
 
         let authenticatedResolver = RecordingProxyResolver(resolutions: [
             httpURL: .init(
@@ -554,20 +583,25 @@ extension NetworkDiagnosticsTests {
         ).run()
 
         #expect(authenticatedResult.status == .abnormal)
-        #expect(authenticatedResult.summary == String(
-            localized: "network_diagnostics.proxy.authentication_required.summary",
-            comment: "Network self-check proxy authentication required result summary"
-        ))
-        #expect(authenticatedResult.evidence.contains(.init(
-            code: "proxy.http.authentication-status",
-            value: "required"
-        )))
+        #expect(
+            authenticatedResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.authentication_required.summary",
+                    comment: "Network self-check proxy authentication required result summary"
+                ))
+        #expect(
+            authenticatedResult.evidence.contains(
+                .init(
+                    code: "proxy.http.authentication-status",
+                    value: "required"
+                )))
         #expect(authenticatedResult.evidence.contains(.init(code: "proxy.http.egress-status", value: "407")))
 
-        let unavailableResolver = RecordingProxyResolver(defaultResolution: .init(
-            candidates: [.http(.init(host: "stale.example", port: 8080))],
-            evidenceCodes: []
-        ))
+        let unavailableResolver = RecordingProxyResolver(
+            defaultResolution: .init(
+                candidates: [.http(.init(host: "stale.example", port: 8080))],
+                evidenceCodes: []
+            ))
 
         let unavailableResult = await SystemProxyCheck(
             resolver: unavailableResolver,
@@ -577,42 +611,55 @@ extension NetworkDiagnosticsTests {
         ).run()
 
         #expect(unavailableResult.status == .abnormal)
-        #expect(unavailableResult.summary == String(
-            localized: "network_diagnostics.proxy.route_unavailable.summary",
-            comment: "Network self-check proxy target route unavailable result summary"
-        ))
-        #expect(unavailableResult.evidence.contains(.init(
-            code: "proxy.http.endpoint-status",
-            value: "unavailable"
-        )))
-        #expect(unavailableResult.evidence.contains(.init(
-            code: "proxy.https.endpoint-status",
-            value: "unavailable"
-        )))
+        #expect(
+            unavailableResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.route_unavailable.summary",
+                    comment: "Network self-check proxy target route unavailable result summary"
+                ))
+        #expect(
+            unavailableResult.evidence.contains(
+                .init(
+                    code: "proxy.http.endpoint-status",
+                    value: "unavailable"
+                )))
+        #expect(
+            unavailableResult.evidence.contains(
+                .init(
+                    code: "proxy.https.endpoint-status",
+                    value: "unavailable"
+                )))
 
         let emptyResolutionResult = await SystemProxyCheck(
-            resolver: RecordingProxyResolver(defaultResolution: .init(
-                candidates: [],
-                evidenceCodes: ["resolution-empty"]
-            )),
+            resolver: RecordingProxyResolver(
+                defaultResolution: .init(
+                    candidates: [],
+                    evidenceCodes: ["resolution-empty"]
+                )),
             connector: StubProxyConnector(reachable: true),
             egressLoader: StubProxyEgressLoader(statusCode: 200),
             tunnelReader: StubProxyTunnelStateReader(interface: nil),
         ).run()
 
         #expect(emptyResolutionResult.status == .indeterminate)
-        #expect(emptyResolutionResult.summary == String(
-            localized: "network_diagnostics.proxy.unable_to_determine.summary",
-            comment: "Network self-check target proxy routing indeterminate result summary"
-        ))
-        #expect(emptyResolutionResult.evidence.contains(.init(
-            code: "proxy.http.resolution",
-            value: "resolution-empty"
-        )))
-        #expect(emptyResolutionResult.evidence.contains(.init(
-            code: "proxy.https.resolution",
-            value: "resolution-empty"
-        )))
+        #expect(
+            emptyResolutionResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.unable_to_determine.summary",
+                    comment: "Network self-check target proxy routing indeterminate result summary"
+                ))
+        #expect(
+            emptyResolutionResult.evidence.contains(
+                .init(
+                    code: "proxy.http.resolution",
+                    value: "resolution-empty"
+                )))
+        #expect(
+            emptyResolutionResult.evidence.contains(
+                .init(
+                    code: "proxy.https.resolution",
+                    value: "resolution-empty"
+                )))
 
         let pacURL = URL(string: "https://proxy.example/config.pac")!
         let pacTimeoutResult = await SystemProxyCheck(
@@ -626,10 +673,12 @@ extension NetworkDiagnosticsTests {
         ).run()
 
         #expect(pacTimeoutResult.status == .indeterminate)
-        #expect(pacTimeoutResult.summary == String(
-            localized: "network_diagnostics.proxy.unable_to_determine.summary",
-            comment: "Network self-check target proxy routing indeterminate result summary"
-        ))
+        #expect(
+            pacTimeoutResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.unable_to_determine.summary",
+                    comment: "Network self-check target proxy routing indeterminate result summary"
+                ))
         #expect(pacTimeoutResult.evidence.contains(.init(code: "proxy.http.resolution", value: "pac-timeout")))
         #expect(pacTimeoutResult.evidence.contains(.init(code: "proxy.https.resolution", value: "pac-timeout")))
     }
@@ -648,10 +697,12 @@ extension NetworkDiagnosticsTests {
         let endpointResult = await endpointCheck.run()
 
         #expect(endpointResult.status == .abnormal)
-        #expect(endpointResult.summary == String(
-            localized: "network_diagnostics.proxy.route_unavailable.summary",
-            comment: "Network self-check proxy target route unavailable result summary"
-        ))
+        #expect(
+            endpointResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.route_unavailable.summary",
+                    comment: "Network self-check proxy target route unavailable result summary"
+                ))
         #expect(endpointResult.evidence.contains(.init(code: "proxy.endpoint-unavailable", value: nil)))
         #expect(await egressRecorder.requests.isEmpty)
 
@@ -665,10 +716,12 @@ extension NetworkDiagnosticsTests {
         let authenticationResult = await authenticationCheck.run()
 
         #expect(authenticationResult.status == .abnormal)
-        #expect(authenticationResult.summary == String(
-            localized: "network_diagnostics.proxy.authentication_required.summary",
-            comment: "Network self-check proxy authentication required result summary"
-        ))
+        #expect(
+            authenticationResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.authentication_required.summary",
+                    comment: "Network self-check proxy authentication required result summary"
+                ))
         #expect(authenticationResult.evidence.contains(.init(code: "proxy.authentication-required", value: "407")))
         #expect(!authenticationResult.evidence.contains(where: { $0.code == "proxy.endpoint-unavailable" }))
 
@@ -718,18 +771,21 @@ extension NetworkDiagnosticsTests {
     @Test("HTTP forward HTTPS tunnel and SOCKS candidates use distinct transport configurations")
     func selectedProxyTransportConfigurationsPreserveSemantics() throws {
         let endpoint = ProxyEndpoint(host: "proxy.example", port: 8080)
-        let httpConfiguration = try #require(SystemProxyEgressLoader.configuration(
-            for: .http(endpoint),
-            timeout: .seconds(3)
-        ))
-        let httpsConfiguration = try #require(SystemProxyEgressLoader.configuration(
-            for: .https(endpoint),
-            timeout: .seconds(3)
-        ))
-        let socksConfiguration = try #require(SystemProxyEgressLoader.configuration(
-            for: .socks(endpoint),
-            timeout: .seconds(3)
-        ))
+        let httpConfiguration = try #require(
+            SystemProxyEgressLoader.configuration(
+                for: .http(endpoint),
+                timeout: .seconds(3)
+            ))
+        let httpsConfiguration = try #require(
+            SystemProxyEgressLoader.configuration(
+                for: .https(endpoint),
+                timeout: .seconds(3)
+            ))
+        let socksConfiguration = try #require(
+            SystemProxyEgressLoader.configuration(
+                for: .socks(endpoint),
+                timeout: .seconds(3)
+            ))
 
         let httpDictionary = try #require(httpConfiguration.connectionProxyDictionary)
         #expect((httpDictionary[kCFNetworkProxiesHTTPEnable as String] as? NSNumber)?.boolValue == true)
@@ -808,10 +864,12 @@ extension NetworkDiagnosticsTests {
         ).run()
 
         #expect(result.status == .abnormal)
-        #expect(result.summary == String(
-            localized: "network_diagnostics.proxy.authentication_required.summary",
-            comment: "Network self-check proxy authentication required result summary"
-        ))
+        #expect(
+            result.summary
+                == String(
+                    localized: "network_diagnostics.proxy.authentication_required.summary",
+                    comment: "Network self-check proxy authentication required result summary"
+                ))
         #expect(result.evidence.contains(.init(code: "proxy.http.authentication-status", value: "required")))
         #expect(result.evidence.contains(.init(code: "proxy.https.endpoint-status", value: "unavailable")))
 
@@ -824,10 +882,12 @@ extension NetworkDiagnosticsTests {
         ).run()
 
         #expect(egressResult.status == .abnormal)
-        #expect(egressResult.summary == String(
-            localized: "network_diagnostics.proxy.route_unavailable.summary",
-            comment: "Network self-check proxy target route unavailable result summary"
-        ))
+        #expect(
+            egressResult.summary
+                == String(
+                    localized: "network_diagnostics.proxy.route_unavailable.summary",
+                    comment: "Network self-check proxy target route unavailable result summary"
+                ))
         #expect(egressResult.evidence.contains(.init(code: "proxy.egress-unavailable", value: "-1005")))
     }
 
@@ -870,10 +930,12 @@ extension NetworkDiagnosticsTests {
 
         #expect(await resolver.urls.count <= 2)
         #expect(result.status == .indeterminate)
-        #expect(result.evidence.contains(.init(
-            code: "proxy.cancelled",
-            value: "after-http-resolution"
-        )))
+        #expect(
+            result.evidence.contains(
+                .init(
+                    code: "proxy.cancelled",
+                    value: "after-http-resolution"
+                )))
     }
 
     @Test("cancelled PAC resolution does not append later static candidates")
@@ -928,10 +990,12 @@ extension NetworkDiagnosticsTests {
 
         #expect(await connector.endpoints == [first])
         #expect(route.status == .indeterminate)
-        #expect(route.evidence.contains(.init(
-            code: "proxy.http.cancelled",
-            value: "endpoint"
-        )))
+        #expect(
+            route.evidence.contains(
+                .init(
+                    code: "proxy.http.cancelled",
+                    value: "endpoint"
+                )))
     }
 
     @Test("cancelling proxy egress stops connector and candidate fallback")
@@ -962,10 +1026,11 @@ extension NetworkDiagnosticsTests {
         #expect(await connector.endpoints == [first])
         #expect(await egress.invocationCount == 1)
         #expect(route.status == .indeterminate)
-        #expect(route.evidence.contains(.init(
-            code: "proxy.http.cancelled",
-            value: "egress"
-        )))
+        #expect(
+            route.evidence.contains(
+                .init(
+                    code: "proxy.http.cancelled",
+                    value: "egress"
+                )))
     }
 }
-

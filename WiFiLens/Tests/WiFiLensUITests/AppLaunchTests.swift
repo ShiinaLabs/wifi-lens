@@ -22,18 +22,21 @@ final class AppLaunchTests: XCTestCase {
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 15))
 
         let window = app.windows.firstMatch
-        XCTAssertTrue(window.waitForExistence(timeout: 10),
-                      "Expected at least one window.\n\(app.debugDescription)")
+        XCTAssertTrue(
+            window.waitForExistence(timeout: 10),
+            "Expected at least one window.\n\(app.debugDescription)")
 
         let sidebar = app.descendants(matching: .any)["sidebar-overview"]
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 5),
-                      "Sidebar should be visible at launch.\n\(app.debugDescription)")
+        XCTAssertTrue(
+            sidebar.waitForExistence(timeout: 5),
+            "Sidebar should be visible at launch.\n\(app.debugDescription)")
     }
 
     func testOnlySelectedPageIsExposedToAccessibility() throws {
         let overviewPage = app.descendants(matching: .any)["page-overview"]
-        XCTAssertTrue(overviewPage.waitForExistence(timeout: 5),
-                      "Overview page should be exposed at launch.\n\(app.debugDescription)")
+        XCTAssertTrue(
+            overviewPage.waitForExistence(timeout: 5),
+            "Overview page should be exposed at launch.\n\(app.debugDescription)")
 
         let hiddenPageIDs = [
             "page-spectrum",
@@ -44,8 +47,9 @@ final class AppLaunchTests: XCTestCase {
             "page-settings",
         ]
         for id in hiddenPageIDs {
-            XCTAssertFalse(app.descendants(matching: .any)[id].exists,
-                           "Hidden page '\(id)' must not remain in the accessibility tree")
+            XCTAssertFalse(
+                app.descendants(matching: .any)[id].exists,
+                "Hidden page '\(id)' must not remain in the accessibility tree")
         }
     }
 
@@ -73,16 +77,18 @@ final class AppLaunchTests: XCTestCase {
 
         let toolPages = ["sidebar-spectrum", "sidebar-channels", "sidebar-interfaces", "sidebar-roaming"]
         for id in toolPages {
-            XCTAssertTrue(app.descendants(matching: .any)[id].waitForExistence(timeout: 3),
-                          "Missing sidebar item: \(id)")
+            XCTAssertTrue(
+                app.descendants(matching: .any)[id].waitForExistence(timeout: 3),
+                "Missing sidebar item: \(id)")
         }
 
         XCTAssertTrue(app.descendants(matching: .any)["sidebar-bleScanner"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.descendants(matching: .any)["sidebar-settings"].waitForExistence(timeout: 3))
 
         for id in ["sidebar-spectrumDebugChart", "sidebar-debugChart", "sidebar-debugTimeline"] {
-            XCTAssertFalse(app.descendants(matching: .any)[id].exists,
-                            "Debug sidebar item should not be present: \(id)")
+            XCTAssertFalse(
+                app.descendants(matching: .any)[id].exists,
+                "Debug sidebar item should not be present: \(id)")
         }
     }
 }

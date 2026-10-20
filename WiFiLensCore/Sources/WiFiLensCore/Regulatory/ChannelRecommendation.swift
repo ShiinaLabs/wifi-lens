@@ -42,17 +42,20 @@ public struct ChannelRecommendation: Identifiable, Sendable {
 
         public var displayName: String {
             switch self {
-            case .recommended: String(localized: "channels.classification.recommended", comment: "Recommended channel classification")
-            case .advanced:    String(localized: "channels.classification.advanced", comment: "Advanced channel classification")
-            case .restricted:  String(localized: "channels.classification.restricted", comment: "Restricted channel classification")
+            case .recommended:
+                String(localized: "channels.classification.recommended", comment: "Recommended channel classification")
+            case .advanced:
+                String(localized: "channels.classification.advanced", comment: "Advanced channel classification")
+            case .restricted:
+                String(localized: "channels.classification.restricted", comment: "Restricted channel classification")
             }
         }
 
         public var order: Int {
             switch self {
             case .recommended: 2
-            case .advanced:    1
-            case .restricted:  0
+            case .advanced: 1
+            case .restricted: 0
             }
         }
     }
@@ -145,34 +148,58 @@ public enum ChannelRecommendationAvailability: String, Sendable {
     public var title: String {
         switch self {
         case .available:
-            String(localized: "channels.recommendation_status.available.title", comment: "Title when channel recommendations are available")
+            String(
+                localized: "channels.recommendation_status.available.title",
+                comment: "Title when channel recommendations are available")
         case .currentGoodEnough:
-            String(localized: "channels.recommendation_status.current_good_enough.title", comment: "Title when current channel is already good enough")
+            String(
+                localized: "channels.recommendation_status.current_good_enough.title",
+                comment: "Title when current channel is already good enough")
         case .targetUnknown:
-            String(localized: "channels.recommendation_status.target_unknown.title", comment: "Title when current AP identity is unavailable")
+            String(
+                localized: "channels.recommendation_status.target_unknown.title",
+                comment: "Title when current AP identity is unavailable")
         case .regulatoryFiltered:
-            String(localized: "channels.recommendation_status.regulatory_filtered.title", comment: "Title when candidate channels were filtered")
+            String(
+                localized: "channels.recommendation_status.regulatory_filtered.title",
+                comment: "Title when candidate channels were filtered")
         case .noSignificantImprovement:
-            String(localized: "channels.recommendation_status.no_significant_improvement.title", comment: "Title when no channel is meaningfully better")
+            String(
+                localized: "channels.recommendation_status.no_significant_improvement.title",
+                comment: "Title when no channel is meaningfully better")
         case .noData:
-            String(localized: "channels.recommendation_status.no_data.title", comment: "Title when no channel data is available")
+            String(
+                localized: "channels.recommendation_status.no_data.title",
+                comment: "Title when no channel data is available")
         }
     }
 
     public var message: String {
         switch self {
         case .available:
-            String(localized: "channels.recommendation_status.available.message", comment: "Message when channel recommendations are available")
+            String(
+                localized: "channels.recommendation_status.available.message",
+                comment: "Message when channel recommendations are available")
         case .currentGoodEnough:
-            String(localized: "channels.recommendation_status.current_good_enough.message", comment: "Message when current channel is already good enough")
+            String(
+                localized: "channels.recommendation_status.current_good_enough.message",
+                comment: "Message when current channel is already good enough")
         case .targetUnknown:
-            String(localized: "channels.recommendation_status.target_unknown.message", comment: "Message when current AP identity is unavailable")
+            String(
+                localized: "channels.recommendation_status.target_unknown.message",
+                comment: "Message when current AP identity is unavailable")
         case .regulatoryFiltered:
-            String(localized: "channels.recommendation_status.regulatory_filtered.message", comment: "Message when candidate channels were filtered")
+            String(
+                localized: "channels.recommendation_status.regulatory_filtered.message",
+                comment: "Message when candidate channels were filtered")
         case .noSignificantImprovement:
-            String(localized: "channels.recommendation_status.no_significant_improvement.message", comment: "Message when no channel is meaningfully better")
+            String(
+                localized: "channels.recommendation_status.no_significant_improvement.message",
+                comment: "Message when no channel is meaningfully better")
         case .noData:
-            String(localized: "channels.recommendation_status.no_data.message", comment: "Message when no channel data is available")
+            String(
+                localized: "channels.recommendation_status.no_data.message",
+                comment: "Message when no channel data is available")
         }
     }
 }

@@ -56,18 +56,19 @@ enum RecommendationReasonCalculator {
 
             // ── Band preference ──
             if ch.band != "24",
-               let band24Count = bandAPCounts["24"],
-               let bandCount = bandAPCounts[ch.band],
-               band24Count > bandCount {
+                let band24Count = bandAPCounts["24"],
+                let bandCount = bandAPCounts[ch.band],
+                band24Count > bandCount
+            {
                 reasons.append(.lessCrowdedBand)
             }
 
             // ── Regulatory caveats (from existing restrictionReasons codes) ──
             for restriction in ch.restrictionReasons {
                 switch restriction.code {
-                case "DFS":             reasons.append(.dfsRequired)
-                case "INDOOR_ONLY":     reasons.append(.indoorOnly)
-                case "CAC_REQUIRED":    reasons.append(.cacRequired)
+                case "DFS": reasons.append(.dfsRequired)
+                case "INDOOR_ONLY": reasons.append(.indoorOnly)
+                case "CAC_REQUIRED": reasons.append(.cacRequired)
                 case "RADAR_SENSITIVE": reasons.append(.radarSensitive)
                 default: break
                 }

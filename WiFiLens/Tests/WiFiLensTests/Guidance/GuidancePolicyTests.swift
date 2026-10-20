@@ -1,7 +1,7 @@
-@testable import WiFiLensCore
-
 import Foundation
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 struct GuidancePolicyTests {
@@ -67,7 +67,9 @@ struct GuidancePolicyTests {
             lastInvitationLaterDate: daysAgo(2),
             lastPurchaseExplorationDate: daysAgo(10)
         )
-        #expect(decide(for: .appReturnedAfterUse, state: state, config: invitationConfig()) == .none(.invitationRecentlyDeferred))
+        #expect(
+            decide(for: .appReturnedAfterUse, state: state, config: invitationConfig())
+                == .none(.invitationRecentlyDeferred))
     }
 
     @Test func purchaseExplorationEnablesOnlyTheThreeDayAcceleratedFollowUp() {
@@ -79,8 +81,12 @@ struct GuidancePolicyTests {
             lastAcceleratedFollowUpExplorationDate: daysAgo(3)
         )
         #expect(decide(for: .appReturnedAfterUse, state: due, config: invitationConfig()) == .showProInvitation)
-        #expect(decide(for: .appReturnedAfterUse, state: tooEarly, config: invitationConfig()) == .none(.invitationCooldown))
-        #expect(decide(for: .appReturnedAfterUse, state: alreadyUsed, config: invitationConfig()) == .none(.invitationCooldown))
+        #expect(
+            decide(for: .appReturnedAfterUse, state: tooEarly, config: invitationConfig()) == .none(.invitationCooldown)
+        )
+        #expect(
+            decide(for: .appReturnedAfterUse, state: alreadyUsed, config: invitationConfig())
+                == .none(.invitationCooldown))
     }
 
     @Test func acceleratedFollowUpIsLimitedToOncePerFourteenDays() {
@@ -90,7 +96,8 @@ struct GuidancePolicyTests {
             lastAcceleratedFollowUpDate: daysAgo(13),
             lastAcceleratedFollowUpExplorationDate: daysAgo(20)
         )
-        #expect(decide(for: .appReturnedAfterUse, state: state, config: invitationConfig()) == .none(.invitationCooldown))
+        #expect(
+            decide(for: .appReturnedAfterUse, state: state, config: invitationConfig()) == .none(.invitationCooldown))
     }
 
     @Test func purchaseExplorationExpiresAfterFourteenDays() {
@@ -103,7 +110,9 @@ struct GuidancePolicyTests {
     @Test func noMoreThanTwoInvitationsInAnySevenLocalDays() {
         let capped = invitationState(presentationDates: [daysAgo(0), daysAgo(4)])
         let eligible = invitationState(presentationDates: [daysAgo(0)])
-        #expect(decide(for: .diagnosticsCompleted, state: capped, config: invitationConfig()) == .none(.invitationWeeklyLimit))
+        #expect(
+            decide(for: .diagnosticsCompleted, state: capped, config: invitationConfig())
+                == .none(.invitationWeeklyLimit))
         #expect(decide(for: .diagnosticsCompleted, state: eligible, config: invitationConfig()) == .showProInvitation)
     }
 
@@ -120,9 +129,15 @@ struct GuidancePolicyTests {
             ProInterestVisit(category: .spectrumRecording, day: today),
             ProInterestVisit(category: .spectrumRecording, day: expired),
         ]
-        #expect(!GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: oneVisit, now: now, calendar: calendar))
-        #expect(GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: repeatedVisit, now: now, calendar: calendar))
-        #expect(!GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: oldVisit, now: now, calendar: calendar))
+        #expect(
+            !GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: oneVisit, now: now, calendar: calendar)
+        )
+        #expect(
+            GuidanceInterestPolicy.isInterested(
+                in: .spectrumRecording, visits: repeatedVisit, now: now, calendar: calendar))
+        #expect(
+            !GuidanceInterestPolicy.isInterested(in: .spectrumRecording, visits: oldVisit, now: now, calendar: calendar)
+        )
     }
 
     @Test func contentUsesOnlyQualifiedInterestAfterRealUseMoments() {
@@ -133,12 +148,20 @@ struct GuidancePolicyTests {
             ProInterestVisit(category: .spectrumRecording, day: yesterday),
         ])
         let oneVisit = GuidanceState(proInterestVisits: [
-            ProInterestVisit(category: .spectrumRecording, day: today),
+            ProInterestVisit(category: .spectrumRecording, day: today)
         ])
 
-        #expect(GuidanceContentSelector.messageKey(for: .appReturnedAfterUse, state: qualified, now: now, calendar: calendar) == "guidance.invitation.message.recording")
-        #expect(GuidanceContentSelector.messageKey(for: .appReturnedAfterUse, state: oneVisit, now: now, calendar: calendar) == "guidance.invitation.message.general")
-        #expect(GuidanceContentSelector.messageKey(for: .diagnosticsCompleted, state: qualified, now: now, calendar: calendar) == "guidance.invitation.message.diagnostics")
+        #expect(
+            GuidanceContentSelector.messageKey(
+                for: .appReturnedAfterUse, state: qualified, now: now, calendar: calendar)
+                == "guidance.invitation.message.recording")
+        #expect(
+            GuidanceContentSelector.messageKey(for: .appReturnedAfterUse, state: oneVisit, now: now, calendar: calendar)
+                == "guidance.invitation.message.general")
+        #expect(
+            GuidanceContentSelector.messageKey(
+                for: .diagnosticsCompleted, state: qualified, now: now, calendar: calendar)
+                == "guidance.invitation.message.diagnostics")
     }
 
     @Test func proAppInstalledSuppressesInvitation() {
@@ -389,11 +412,11 @@ struct GuidancePolicyTests {
                 state: reviewState(firstLaunchDate: daysAgo(7), lastReviewRequestVersion: appVersion),
                 config: reviewConfig()
             ),
-            decide(for: .diagnosticsCompleted, state: invitationState(), config: GuidanceConfiguration())
+            decide(for: .diagnosticsCompleted, state: invitationState(), config: GuidanceConfiguration()),
         ]
 
         for decision in scenarios {
-            if case let .none(reason) = decision {
+            if case .none(let reason) = decision {
                 #expect(reason != .invitationAlreadyPending)
                 #expect(reason != .reviewRequestPending)
             }

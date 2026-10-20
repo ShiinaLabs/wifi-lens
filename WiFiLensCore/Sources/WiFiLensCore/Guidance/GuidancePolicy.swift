@@ -73,7 +73,8 @@ enum GuidancePolicy {
         }
         guard config.localMarketingPolicyEnabled else {
             if let lastInvitationDate = state.lastInvitationDate,
-               daysSince(lastInvitationDate, now: now, calendar: calendar) < config.invitationCooldownDays {
+                daysSince(lastInvitationDate, now: now, calendar: calendar) < config.invitationCooldownDays
+            {
                 return .none(.invitationCooldown)
             }
             guard state.invitationPresentationCount < config.maxAutomaticInvitations else {
@@ -82,12 +83,14 @@ enum GuidancePolicy {
             return .showProInvitation
         }
         if let laterDate = state.lastInvitationLaterDate,
-           daysSince(laterDate, now: now, calendar: calendar) < config.invitationCooldownDays {
+            daysSince(laterDate, now: now, calendar: calendar) < config.invitationCooldownDays
+        {
             return .none(.invitationRecentlyDeferred)
         }
         var recordedPresentationDates = state.invitationPresentationDates
         if let legacyPresentationDate = state.lastInvitationDate,
-           !recordedPresentationDates.contains(legacyPresentationDate) {
+            !recordedPresentationDates.contains(legacyPresentationDate)
+        {
             recordedPresentationDates.append(legacyPresentationDate)
         }
         let presentationsInLastWeek = recordedPresentationDates.filter {
@@ -102,8 +105,9 @@ enum GuidancePolicy {
             calendar: calendar
         )
         if !accelerated,
-           let lastInvitationDate = state.lastInvitationDate,
-           daysSince(lastInvitationDate, now: now, calendar: calendar) < config.invitationCooldownDays {
+            let lastInvitationDate = state.lastInvitationDate,
+            daysSince(lastInvitationDate, now: now, calendar: calendar) < config.invitationCooldownDays
+        {
             return .none(.invitationCooldown)
         }
         return .showProInvitation
@@ -117,7 +121,8 @@ enum GuidancePolicy {
         appVersion: String
     ) -> GuidanceDecision {
         guard let firstLaunchDate = state.firstLaunchDate,
-              daysSince(firstLaunchDate, now: now, calendar: calendar) >= config.minimumReviewAgeDays else {
+            daysSince(firstLaunchDate, now: now, calendar: calendar) >= config.minimumReviewAgeDays
+        else {
             return .none(.firstLaunchAgeNotMet)
         }
         guard state.activeDays.count >= config.minimumReviewActiveDays else {
@@ -130,7 +135,8 @@ enum GuidancePolicy {
             return .none(.reviewAlreadyRequestedForVersion)
         }
         if let lastReviewRequestDate = state.lastReviewRequestDate,
-           daysSince(lastReviewRequestDate, now: now, calendar: calendar) < config.reviewCooldownDays {
+            daysSince(lastReviewRequestDate, now: now, calendar: calendar) < config.reviewCooldownDays
+        {
             return .none(.reviewCooldown)
         }
         return .requestReview
@@ -162,9 +168,10 @@ enum GuidanceInterestPolicy {
         guard let firstDay = calendar.date(byAdding: .day, value: -13, to: today) else { return false }
         let firstKey = GuidanceState.dayKey(for: firstDay, calendar: calendar)
         let lastKey = GuidanceState.dayKey(for: today, calendar: calendar)
-        let visitDays = Set(visits
-            .filter { $0.category == category && $0.day >= firstKey && $0.day <= lastKey }
-            .map(\.day))
+        let visitDays = Set(
+            visits
+                .filter { $0.category == category && $0.day >= firstKey && $0.day <= lastKey }
+                .map(\.day))
         return visitDays.count >= 2
     }
 
@@ -174,13 +181,14 @@ enum GuidanceInterestPolicy {
         calendar: Calendar
     ) -> Bool {
         guard let exploration = state.lastPurchaseExplorationDate,
-              GuidancePolicy.localDaysBetween(exploration, now: now, calendar: calendar) >= 3,
-              GuidancePolicy.localDaysBetween(exploration, now: now, calendar: calendar) < 14,
-              state.lastInvitationLaterDate.map({ $0 < exploration }) ?? true,
-              state.lastAcceleratedFollowUpExplorationDate != exploration,
-              state.lastAcceleratedFollowUpDate.map({
-                  GuidancePolicy.localDaysBetween($0, now: now, calendar: calendar) >= 14
-              }) ?? true else { return false }
+            GuidancePolicy.localDaysBetween(exploration, now: now, calendar: calendar) >= 3,
+            GuidancePolicy.localDaysBetween(exploration, now: now, calendar: calendar) < 14,
+            state.lastInvitationLaterDate.map({ $0 < exploration }) ?? true,
+            state.lastAcceleratedFollowUpExplorationDate != exploration,
+            state.lastAcceleratedFollowUpDate.map({
+                GuidancePolicy.localDaysBetween($0, now: now, calendar: calendar) >= 14
+            }) ?? true
+        else { return false }
         return true
     }
 }
@@ -200,12 +208,16 @@ enum GuidanceContentSelector {
             return "guidance.invitation.message.export"
         case .analysisLoaded, .roamingCompleted, .appReturnedAfterUse:
             let currentDay = GuidanceState.dayKey(for: now, calendar: calendar)
-            let interested = Set(ProInterestCategory.allCases.filter {
-                GuidanceInterestPolicy.isInterested(in: $0, visits: state.proInterestVisits, now: now, calendar: calendar)
-            })
-            guard let category = state.proInterestVisits
-                .filter({ $0.day <= currentDay && interested.contains($0.category) })
-                .max(by: { $0.day < $1.day })?.category else {
+            let interested = Set(
+                ProInterestCategory.allCases.filter {
+                    GuidanceInterestPolicy.isInterested(
+                        in: $0, visits: state.proInterestVisits, now: now, calendar: calendar)
+                })
+            guard
+                let category = state.proInterestVisits
+                    .filter({ $0.day <= currentDay && interested.contains($0.category) })
+                    .max(by: { $0.day < $1.day })?.category
+            else {
                 return "guidance.invitation.message.general"
             }
             switch category {

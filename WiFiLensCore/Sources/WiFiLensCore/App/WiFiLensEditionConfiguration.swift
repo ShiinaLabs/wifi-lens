@@ -122,12 +122,20 @@ public struct WiFiLensEditionShellHooks {
 public struct WiFiLensEditionConfiguration {
     public let identity: WiFiLensEditionIdentity
     public let capabilities: Set<WiFiLensEditionCapability>
+    public let analysisSidebarPages: [SidebarPage]
+    /// Whether this edition presents the Analysis destinations as locked previews.
+    /// The group then carries an invitation badge; the pages themselves come from
+    /// the edition that implements them.
+    public let analysisSidebarIsLockedPreview: Bool
+    /// Badge styles an edition attaches to individual destinations. Editions supply these at
+    /// construction so the decision stays with the edition that makes it.
+    public let sidebarBadgeOverrides: [SidebarPage: SidebarBadge.Style]
     public let shouldStartObservationRuntime: Bool
     public let requiresLiveWiFiAuthorization: Bool
-    public let isTimelineLockedPreview: Bool
     public let initialMainWindowRoute: SidebarPage
     public let timelineToolbarDescriptor: SecondaryToolbarDescriptor?
     public let spectrumToolbarDescriptor: SecondaryToolbarDescriptor
+    public let networkExperienceToolbarDescriptor: SecondaryToolbarDescriptor?
     public let exportSuccessPresentation: ExportSuccessPresentation
     public let onboardingConfiguration: OnboardingConfiguration
     public let guidanceConfiguration: GuidanceConfiguration
@@ -145,16 +153,20 @@ public struct WiFiLensEditionConfiguration {
     public let menuBarWindowManagementEnabled: Bool
 
     func sidebarBadgeStyle(for page: SidebarPage) -> SidebarBadge.Style? {
+        if let override = sidebarBadgeOverrides[page] {
+            return override
+        }
         switch page {
         case .wifiCallingTest:
-            capabilities.contains(.wifiCalling) ? .preview : .pro
+            return capabilities.contains(.wifiCalling) ? .preview : .pro
         default:
-            nil
+            return nil
         }
     }
 
-    var analysisSidebarBadgeStyle: SidebarBadge.Style {
-        capabilities.contains(.analysis) ? .preview : .pro
+    var analysisSidebarBadgeStyle: SidebarBadge.Style? {
+        guard analysisSidebarIsLockedPreview else { return nil }
+        return capabilities.contains(.analysis) ? .preview : .pro
     }
 
     public init(
@@ -162,7 +174,7 @@ public struct WiFiLensEditionConfiguration {
         capabilities: Set<WiFiLensEditionCapability>,
         shouldStartObservationRuntime: Bool,
         requiresLiveWiFiAuthorization: Bool,
-        isTimelineLockedPreview: Bool,
+        analysisSidebarIsLockedPreview: Bool,
         initialMainWindowRoute: SidebarPage,
         timelineToolbarDescriptor: SecondaryToolbarDescriptor?,
         spectrumToolbarDescriptor: SecondaryToolbarDescriptor,
@@ -171,16 +183,22 @@ public struct WiFiLensEditionConfiguration {
         guidanceConfiguration: GuidanceConfiguration,
         guidanceCoordinator: GuidanceCoordinator,
         shellHooks: WiFiLensEditionShellHooks,
-        menuBarWindowManagementEnabled: Bool
+        menuBarWindowManagementEnabled: Bool,
+        analysisSidebarPages: [SidebarPage] = [.networkExperience, .problemHistory],
+        sidebarBadgeOverrides: [SidebarPage: SidebarBadge.Style] = [:],
+        networkExperienceToolbarDescriptor: SecondaryToolbarDescriptor? = nil
     ) {
         self.identity = identity
         self.capabilities = capabilities
+        self.analysisSidebarPages = analysisSidebarPages
+        self.sidebarBadgeOverrides = sidebarBadgeOverrides
         self.shouldStartObservationRuntime = shouldStartObservationRuntime
         self.requiresLiveWiFiAuthorization = requiresLiveWiFiAuthorization
-        self.isTimelineLockedPreview = isTimelineLockedPreview
+        self.analysisSidebarIsLockedPreview = analysisSidebarIsLockedPreview
         self.initialMainWindowRoute = initialMainWindowRoute
         self.timelineToolbarDescriptor = timelineToolbarDescriptor
         self.spectrumToolbarDescriptor = spectrumToolbarDescriptor
+        self.networkExperienceToolbarDescriptor = networkExperienceToolbarDescriptor
         self.exportSuccessPresentation = exportSuccessPresentation
         self.onboardingConfiguration = onboardingConfiguration
         self.guidanceConfiguration = guidanceConfiguration

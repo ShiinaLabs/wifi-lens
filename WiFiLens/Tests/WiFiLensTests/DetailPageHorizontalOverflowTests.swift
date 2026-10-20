@@ -1,8 +1,8 @@
-@testable import WiFiLensCore
-
 import AppKit
 import SwiftUI
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 /// At the main window's minimum size (820x620) the NavigationSplitView detail column is
@@ -38,7 +38,9 @@ struct DetailPageHorizontalOverflowTests {
 
     // MARK: - Harness
 
-    private func host(_ view: some View, width: CGFloat = Self.detailWidth) -> (NSHostingController<some View>, NSWindow) {
+    private func host(_ view: some View, width: CGFloat = Self.detailWidth) -> (
+        NSHostingController<some View>, NSWindow
+    ) {
         let controller = NSHostingController(rootView: view)
         let window = NSWindow(contentViewController: controller)
         window.styleMask = [.titled, .resizable]
@@ -100,8 +102,9 @@ struct DetailPageHorizontalOverflowTests {
         var problems: [String] = []
         func walk(_ subject: NSView) {
             if let scroll = subject as? NSScrollView,
-               !scroll.hasHorizontalScroller,
-               let doc = scroll.documentView {
+                !scroll.hasHorizontalScroller,
+                let doc = scroll.documentView
+            {
                 let clip = scroll.contentView.bounds.width
                 if doc.frame.width > clip + Self.tolerance {
                     problems.append("doc \(doc.frame.width) > clip \(clip)")
@@ -146,25 +149,27 @@ struct DetailPageHorizontalOverflowTests {
     /// A current channel plus a recommended channel, so the connection card, health row,
     /// and channel advice/status cards all render.
     private var channelFixtures: [ChannelRecommendation] {
-        var current = ChannelRecommendation(from: ChannelQuality(
-            channel: 149, band: "5", bandDisplay: "5 GHz", qualityScore: 82,
-            qualityLevel: .excellent, apCount: 3, coChannelCount: 2, adjacentCount: 1,
-            interferenceScore: 40, overlapLevel: .low, strongestNeighborRSSI: -70,
-            isRecommended: false, isCurrentChannel: true, showInSimpleView: true,
-            recommendationScore: 82, recommendationLevel: .excellent,
-            recommendationConfidence: .exact, recommendationState: .currentGoodEnough
-        ))
+        var current = ChannelRecommendation(
+            from: ChannelQuality(
+                channel: 149, band: "5", bandDisplay: "5 GHz", qualityScore: 82,
+                qualityLevel: .excellent, apCount: 3, coChannelCount: 2, adjacentCount: 1,
+                interferenceScore: 40, overlapLevel: .low, strongestNeighborRSSI: -70,
+                isRecommended: false, isCurrentChannel: true, showInSimpleView: true,
+                recommendationScore: 82, recommendationLevel: .excellent,
+                recommendationConfidence: .exact, recommendationState: .currentGoodEnough
+            ))
         current.scoreSelected = true
         current.recommendationReasons = [.lowInterference]
 
-        var recommended = ChannelRecommendation(from: ChannelQuality(
-            channel: 36, band: "5", bandDisplay: "5 GHz", qualityScore: 90,
-            qualityLevel: .excellent, apCount: 1, coChannelCount: 0, adjacentCount: 0,
-            interferenceScore: 10, overlapLevel: .low, strongestNeighborRSSI: -80,
-            isRecommended: true, isCurrentChannel: false, showInSimpleView: true,
-            recommendationScore: 92, recommendationLevel: .excellent,
-            recommendationConfidence: .exact, recommendationState: .recommended
-        ))
+        var recommended = ChannelRecommendation(
+            from: ChannelQuality(
+                channel: 36, band: "5", bandDisplay: "5 GHz", qualityScore: 90,
+                qualityLevel: .excellent, apCount: 1, coChannelCount: 0, adjacentCount: 0,
+                interferenceScore: 10, overlapLevel: .low, strongestNeighborRSSI: -80,
+                isRecommended: true, isCurrentChannel: false, showInSimpleView: true,
+                recommendationScore: 92, recommendationLevel: .excellent,
+                recommendationConfidence: .exact, recommendationState: .recommended
+            ))
         recommended.scoreSelected = true
         recommended.recommendationReasons = [.clearSpectrum]
         return [current, recommended]
@@ -181,14 +186,24 @@ struct DetailPageHorizontalOverflowTests {
         viewModel.gatewayLatency = 12.3
         let start = Date(timeIntervalSinceNow: -60)
         viewModel.segments = [
-            RoamingSegment(bssid: "AA:BB:CC:DD:EE:FF", startTime: start, endTime: nil, samples: [
-                RoamingSample(timestamp: start, rssi: -60, channel: 149, txRate: 866, gatewayLatency: 10),
-                RoamingSample(timestamp: start.addingTimeInterval(10), rssi: -62, channel: 149, txRate: 700, gatewayLatency: 12),
-            ]),
-            RoamingSegment(bssid: "00:11:22:33:44:55", startTime: start.addingTimeInterval(20), endTime: nil, samples: [
-                RoamingSample(timestamp: start.addingTimeInterval(20), rssi: -65, channel: 36, txRate: 600, gatewayLatency: 15),
-                RoamingSample(timestamp: start.addingTimeInterval(30), rssi: -64, channel: 36, txRate: 640, gatewayLatency: 14),
-            ]),
+            RoamingSegment(
+                bssid: "AA:BB:CC:DD:EE:FF", startTime: start, endTime: nil,
+                samples: [
+                    RoamingSample(timestamp: start, rssi: -60, channel: 149, txRate: 866, gatewayLatency: 10),
+                    RoamingSample(
+                        timestamp: start.addingTimeInterval(10), rssi: -62, channel: 149, txRate: 700,
+                        gatewayLatency: 12),
+                ]),
+            RoamingSegment(
+                bssid: "00:11:22:33:44:55", startTime: start.addingTimeInterval(20), endTime: nil,
+                samples: [
+                    RoamingSample(
+                        timestamp: start.addingTimeInterval(20), rssi: -65, channel: 36, txRate: 600, gatewayLatency: 15
+                    ),
+                    RoamingSample(
+                        timestamp: start.addingTimeInterval(30), rssi: -64, channel: 36, txRate: 640, gatewayLatency: 14
+                    ),
+                ]),
         ]
         viewModel.transitions = [
             APTransitionEvent(
@@ -269,10 +284,11 @@ struct DetailPageHorizontalOverflowTests {
             band: .band5GHz
         )
         let timestamp = Date(timeIntervalSince1970: 100)
-        let tracking = APRadarState.tracking(APRadarSnapshot(
-            target: target, rawRSSI: -61, smoothedRSSI: -60,
-            trend: .gettingCloser, lastSeenAt: timestamp
-        ))
+        let tracking = APRadarState.tracking(
+            APRadarSnapshot(
+                target: target, rawRSSI: -61, smoothedRSSI: -60,
+                trend: .gettingCloser, lastSeenAt: timestamp
+            ))
         viewModel.state = tracking
         let (controller, window) = host(APRadarView(viewModel: viewModel, isActive: false, onRescan: {}))
 
@@ -281,7 +297,7 @@ struct DetailPageHorizontalOverflowTests {
             APRadarState.tracking(APRadarSnapshot(target: target)),
             tracking,
             .signalLost(APRadarLostSnapshot(target: target, lastRSSI: -60, lastSeenAt: timestamp)),
-            tracking
+            tracking,
         ] {
             viewModel.state = state
             for size in [CGSize(width: 600, height: 420), CGSize(width: 1_100, height: 680)] {
@@ -289,18 +305,20 @@ struct DetailPageHorizontalOverflowTests {
                 window.layoutIfNeeded()
                 let measured = controller.sizeThatFits(in: size)
                 #expect(abs(measured.width - size.width) <= Self.tolerance)
-                #expect(abs(measured.height - size.height) <= Self.tolerance,
-                        "A radar state change must not expand the page beyond its viewport")
+                #expect(
+                    abs(measured.height - size.height) <= Self.tolerance,
+                    "A radar state change must not expand the page beyond its viewport")
             }
         }
     }
 
     @Test("Network self-check fits the minimum detail width")
     func networkDiagnosticsFitsMinimumDetailWidth() {
-        assertFitsWidth(NetworkDiagnosticsView(
-            viewModel: NetworkDiagnosticsViewModel(),
-            guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
-        ))
+        assertFitsWidth(
+            NetworkDiagnosticsView(
+                viewModel: NetworkDiagnosticsViewModel(),
+                guidance: EditionAssemblyProvider.configuration.guidanceCoordinator
+            ))
     }
 
     @Test("Roaming active state fits the minimum detail width")

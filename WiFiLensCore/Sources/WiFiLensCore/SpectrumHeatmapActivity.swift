@@ -16,10 +16,11 @@ enum SpectrumHeatmapActivity {
         band: ChannelBand
     ) -> SpectrumHeatmapEnvelope? {
         guard network.channel.band == band,
-              (1...band.maxChannel).contains(network.channel.channelNumber),
-              rssi.isFinite,
-              SpectrumHeatmapLayout.fixedRSSIRange.contains(rssi),
-              network.channel.channelWidthMHz > 0 else { return nil }
+            (1...band.maxChannel).contains(network.channel.channelNumber),
+            rssi.isFinite,
+            SpectrumHeatmapLayout.fixedRSSIRange.contains(rssi),
+            network.channel.channelWidthMHz > 0
+        else { return nil }
 
         let block = ChannelSpanCalculator.channelBlock(
             primaryChannel: network.channel.channelNumber,

@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 public struct NativeTableView: NSViewRepresentable {
     let rows: [NetworkTableRow]
@@ -29,7 +29,9 @@ public struct NativeTableView: NSViewRepresentable {
     }
 
     public func makeCoordinator() -> Coordinator {
-        Coordinator(rows: rows, selectedID: $selectedID, sortOrder: $sortOrder, hiddenColumns: $hiddenColumns, onToggleVisibility: onToggleVisibility, onToggleVisibilityLocked: onToggleVisibilityLocked)
+        Coordinator(
+            rows: rows, selectedID: $selectedID, sortOrder: $sortOrder, hiddenColumns: $hiddenColumns,
+            onToggleVisibility: onToggleVisibility, onToggleVisibilityLocked: onToggleVisibilityLocked)
     }
 
     public func makeNSView(context: Context) -> NSScrollView {
@@ -54,7 +56,8 @@ public struct NativeTableView: NSViewRepresentable {
         tableView.addTableColumn(dotColumn)
 
         let visibilityColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("visibility"))
-        visibilityColumn.title = String(localized: "table.column.visibility", comment: "Visibility column header in network table")
+        visibilityColumn.title = String(
+            localized: "table.column.visibility", comment: "Visibility column header in network table")
         visibilityColumn.width = 42
         visibilityColumn.minWidth = 38
         visibilityColumn.maxWidth = 46
@@ -71,26 +74,76 @@ public struct NativeTableView: NSViewRepresentable {
             tableView.addTableColumn(lockColumn)
         }
 
-        addColumn(to: tableView, id: "SSID", title: String(localized: "table.column.ssid", comment: "SSID column header in network table"), width: 160, sortKey: "ssid", ascending: true)
+        addColumn(
+            to: tableView, id: "SSID",
+            title: String(localized: "table.column.ssid", comment: "SSID column header in network table"), width: 160,
+            sortKey: "ssid", ascending: true)
         if isVendorColumnAvailable {
             addVendorColumn(to: tableView)
         }
-        addColumn(to: tableView, id: "Hidden", title: String(localized: "table.column.hidden", comment: "Hidden network indicator column header"), width: 20, sortKey: "isHiddenSSID", ascending: false)
-        addColumn(to: tableView, id: "Band", title: String(localized: "channels.table.col.band", comment: "Band column header"), width: 80, sortKey: "bandLabel", ascending: true)
-        addColumn(to: tableView, id: "Ch", title: String(localized: "table.column.channel", comment: "Channel column header (abbreviated)"), width: 50, sortKey: "channel", ascending: true)
-        addColumn(to: tableView, id: "RSSI", title: String(localized: "channels.table.col.rssi", comment: "RSSI column header"), width: 75, sortKey: "rssi", ascending: false)
-        addColumn(to: tableView, id: "BSSID", title: String(localized: "interfaces.field.bssid", comment: "BSSID field label"), width: 150, sortKey: "bssid", ascending: true)
-        addColumn(to: tableView, id: "Seen", title: String(localized: "table.column.seen", comment: "Last seen column header"), width: 56, sortKey: "lastSeen", ascending: false)
-        addColumn(to: tableView, id: "PHY", title: String(localized: "interfaces.field.phy", comment: "PHY mode field label (short)"), width: 36, sortKey: "phyMode", ascending: true)
-        addColumn(to: tableView, id: "BW", title: String(localized: "table.column.bandwidth", comment: "Channel bandwidth column header"), width: 40, sortKey: "channelWidth", ascending: false)
-        addColumn(to: tableView, id: "k", title: String(localized: "table.column.dot11k", comment: "802.11k support indicator column header"), width: 28, sortKey: "supportsK", ascending: false)
-        addColumn(to: tableView, id: "r", title: String(localized: "table.column.dot11r", comment: "802.11r support indicator column header"), width: 28, sortKey: "supportsR", ascending: false)
-        addColumn(to: tableView, id: "v", title: String(localized: "table.column.dot11v", comment: "802.11v support indicator column header"), width: 28, sortKey: "supportsV", ascending: false)
-        addColumn(to: tableView, id: "Score", title: String(localized: "channels.table.col.score", comment: "Quality score column header"), width: 48, sortKey: "qualityScore", ascending: false)
-        addColumn(to: tableView, id: "Sec", title: String(localized: "table.column.security", comment: "Security type column header (abbreviated)"), width: 120, sortKey: "security", ascending: true)
-        addColumn(to: tableView, id: "MCS", title: String(localized: "table.column.mcs", comment: "MCS index column header"), width: 36, sortKey: "mcs", ascending: false)
-        addColumn(to: tableView, id: "NSS", title: String(localized: "table.column.nss", comment: "NSS (spatial streams) column header"), width: 36, sortKey: "nss", ascending: false)
-        addColumn(to: tableView, id: "CC", title: String(localized: "table.column.country_code", comment: "Country code column header"), width: 36, sortKey: "country", ascending: true)
+        addColumn(
+            to: tableView, id: "Hidden",
+            title: String(localized: "table.column.hidden", comment: "Hidden network indicator column header"),
+            width: 20, sortKey: "isHiddenSSID", ascending: false)
+        addColumn(
+            to: tableView, id: "Band",
+            title: String(localized: "channels.table.col.band", comment: "Band column header"), width: 80,
+            sortKey: "bandLabel", ascending: true)
+        addColumn(
+            to: tableView, id: "Ch",
+            title: String(localized: "table.column.channel", comment: "Channel column header (abbreviated)"), width: 50,
+            sortKey: "channel", ascending: true)
+        addColumn(
+            to: tableView, id: "RSSI",
+            title: String(localized: "channels.table.col.rssi", comment: "RSSI column header"), width: 75,
+            sortKey: "rssi", ascending: false)
+        addColumn(
+            to: tableView, id: "BSSID",
+            title: String(localized: "interfaces.field.bssid", comment: "BSSID field label"), width: 150,
+            sortKey: "bssid", ascending: true)
+        addColumn(
+            to: tableView, id: "Seen",
+            title: String(localized: "table.column.seen", comment: "Last seen column header"), width: 56,
+            sortKey: "lastSeen", ascending: false)
+        addColumn(
+            to: tableView, id: "PHY",
+            title: String(localized: "interfaces.field.phy", comment: "PHY mode field label (short)"), width: 36,
+            sortKey: "phyMode", ascending: true)
+        addColumn(
+            to: tableView, id: "BW",
+            title: String(localized: "table.column.bandwidth", comment: "Channel bandwidth column header"), width: 40,
+            sortKey: "channelWidth", ascending: false)
+        addColumn(
+            to: tableView, id: "k",
+            title: String(localized: "table.column.dot11k", comment: "802.11k support indicator column header"),
+            width: 28, sortKey: "supportsK", ascending: false)
+        addColumn(
+            to: tableView, id: "r",
+            title: String(localized: "table.column.dot11r", comment: "802.11r support indicator column header"),
+            width: 28, sortKey: "supportsR", ascending: false)
+        addColumn(
+            to: tableView, id: "v",
+            title: String(localized: "table.column.dot11v", comment: "802.11v support indicator column header"),
+            width: 28, sortKey: "supportsV", ascending: false)
+        addColumn(
+            to: tableView, id: "Score",
+            title: String(localized: "channels.table.col.score", comment: "Quality score column header"), width: 48,
+            sortKey: "qualityScore", ascending: false)
+        addColumn(
+            to: tableView, id: "Sec",
+            title: String(localized: "table.column.security", comment: "Security type column header (abbreviated)"),
+            width: 120, sortKey: "security", ascending: true)
+        addColumn(
+            to: tableView, id: "MCS", title: String(localized: "table.column.mcs", comment: "MCS index column header"),
+            width: 36, sortKey: "mcs", ascending: false)
+        addColumn(
+            to: tableView, id: "NSS",
+            title: String(localized: "table.column.nss", comment: "NSS (spatial streams) column header"), width: 36,
+            sortKey: "nss", ascending: false)
+        addColumn(
+            to: tableView, id: "CC",
+            title: String(localized: "table.column.country_code", comment: "Country code column header"), width: 36,
+            sortKey: "country", ascending: true)
 
         for column in tableView.tableColumns {
             if hiddenColumns.contains(column.identifier.rawValue) {
@@ -120,7 +173,8 @@ public struct NativeTableView: NSViewRepresentable {
         let storedColumns = tableView.tableColumns
         for descriptor in sortOrder {
             if let key = descriptor.key,
-               let column = storedColumns.first(where: { $0.identifier.rawValue == key }) {
+                let column = storedColumns.first(where: { $0.identifier.rawValue == key })
+            {
                 column.sortDescriptorPrototype = descriptor
             }
         }
@@ -174,8 +228,9 @@ public struct NativeTableView: NSViewRepresentable {
 
         if needsRestore {
             if let selID = selectedID,
-               let idx = rows.firstIndex(where: { $0.id == selID }),
-               tableView.selectedRow != idx {
+                let idx = rows.firstIndex(where: { $0.id == selID }),
+                tableView.selectedRow != idx
+            {
                 tableView.selectRowIndexes(IndexSet(integer: idx), byExtendingSelection: false)
             } else if selectedID == nil && tableView.selectedRow != -1 {
                 tableView.deselectAll(nil)
@@ -183,7 +238,9 @@ public struct NativeTableView: NSViewRepresentable {
         }
     }
 
-    private func addColumn(to tableView: NSTableView, id: String, title: String, width: CGFloat, sortKey: String, ascending: Bool) {
+    private func addColumn(
+        to tableView: NSTableView, id: String, title: String, width: CGFloat, sortKey: String, ascending: Bool
+    ) {
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(id))
         column.title = title
         column.width = width
@@ -211,7 +268,8 @@ public struct NativeTableView: NSViewRepresentable {
         if isVendorColumnAvailable, vendorColumn == nil {
             addVendorColumn(to: tableView)
             if let vendorIndex = tableView.tableColumns.firstIndex(where: { $0.identifier == vendorIdentifier }),
-               let ssidIndex = tableView.tableColumns.firstIndex(where: { $0.identifier.rawValue == "SSID" }) {
+                let ssidIndex = tableView.tableColumns.firstIndex(where: { $0.identifier.rawValue == "SSID" })
+            {
                 tableView.moveColumn(vendorIndex, toColumn: ssidIndex + 1)
             }
             return true
@@ -239,7 +297,11 @@ public struct NativeTableView: NSViewRepresentable {
         /// update) are fitted the first time they are seen.
         fileprivate var autoSizedColumnIDs: Set<String> = []
 
-        init(rows: [NetworkTableRow], selectedID: Binding<String?>, sortOrder: Binding<[NSSortDescriptor]>, hiddenColumns: Binding<Set<String>>, onToggleVisibility: ((String) -> Void)?, onToggleVisibilityLocked: ((String) -> Void)?) {
+        init(
+            rows: [NetworkTableRow], selectedID: Binding<String?>, sortOrder: Binding<[NSSortDescriptor]>,
+            hiddenColumns: Binding<Set<String>>, onToggleVisibility: ((String) -> Void)?,
+            onToggleVisibilityLocked: ((String) -> Void)?
+        ) {
             self.rows = rows
             self.selectedID = selectedID
             self.sortOrder = sortOrder
@@ -269,7 +331,9 @@ public struct NativeTableView: NSViewRepresentable {
                     opacity: opacity,
                     row: row,
                     action: #selector(Coordinator.visibilityToggled(_:)),
-                    accessibilityLabel: String(localized: "table.accessibility.toggle_visibility", comment: "Toggle network visibility checkbox")
+                    accessibilityLabel: String(
+                        localized: "table.accessibility.toggle_visibility",
+                        comment: "Toggle network visibility checkbox")
                 )
                 return cell
             case "lock":
@@ -281,7 +345,8 @@ public struct NativeTableView: NSViewRepresentable {
                     opacity: opacity,
                     row: row,
                     action: #selector(Coordinator.lockToggled(_:)),
-                    accessibilityLabel: String(localized: "table.accessibility.toggle_lock", comment: "Toggle network lock checkbox")
+                    accessibilityLabel: String(
+                        localized: "table.accessibility.toggle_lock", comment: "Toggle network lock checkbox")
                 )
                 return cell
             case "dot":
@@ -296,7 +361,9 @@ public struct NativeTableView: NSViewRepresentable {
         }
 
         @MainActor
-        private func makeIconCell(tableView: NSTableView, identifier: NSUserInterfaceItemIdentifier) -> NativeTableCellView {
+        private func makeIconCell(tableView: NSTableView, identifier: NSUserInterfaceItemIdentifier)
+            -> NativeTableCellView
+        {
             if let cell = tableView.makeView(withIdentifier: identifier, owner: self) as? NativeTableCellView {
                 cell.prepareForReuse()
                 return cell
@@ -319,7 +386,7 @@ public struct NativeTableView: NSViewRepresentable {
                 button.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
                 button.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
                 button.widthAnchor.constraint(equalToConstant: 18),
-                button.heightAnchor.constraint(equalToConstant: 18)
+                button.heightAnchor.constraint(equalToConstant: 18),
             ])
             return cell
         }
@@ -346,7 +413,9 @@ public struct NativeTableView: NSViewRepresentable {
         }
 
         @MainActor
-        private func makeDotCell(tableView: NSTableView, identifier: NSUserInterfaceItemIdentifier) -> NativeTableCellView {
+        private func makeDotCell(tableView: NSTableView, identifier: NSUserInterfaceItemIdentifier)
+            -> NativeTableCellView
+        {
             if let cell = tableView.makeView(withIdentifier: identifier, owner: self) as? NativeTableCellView {
                 cell.prepareForReuse()
                 return cell
@@ -371,7 +440,9 @@ public struct NativeTableView: NSViewRepresentable {
         }
 
         @MainActor
-        private func makeTextCell(tableView: NSTableView, identifier: NSUserInterfaceItemIdentifier, columnID: String) -> NativeTableCellView {
+        private func makeTextCell(tableView: NSTableView, identifier: NSUserInterfaceItemIdentifier, columnID: String)
+            -> NativeTableCellView
+        {
             if let cell = tableView.makeView(withIdentifier: identifier, owner: self) as? NativeTableCellView {
                 cell.prepareForReuse()
                 return cell
@@ -392,13 +463,15 @@ public struct NativeTableView: NSViewRepresentable {
             NSLayoutConstraint.activate([
                 textField.leadingAnchor.constraint(equalTo: cell.leadingAnchor),
                 textField.trailingAnchor.constraint(equalTo: cell.trailingAnchor),
-                textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+                textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
             ])
             return cell
         }
 
         @MainActor
-        private func configureTextCell(_ cell: NativeTableCellView, columnID: String, network: NetworkTableRow, opacity: Double) {
+        private func configureTextCell(
+            _ cell: NativeTableCellView, columnID: String, network: NetworkTableRow, opacity: Double
+        ) {
             guard let textField = cell.textField else { return }
             textField.alphaValue = opacity
 
@@ -479,8 +552,8 @@ public struct NativeTableView: NSViewRepresentable {
 
         @MainActor @objc func toggleColumnVisibility(_ sender: NSMenuItem) {
             guard let id = sender.representedObject as? String,
-                  let tableView,
-                  let column = tableView.tableColumns.first(where: { $0.identifier.rawValue == id })
+                let tableView,
+                let column = tableView.tableColumns.first(where: { $0.identifier.rawValue == id })
             else { return }
 
             column.isHidden.toggle()
@@ -494,12 +567,17 @@ public struct NativeTableView: NSViewRepresentable {
         @MainActor
         func autoSizeColumns() {
             guard let tableView else { return }
-            for column in tableView.tableColumns where !column.isHidden && !autoSizedColumnIDs.contains(column.identifier.rawValue) {
+            for column in tableView.tableColumns
+            where !column.isHidden && !autoSizedColumnIDs.contains(column.identifier.rawValue) {
                 let headerWidth = (column.headerCell.attributedStringValue.size().width.rounded(.up)) + 20
                 var maxWidth = max(column.minWidth, headerWidth)
 
                 for row in rows.indices {
-                    guard let view = tableView.view(atColumn: tableView.column(withIdentifier: column.identifier), row: row, makeIfNecessary: true) else { continue }
+                    guard
+                        let view = tableView.view(
+                            atColumn: tableView.column(withIdentifier: column.identifier), row: row,
+                            makeIfNecessary: true)
+                    else { continue }
                     let fitting = view.fittingSize.width.rounded(.up)
                     maxWidth = max(maxWidth, fitting + 12)
                 }

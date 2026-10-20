@@ -1,5 +1,5 @@
-import SwiftUI
 import Foundation
+import SwiftUI
 
 /// Fixed thermal-imaging colormap for the heatmap field.
 /// The ramp stays in purple → magenta → red → orange → yellow; it avoids a
@@ -12,7 +12,7 @@ enum SpectrumHeatmapColor {
         (0.52, 0.650, 0.015, 0.230),
         (0.70, 0.960, 0.080, 0.025),
         (0.86, 1.000, 0.430, 0.015),
-        (1.00, 1.000, 0.960, 0.120)
+        (1.00, 1.000, 0.960, 0.120),
     ]
 
     static func color(forIntensity intensity: Float) -> Color {

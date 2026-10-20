@@ -29,14 +29,14 @@ public struct TitleBadge: View {
         } label: {
             Text(String(localized: "settings.app.title_badge_oss", comment: "OSS edition title badge text"))
                 .font(.subheadline.weight(.medium))
-                .foregroundColor(Color(red: 91/255, green: 46/255, blue: 166/255))
+                .foregroundColor(Color(red: 91 / 255, green: 46 / 255, blue: 166 / 255))
                 .frame(height: 34)
                 .padding(.horizontal, 14)
         }
         .buttonStyle(.plain)
-        .background(Color(red: 245/255, green: 213/255, blue: 250/255), in: Capsule())
+        .background(Color(red: 245 / 255, green: 213 / 255, blue: 250 / 255), in: Capsule())
         .overlay {
-            Capsule().stroke(Color(red: 91/255, green: 46/255, blue: 166/255), lineWidth: 1)
+            Capsule().stroke(Color(red: 91 / 255, green: 46 / 255, blue: 166 / 255), lineWidth: 1)
         }
         .accessibilityHidden(true)
     }
@@ -44,7 +44,7 @@ public struct TitleBadge: View {
     // MARK: - PRO Badge
 
     private var proBadge: some View {
-        let goldColor = Color(red: 218/255, green: 165/255, blue: 32/255)
+        let goldColor = Color(red: 218 / 255, green: 165 / 255, blue: 32 / 255)
 
         return Button {
             // no action yet
@@ -55,12 +55,12 @@ public struct TitleBadge: View {
                 Text(String(localized: "settings.app.title_badge_pro", comment: "PRO edition title badge text"))
                     .font(.subheadline.weight(.semibold))
             }
-            .foregroundColor(Color(red: 138/255, green: 90/255, blue: 0))
+            .foregroundColor(Color(red: 138 / 255, green: 90 / 255, blue: 0))
             .frame(height: 34)
             .padding(.horizontal, 14)
         }
         .buttonStyle(.plain)
-        .background(Color(red: 255/255, green: 245/255, blue: 220/255), in: Capsule())
+        .background(Color(red: 255 / 255, green: 245 / 255, blue: 220 / 255), in: Capsule())
         .overlay {
             Capsule().stroke(goldColor, lineWidth: 1.5)
         }

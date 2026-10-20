@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Compact metadata displayed at the trailing edge of a sidebar destination.
-struct SidebarBadge: View {
+public struct SidebarBadge: View {
     public enum Presentation: Hashable, Sendable {
         case full
         case compact
@@ -67,16 +67,18 @@ struct SidebarBadge: View {
         static let borderWidth: CGFloat = 1
     }
 
-    enum Style: Equatable {
+    public enum Style: Equatable {
         case pro
         case preview
         case experimental
+        case deprecated
 
         var icon: String {
             switch self {
             case .pro: "crown.fill"
             case .preview: "sparkles"
             case .experimental: "flask"
+            case .deprecated: "archivebox"
             }
         }
 
@@ -85,6 +87,7 @@ struct SidebarBadge: View {
             case .pro: "common.badge.pro"
             case .preview: "common.badge.preview"
             case .experimental: "common.badge.experimental"
+            case .deprecated: "common.badge.deprecated"
             }
         }
 
@@ -127,6 +130,21 @@ struct SidebarBadge: View {
                         foreground: Swatch(hex: 0xA7F0E6),
                         background: Swatch(hex: 0x1F4E49),
                         border: Swatch(hex: 0x53C6B7)
+                    )
+                )
+            case .deprecated:
+                // Deliberately neutral: a retired destination should read as muted rather than
+                // borrowing the gold, purple, or teal that mark editions and previews.
+                Palette(
+                    light: ColorSet(
+                        foreground: Swatch(hex: 0x3F4247),
+                        background: Swatch(hex: 0xE6E7EA),
+                        border: Swatch(hex: 0xA0A3AA)
+                    ),
+                    dark: ColorSet(
+                        foreground: Swatch(hex: 0xDCDEE3),
+                        background: Swatch(hex: 0x3A3D42),
+                        border: Swatch(hex: 0x7C8087)
                     )
                 )
             }
@@ -235,6 +253,8 @@ struct SidebarBadge: View {
     VStack(alignment: .leading, spacing: 8) {
         SidebarBadge(style: .pro)
         SidebarBadge(style: .preview)
+        SidebarBadge(style: .experimental)
+        SidebarBadge(style: .deprecated)
         SidebarBadge(icon: "star.fill", text: "Custom", tint: .teal)
     }
     .padding()

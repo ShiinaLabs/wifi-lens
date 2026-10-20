@@ -44,16 +44,16 @@ public struct NetworkDiagnosticsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .animation(reduceMotion ? nil : .snappy(duration: 0.24), value: viewModel.phase)
-#if DEBUG
-        // Debug-only: the current, real host consumes the one-shot staging
-        // request set by the Debug menu, so a closed old window can never
-        // stage into a stale view model.
-        .onAppear {
-            if GuidanceDebugOverrides.consumeDiagnosticsStaging() {
-                viewModel.debugStageCompletedResult()
+        #if DEBUG
+            // Debug-only: the current, real host consumes the one-shot staging
+            // request set by the Debug menu, so a closed old window can never
+            // stage into a stale view model.
+            .onAppear {
+                if GuidanceDebugOverrides.consumeDiagnosticsStaging() {
+                    viewModel.debugStageCompletedResult()
+                }
             }
-        }
-#endif
+        #endif
         .onDisappear {
             viewModel.cancel()
             if let id = renderedInvitationID {
@@ -76,7 +76,8 @@ public struct NetworkDiagnosticsView: View {
                 conclusionStrip(conclusion)
                 Divider()
                 if let invitation = guidance.pendingInvitation,
-                   invitation.moment == .diagnosticsCompleted {
+                    invitation.moment == .diagnosticsCompleted
+                {
                     ProInvitationCard(
                         invitation: invitation,
                         guidance: guidance,
@@ -84,9 +85,9 @@ public struct NetworkDiagnosticsView: View {
                         hostWindow: hostWindow,
                         ownerWindowID: ownerWindowID
                     )
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .onAppear { renderedInvitationID = invitation.id }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .onAppear { renderedInvitationID = invitation.id }
                 }
             } else if viewModel.phase == .completed {
                 sessionOutcomeStrip
@@ -126,8 +127,12 @@ public struct NetworkDiagnosticsView: View {
                 .buttonStyle(.borderless)
                 .frame(width: 26, height: 22)
                 .contentShape(Rectangle())
-                .help(String(localized: "network_diagnostics.log.clear", comment: "Clear network self-check logs action"))
-                .accessibilityLabel(String(localized: "network_diagnostics.log.clear", comment: "Clear network self-check logs action"))
+                .help(
+                    String(localized: "network_diagnostics.log.clear", comment: "Clear network self-check logs action")
+                )
+                .accessibilityLabel(
+                    String(localized: "network_diagnostics.log.clear", comment: "Clear network self-check logs action")
+                )
                 .accessibilityIdentifier("network-diagnostics-log-clear")
             }
             Button {
@@ -177,10 +182,15 @@ public struct NetworkDiagnosticsView: View {
         case .running:
             HStack(spacing: 7) {
                 ProgressView().controlSize(.mini)
-                Text(viewModel.logStore.events.last?.message ?? String(localized: "network_diagnostics.state.checking", comment: "Network self-check running state"))
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                Text(
+                    viewModel.logStore.events.last?.message
+                        ?? String(
+                            localized: "network_diagnostics.state.checking", comment: "Network self-check running state"
+                        )
+                )
+                .font(.caption.monospaced())
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
             }
         case .completed:
             if let conclusion = viewModel.conclusion {
@@ -236,20 +246,12 @@ public struct NetworkDiagnosticsView: View {
     }
 
     private var commandIdentity: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Label {
-                Text(String(localized: "nav.network_diagnostics", comment: "Network Self-Check page title"))
-                    .font(.headline)
-            } icon: {
-                Image(systemName: "stethoscope")
-                    .foregroundStyle(Color.accentColor)
-            }
-
-            Text(String(localized: "network_diagnostics.description", comment: "Network self-check page description"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-        }
+        Text(String(localized: "network_diagnostics.description", comment: "Network self-check page description"))
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: 440, alignment: .leading)
     }
 
     @ViewBuilder
@@ -266,8 +268,12 @@ public struct NetworkDiagnosticsView: View {
                 ProgressView().controlSize(.small)
                 Text(
                     viewModel.automaticRestartCount > 0
-                        ? String(localized: "network_diagnostics.session.restarting", comment: "Network self-check automatic restart state")
-                        : String(localized: "network_diagnostics.state.checking", comment: "Network self-check running state")
+                        ? String(
+                            localized: "network_diagnostics.session.restarting",
+                            comment: "Network self-check automatic restart state")
+                        : String(
+                            localized: "network_diagnostics.state.checking", comment: "Network self-check running state"
+                        )
                 )
             }
         case .completed:
@@ -317,11 +323,14 @@ public struct NetworkDiagnosticsView: View {
                 total: Double(viewModel.checkIDs.count)
             )
             .progressViewStyle(.linear)
-            .accessibilityLabel(String(localized: "network_diagnostics.state.checking", comment: "Network self-check running state"))
+            .accessibilityLabel(
+                String(localized: "network_diagnostics.state.checking", comment: "Network self-check running state"))
 
             if !viewModel.fingerprintMonitoringAvailable {
                 Label(
-                    String(localized: "network_diagnostics.session.monitor_unavailable", comment: "Network self-check network change monitoring unavailable state"),
+                    String(
+                        localized: "network_diagnostics.session.monitor_unavailable",
+                        comment: "Network self-check network change monitoring unavailable state"),
                     systemImage: "eye.slash"
                 )
                 .font(.caption)
@@ -350,11 +359,16 @@ public struct NetworkDiagnosticsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if conclusion == .needsAttention,
-                   let issue = viewModel.assessment?.primaryIssue {
+                    let issue = viewModel.assessment?.primaryIssue
+                {
                     let remediation = NetworkDiagnosticRemediation.forResult(issue)
-                    Text(String(localized: .init(stringLiteral: remediation.actionKey), comment: "Network self-check primary remediation action"))
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                    Text(
+                        String(
+                            localized: .init(stringLiteral: remediation.actionKey),
+                            comment: "Network self-check primary remediation action")
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.orange)
                 }
             }
             Spacer(minLength: 0)
@@ -398,9 +412,12 @@ public struct NetworkDiagnosticsView: View {
                 Int64(viewModel.checkIDs.count)
             )
         case .cancelled:
-            String(localized: "network_diagnostics.session.cancelled", comment: "Network self-check cancellation summary")
+            String(
+                localized: "network_diagnostics.session.cancelled", comment: "Network self-check cancellation summary")
         case .superseded:
-            String(localized: "network_diagnostics.session.network_changed", comment: "Network self-check unstable network summary")
+            String(
+                localized: "network_diagnostics.session.network_changed",
+                comment: "Network self-check unstable network summary")
         case .completed, .none:
             String(localized: "network_diagnostics.state.waiting", comment: "Network self-check waiting state")
         }
@@ -448,9 +465,13 @@ public struct NetworkDiagnosticsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(String(localized: "network_diagnostics.state.waiting", comment: "Network self-check ready state"))
                     .font(.callout.weight(.semibold))
-                Text(String(localized: "network_diagnostics.ready.message", comment: "Instructions shown before running network diagnostics"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(
+                    String(
+                        localized: "network_diagnostics.ready.message",
+                        comment: "Instructions shown before running network diagnostics")
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
         }
@@ -562,8 +583,12 @@ public struct NetworkDiagnosticsView: View {
         } else {
             HStack(spacing: 6) {
                 ProgressView().controlSize(.mini)
-                Text(String(localized: "network_diagnostics.state.checking", comment: "Network self-check item running state"))
-                    .font(.caption.weight(.medium))
+                Text(
+                    String(
+                        localized: "network_diagnostics.state.checking",
+                        comment: "Network self-check item running state")
+                )
+                .font(.caption.weight(.medium))
             }
             .foregroundStyle(Color.accentColor)
             .padding(.horizontal, 8)
@@ -599,8 +624,9 @@ public struct NetworkDiagnosticsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                if (result.status == .abnormal || result.status == .indeterminate),
-                   viewModel.assessment?.primaryIssue?.id == result.id {
+                if result.status == .abnormal || result.status == .indeterminate,
+                    viewModel.assessment?.primaryIssue?.id == result.id
+                {
                     remediationView(for: result)
                 }
             }
@@ -622,16 +648,24 @@ public struct NetworkDiagnosticsView: View {
     private func stageTitle(_ stage: NetworkDiagnosticStage) -> String {
         switch stage {
         case .thisMac:
-            String(localized: "network_diagnostics.stage.this_mac.title", comment: "Network self-check local environment stage title")
+            String(
+                localized: "network_diagnostics.stage.this_mac.title",
+                comment: "Network self-check local environment stage title")
         case .lan:
-            String(localized: "network_diagnostics.stage.lan.title", comment: "Network self-check LAN connectivity stage title")
+            String(
+                localized: "network_diagnostics.stage.lan.title",
+                comment: "Network self-check LAN connectivity stage title")
         case .internet:
-            String(localized: "network_diagnostics.stage.internet.title", comment: "Network self-check internet connectivity stage title")
+            String(
+                localized: "network_diagnostics.stage.internet.title",
+                comment: "Network self-check internet connectivity stage title")
         }
     }
 
     private var additionalTitle: String {
-        String(localized: "network_diagnostics.stage.additional.title", comment: "Network self-check additional checks group title")
+        String(
+            localized: "network_diagnostics.stage.additional.title",
+            comment: "Network self-check additional checks group title")
     }
 
     private func stageIcon(_ stage: NetworkDiagnosticStage) -> String {
@@ -694,7 +728,8 @@ public struct NetworkDiagnosticsView: View {
                 inGroup = id == "additional"
             case .check(let row):
                 if inGroup, let result = row.result,
-                   result.status != .normal, result.status != .skipped {
+                    result.status != .normal, result.status != .skipped
+                {
                     allClear = false
                 }
             }
@@ -705,14 +740,26 @@ public struct NetworkDiagnosticsView: View {
     private func remediationView(for result: NetworkDiagnosticResult) -> some View {
         let remediation = NetworkDiagnosticRemediation.forResult(result)
         return VStack(alignment: .leading, spacing: 2) {
-            Text(String(localized: .init(stringLiteral: remediation.detectionKey), comment: "Network self-check remediation detected condition"))
-                .font(.caption.weight(.medium))
-            Text(String(localized: .init(stringLiteral: remediation.actionKey), comment: "Network self-check remediation next action"))
-                .font(.caption)
-                .foregroundStyle(.orange)
-            Text(String(localized: .init(stringLiteral: remediation.rerunKey), comment: "Network self-check remediation rerun instruction"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(
+                String(
+                    localized: .init(stringLiteral: remediation.detectionKey),
+                    comment: "Network self-check remediation detected condition")
+            )
+            .font(.caption.weight(.medium))
+            Text(
+                String(
+                    localized: .init(stringLiteral: remediation.actionKey),
+                    comment: "Network self-check remediation next action")
+            )
+            .font(.caption)
+            .foregroundStyle(.orange)
+            Text(
+                String(
+                    localized: .init(stringLiteral: remediation.rerunKey),
+                    comment: "Network self-check remediation rerun instruction")
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .padding(.top, 4)
         .accessibilityElement(children: .combine)
@@ -759,11 +806,13 @@ public struct NetworkDiagnosticsView: View {
     }
 
     private var columnStatusTitle: String {
-        String(localized: "network_diagnostics.report.column.status", comment: "Diagnostic workbench status column title")
+        String(
+            localized: "network_diagnostics.report.column.status", comment: "Diagnostic workbench status column title")
     }
 
     private var columnResultTitle: String {
-        String(localized: "network_diagnostics.report.column.result", comment: "Diagnostic workbench result column title")
+        String(
+            localized: "network_diagnostics.report.column.result", comment: "Diagnostic workbench result column title")
     }
 
     private var actionTitle: String {
@@ -773,7 +822,8 @@ public struct NetworkDiagnosticsView: View {
         case .running:
             String(localized: "network_diagnostics.state.checking", comment: "Network self-check running state")
         case .completed:
-            String(localized: "network_diagnostics.action.run_again", comment: "Run the network self-check again button")
+            String(
+                localized: "network_diagnostics.action.run_again", comment: "Run the network self-check again button")
         }
     }
 
@@ -821,20 +871,30 @@ public struct NetworkDiagnosticsView: View {
     private func pendingTitle(for reason: DiagnosticRunEndReason) -> String {
         switch reason {
         case .cancelled:
-            String(localized: "network_diagnostics.check.not_run_cancelled", comment: "Pending network self-check cancelled row status")
+            String(
+                localized: "network_diagnostics.check.not_run_cancelled",
+                comment: "Pending network self-check cancelled row status")
         case .timedOut, .superseded:
-            String(localized: "network_diagnostics.check.not_run_timeout", comment: "Pending network self-check timeout row status")
+            String(
+                localized: "network_diagnostics.check.not_run_timeout",
+                comment: "Pending network self-check timeout row status")
         case .completed:
-            String(localized: "network_diagnostics.check.not_run_timeout", comment: "Pending network self-check incomplete row status")
+            String(
+                localized: "network_diagnostics.check.not_run_timeout",
+                comment: "Pending network self-check incomplete row status")
         }
     }
 
     private func pendingDetail(for reason: DiagnosticRunEndReason) -> String {
         switch reason {
         case .cancelled:
-            String(localized: "network_diagnostics.check.not_run_cancelled", comment: "Pending network self-check cancellation detail")
+            String(
+                localized: "network_diagnostics.check.not_run_cancelled",
+                comment: "Pending network self-check cancellation detail")
         case .timedOut, .superseded, .completed:
-            String(localized: "network_diagnostics.check.not_run_timeout", comment: "Pending network self-check timeout detail")
+            String(
+                localized: "network_diagnostics.check.not_run_timeout",
+                comment: "Pending network self-check timeout detail")
         }
     }
 
@@ -846,7 +906,7 @@ public struct NetworkDiagnosticsView: View {
             }
         }
         guard let interface = evidence["gateway.interface"],
-              let address = evidence["gateway.address"] ?? evidence["gateway.no-response"]
+            let address = evidence["gateway.address"] ?? evidence["gateway.no-response"]
         else { return nil }
         return String(
             format: String(
@@ -871,22 +931,34 @@ public struct NetworkDiagnosticsView: View {
     private func conclusionTitle(_ conclusion: NetworkDiagnosticConclusion) -> String {
         switch conclusion {
         case .networkNormal:
-            String(localized: "network_diagnostics.conclusion.normal.title", comment: "Network self-check normal conclusion title")
+            String(
+                localized: "network_diagnostics.conclusion.normal.title",
+                comment: "Network self-check normal conclusion title")
         case .needsAttention:
-            String(localized: "network_diagnostics.conclusion.attention.title", comment: "Network self-check attention conclusion title")
+            String(
+                localized: "network_diagnostics.conclusion.attention.title",
+                comment: "Network self-check attention conclusion title")
         case .networkUnavailable:
-            String(localized: "network_diagnostics.conclusion.unavailable.title", comment: "Network self-check unavailable conclusion title")
+            String(
+                localized: "network_diagnostics.conclusion.unavailable.title",
+                comment: "Network self-check unavailable conclusion title")
         }
     }
 
     private func conclusionMessage(_ conclusion: NetworkDiagnosticConclusion) -> String {
         switch conclusion {
         case .networkNormal:
-            String(localized: "network_diagnostics.conclusion.normal.message", comment: "Network self-check normal conclusion message")
+            String(
+                localized: "network_diagnostics.conclusion.normal.message",
+                comment: "Network self-check normal conclusion message")
         case .needsAttention:
-            String(localized: "network_diagnostics.conclusion.attention.message", comment: "Network self-check attention conclusion message")
+            String(
+                localized: "network_diagnostics.conclusion.attention.message",
+                comment: "Network self-check attention conclusion message")
         case .networkUnavailable:
-            String(localized: "network_diagnostics.conclusion.unavailable.message", comment: "Network self-check unavailable conclusion message")
+            String(
+                localized: "network_diagnostics.conclusion.unavailable.message",
+                comment: "Network self-check unavailable conclusion message")
         }
     }
 
@@ -945,13 +1017,15 @@ struct NetworkDiagnosticsPipelinePresentation: Equatable, Sendable {
         assessment: NetworkDiagnosticAssessment? = nil,
         resolver: NetworkDiagnosticStageResolver = NetworkDiagnosticStageResolver()
     ) -> Self {
-        let stageAssessments = assessment?.stages ?? NetworkDiagnosticStage.allCases.map { stage in
-            DiagnosticStageAssessment(
-                stage: stage,
-                status: resolver.status(for: stage, results: results),
-                qualificationCode: nil
-            )
-        }
+        let stageAssessments =
+            assessment?.stages
+            ?? NetworkDiagnosticStage.allCases.map { stage in
+                DiagnosticStageAssessment(
+                    stage: stage,
+                    status: resolver.status(for: stage, results: results),
+                    qualificationCode: nil
+                )
+            }
         let thisMac = stageAssessments.first { $0.stage == .thisMac }?.status
         let lan = stageAssessments.first { $0.stage == .lan }?.status
         let internet = stageAssessments.first { $0.stage == .internet }?.status
@@ -961,12 +1035,18 @@ struct NetworkDiagnosticsPipelinePresentation: Equatable, Sendable {
 
         let stations = [
             Station(kind: .thisMac, status: thisMac, qualificationCode: thisMacQualification, isUnreachable: false),
-            Station(kind: .router, status: lan, qualificationCode: lanQualification, isUnreachable: lan == .abnormal || lan == .blocked),
-            Station(kind: .internet, status: internet, qualificationCode: internetQualification, isUnreachable: internet == .abnormal || internet == .blocked),
+            Station(
+                kind: .router, status: lan, qualificationCode: lanQualification,
+                isUnreachable: lan == .abnormal || lan == .blocked),
+            Station(
+                kind: .internet, status: internet, qualificationCode: internetQualification,
+                isUnreachable: internet == .abnormal || internet == .blocked),
         ]
         let edges = [
             Edge(kind: .lan, status: lan, isActive: isActive(stage: .lan, executionPhases: executionPhases)),
-            Edge(kind: .internet, status: internet, isActive: isActive(stage: .internet, executionPhases: executionPhases)),
+            Edge(
+                kind: .internet, status: internet,
+                isActive: isActive(stage: .internet, executionPhases: executionPhases)),
         ]
         return Self(stations: stations, edges: edges)
     }
@@ -1056,7 +1136,8 @@ struct NetworkDiagnosticsPipelineView: View {
         let content = railContent(edge)
         if edge.isActive, !reduceMotion {
             SwiftUI.TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
-                let cycle = context.date.timeIntervalSinceReferenceDate
+                let cycle =
+                    context.date.timeIntervalSinceReferenceDate
                     .truncatingRemainder(dividingBy: 1.4) / 1.4
                 content.opacity(0.45 + 0.55 * abs(cycle - 0.5) * 2)
             }
@@ -1099,12 +1180,14 @@ struct NetworkDiagnosticsPipelineView: View {
                     path.addLine(to: CGPoint(x: shoulderX, y: centerY + 4))
                 }
             }
-            .stroke(color, style: StrokeStyle(
-                lineWidth: 2.5,
-                lineCap: .round,
-                lineJoin: .round,
-                dash: dashed ? [7, 5] : []
-            ))
+            .stroke(
+                color,
+                style: StrokeStyle(
+                    lineWidth: 2.5,
+                    lineCap: .round,
+                    lineJoin: .round,
+                    dash: dashed ? [7, 5] : []
+                ))
         }
         .frame(height: 14)
         .frame(maxWidth: .infinity)
@@ -1149,20 +1232,30 @@ struct NetworkDiagnosticsPipelineView: View {
     private func stationTitle(_ kind: NetworkDiagnosticsPipelinePresentation.StationKind) -> String {
         switch kind {
         case .thisMac:
-            String(localized: "network_diagnostics.stage.this_mac.title", comment: "Network self-check local environment stage title")
+            String(
+                localized: "network_diagnostics.stage.this_mac.title",
+                comment: "Network self-check local environment stage title")
         case .router:
-            String(localized: "network_diagnostics.diagram.router.title", comment: "Network self-check pipeline router station title")
+            String(
+                localized: "network_diagnostics.diagram.router.title",
+                comment: "Network self-check pipeline router station title")
         case .internet:
-            String(localized: "network_diagnostics.stage.internet.title", comment: "Network self-check internet connectivity stage title")
+            String(
+                localized: "network_diagnostics.stage.internet.title",
+                comment: "Network self-check internet connectivity stage title")
         }
     }
 
     private func edgeTitle(_ kind: NetworkDiagnosticsPipelinePresentation.EdgeKind) -> String {
         switch kind {
         case .lan:
-            String(localized: "network_diagnostics.stage.lan.title", comment: "Network self-check LAN connectivity stage title")
+            String(
+                localized: "network_diagnostics.stage.lan.title",
+                comment: "Network self-check LAN connectivity stage title")
         case .internet:
-            String(localized: "network_diagnostics.stage.internet.title", comment: "Network self-check internet connectivity stage title")
+            String(
+                localized: "network_diagnostics.stage.internet.title",
+                comment: "Network self-check internet connectivity stage title")
         }
     }
 
@@ -1170,7 +1263,8 @@ struct NetworkDiagnosticsPipelineView: View {
         presentation.stations.map { station in
             let title = stationTitle(station.kind)
             guard let status = station.status else {
-                return "\(title): \(String(localized: "network_diagnostics.state.waiting", comment: "Network self-check waiting state"))"
+                return
+                    "\(title): \(String(localized: "network_diagnostics.state.waiting", comment: "Network self-check waiting state"))"
             }
             return "\(title): \(statusTitle(status))"
         }
@@ -1178,7 +1272,8 @@ struct NetworkDiagnosticsPipelineView: View {
     }
 
     private func statusTitle(_ status: NetworkDiagnosticStatus) -> String {
-        String(localized: .init(stringLiteral: status.presentation.labelKey), comment: "Network self-check status label")
+        String(
+            localized: .init(stringLiteral: status.presentation.labelKey), comment: "Network self-check status label")
     }
 
     private func statusIcon(_ status: NetworkDiagnosticStatus) -> String {
@@ -1198,11 +1293,16 @@ struct NetworkDiagnosticsPipelineView: View {
     private func qualificationTitle(_ code: String) -> String {
         switch code {
         case "gateway.unverified":
-            String(localized: "network_diagnostics.gateway.unverified", comment: "Gateway qualification after successful internet access")
+            String(
+                localized: "network_diagnostics.gateway.unverified",
+                comment: "Gateway qualification after successful internet access")
         case "proxy.direct-unverified":
-            String(localized: "network_diagnostics.proxy.direct_unverified", comment: "Direct proxy route qualification")
+            String(
+                localized: "network_diagnostics.proxy.direct_unverified", comment: "Direct proxy route qualification")
         default:
-            String(localized: "network_diagnostics.status.indeterminate", comment: "Network self-check uncertainty qualification")
+            String(
+                localized: "network_diagnostics.status.indeterminate",
+                comment: "Network self-check uncertainty qualification")
         }
     }
 }

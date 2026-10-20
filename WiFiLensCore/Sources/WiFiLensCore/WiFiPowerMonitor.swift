@@ -32,9 +32,9 @@ final class WiFiPowerMonitor {
     private var isMonitoring = false
     private var lastAppliedSnapshotID: UUID?
     private var isReceivingInitialSnapshot = false
-#if DEBUG
-    private(set) var debugPublishedSampleCount = 0
-#endif
+    #if DEBUG
+        private(set) var debugPublishedSampleCount = 0
+    #endif
     private(set) var currentState: WiFiPowerState = .unknown
 
     init(center: WiFiLinkStateCenter = .shared) {
@@ -110,7 +110,8 @@ final class WiFiPowerMonitor {
         let previous = currentState
         currentState = next
         if previous != next {
-            scannerLogger.info("WiFi radio evidence changed: \(String(describing: previous)) → \(String(describing: next))")
+            scannerLogger.info(
+                "WiFi radio evidence changed: \(String(describing: previous)) → \(String(describing: next))")
         }
         // Repeated equal states are still fresh evidence samples. The scanner
         // uses them to bound work while radio evidence remains unknown.
@@ -120,15 +121,15 @@ final class WiFiPowerMonitor {
             snapshotID: snapshot.id
         )
         continuation?.yield(WiFiPowerMonitorEvent(state: next, sampleIdentity: countsAsEvidence ? identity : nil))
-#if DEBUG
-        if countsAsEvidence { debugPublishedSampleCount += 1 }
-#endif
+        #if DEBUG
+            if countsAsEvidence { debugPublishedSampleCount += 1 }
+        #endif
     }
 }
 
 #if DEBUG
-extension WiFiPowerMonitor {
-    var debugIsMonitoringForTesting: Bool { isMonitoring }
-    func debugApplySnapshotForTesting(_ snapshot: WiFiLinkStateSnapshot) { apply(snapshot) }
-}
+    extension WiFiPowerMonitor {
+        var debugIsMonitoringForTesting: Bool { isMonitoring }
+        func debugApplySnapshotForTesting(_ snapshot: WiFiLinkStateSnapshot) { apply(snapshot) }
+    }
 #endif

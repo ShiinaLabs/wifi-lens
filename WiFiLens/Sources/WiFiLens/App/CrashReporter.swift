@@ -10,14 +10,16 @@ enum CrashReporter {
     }()
 
     static func consumeCrashLog() -> String? {
-        guard let files = try? FileManager.default.contentsOfDirectory(at: logDir, includingPropertiesForKeys: nil) else { return nil }
+        guard let files = try? FileManager.default.contentsOfDirectory(at: logDir, includingPropertiesForKeys: nil)
+        else { return nil }
         let crashFiles = files.filter { $0.lastPathComponent.hasPrefix("crash-") && $0.pathExtension == "log" }
         guard !crashFiles.isEmpty else { return nil }
 
         var all: [String] = []
         for url in crashFiles {
             if let data = try? Data(contentsOf: url),
-               let text = String(data: data, encoding: .utf8), !text.isEmpty {
+                let text = String(data: data, encoding: .utf8), !text.isEmpty
+            {
                 all.append(text)
             }
             try? FileManager.default.removeItem(at: url)
@@ -27,10 +29,10 @@ enum CrashReporter {
 
     static func register() {
         NSSetUncaughtExceptionHandler(exceptionHandler)
-        signal(SIGILL,  crashHandler)
+        signal(SIGILL, crashHandler)
         signal(SIGTRAP, crashHandler)
         signal(SIGABRT, crashHandler)
-        signal(SIGBUS,  crashHandler)
+        signal(SIGBUS, crashHandler)
         signal(SIGSEGV, crashHandler)
     }
 
@@ -46,14 +48,15 @@ enum CrashReporter {
 // MARK: - C function pointers (must not capture context)
 
 private func crashHandler(_ sig: Int32) {
-    let name = switch sig {
-    case SIGILL:  "SIGILL"
-    case SIGTRAP: "SIGTRAP"
-    case SIGABRT: "SIGABRT"
-    case SIGBUS:  "SIGBUS"
-    case SIGSEGV: "SIGSEGV"
-    default:      "SIGNAL(\(sig))"
-    }
+    let name =
+        switch sig {
+        case SIGILL: "SIGILL"
+        case SIGTRAP: "SIGTRAP"
+        case SIGABRT: "SIGABRT"
+        case SIGBUS: "SIGBUS"
+        case SIGSEGV: "SIGSEGV"
+        default: "SIGNAL(\(sig))"
+        }
     let trace = Thread.callStackSymbols.joined(separator: "\n")
     CrashReporter.write("Signal \(name):\n\(trace)")
     signal(sig, SIG_DFL)

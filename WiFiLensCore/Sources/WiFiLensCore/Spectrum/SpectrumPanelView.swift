@@ -48,7 +48,10 @@ struct SpectrumPanelView: View {
 
     private var toolbar: some View {
         HStack(spacing: 8) {
-            Picker(String(localized: "spectrum.panel.chart_type", comment: "Chart type picker label"), selection: $chartType) {
+            Picker(
+                String(localized: "spectrum.panel.chart_type", comment: "Chart type picker label"),
+                selection: $chartType
+            ) {
                 ForEach(supportedViewTypes) { type in
                     Text(type.displayName)
                         .lineLimit(1)
@@ -74,7 +77,8 @@ struct SpectrumPanelView: View {
             case .trend:
                 EmptyView()
             case .heatmap:
-                bandPicker(label: String(localized: "spectrum.heatmap.band", comment: "Band picker label for the heatmap"))
+                bandPicker(
+                    label: String(localized: "spectrum.heatmap.band", comment: "Band picker label for the heatmap"))
                 heatmapPanel.heatmapToolbarContent
             case .table:
                 tablePanel.toolbarContent
@@ -88,8 +92,16 @@ struct SpectrumPanelView: View {
                 }
                 .buttonStyle(.borderless)
                 .disabled(!canRemove)
-                .help(String(localized: "spectrum.dashboard.remove_panel", comment: "Button to remove a spectrum dashboard panel"))
-                .accessibilityLabel(String(localized: "spectrum.dashboard.remove_panel", comment: "Button to remove a spectrum dashboard panel"))
+                .help(
+                    String(
+                        localized: "spectrum.dashboard.remove_panel",
+                        comment: "Button to remove a spectrum dashboard panel")
+                )
+                .accessibilityLabel(
+                    String(
+                        localized: "spectrum.dashboard.remove_panel",
+                        comment: "Button to remove a spectrum dashboard panel")
+                )
                 .accessibilityIdentifier("spectrum-dashboard-remove-panel-\(panelID.rawValue)")
             }
         }

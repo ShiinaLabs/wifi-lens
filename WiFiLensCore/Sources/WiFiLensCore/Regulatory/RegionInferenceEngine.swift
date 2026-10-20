@@ -23,27 +23,46 @@ enum RegionInferenceEngine {
             contributions.append(source)
             // Still record what other sources would say
             let localeDomain = localeDomain(systemLocale)
-            contributions.append(RegionSource(kind: .systemLocale, rawValue: systemLocale.region?.identifier ?? "nil", inferredDomain: localeDomain))
+            contributions.append(
+                RegionSource(
+                    kind: .systemLocale, rawValue: systemLocale.region?.identifier ?? "nil",
+                    inferredDomain: localeDomain))
             if !apCountryCodes.isEmpty {
                 let apDomain = apConsensus(apCountryCodes)
-                contributions.append(RegionSource(kind: .apBeaconCountry, rawValue: apCountryCodes.joined(separator: ","), inferredDomain: apDomain.domain))
+                contributions.append(
+                    RegionSource(
+                        kind: .apBeaconCountry, rawValue: apCountryCodes.joined(separator: ","),
+                        inferredDomain: apDomain.domain))
             }
             let chanDomain = channelFingerprint(supportedChannels)
-            contributions.append(RegionSource(kind: .supportedChannels, rawValue: "\(supportedChannels.count) channels", inferredDomain: chanDomain))
-            return RegionInferenceResult(domain: override, confidence: .high, contributions: contributions, conflicts: [])
+            contributions.append(
+                RegionSource(
+                    kind: .supportedChannels, rawValue: "\(supportedChannels.count) channels",
+                    inferredDomain: chanDomain))
+            return RegionInferenceResult(
+                domain: override, confidence: .high, contributions: contributions, conflicts: [])
         }
 
         // 2. Collect source candidates
         let localeCandidate = localeDomain(systemLocale)
-        contributions.append(RegionSource(kind: .systemLocale, rawValue: systemLocale.region?.identifier ?? "nil", inferredDomain: localeCandidate))
+        contributions.append(
+            RegionSource(
+                kind: .systemLocale, rawValue: systemLocale.region?.identifier ?? "nil", inferredDomain: localeCandidate
+            ))
 
         let apResult = apConsensus(apCountryCodes)
         if !apCountryCodes.isEmpty {
-            contributions.append(RegionSource(kind: .apBeaconCountry, rawValue: apCountryCodes.joined(separator: ","), inferredDomain: apResult.domain))
+            contributions.append(
+                RegionSource(
+                    kind: .apBeaconCountry, rawValue: apCountryCodes.joined(separator: ","),
+                    inferredDomain: apResult.domain))
         }
 
         let channelCandidate = channelFingerprint(supportedChannels)
-        contributions.append(RegionSource(kind: .supportedChannels, rawValue: "\(supportedChannels.count) channels", inferredDomain: channelCandidate))
+        contributions.append(
+            RegionSource(
+                kind: .supportedChannels, rawValue: "\(supportedChannels.count) channels",
+                inferredDomain: channelCandidate))
 
         // 3. Resolve
         let channelValid = channelCandidate != .unknown
@@ -63,13 +82,15 @@ enum RegionInferenceEngine {
         // Channel fingerprint alone → medium (hardware/driver is authoritative)
         if channelValid {
             if apValid && channelCandidate != apResult.domain,
-               let chanSource = contributions.first(where: { $0.kind == .supportedChannels }),
-               let apSource = contributions.first(where: { $0.kind == .apBeaconCountry }) {
-                conflicts.append(RegionConflict(
-                    sourceA: chanSource,
-                    sourceB: apSource,
-                    resolution: "AP beacon disagrees with hardware supported channels; trusting hardware"
-                ))
+                let chanSource = contributions.first(where: { $0.kind == .supportedChannels }),
+                let apSource = contributions.first(where: { $0.kind == .apBeaconCountry })
+            {
+                conflicts.append(
+                    RegionConflict(
+                        sourceA: chanSource,
+                        sourceB: apSource,
+                        resolution: "AP beacon disagrees with hardware supported channels; trusting hardware"
+                    ))
             }
             return RegionInferenceResult(
                 domain: channelCandidate,
@@ -116,7 +137,9 @@ enum RegionInferenceEngine {
         RegulatoryDomain.from(localeRegionCode: locale.region?.identifier)
     }
 
-    private static func apConsensus(_ codes: [String]) -> (domain: RegulatoryDomain, consensus: Bool, conflict: (RegionSource, RegionSource)?) {
+    private static func apConsensus(_ codes: [String]) -> (
+        domain: RegulatoryDomain, consensus: Bool, conflict: (RegionSource, RegionSource)?
+    ) {
         let normalized = codes.map { String($0.prefix(2)).uppercased() }
         let domains = normalized.compactMap { code -> RegulatoryDomain? in
             let d = RegulatoryDomain.from(localeRegionCode: code)
@@ -217,9 +240,9 @@ enum RegionInferenceEngine {
     private static func bandToRaw(_ id: String) -> Int? {
         switch id {
         case "24": return 1
-        case "5":  return 2
-        case "6":  return 3
-        default:   return nil
+        case "5": return 2
+        case "6": return 3
+        default: return nil
         }
     }
 }

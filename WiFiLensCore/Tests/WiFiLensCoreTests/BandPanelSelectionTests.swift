@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct SpectrumPanelViewTypeTests {

@@ -1,6 +1,7 @@
-import Foundation
 import CoreLocation
+import Foundation
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -56,10 +57,13 @@ struct RuntimeTests {
         #expect(await runtime.accept(distinctSameTime))
         await runtime.drainConsumers()
 
-        #expect(firstConsumer.observations.map(\.sourceObservationID) == [
-            first.sourceObservationID, distinctSameTime.sourceObservationID,
-        ])
-        #expect(secondConsumer.observations.map(\.sourceObservationID) == firstConsumer.observations.map(\.sourceObservationID))
+        #expect(
+            firstConsumer.observations.map(\.sourceObservationID) == [
+                first.sourceObservationID, distinctSameTime.sourceObservationID,
+            ])
+        #expect(
+            secondConsumer.observations.map(\.sourceObservationID)
+                == firstConsumer.observations.map(\.sourceObservationID))
         #expect(store.history.map(\.sourceObservationID) == firstConsumer.observations.map(\.sourceObservationID))
     }
 
@@ -74,12 +78,14 @@ struct RuntimeTests {
         let original = WiFiObservation(
             sourceObservationID: identity,
             timestamp: timestamp,
-            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Home", isConnected: false, isWiFiPowerOn: true)
+            currentStatus: WiFiCurrentStatus(
+                timestamp: timestamp, ssid: "Home", isConnected: false, isWiFiPowerOn: true)
         )
         let changed = WiFiObservation(
             sourceObservationID: identity,
             timestamp: timestamp,
-            currentStatus: WiFiCurrentStatus(timestamp: timestamp, ssid: "Office", isConnected: false, isWiFiPowerOn: true)
+            currentStatus: WiFiCurrentStatus(
+                timestamp: timestamp, ssid: "Office", isConnected: false, isWiFiPowerOn: true)
         )
 
         #expect(await runtime.accept(original))
@@ -131,9 +137,11 @@ struct RuntimeTests {
         }
         runtime.addConsumer(consumer)
 
-        await runtime.startScanning(configuration: WiFiObservationRuntimeConfiguration(
-            scanInterval: .seconds(4)
-        )) { _ in }
+        await runtime.startScanning(
+            configuration: WiFiObservationRuntimeConfiguration(
+                scanInterval: .seconds(4)
+            )
+        ) { _ in }
         let observation = WiFiObservation(timestamp: Date(timeIntervalSince1970: 42))
         let acceptance = Task { @MainActor in await runtime.accept(observation) }
         await consumer.waitUntilEntered()
@@ -168,9 +176,10 @@ struct RuntimeTests {
         await runtime.accept(WiFiObservation(timestamp: Date(timeIntervalSince1970: 2)))
 
         await runtime.drainConsumers()
-        #expect(consumer.attemptedTimestamps == [
-            Date(timeIntervalSince1970: 1), Date(timeIntervalSince1970: 2),
-        ])
+        #expect(
+            consumer.attemptedTimestamps == [
+                Date(timeIntervalSince1970: 1), Date(timeIntervalSince1970: 2),
+            ])
     }
 
     @Test("OSS composition needs no consumer")
@@ -199,10 +208,11 @@ struct RuntimeTests {
         await runtime.stopScanning()
         await runtime.stopScanning()
 
-        #expect(consumer.events == [
-            .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(4)),
-            .stopped(date: Date(timeIntervalSince1970: 20)),
-        ])
+        #expect(
+            consumer.events == [
+                .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(4)),
+                .stopped(date: Date(timeIntervalSince1970: 20)),
+            ])
     }
 
     @Test("restart closes the old generation before starting the new interval")
@@ -220,12 +230,13 @@ struct RuntimeTests {
         await runtime.restartScanning(configuration: .init(scanInterval: .seconds(9)))
         await runtime.stopScanning()
 
-        #expect(consumer.events == [
-            .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(4)),
-            .stopped(date: Date(timeIntervalSince1970: 20)),
-            .started(date: Date(timeIntervalSince1970: 30), interval: .seconds(9)),
-            .stopped(date: Date(timeIntervalSince1970: 40)),
-        ])
+        #expect(
+            consumer.events == [
+                .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(4)),
+                .stopped(date: Date(timeIntervalSince1970: 20)),
+                .started(date: Date(timeIntervalSince1970: 30), interval: .seconds(9)),
+                .stopped(date: Date(timeIntervalSince1970: 40)),
+            ])
     }
 
     @Test("publication rejection closes the active observation generation")
@@ -243,10 +254,11 @@ struct RuntimeTests {
         await source.yield(.networks([]))
         await runtime.drainRawCyclesForTesting()
 
-        #expect(consumer.events == [
-            .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(3)),
-            .stopped(date: Date(timeIntervalSince1970: 20)),
-        ])
+        #expect(
+            consumer.events == [
+                .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(3)),
+                .stopped(date: Date(timeIntervalSince1970: 20)),
+            ])
         #expect(runtime.store.history.isEmpty)
         #expect(runtime.store.currentObservation == nil)
     }
@@ -291,10 +303,11 @@ struct RuntimeTests {
         #expect(late.events == [.started(date: Date(timeIntervalSince1970: 10), interval: .seconds(4))])
 
         await runtime.stopScanning()
-        #expect(late.events == [
-            .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(4)),
-            .stopped(date: Date(timeIntervalSince1970: 20)),
-        ])
+        #expect(
+            late.events == [
+                .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(4)),
+                .stopped(date: Date(timeIntervalSince1970: 20)),
+            ])
     }
 
     @Test("synchronous scan emission cannot overtake lifecycle start")
@@ -311,10 +324,11 @@ struct RuntimeTests {
         await runtime.startScanning(configuration: .testDefault) { _ in }
         await runtime.drainRawCyclesForTesting()
 
-        #expect(consumer.events.prefix(2) == [
-            .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(3)),
-            .observation,
-        ])
+        #expect(
+            consumer.events.prefix(2) == [
+                .started(date: Date(timeIntervalSince1970: 10), interval: .seconds(3)),
+                .observation,
+            ])
         await runtime.stopScanning()
     }
 
@@ -592,11 +606,12 @@ struct RuntimeTests {
         await source.yield(.networks([runtimeNetwork(bssid: "AA:10", channel: 36)]))
         await source.waitUntilStopCallCount(1)
 
-        await runtime.restartScanning(configuration: .init(
-            scanInterval: .seconds(9),
-            userRegionOverride: nil,
-            userDefaultsRegionOverride: nil
-        ))
+        await runtime.restartScanning(
+            configuration: .init(
+                scanInterval: .seconds(9),
+                userRegionOverride: nil,
+                userDefaultsRegionOverride: nil
+            ))
 
         let snapshot = await source.snapshot()
         #expect(snapshot.requestedIntervals == [.seconds(3)])
@@ -639,11 +654,12 @@ struct RuntimeTests {
             outputCount += 1
             outputCounter.increment()
         }
-        await runtime.restartScanning(configuration: WiFiObservationRuntimeConfiguration(
-            scanInterval: .seconds(9),
-            userRegionOverride: nil,
-            userDefaultsRegionOverride: nil
-        ))
+        await runtime.restartScanning(
+            configuration: WiFiObservationRuntimeConfiguration(
+                scanInterval: .seconds(9),
+                userRegionOverride: nil,
+                userDefaultsRegionOverride: nil
+            ))
         await source.waitUntilActiveStreamCount(1)
         await source.yield(.networks([runtimeNetwork(bssid: "AA:09", channel: 9)]))
         await outputCounter.waitForCount(1)
@@ -710,11 +726,12 @@ struct RuntimeTests {
         let restartEntered = MainActorMilestone()
         let restart = Task { @MainActor in
             restartEntered.reach()
-            await runtime.restartScanning(configuration: WiFiObservationRuntimeConfiguration(
-                scanInterval: .seconds(9),
-                userRegionOverride: nil,
-                userDefaultsRegionOverride: nil
-            ))
+            await runtime.restartScanning(
+                configuration: WiFiObservationRuntimeConfiguration(
+                    scanInterval: .seconds(9),
+                    userRegionOverride: nil,
+                    userDefaultsRegionOverride: nil
+                ))
         }
         await restartEntered.waitUntilReached()
         await source.releaseCapabilityLookup()
@@ -752,11 +769,12 @@ struct RuntimeTests {
         await source.waitUntilCapabilityLookupEntered()
         Task { @MainActor in
             restartEntered.reach()
-            await runtime.restartScanning(configuration: .init(
-                scanInterval: .seconds(9),
-                userRegionOverride: nil,
-                userDefaultsRegionOverride: nil
-            ))
+            await runtime.restartScanning(
+                configuration: .init(
+                    scanInterval: .seconds(9),
+                    userRegionOverride: nil,
+                    userDefaultsRegionOverride: nil
+                ))
             completed.insert("B")
             completedCounter.increment()
         }
@@ -800,22 +818,25 @@ struct RuntimeTests {
         await source.waitUntilCapabilityLookupEntered()
         Task { @MainActor in
             restartEntered.reach()
-            await runtime.restartScanning(configuration: .init(
-                scanInterval: .seconds(9),
-                userRegionOverride: nil,
-                userDefaultsRegionOverride: nil
-            ))
+            await runtime.restartScanning(
+                configuration: .init(
+                    scanInterval: .seconds(9),
+                    userRegionOverride: nil,
+                    userDefaultsRegionOverride: nil
+                ))
             completed.insert("B")
             completedCounter.increment()
         }
         await restartEntered.waitUntilReached()
         Task { @MainActor in
             latestStartEntered.reach()
-            await runtime.startScanning(configuration: .init(
-                scanInterval: .seconds(11),
-                userRegionOverride: nil,
-                userDefaultsRegionOverride: nil
-            )) { _ in }
+            await runtime.startScanning(
+                configuration: .init(
+                    scanInterval: .seconds(11),
+                    userRegionOverride: nil,
+                    userDefaultsRegionOverride: nil
+                )
+            ) { _ in }
             completed.insert("C")
             completedCounter.increment()
         }
@@ -1069,10 +1090,11 @@ struct ScannerRuntimeMigrationTests {
         #expect(scanner.wifiPowerState == .unknown)
         #expect(store.currentStatus == nil)
         #expect(store.validity(at: Date())?.currentStatus != .current)
-        #expect(OverviewWiFiDataResolver.currentStatus(
-            observation: store.currentObservation,
-            validity: store.validity(at: Date())
-        ) == nil)
+        #expect(
+            OverviewWiFiDataResolver.currentStatus(
+                observation: store.currentObservation,
+                validity: store.validity(at: Date())
+            ) == nil)
     }
 
     @Test("Persistent unknown evidence pauses scans and trusted radio evidence resumes one loop")
@@ -1221,8 +1243,9 @@ struct ScannerRuntimeMigrationTests {
         await outputCounter.waitForCount(1)
 
         #expect(output?.rawNetworks.isEmpty == true)
-        #expect(output?.cycle.observation.environmentSnapshot?.error
-            == .environmentScanFailed("Wi-Fi interface unavailable"))
+        #expect(
+            output?.cycle.observation.environmentSnapshot?.error
+                == .environmentScanFailed("Wi-Fi interface unavailable"))
         #expect(interfaceSource.captureCount == 1)
         await runtime.stopScanning()
     }
@@ -1641,8 +1664,8 @@ struct WiFiScanCadenceTests {
     }
 }
 
-private extension WiFiObservationRuntimeConfiguration {
-    static let testDefault = WiFiObservationRuntimeConfiguration(
+extension WiFiObservationRuntimeConfiguration {
+    fileprivate static let testDefault = WiFiObservationRuntimeConfiguration(
         scanInterval: .seconds(3),
         userRegionOverride: nil,
         userDefaultsRegionOverride: nil
@@ -1940,11 +1963,13 @@ private actor RecordingCyclePipeline: WiFiObservationPipelining {
     private(set) var calls: [Call] = []
     private let currentStatus: WiFiCurrentStatus
 
-    init(currentStatus: WiFiCurrentStatus = WiFiCurrentStatus(
-        timestamp: Date(timeIntervalSince1970: 1),
-        isConnected: false,
-        isWiFiPowerOn: true
-    )) {
+    init(
+        currentStatus: WiFiCurrentStatus = WiFiCurrentStatus(
+            timestamp: Date(timeIntervalSince1970: 1),
+            isConnected: false,
+            isWiFiPowerOn: true
+        )
+    ) {
         self.currentStatus = currentStatus
     }
 

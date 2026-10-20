@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import WiFiLensCore
 
 // MARK: - RegulatoryDomain
@@ -345,22 +346,23 @@ struct RecommendationReasonCalculatorTests {
         classification: ChannelRecommendation.Classification = .recommended,
         restrictions: [ChannelRecommendation.RestrictionReason] = []
     ) -> ChannelRecommendation {
-        var rec = ChannelRecommendation(from: ChannelQuality(
-            channel: channel,
-            band: band,
-            bandDisplay: band == "24" ? "2.4 GHz" : "5 GHz",
-            qualityScore: score,
-            qualityLevel: .from(score: score),
-            apCount: apCount,
-            coChannelCount: coChannelCount,
-            adjacentCount: adjacentCount,
-            interferenceScore: interferenceScore,
-            overlapLevel: overlapLevel,
-            strongestNeighborRSSI: -60,
-            isRecommended: false,
-            isCurrentChannel: isCurrentChannel,
-            showInSimpleView: true
-        ))
+        var rec = ChannelRecommendation(
+            from: ChannelQuality(
+                channel: channel,
+                band: band,
+                bandDisplay: band == "24" ? "2.4 GHz" : "5 GHz",
+                qualityScore: score,
+                qualityLevel: .from(score: score),
+                apCount: apCount,
+                coChannelCount: coChannelCount,
+                adjacentCount: adjacentCount,
+                interferenceScore: interferenceScore,
+                overlapLevel: overlapLevel,
+                strongestNeighborRSSI: -60,
+                isRecommended: false,
+                isCurrentChannel: isCurrentChannel,
+                showInSimpleView: true
+            ))
         rec.scoreSelected = scoreSelected
         rec.classification = classification
         rec.restrictionReasons = restrictions
@@ -513,15 +515,16 @@ struct RecommendationReasonCalculatorTests {
         ])
         let out = RecommendationReasonCalculator.compute(for: [rec])
         let computed = try #require(out.first)
-        #expect(computed.recommendationReasons == [
-            .dfsRequired, .indoorOnly, .cacRequired, .radarSensitive,
-        ])
+        #expect(
+            computed.recommendationReasons == [
+                .dfsRequired, .indoorOnly, .cacRequired, .radarSensitive,
+            ])
     }
 
     @Test("Regulatory: unknown restriction codes are ignored")
     func regulatoryUnknownCodeIgnored() throws {
         let rec = recommendation(restrictions: [
-            .init(code: "UNKNOWN_CODE", description: "Unknown"),
+            .init(code: "UNKNOWN_CODE", description: "Unknown")
         ])
         let out = RecommendationReasonCalculator.compute(for: [rec])
         let computed = try #require(out.first)

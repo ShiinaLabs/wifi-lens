@@ -1,6 +1,6 @@
-import SwiftUI
 import Foundation
 import Logging
+import SwiftUI
 
 public enum ScanAccessState: Equatable {
     case waitingForAuthorization
@@ -12,7 +12,7 @@ public enum ScanAccessState: Equatable {
 
 public struct NetworkTableRow: Identifiable, Hashable {
     public let id: String
-    public let bandID: String           // "24"/"5"/"6" — raw identifier, never localized
+    public let bandID: String  // "24"/"5"/"6" — raw identifier, never localized
     public let bandLabel: String
     public let channel: Int
     public let rssi: Int
@@ -88,8 +88,8 @@ public final class ScannerViewModel {
     let mcpServer = MCPServer()
     public let throughputMonitor = ThroughputMonitor()
     public var hiddenBSSIDs: Set<String> = []
-    public var hiddenBands: Set<String> = []       // band IDs ("24"/"5"/"6") to hide
-    var hideHiddenSSIDs: Bool = false       // hide networks with empty SSID
+    public var hiddenBands: Set<String> = []  // band IDs ("24"/"5"/"6") to hide
+    var hideHiddenSSIDs: Bool = false  // hide networks with empty SSID
     public private(set) var lastNetworks: [WiFiNetwork] = []  // cached for toggle rebuild + MCP
     private(set) var lastObservationTimestamp = Date.distantPast
     private(set) var vendorDatabaseRevision = 0
@@ -130,11 +130,11 @@ public final class ScannerViewModel {
     private var unknownWiFiProbeTask: Task<Void, Never>?
     private var consecutiveUnknownWiFiSamples = 0
     private var lastReconciledWiFiSampleIdentity: WiFiPowerSampleIdentity?
-#if DEBUG
-    private var debugReconciliationRunSessionID = UUID()
-    private var debugReconciliationSequence: UInt64 = 0
-    private var debugReconciliationSampleSequences: [UUID: UInt64] = [:]
-#endif
+    #if DEBUG
+        private var debugReconciliationRunSessionID = UUID()
+        private var debugReconciliationSequence: UInt64 = 0
+        private var debugReconciliationSampleSequences: [UUID: UInt64] = [:]
+    #endif
     private var runtimeLifecycleTail: Task<Void, Never>?
     private var terminationStopTask: Task<Void, Never>?
     private var isTerminating = false
@@ -305,7 +305,8 @@ public final class ScannerViewModel {
     /// 1...170; 6 GHz is the 1/5/9/… PSC grid).
     private func heatmapChannels(for band: ChannelBand) -> [Int] {
         let region = userRegionOverride ?? inferredRegion?.domain ?? .US
-        let allowed = region.allowedChannels(forBand: band.id)
+        let allowed =
+            region.allowedChannels(forBand: band.id)
             ?? RegulatoryDomain.US.allowedChannels(forBand: band.id)
             ?? Set(band == .band24GHz ? Array(1...14) : Array(1...band.maxChannel))
         return allowed.sorted()
@@ -325,9 +326,10 @@ public final class ScannerViewModel {
     /// visibility toggles, global filter/hidden-network changes) — never from
     /// the 60fps animation tick.
     private func rebuildCachedDerivedData() {
-        let qualityScores = Dictionary(uniqueKeysWithValues: bandViewModels.flatMap { vm in
-            vm.allSeriesData.map { ($0.id, $0.qualityScore) }
-        })
+        let qualityScores = Dictionary(
+            uniqueKeysWithValues: bandViewModels.flatMap { vm in
+                vm.allSeriesData.map { ($0.id, $0.qualityScore) }
+            })
 
         cachedTotalNetworks = bandViewModels.reduce(0) { $0 + $1.allSeriesData.count }
         cachedBandSummary = bandViewModels.map { vm in
@@ -339,10 +341,12 @@ public final class ScannerViewModel {
             let ie = network.ieData.map { IEParser.parse(data: $0) }
             let trend = signalHistory.trend(for: network.bssid)
             let isHiddenSSID = (ie?.isHiddenSSID ?? false) || (network.ssid ?? "").isEmpty
-            let displayState = displayStatesByID[seriesID] ?? APDisplayState(
-                visibility: automaticVisibility(for: network),
-                visibilityLocked: false
-            )
+            let displayState =
+                displayStatesByID[seriesID]
+                ?? APDisplayState(
+                    visibility: automaticVisibility(for: network),
+                    visibilityLocked: false
+                )
 
             return NetworkTableRow(
                 id: seriesID,
@@ -376,7 +380,7 @@ public final class ScannerViewModel {
     }
 
     private func vendorDisplayName(for bssid: String) -> String {
-        if case let .registered(organization) = vendorResolver.resolve(bssid) {
+        if case .registered(let organization) = vendorResolver.resolve(bssid) {
             return organization
         }
         return ""
@@ -423,9 +427,10 @@ public final class ScannerViewModel {
 
     private func applyEffectiveScanInterval() {
         let leasedInterval = scanIntervalLeases.values.min()
-        let nextInterval = leasedInterval.map {
-            min(requestedScanIntervalSeconds, $0)
-        } ?? requestedScanIntervalSeconds
+        let nextInterval =
+            leasedInterval.map {
+                min(requestedScanIntervalSeconds, $0)
+            } ?? requestedScanIntervalSeconds
         guard effectiveScanIntervalSeconds != nextInterval else { return }
 
         let previousInterval = effectiveScanIntervalSeconds
@@ -612,7 +617,8 @@ public final class ScannerViewModel {
             guard let self else { return }
             unknownWiFiProbeTask = nil
             guard !isTerminating, wifiPowerState == .unknown,
-                  locationManager.isAuthorizedForSSID else { return }
+                locationManager.isAuthorizedForSSID
+            else { return }
             consecutiveUnknownWiFiSamples = 0
             await startScanningAfterAuth()
         }
@@ -639,7 +645,8 @@ public final class ScannerViewModel {
     }
 
     func makeMCPSnapshot(at date: Date = Date()) -> MCPSnapshot {
-        let scanContextIsCurrent = isScanning
+        let scanContextIsCurrent =
+            isScanning
             && isWiFiAvailable
             && store.validity(at: date)?.environment == .current
             && lastObservationTimestamp != .distantPast
@@ -854,10 +861,12 @@ public final class ScannerViewModel {
         var nextStates: [String: APDisplayState] = [:]
         for network in networks {
             let seriesID = network.id
-            let previous = displayStatesByID[seriesID] ?? APDisplayState(
-                visibility: automaticVisibility(for: network),
-                visibilityLocked: false
-            )
+            let previous =
+                displayStatesByID[seriesID]
+                ?? APDisplayState(
+                    visibility: automaticVisibility(for: network),
+                    visibilityLocked: false
+                )
 
             if previous.visibilityLocked {
                 nextStates[seriesID] = previous
@@ -883,10 +892,12 @@ public final class ScannerViewModel {
         var nextStates: [String: APDisplayState] = [:]
         for network in networks {
             let seriesID = network.id
-            let baseState = displayStatesByID[seriesID] ?? APDisplayState(
-                visibility: automaticVisibility(for: network),
-                visibilityLocked: false
-            )
+            let baseState =
+                displayStatesByID[seriesID]
+                ?? APDisplayState(
+                    visibility: automaticVisibility(for: network),
+                    visibilityLocked: false
+                )
 
             if baseState.visibilityLocked {
                 nextStates[seriesID] = baseState
@@ -911,7 +922,8 @@ public final class ScannerViewModel {
         snapshots: [String: [NetworkSnapshot]]
     ) {
         if supportedBands.contains(.band24GHz),
-           let vm = panelBandViewModelsByID[panelID]?[.band24GHz] {
+            let vm = panelBandViewModelsByID[panelID]?[.band24GHz]
+        {
             syncBandViewModel(
                 vm,
                 for: panelID,
@@ -923,7 +935,8 @@ public final class ScannerViewModel {
         }
 
         if supportedBands.contains(.band5GHz),
-           let vm = panelBandViewModelsByID[panelID]?[.band5GHz] {
+            let vm = panelBandViewModelsByID[panelID]?[.band5GHz]
+        {
             syncBandViewModel(
                 vm,
                 for: panelID,
@@ -935,7 +948,8 @@ public final class ScannerViewModel {
         }
 
         if supportedBands.contains(.band6GHz),
-           let vm = panelBandViewModelsByID[panelID]?[.band6GHz] {
+            let vm = panelBandViewModelsByID[panelID]?[.band6GHz]
+        {
             syncBandViewModel(
                 vm,
                 for: panelID,
@@ -956,7 +970,8 @@ public final class ScannerViewModel {
         snapshots: [String: [NetworkSnapshot]]
     ) {
         let panelDisplayStates = recomputePanelDisplayStates(for: networks, panelID: panelID)
-        let sorted = networks
+        let sorted =
+            networks
             .filter { $0.channel.band == band }
             .sorted { $0.channel.channelNumber < $1.channel.channelNumber }
         vm.updateNetworks(
@@ -1028,7 +1043,6 @@ public final class ScannerViewModel {
         }
     }
 
-
     private func ingestNetworks(_ networks: [WiFiNetwork], timestamp: Date) {
         lastNetworks = networks
         let deduped = deduplicateNetworks(networks)
@@ -1058,25 +1072,37 @@ public final class ScannerViewModel {
         }
         displayStatesByID = recomputeDisplayStates(for: deduped)
 
-        let sorted24 = deduped
+        let sorted24 =
+            deduped
             .filter { $0.channel.band == .band24GHz }
             .sorted { $0.channel.channelNumber < $1.channel.channelNumber }
         if supportedBands.contains(.band24GHz) {
-            band24.updateNetworks(sorted24, colorHasher: colorHasher, filterQuery: globalFilterQuery, trends: trends, snapshots: snapshotDict, hiddenBSSIDs: hiddenBSSIDs, hiddenBands: hiddenBands, hideHiddenSSIDs: hideHiddenSSIDs)
+            band24.updateNetworks(
+                sorted24, colorHasher: colorHasher, filterQuery: globalFilterQuery, trends: trends,
+                snapshots: snapshotDict, hiddenBSSIDs: hiddenBSSIDs, hiddenBands: hiddenBands,
+                hideHiddenSSIDs: hideHiddenSSIDs)
         }
 
-        let sorted5 = deduped
+        let sorted5 =
+            deduped
             .filter { $0.channel.band == .band5GHz }
             .sorted { $0.channel.channelNumber < $1.channel.channelNumber }
         if supportedBands.contains(.band5GHz) {
-            band5.updateNetworks(sorted5, colorHasher: colorHasher, filterQuery: globalFilterQuery, trends: trends, snapshots: snapshotDict, hiddenBSSIDs: hiddenBSSIDs, hiddenBands: hiddenBands, hideHiddenSSIDs: hideHiddenSSIDs)
+            band5.updateNetworks(
+                sorted5, colorHasher: colorHasher, filterQuery: globalFilterQuery, trends: trends,
+                snapshots: snapshotDict, hiddenBSSIDs: hiddenBSSIDs, hiddenBands: hiddenBands,
+                hideHiddenSSIDs: hideHiddenSSIDs)
         }
 
-        let sorted6 = deduped
+        let sorted6 =
+            deduped
             .filter { $0.channel.band == .band6GHz }
             .sorted { $0.channel.channelNumber < $1.channel.channelNumber }
         if supportedBands.contains(.band6GHz) {
-            band6.updateNetworks(sorted6, colorHasher: colorHasher, filterQuery: globalFilterQuery, trends: trends, snapshots: snapshotDict, hiddenBSSIDs: hiddenBSSIDs, hiddenBands: hiddenBands, hideHiddenSSIDs: hideHiddenSSIDs)
+            band6.updateNetworks(
+                sorted6, colorHasher: colorHasher, filterQuery: globalFilterQuery, trends: trends,
+                snapshots: snapshotDict, hiddenBSSIDs: hiddenBSSIDs, hiddenBands: hiddenBands,
+                hideHiddenSSIDs: hideHiddenSSIDs)
         }
         refreshAllPanelBandViewModels(with: deduped, trends: trends, snapshots: snapshotDict)
 
@@ -1188,7 +1214,8 @@ public final class ScannerViewModel {
         authorizationRefresh(locationManager)
         guard locationManager.isAuthorizedForSSID else {
             transitionToStoppedState()
-            accessState = locationManager.authorizationStatus == .notDetermined
+            accessState =
+                locationManager.authorizationStatus == .notDetermined
                 ? .waitingForAuthorization
                 : .denied
             return false
@@ -1229,65 +1256,65 @@ public final class ScannerViewModel {
 }
 
 #if DEBUG
-extension ScannerViewModel {
-    func debugApplyNetworksForTesting(
-        _ networks: [WiFiNetwork],
-        supportedBands: Set<ChannelBand>,
-        timestamp: Date = Date()
-    ) {
-        self.supportedBands = supportedBands
-        self.lastObservationTimestamp = timestamp
-        ingestNetworks(networks, timestamp: timestamp)
-    }
-
-    func debugStartScanLoopForTesting() async {
-        await startScanLoop()
-    }
-
-    func debugStartAfterAuthorizationForTesting() async {
-        await startScanningAfterAuth()
-    }
-
-    func debugReconcileWiFiStateForTesting(_ state: WiFiPowerState, sampleID: UUID? = nil) {
-        let identity: WiFiPowerSampleIdentity?
-        if state == .unknown {
-            let resolvedID = sampleID ?? UUID()
-            let sequence: UInt64
-            if let existing = debugReconciliationSampleSequences[resolvedID] {
-                sequence = existing
-            } else {
-                debugReconciliationSequence &+= 1
-                sequence = debugReconciliationSequence
-                debugReconciliationSampleSequences[resolvedID] = sequence
-            }
-            identity = WiFiPowerSampleIdentity(
-                runSessionID: debugReconciliationRunSessionID,
-                sequence: sequence,
-                snapshotID: resolvedID
-            )
-        } else {
-            identity = nil
+    extension ScannerViewModel {
+        func debugApplyNetworksForTesting(
+            _ networks: [WiFiNetwork],
+            supportedBands: Set<ChannelBand>,
+            timestamp: Date = Date()
+        ) {
+            self.supportedBands = supportedBands
+            self.lastObservationTimestamp = timestamp
+            ingestNetworks(networks, timestamp: timestamp)
         }
-        reconcileWiFiState(state, sampleIdentity: identity)
-    }
 
-    func debugReconcileWiFiSampleForTesting(_ state: WiFiPowerState, identity: WiFiPowerSampleIdentity) {
-        reconcileWiFiState(state, sampleIdentity: identity)
-    }
+        func debugStartScanLoopForTesting() async {
+            await startScanLoop()
+        }
 
-    var debugConsecutiveUnknownSamplesForTesting: Int { consecutiveUnknownWiFiSamples }
+        func debugStartAfterAuthorizationForTesting() async {
+            await startScanningAfterAuth()
+        }
 
-    func debugDrainRuntimeLifecycleForTesting() async {
-        await runtimeLifecycleTail?.value
-    }
+        func debugReconcileWiFiStateForTesting(_ state: WiFiPowerState, sampleID: UUID? = nil) {
+            let identity: WiFiPowerSampleIdentity?
+            if state == .unknown {
+                let resolvedID = sampleID ?? UUID()
+                let sequence: UInt64
+                if let existing = debugReconciliationSampleSequences[resolvedID] {
+                    sequence = existing
+                } else {
+                    debugReconciliationSequence &+= 1
+                    sequence = debugReconciliationSequence
+                    debugReconciliationSampleSequences[resolvedID] = sequence
+                }
+                identity = WiFiPowerSampleIdentity(
+                    runSessionID: debugReconciliationRunSessionID,
+                    sequence: sequence,
+                    snapshotID: resolvedID
+                )
+            } else {
+                identity = nil
+            }
+            reconcileWiFiState(state, sampleIdentity: identity)
+        }
 
-    func debugStartWiFiMonitoringForTesting() {
-        wifiPowerMonitor.startMonitoring()
-        startWiFiMonitoring()
-    }
+        func debugReconcileWiFiSampleForTesting(_ state: WiFiPowerState, identity: WiFiPowerSampleIdentity) {
+            reconcileWiFiState(state, sampleIdentity: identity)
+        }
 
-    var debugHasActiveWiFiMonitoringForTesting: Bool {
-        wifiMonitoringTask != nil && wifiPowerMonitor.debugIsMonitoringForTesting
+        var debugConsecutiveUnknownSamplesForTesting: Int { consecutiveUnknownWiFiSamples }
+
+        func debugDrainRuntimeLifecycleForTesting() async {
+            await runtimeLifecycleTail?.value
+        }
+
+        func debugStartWiFiMonitoringForTesting() {
+            wifiPowerMonitor.startMonitoring()
+            startWiFiMonitoring()
+        }
+
+        var debugHasActiveWiFiMonitoringForTesting: Bool {
+            wifiMonitoringTask != nil && wifiPowerMonitor.debugIsMonitoringForTesting
+        }
     }
-}
 #endif

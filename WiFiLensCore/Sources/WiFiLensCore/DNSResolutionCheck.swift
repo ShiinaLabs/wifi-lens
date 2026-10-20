@@ -163,7 +163,9 @@ struct DNSResolutionCheck: DiagnosticCheck {
     }
 
     func run() async -> NetworkDiagnosticResult {
-        let outcomes = await withTaskGroup(of: (index: Int, outcome: DNSResolutionOutcome).self, returning: [DNSResolutionOutcome].self) { group in
+        let outcomes = await withTaskGroup(
+            of: (index: Int, outcome: DNSResolutionOutcome).self, returning: [DNSResolutionOutcome].self
+        ) { group in
             for (index, host) in probeTargets.enumerated() {
                 group.addTask {
                     let firstOutcome = await resolver.resolve(host: host, timeout: timeout)
@@ -194,17 +196,21 @@ struct DNSResolutionCheck: DiagnosticCheck {
                 value: Self.evidenceValue(for: outcomes[index])
             )
         }
-        let evidence = sampleEvidence + [
-            NetworkDiagnosticEvidence(code: "dns.success-count", value: "\(successCount)/\(probeTargets.count)"),
-            NetworkDiagnosticEvidence(code: "dns.failure-count", value: "\(failureCount)/\(probeTargets.count)"),
-            NetworkDiagnosticEvidence(code: "dns.indeterminate-count", value: "\(indeterminateCount)/\(probeTargets.count)"),
-        ]
+        let evidence =
+            sampleEvidence + [
+                NetworkDiagnosticEvidence(code: "dns.success-count", value: "\(successCount)/\(probeTargets.count)"),
+                NetworkDiagnosticEvidence(code: "dns.failure-count", value: "\(failureCount)/\(probeTargets.count)"),
+                NetworkDiagnosticEvidence(
+                    code: "dns.indeterminate-count", value: "\(indeterminateCount)/\(probeTargets.count)"),
+            ]
 
         if successCount == probeTargets.count {
             return NetworkDiagnosticResult(
                 id: id,
                 status: .normal,
-                summary: String(localized: "network_diagnostics.dns.available.summary", comment: "Network self-check DNS all test names resolved"),
+                summary: String(
+                    localized: "network_diagnostics.dns.available.summary",
+                    comment: "Network self-check DNS all test names resolved"),
                 evidence: evidence
             )
         }
@@ -212,7 +218,9 @@ struct DNSResolutionCheck: DiagnosticCheck {
             return NetworkDiagnosticResult(
                 id: id,
                 status: .abnormal,
-                summary: String(localized: "network_diagnostics.dns.unavailable.summary", comment: "Network self-check DNS all test names failed"),
+                summary: String(
+                    localized: "network_diagnostics.dns.unavailable.summary",
+                    comment: "Network self-check DNS all test names failed"),
                 evidence: evidence
             )
         }
@@ -220,14 +228,18 @@ struct DNSResolutionCheck: DiagnosticCheck {
             return NetworkDiagnosticResult(
                 id: id,
                 status: .indeterminate,
-                summary: String(localized: "network_diagnostics.dns.unable_to_determine.summary", comment: "Network self-check DNS no test name produced a result"),
+                summary: String(
+                    localized: "network_diagnostics.dns.unable_to_determine.summary",
+                    comment: "Network self-check DNS no test name produced a result"),
                 evidence: evidence
             )
         }
         return NetworkDiagnosticResult(
             id: id,
             status: .indeterminate,
-            summary: String(localized: "network_diagnostics.dns.inconsistent.summary", comment: "Network self-check DNS test names had mixed outcomes"),
+            summary: String(
+                localized: "network_diagnostics.dns.inconsistent.summary",
+                comment: "Network self-check DNS test names had mixed outcomes"),
             evidence: evidence
         )
     }

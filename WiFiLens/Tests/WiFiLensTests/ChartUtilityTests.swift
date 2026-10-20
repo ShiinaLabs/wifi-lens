@@ -1,7 +1,8 @@
-import Testing
+import ChartLens
 import Foundation
 import SwiftUI
-import ChartLens
+import Testing
+
 @testable import WiFi_Lens
 
 // MARK: - chartDurationLabel
@@ -110,7 +111,10 @@ struct SplineInterpolationTests {
     }
 
     @Test func clampedCubicManyPoints() {
-        let points = [CGPoint(x: 0, y: 50), CGPoint(x: 25, y: 100), CGPoint(x: 50, y: 0), CGPoint(x: 75, y: 75), CGPoint(x: 100, y: 25)]
+        let points = [
+            CGPoint(x: 0, y: 50), CGPoint(x: 25, y: 100), CGPoint(x: 50, y: 0), CGPoint(x: 75, y: 75),
+            CGPoint(x: 100, y: 25),
+        ]
         let path = clampedCubicSpline(points: points)
         #expect(!path.isEmpty)
         let rect = path.boundingRect.insetBy(dx: -1, dy: -1)

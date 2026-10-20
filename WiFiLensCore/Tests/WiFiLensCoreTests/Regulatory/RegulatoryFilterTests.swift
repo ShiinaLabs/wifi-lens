@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct RegulatoryFilterTests {
@@ -72,8 +73,9 @@ import Testing
         let result = RegulatoryFilter.apply(to: input)
 
         for rec in result {
-            #expect(rec.classification == .recommended,
-                     "Channel \(rec.channel) (\(rec.band)) should be recommended, got \(rec.classification.rawValue)")
+            #expect(
+                rec.classification == .recommended,
+                "Channel \(rec.channel) (\(rec.band)) should be recommended, got \(rec.classification.rawValue)")
         }
     }
 
@@ -102,7 +104,7 @@ import Testing
     @Test("DFS score-selected channels are not final recommendations")
     func dfsScoreSelectedChannelsAreNotFinalRecommendations() {
         let rf = [
-            makeQuality(channel: 52, band: "5", score: 100),
+            makeQuality(channel: 52, band: "5", score: 100)
         ]
         let input = usFilterInput(rfResults: rf)
         let result = RegulatoryFilter.apply(to: input)
@@ -117,7 +119,7 @@ import Testing
     func channelNotInRegionBlocked() {
         let rf = [
             makeQuality(channel: 14, band: "24", score: 100),  // JP-only
-            makeQuality(channel: 120, band: "5", score: 95),   // DFS but still US-legal
+            makeQuality(channel: 120, band: "5", score: 95),  // DFS but still US-legal
         ]
         let input = usFilterInput(rfResults: rf)
         let result = RegulatoryFilter.apply(to: input)
@@ -132,9 +134,9 @@ import Testing
     @Test("RF scores are preserved regardless of classification")
     func rfScorePreserved() {
         let rf = [
-            makeQuality(channel: 52, band: "5", score: 100, apCount: 0),   // DFS → advanced
-            makeQuality(channel: 14, band: "24", score: 95, apCount: 0),   // blocked → restricted
-            makeQuality(channel: 36, band: "5", score: 80, apCount: 2),    // recommended
+            makeQuality(channel: 52, band: "5", score: 100, apCount: 0),  // DFS → advanced
+            makeQuality(channel: 14, band: "24", score: 95, apCount: 0),  // blocked → restricted
+            makeQuality(channel: 36, band: "5", score: 80, apCount: 2),  // recommended
         ]
         let input = usFilterInput(rfResults: rf)
         let result = RegulatoryFilter.apply(to: input)
@@ -149,10 +151,10 @@ import Testing
     @Test("Results sorted: recommended → advanced → restricted, then by recommendation score descending")
     func sortOrderRespectsClassificationThenRecommendationScore() {
         let rf = [
-            makeQuality(channel: 36, band: "5", score: 50),   // recommended
-            makeQuality(channel: 40, band: "5", score: 90),   // recommended (higher score)
+            makeQuality(channel: 36, band: "5", score: 50),  // recommended
+            makeQuality(channel: 40, band: "5", score: 90),  // recommended (higher score)
             makeQuality(channel: 52, band: "5", score: 100),  // advanced (DFS)
-            makeQuality(channel: 60, band: "5", score: 30),   // advanced (DFS, lower score)
+            makeQuality(channel: 60, band: "5", score: 30),  // advanced (DFS, lower score)
         ]
         let input = usFilterInput(rfResults: rf)
         let result = RegulatoryFilter.apply(to: input)
@@ -177,7 +179,7 @@ import Testing
                 domain: .US,
                 confidence: .low,
                 contributions: [
-                    RegionSource(kind: .systemLocale, rawValue: "US", inferredDomain: .US),
+                    RegionSource(kind: .systemLocale, rawValue: "US", inferredDomain: .US)
                 ],
                 conflicts: []
             ),
@@ -272,8 +274,9 @@ import Testing
         )
         let result = RegulatoryFilter.apply(to: input)
         for rec in result {
-            #expect(rec.classification == .restricted,
-                     "Channel \(rec.channel) should be restricted in unknown region")
+            #expect(
+                rec.classification == .restricted,
+                "Channel \(rec.channel) should be restricted in unknown region")
         }
     }
 

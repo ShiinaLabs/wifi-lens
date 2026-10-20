@@ -1,17 +1,20 @@
 import Metal
 import Testing
+
 @testable import WiFiLensCore
 
 @Suite struct SpectrumHeatmapMetalBackendTests {
     private static let tolerance = 0.02
 
     private let input = SpectrumHeatmapComputeInput(
-        envelopes: [SpectrumHeatmapEnvelope(
-            leftX: 3,
-            rightX: 7,
-            peakRSSI: -50,
-            baselineRSSI: -100
-        )],
+        envelopes: [
+            SpectrumHeatmapEnvelope(
+                leftX: 3,
+                rightX: 7,
+                peakRSSI: -50,
+                baselineRSSI: -100
+            )
+        ],
         domain: SpectrumHeatmapChannelDomain(
             minChannelCoordinate: 1,
             maxChannelCoordinate: 9
@@ -44,7 +47,7 @@ import Testing
         let overlappingInput = SpectrumHeatmapComputeInput(
             envelopes: [
                 SpectrumHeatmapEnvelope(leftX: 2, rightX: 6, peakRSSI: -55, baselineRSSI: -100),
-                SpectrumHeatmapEnvelope(leftX: 4, rightX: 8, peakRSSI: -60, baselineRSSI: -100)
+                SpectrumHeatmapEnvelope(leftX: 4, rightX: 8, peakRSSI: -60, baselineRSSI: -100),
             ],
             domain: input.domain,
             rssiRange: input.rssiRange,
@@ -101,7 +104,8 @@ import Testing
         #expect(actual.values.allSatisfy { $0.isFinite && (0...1).contains($0) })
 
         // Float32 CPU/Metal parity uses a tolerance instead of byte equality.
-        let maximumError = zip(actual.values, expected.values)
+        let maximumError =
+            zip(actual.values, expected.values)
             .map { abs(Double($0) - Double($1)) }
             .max() ?? 0
         #expect(maximumError < Self.tolerance)

@@ -1,5 +1,5 @@
-import Foundation
 import Darwin
+import Foundation
 import Logging
 
 private let throughputLogger = Logger(label: "throughput")
@@ -9,10 +9,11 @@ public struct ThroughputSample: Identifiable {
     public let timestamp: Date
     public let bytesIn: UInt64
     public let bytesOut: UInt64
-    public let rateIn: Double   // bytes/sec
+    public let rateIn: Double  // bytes/sec
     public let rateOut: Double  // bytes/sec
 
-    public init(id: UUID = UUID(), timestamp: Date, bytesIn: UInt64, bytesOut: UInt64, rateIn: Double, rateOut: Double) {
+    public init(id: UUID = UUID(), timestamp: Date, bytesIn: UInt64, bytesOut: UInt64, rateIn: Double, rateOut: Double)
+    {
         self.id = id
         self.timestamp = timestamp
         self.bytesIn = bytesIn
@@ -32,7 +33,7 @@ public final class ThroughputMonitor {
     private let now: () -> Date
     private let pollInterval: Duration
 
-    static let maxSamples = 90          // retain 90 s
+    static let maxSamples = 90  // retain 90 s
     private static let cleanupInterval = 60  // purge stale ifaces every 60 polls
     private var pollCount = 0
 
@@ -110,7 +111,7 @@ public final class ThroughputMonitor {
 
             let prev = lastCounters[name]
             let elapsed = prev.map { now.timeIntervalSince($0.ts) } ?? 1.0
-            let deltaIn  = prev.map { max(0, Double(Int64(bytesIn) - Int64($0.in)))   / max(0.1, elapsed) } ?? 0
+            let deltaIn = prev.map { max(0, Double(Int64(bytesIn) - Int64($0.in))) / max(0.1, elapsed) } ?? 0
             let deltaOut = prev.map { max(0, Double(Int64(bytesOut) - Int64($0.out))) / max(0.1, elapsed) } ?? 0
 
             lastCounters[name] = (in: bytesIn, out: bytesOut, ts: now)

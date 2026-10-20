@@ -13,7 +13,7 @@ enum RegulatoryFilter {
     struct FilterInput: Sendable {
         let rfResults: [ChannelQuality]
         let inferredRegion: RegionInferenceResult
-        let deviceSupportedChannels: Set<String>    // "bandRaw-channel" keys
+        let deviceSupportedChannels: Set<String>  // "bandRaw-channel" keys
         let deviceCapabilities: DevicePHYCapabilities
         let userClassificationOverrides: [String: ChannelRecommendation.Classification]?  // keyed by "band-channel"
     }
@@ -36,7 +36,9 @@ enum RegulatoryFilter {
                 // No rules for this band in this region → mark restricted
                 recommendations[i].classification = .restricted
                 recommendations[i].restrictionReasons.append(
-                    .init(code: "REGION_UNKNOWN", description: "No regulatory data for region \(region.rawValue) band \(rec.band)")
+                    .init(
+                        code: "REGION_UNKNOWN",
+                        description: "No regulatory data for region \(region.rawValue) band \(rec.band)")
                 )
                 continue
             }
@@ -45,7 +47,9 @@ enum RegulatoryFilter {
             guard bandRules.allowedChannels.contains(rec.channel) else {
                 recommendations[i].classification = .restricted
                 recommendations[i].restrictionReasons.append(
-                    .init(code: "REGION_BLOCKED", description: "Channel \(rec.channel) not allowed in \(region.rawValue) (\(rec.bandDisplay))")
+                    .init(
+                        code: "REGION_BLOCKED",
+                        description: "Channel \(rec.channel) not allowed in \(region.rawValue) (\(rec.bandDisplay))")
                 )
                 continue
             }
@@ -183,6 +187,8 @@ enum RegulatoryFilter {
 
 // MARK: - Comparable helper for downgrade logic
 
-private func min(_ a: ChannelRecommendation.Classification, _ b: ChannelRecommendation.Classification) -> ChannelRecommendation.Classification {
+private func min(_ a: ChannelRecommendation.Classification, _ b: ChannelRecommendation.Classification)
+    -> ChannelRecommendation.Classification
+{
     a.order < b.order ? a : b
 }

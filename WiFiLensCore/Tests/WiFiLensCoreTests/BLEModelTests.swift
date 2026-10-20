@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import WiFiLensCore
 
 // MARK: - BLEChannel
@@ -196,7 +197,9 @@ struct BLEDeviceSnapshotTests {
 
 @Suite @MainActor struct BLEDeviceTrackerTests {
 
-    private func makeEvent(deviceID: UUID, rssi: Int = -50, name: String? = nil, timestamp: Date = Date()) -> BLEAdvertisementEvent {
+    private func makeEvent(deviceID: UUID, rssi: Int = -50, name: String? = nil, timestamp: Date = Date())
+        -> BLEAdvertisementEvent
+    {
         BLEAdvertisementEvent(
             timestamp: timestamp,
             peripheralIdentifier: deviceID,
@@ -224,7 +227,8 @@ struct BLEDeviceSnapshotTests {
 
     @Test func processMultipleDevices() {
         let tracker = BLEDeviceTracker(maxHistoryCount: 10, staleTimeout: 60)
-        let id1 = UUID(), id2 = UUID()
+        let id1 = UUID()
+        let id2 = UUID()
         let snapshots = tracker.processBatch([
             id1: [makeEvent(deviceID: id1, rssi: -50, name: "A")],
             id2: [makeEvent(deviceID: id2, rssi: -70, name: "B")],
@@ -291,7 +295,9 @@ struct BLEDeviceSnapshotTests {
         let now = Date()
         for i in 0..<3 {
             let id = UUID()
-            _ = tracker.processBatch([id: [makeEvent(deviceID: id, rssi: -50 - i, timestamp: now.addingTimeInterval(Double(i)))]])
+            _ = tracker.processBatch([
+                id: [makeEvent(deviceID: id, rssi: -50 - i, timestamp: now.addingTimeInterval(Double(i)))]
+            ])
         }
 
         let snapshots = tracker.processBatch([:])

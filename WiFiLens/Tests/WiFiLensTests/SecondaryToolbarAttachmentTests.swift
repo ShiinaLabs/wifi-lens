@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -66,18 +67,21 @@ struct SpectrumLegacyCompatibilityTests {
 
     @Test func panelFiltersRemainIndependent() {
         let viewModel = ScannerViewModel()
-        viewModel.debugApplyNetworksForTesting([
-            makeNetwork(ssid: "Alpha", bssid: "aa:aa:aa:aa:aa:aa", band: .band24GHz, channel: 1, rssi: -45),
-            makeNetwork(ssid: "Beta", bssid: "bb:bb:bb:bb:bb:bb", band: .band24GHz, channel: 6, rssi: -52)
-        ], supportedBands: [.band24GHz])
+        viewModel.debugApplyNetworksForTesting(
+            [
+                makeNetwork(ssid: "Alpha", bssid: "aa:aa:aa:aa:aa:aa", band: .band24GHz, channel: 1, rssi: -45),
+                makeNetwork(ssid: "Beta", bssid: "bb:bb:bb:bb:bb:bb", band: .band24GHz, channel: 6, rssi: -52),
+            ], supportedBands: [.band24GHz])
 
         viewModel.setFilterQuery("Alpha", for: .primary)
 
-        let primaryVisible = viewModel
+        let primaryVisible =
+            viewModel
             .bandViewModel(for: .primary, band: .band24GHz)
             .visibleSeriesData()
             .map(\.displaySSID)
-        let secondaryVisible = viewModel
+        let secondaryVisible =
+            viewModel
             .bandViewModel(for: .secondary, band: .band24GHz)
             .visibleSeriesData()
             .map(\.displaySSID)

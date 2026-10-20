@@ -1,7 +1,9 @@
 import Foundation
 import Observation
 import Testing
+
 @testable import WiFiLensCore
+
 @MainActor
 struct MACVendorResolverTests {
     private func makeResolver() -> MACVendorResolver {
@@ -65,12 +67,12 @@ struct MACVendorResolverTests {
 
     @Test func replacingEntriesClearsCachedResults() {
         let resolver = MACVendorResolver(entries: [
-            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "Old Name"),
+            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "Old Name")
         ])
         #expect(resolver.resolve("00:11:22:33:44:55") == .registered("Old Name"))
 
         resolver.replaceEntries([
-            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "New Name"),
+            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "New Name")
         ])
 
         #expect(resolver.resolve("00:11:22:33:44:55") == .registered("New Name"))
@@ -78,7 +80,7 @@ struct MACVendorResolverTests {
 
     @Test func locallyAdministeredAddressesDoNotUseRegistryMappings() {
         let resolver = MACVendorResolver(entries: [
-            MACVendorEntry(prefix: "021122", prefixLength: 24, organization: "Should Not Match"),
+            MACVendorEntry(prefix: "021122", prefixLength: 24, organization: "Should Not Match")
         ])
 
         #expect(resolver.resolve("02:11:22:33:44:55") == .locallyAdministered)
@@ -107,7 +109,7 @@ struct MACVendorResolverTests {
 
     @Test func scannerProjectsRegisteredVendorIntoTableRows() {
         let resolver = MACVendorResolver(entries: [
-            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "Example Networks"),
+            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "Example Networks")
         ])
         let viewModel = ScannerViewModel(vendorResolver: resolver)
         let network = WiFiNetwork(
@@ -138,7 +140,7 @@ struct MACVendorResolverTests {
 
     @Test func scannerRefreshSeamReprojectsExistingRowsWithoutAnotherScan() async {
         let resolver = MACVendorResolver(entries: [
-            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "Old Name"),
+            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "Old Name")
         ])
         let viewModel = ScannerViewModel(vendorResolver: resolver)
         let network = WiFiNetwork(
@@ -158,7 +160,7 @@ struct MACVendorResolverTests {
             }
 
             resolver.replaceEntries([
-                MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "New Name"),
+                MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "New Name")
             ])
             viewModel.vendorDatabaseDidChange()
         }

@@ -96,9 +96,12 @@ struct SystemControlEndpointLoader: ControlEndpointLoading {
                 metrics: metricsCollector.metrics
             )
         } catch let error as URLError {
-            return .init(status: nil, body: nil, errorCode: String(error.code.rawValue), metrics: metricsCollector.metrics)
+            return .init(
+                status: nil, body: nil, errorCode: String(error.code.rawValue), metrics: metricsCollector.metrics)
         } catch {
-            return .init(status: nil, body: nil, errorCode: String(describing: type(of: error)), metrics: metricsCollector.metrics)
+            return .init(
+                status: nil, body: nil, errorCode: String(describing: type(of: error)),
+                metrics: metricsCollector.metrics)
         }
     }
 }
@@ -140,7 +143,8 @@ struct HTTPSControlEndpointCheck: DiagnosticCheck {
             status = .abnormal
         }
 
-        let metricsEvidence = metricEvidence(for: httpsResponse.metrics, prefix: "https")
+        let metricsEvidence =
+            metricEvidence(for: httpsResponse.metrics, prefix: "https")
             + metricEvidence(for: captivePortalResponse.metrics, prefix: "captive-portal")
         return NetworkDiagnosticResult(
             id: id,
@@ -207,19 +211,19 @@ struct HTTPSControlEndpointCheck: DiagnosticCheck {
         case .serverCertificateHasBadDate, .serverCertificateNotYetValid:
             return "https.certificate-time-error"
         case .serverCertificateUntrusted,
-             .serverCertificateHasUnknownRoot,
-             .clientCertificateRejected,
-             .clientCertificateRequired:
+            .serverCertificateHasUnknownRoot,
+            .clientCertificateRejected,
+            .clientCertificateRequired:
             return "https.certificate-error"
         case .timedOut,
-             .cannotFindHost,
-             .cannotConnectToHost,
-             .networkConnectionLost,
-             .dnsLookupFailed,
-             .notConnectedToInternet,
-             .internationalRoamingOff,
-             .callIsActive,
-             .dataNotAllowed:
+            .cannotFindHost,
+            .cannotConnectToHost,
+            .networkConnectionLost,
+            .dnsLookupFailed,
+            .notConnectedToInternet,
+            .internationalRoamingOff,
+            .callIsActive,
+            .dataNotAllowed:
             return "https.connectivity-error"
         default:
             return "https.transport-error"
@@ -272,19 +276,31 @@ struct HTTPSControlEndpointCheck: DiagnosticCheck {
     ) -> String {
         switch status {
         case .normal:
-            String(localized: "network_diagnostics.internet.normal.summary", comment: "Network self-check HTTPS control endpoint result summary")
+            String(
+                localized: "network_diagnostics.internet.normal.summary",
+                comment: "Network self-check HTTPS control endpoint result summary")
         case .indeterminate:
-            String(localized: "network_diagnostics.internet.indeterminate.summary", comment: "Network self-check HTTPS control endpoint result summary")
+            String(
+                localized: "network_diagnostics.internet.indeterminate.summary",
+                comment: "Network self-check HTTPS control endpoint result summary")
         case .abnormal, .blocked, .skipped:
             switch httpsEvidence.code {
             case "https.connectivity-error":
-                String(localized: "network_diagnostics.internet.connectivity_failure.summary", comment: "Network self-check connectivity failure summary")
+                String(
+                    localized: "network_diagnostics.internet.connectivity_failure.summary",
+                    comment: "Network self-check connectivity failure summary")
             case "https.tls-error", "https.certificate-error":
-                String(localized: "network_diagnostics.internet.secure_connection_failure.summary", comment: "Network self-check TLS or certificate failure summary")
+                String(
+                    localized: "network_diagnostics.internet.secure_connection_failure.summary",
+                    comment: "Network self-check TLS or certificate failure summary")
             case "https.certificate-time-error":
-                String(localized: "network_diagnostics.internet.certificate_time_failure.summary", comment: "Network self-check certificate time failure summary")
+                String(
+                    localized: "network_diagnostics.internet.certificate_time_failure.summary",
+                    comment: "Network self-check certificate time failure summary")
             default:
-                String(localized: "network_diagnostics.internet.abnormal.summary", comment: "Network self-check HTTPS control endpoint result summary")
+                String(
+                    localized: "network_diagnostics.internet.abnormal.summary",
+                    comment: "Network self-check HTTPS control endpoint result summary")
             }
         }
     }
@@ -292,11 +308,17 @@ struct HTTPSControlEndpointCheck: DiagnosticCheck {
     private func localizedDetail(for status: NetworkDiagnosticStatus) -> String {
         switch status {
         case .normal:
-            String(localized: "network_diagnostics.internet.normal.detail", comment: "Network self-check HTTPS control endpoint result detail")
+            String(
+                localized: "network_diagnostics.internet.normal.detail",
+                comment: "Network self-check HTTPS control endpoint result detail")
         case .indeterminate:
-            String(localized: "network_diagnostics.internet.indeterminate.detail", comment: "Network self-check HTTPS control endpoint result detail")
+            String(
+                localized: "network_diagnostics.internet.indeterminate.detail",
+                comment: "Network self-check HTTPS control endpoint result detail")
         case .abnormal, .blocked, .skipped:
-            String(localized: "network_diagnostics.internet.abnormal.detail", comment: "Network self-check HTTPS control endpoint result detail")
+            String(
+                localized: "network_diagnostics.internet.abnormal.detail",
+                comment: "Network self-check HTTPS control endpoint result detail")
         }
     }
 }
@@ -353,13 +375,16 @@ private final class ControlEndpointDelegate: NSObject, URLSessionTaskDelegate, @
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
         guard let transaction = metrics.transactionMetrics.last else { return }
-        metricsCollector.store(.init(
-            dnsDuration: Self.duration(from: transaction.domainLookupStartDate, to: transaction.domainLookupEndDate),
-            connectDuration: Self.duration(from: transaction.connectStartDate, to: transaction.connectEndDate),
-            tlsDuration: Self.duration(from: transaction.secureConnectionStartDate, to: transaction.secureConnectionEndDate),
-            negotiatedTLSVersion: transaction.negotiatedTLSProtocolVersion.map { String(describing: $0) },
-            isProxyConnection: transaction.isProxyConnection
-        ))
+        metricsCollector.store(
+            .init(
+                dnsDuration: Self.duration(
+                    from: transaction.domainLookupStartDate, to: transaction.domainLookupEndDate),
+                connectDuration: Self.duration(from: transaction.connectStartDate, to: transaction.connectEndDate),
+                tlsDuration: Self.duration(
+                    from: transaction.secureConnectionStartDate, to: transaction.secureConnectionEndDate),
+                negotiatedTLSVersion: transaction.negotiatedTLSProtocolVersion.map { String(describing: $0) },
+                isProxyConnection: transaction.isProxyConnection
+            ))
     }
 
     private static func duration(from start: Date?, to end: Date?) -> Duration? {
@@ -368,8 +393,8 @@ private final class ControlEndpointDelegate: NSObject, URLSessionTaskDelegate, @
     }
 }
 
-private extension Duration {
-    var controlEndpointTimeInterval: TimeInterval {
+extension Duration {
+    fileprivate var controlEndpointTimeInterval: TimeInterval {
         let components = self.components
         return max(
             0.001,
@@ -377,9 +402,10 @@ private extension Duration {
         )
     }
 
-    var millisecondsString: String {
+    fileprivate var millisecondsString: String {
         let components = self.components
-        let milliseconds = Double(components.seconds) * 1_000
+        let milliseconds =
+            Double(components.seconds) * 1_000
             + Double(components.attoseconds) / 1_000_000_000_000_000
         return String(Int64(max(0, milliseconds.rounded())))
     }

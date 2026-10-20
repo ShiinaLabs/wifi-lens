@@ -45,9 +45,6 @@ public struct APRadarView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            pageHeader
-            Divider()
-
             // State pages animate in/out so entering or leaving scan mode
             // feels like the radar powers up/down instead of an instant swap.
             ZStack {
@@ -89,7 +86,9 @@ public struct APRadarView: View {
         .overlay(alignment: .bottom) {
             if geigerUnlockedToast {
                 Label(
-                    String(localized: "apRadar.easterEgg.unlocked", comment: "Toast shown when the hidden Geiger counter preset is unlocked"),
+                    String(
+                        localized: "apRadar.easterEgg.unlocked",
+                        comment: "Toast shown when the hidden Geiger counter preset is unlocked"),
                     systemImage: "gift.fill"
                 )
                 .font(.callout.weight(.medium))
@@ -121,22 +120,6 @@ public struct APRadarView: View {
                 }
             }
         }
-    }
-
-    // MARK: - Header
-
-    private var pageHeader: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "dot.radiowaves.left.and.right")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
-                .accessibilityHidden(true)
-            Text(String(localized: "nav.apRadar", comment: "AP Radar sidebar navigation item"))
-                .font(.title3.weight(.semibold))
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
     }
 
     /// Adaptive layout metrics for the page. `regular` is the comfortable
@@ -253,7 +236,8 @@ public struct APRadarView: View {
 
             if viewModel.scanFailed {
                 Label(
-                    String(localized: "apRadar.scan.failed", comment: "Message shown when the latest Wi-Fi scan failed"),
+                    String(
+                        localized: "apRadar.scan.failed", comment: "Message shown when the latest Wi-Fi scan failed"),
                     systemImage: "exclamationmark.triangle.fill"
                 )
                 .font(.caption)
@@ -274,7 +258,9 @@ public struct APRadarView: View {
     private var selectionSummary: String {
         let count = viewModel.selectionOptions.count
         return String(
-            format: String(localized: "apRadar.summary.available", comment: "Summary of APs visible to the selector, e.g. 12 access points available"),
+            format: String(
+                localized: "apRadar.summary.available",
+                comment: "Summary of APs visible to the selector, e.g. 12 access points available"),
             count
         )
     }
@@ -283,10 +269,14 @@ public struct APRadarView: View {
         VStack(spacing: 8) {
             Text(String(localized: "apRadar.empty.title", comment: "Empty state when no access points were found"))
                 .font(.headline)
-            Text(String(localized: "apRadar.empty.description", comment: "Empty state guidance when no access points were found"))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            Text(
+                String(
+                    localized: "apRadar.empty.description",
+                    comment: "Empty state guidance when no access points were found")
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
             Button {
                 onRescan()
             } label: {
@@ -321,7 +311,8 @@ public struct APRadarView: View {
                         isGeiger: viewModel.soundPreset == .geiger,
                         size: side,
                         coreDiameter: coreDiameter,
-                        isSuspended: viewModel.isSuspended || viewModel.isAwaitingFreshScan || isLost || snapshot.smoothedRSSI == nil
+                        isSuspended: viewModel.isSuspended || viewModel.isAwaitingFreshScan || isLost
+                            || snapshot.smoothedRSSI == nil
                     )
                     instrumentReadout(snapshot, isLost: isLost, diameter: coreDiameter)
                 }
@@ -340,10 +331,15 @@ public struct APRadarView: View {
     private func targetHeader(_ snapshot: APRadarSnapshot, isLost: Bool) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
-                Text(snapshot.target.currentSSID ?? String(localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID"))
-                    .font(.title3.weight(.semibold))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                Text(
+                    snapshot.target.currentSSID
+                        ?? String(
+                            localized: "apRadar.target.hiddenNetwork",
+                            comment: "Label for an access point that hides its SSID")
+                )
+                .font(.title3.weight(.semibold))
+                .lineLimit(1)
+                .truncationMode(.tail)
                 Text(targetSubtitle(snapshot.target))
                     .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
@@ -357,7 +353,9 @@ public struct APRadarView: View {
                     ? String(localized: "apRadar.signalLost.title", comment: "Signal lost title")
                     : snapshot.smoothedRSSI == nil
                         ? trendText(.measuring)
-                        : String(localized: "apRadar.status.tracking", comment: "Status pill shown while AP Radar is tracking an access point"),
+                        : String(
+                            localized: "apRadar.status.tracking",
+                            comment: "Status pill shown while AP Radar is tracking an access point"),
                 systemImage: isLost ? "wifi.exclamationmark" : "dot.radiowaves.left.and.right"
             )
             .font(.caption.weight(.medium))
@@ -389,14 +387,19 @@ public struct APRadarView: View {
             }
 
             Label(
-                isLost ? String(localized: "apRadar.signalLost.title", comment: "Signal lost title") : trendText(snapshot.trend),
+                isLost
+                    ? String(localized: "apRadar.signalLost.title", comment: "Signal lost title")
+                    : trendText(snapshot.trend),
                 systemImage: isLost ? "exclamationmark.circle" : trendSymbol(snapshot.trend)
             )
             .font(.callout.weight(.medium))
             .foregroundStyle(isLost ? .orange : trendColor(snapshot.trend))
             .lineLimit(2)
             .multilineTextAlignment(.center)
-            .help(isLost ? String(localized: "apRadar.signalLost.description", comment: "Signal lost explanation") : trendText(snapshot.trend))
+            .help(
+                isLost
+                    ? String(localized: "apRadar.signalLost.description", comment: "Signal lost explanation")
+                    : trendText(snapshot.trend))
         }
         .padding(diameter < 160 ? 8 : 12)
         .frame(width: diameter, height: diameter)
@@ -416,17 +419,22 @@ public struct APRadarView: View {
                 Label(audioErrorMessage, systemImage: "speaker.slash.fill")
                     .foregroundStyle(.orange)
             } else if isLost {
-                Label(String(localized: "apRadar.signalLost.rescanning", comment: "Status shown while waiting for the next scan"), systemImage: "arrow.clockwise")
+                Label(
+                    String(
+                        localized: "apRadar.signalLost.rescanning",
+                        comment: "Status shown while waiting for the next scan"), systemImage: "arrow.clockwise")
             } else if let raw = snapshot.rawRSSI {
                 Text(rawSignalText(raw))
             } else {
                 Text(trendText(.measuring))
             }
             if let lastSeen = snapshot.lastSeenAt {
-                Text(String(
-                    format: String(localized: "apRadar.signalLost.lastSeen", comment: "Time the access point was last seen"),
-                    Self.lastSeenFormatter.string(from: lastSeen)
-                ))
+                Text(
+                    String(
+                        format: String(
+                            localized: "apRadar.signalLost.lastSeen", comment: "Time the access point was last seen"),
+                        Self.lastSeenFormatter.string(from: lastSeen)
+                    ))
             }
         }
         .font(.caption)
@@ -530,9 +538,12 @@ public struct APRadarView: View {
 
     private func targetSubtitle(_ target: TrackedAccessPoint) -> String {
         let band = target.band?.displayName ?? ""
-        let channel = target.channel.map {
-            String(format: String(localized: "apRadar.target.channel", comment: "Access point channel, e.g. Channel 149"), $0)
-        } ?? ""
+        let channel =
+            target.channel.map {
+                String(
+                    format: String(
+                        localized: "apRadar.target.channel", comment: "Access point channel, e.g. Channel 149"), $0)
+            } ?? ""
         return [target.bssid, band, channel]
             .filter { !$0.isEmpty }
             .joined(separator: " · ")
@@ -540,19 +551,27 @@ public struct APRadarView: View {
 
     private func trackingAccessibilityLabel(_ snapshot: APRadarSnapshot) -> String {
         let target = snapshot.target
-        let ssid = target.currentSSID ?? String(localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID")
+        let ssid =
+            target.currentSSID
+            ?? String(
+                localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID")
         let trend = trendText(snapshot.trend)
-        let soundState = viewModel.soundEnabled
+        let soundState =
+            viewModel.soundEnabled
             ? String(localized: "apRadar.sound.state.on", comment: "VoiceOver text when sound is enabled")
             : String(localized: "apRadar.sound.state.off", comment: "VoiceOver text when sound is disabled")
-        let signalStrength = snapshot.smoothedRSSI.map {
-            String(
-                format: String(localized: "apRadar.signal.dbm", comment: "Smoothed signal value with dBm unit for the VoiceOver summary"),
-                Int($0.rounded())
-            )
-        } ?? "—"
+        let signalStrength =
+            snapshot.smoothedRSSI.map {
+                String(
+                    format: String(
+                        localized: "apRadar.signal.dbm",
+                        comment: "Smoothed signal value with dBm unit for the VoiceOver summary"),
+                    Int($0.rounded())
+                )
+            } ?? "—"
         return String(
-            format: String(localized: "apRadar.accessibility.tracking", comment: "VoiceOver summary of the tracked access point"),
+            format: String(
+                localized: "apRadar.accessibility.tracking", comment: "VoiceOver summary of the tracked access point"),
             ssid,
             target.bssid,
             signalStrength,
@@ -562,9 +581,13 @@ public struct APRadarView: View {
     }
 
     private func signalLostAccessibilityLabel(_ snapshot: APRadarLostSnapshot) -> String {
-        let ssid = snapshot.target.currentSSID ?? String(localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID")
+        let ssid =
+            snapshot.target.currentSSID
+            ?? String(
+                localized: "apRadar.target.hiddenNetwork", comment: "Label for an access point that hides its SSID")
         return String(
-            format: String(localized: "apRadar.accessibility.signalLost", comment: "VoiceOver summary for the signal lost state"),
+            format: String(
+                localized: "apRadar.accessibility.signalLost", comment: "VoiceOver summary for the signal lost state"),
             ssid,
             snapshot.target.bssid
         )
@@ -620,7 +643,6 @@ public struct APRadarView: View {
     }()
 }
 
-
 // MARK: - Radar backdrop
 
 /// Full-page backdrop behind the ripple: a soft radial tint plus a few faint
@@ -650,9 +672,9 @@ private struct RadarBackdrop: View {
     }
 }
 
-private extension Color {
+extension Color {
     /// Signature green used by the AP Radar ripple visual.
-    static let radarGreen = Color(red: 0.26, green: 0.83, blue: 0.47)
+    fileprivate static let radarGreen = Color(red: 0.26, green: 0.83, blue: 0.47)
 }
 
 // MARK: - Ripple pulse visual
@@ -802,9 +824,10 @@ private struct RadarPulseVisual: View {
                         guard remaining > .zero else { break }
                         try? await Task.sleep(for: min(remaining, .milliseconds(100)))
                         let desired = ContinuousClock.now.advanced(
-                            by: .seconds(APRadarPulseInterval.intervalSeconds(
-                                forRSSI: liveSmoothedRSSI ?? -70
-                            ))
+                            by: .seconds(
+                                APRadarPulseInterval.intervalSeconds(
+                                    forRSSI: liveSmoothedRSSI ?? -70
+                                ))
                         )
                         if desired < deadline {
                             deadline = desired
@@ -894,7 +917,7 @@ private struct RippleRingView: View {
                 rippleColor.opacity(0.67),
                 rippleColor.opacity(0.20),
                 rippleColor.opacity(0.03),
-                rippleColor.opacity(0.0)
+                rippleColor.opacity(0.0),
             ],
             center: .center,
             startRadius: radius - bandWidth * 0.5,

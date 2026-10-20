@@ -88,7 +88,7 @@ struct IEData {
     var htSupported: Bool = false
     var vhtSupported: Bool = false
     var heSupported: Bool = false  // 802.11ax / Wi-Fi 6
-    var ehtSupported: Bool = false // 802.11be / Wi-Fi 7
+    var ehtSupported: Bool = false  // 802.11be / Wi-Fi 7
 
     // Channel width capability and current operation
     /// Whether HT Capabilities advertise 20/40 MHz support.
@@ -150,7 +150,8 @@ struct IEData {
         // WPA3 variants. The AKM names themselves stay protocol-accurate;
         // the WPA3 display label is added only in this user-facing summary.
         let wpa3AKMNames: Set<String> = ["SAE", "FT-SAE", "802.1X-Suite-B-192"]
-        let wpa3Suites = akmSuites
+        let wpa3Suites =
+            akmSuites
             .filter { wpa3AKMNames.contains($0) }
             .map { "\($0) (WPA3)" }
         if !wpa3Suites.isEmpty {
@@ -179,7 +180,8 @@ struct IEData {
             labels.append(contentsOf: otherSuites)
         }
 
-        let joined = labels.isEmpty
+        let joined =
+            labels.isEmpty
             ? (akmSuites.first?.components(separatedBy: " ").first ?? akmSuites.first ?? "")
             : labels.joined(separator: "/")
 
@@ -225,7 +227,7 @@ enum IEParser {
 
     // Extended Capabilities bit positions (within the IE data bytes)
     // Bit numbering follows 802.11: bit 0 is LSB of byte 0
-    private static let extCapBit_BSS_Transition: Int = 19     // 802.11v
+    private static let extCapBit_BSS_Transition: Int = 19  // 802.11v
 
     // RSN suite OUI. Legacy WPA's 00:50:F2 OUI belongs to Vendor Specific
     // elements and must not be accepted inside an RSN element.
@@ -261,11 +263,11 @@ enum IEParser {
             case tagVHTCapabilities:
                 guard ieData.count >= 12 else { break }
                 result.vhtSupported = true
-                // VHT MCS/NSS from CoreWLAN's IE data is unreliable — the
-                // MCS Map bytes are replaced with fixed markers.  We rely on
-                // trusted HT MCS (which is normally present on VHT APs for
-                // backwards compatibility) and intentionally do not parse the
-                // unreliable VHT MCS map.
+            // VHT MCS/NSS from CoreWLAN's IE data is unreliable — the
+            // MCS Map bytes are replaced with fixed markers.  We rely on
+            // trusted HT MCS (which is normally present on VHT APs for
+            // backwards compatibility) and intentionally do not parse the
+            // unreliable VHT MCS map.
 
             case tagHTOperation:
                 parseHTOperation(ieData, into: &result)
@@ -420,7 +422,7 @@ enum IEParser {
     /// optional PPE Threshold field.
     private static func isValidHECapabilities(_ data: [UInt8]) -> Bool {
         let fixedCapabilitiesLength = 17  // 6-byte MAC + 11-byte PHY
-        let baseMCSNSSLength = 4          // MCS/NSS for <= 80 MHz
+        let baseMCSNSSLength = 4  // MCS/NSS for <= 80 MHz
 
         guard data.count >= fixedCapabilitiesLength else { return false }
 
@@ -466,7 +468,7 @@ enum IEParser {
 
         // Pairwise cipher count
         guard pos + 2 <= data.count else { return }
-        let pairwiseCount = Int(UInt16(data[pos]) | (UInt16(data[pos+1]) << 8))
+        let pairwiseCount = Int(UInt16(data[pos]) | (UInt16(data[pos + 1]) << 8))
         pos += 2
         guard pairwiseCount > 0, pairwiseCount <= (data.count - pos) / 4 else { return }
 
@@ -482,7 +484,7 @@ enum IEParser {
 
         // AKM count
         guard pos + 2 <= data.count else { return }
-        let akmCount = Int(UInt16(data[pos]) | (UInt16(data[pos+1]) << 8))
+        let akmCount = Int(UInt16(data[pos]) | (UInt16(data[pos + 1]) << 8))
         pos += 2
         guard akmCount > 0, akmCount <= (data.count - pos) / 4 else { return }
 
@@ -508,7 +510,7 @@ enum IEParser {
         // PMF (802.11w) capabilities
         var parsedSupports80211w: Bool?
         if pos + 2 <= data.count {
-            let rsnCap = UInt16(data[pos]) | (UInt16(data[pos+1]) << 8)
+            let rsnCap = UInt16(data[pos]) | (UInt16(data[pos + 1]) << 8)
             // PMF required: bit 6, PMF capable: bit 7
             parsedSupports80211w = (rsnCap & (1 << 7)) != 0
         }
@@ -563,11 +565,11 @@ enum IEParser {
 
         let streams: Int
         switch highestGlobal {
-        case 0...7:   streams = 1
-        case 8...15:  streams = 2
+        case 0...7: streams = 1
+        case 8...15: streams = 2
         case 16...23: streams = 3
         case 24...31: streams = 4
-        default:      return (mcs: nil, streams: nil)
+        default: return (mcs: nil, streams: nil)
         }
 
         return (mcs: highestGlobal % 8, streams: streams)

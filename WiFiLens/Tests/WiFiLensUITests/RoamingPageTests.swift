@@ -29,13 +29,16 @@ final class RoamingPageTests: XCTestCase {
 
         let idleState = app.descendants(matching: .any)["roaming-idle-state"]
         let activeState = app.descendants(matching: .any)["roaming-active-state"]
-        guard waitForEither(
-            idleState,
-            activeState,
-            message: "Roaming page should expose either idle or active state",
-            app: app
-        ) else { return }
-        XCTAssertNotEqual(idleState.exists, activeState.exists,
-                          "Roaming page should expose exactly one state")
+        guard
+            waitForEither(
+                idleState,
+                activeState,
+                message: "Roaming page should expose either idle or active state",
+                app: app
+            )
+        else { return }
+        XCTAssertNotEqual(
+            idleState.exists, activeState.exists,
+            "Roaming page should expose exactly one state")
     }
 }

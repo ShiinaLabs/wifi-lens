@@ -33,8 +33,9 @@ enum SpectrumHeatmapLayout {
         in rect: CGRect
     ) -> CGFloat? {
         guard rect.width > 0, domain.span > 0, channel.isFinite,
-              channel >= domain.minChannelCoordinate,
-              channel <= domain.maxChannelCoordinate else { return nil }
+            channel >= domain.minChannelCoordinate,
+            channel <= domain.maxChannelCoordinate
+        else { return nil }
         return rect.minX + CGFloat((channel - domain.minChannelCoordinate) / domain.span) * rect.width
     }
 
@@ -44,7 +45,8 @@ enum SpectrumHeatmapLayout {
         in rect: CGRect
     ) -> Double? {
         guard rect.width > 0, domain.span > 0,
-              x >= rect.minX, x <= rect.maxX else { return nil }
+            x >= rect.minX, x <= rect.maxX
+        else { return nil }
         return domain.minChannelCoordinate + Double((x - rect.minX) / rect.width) * domain.span
     }
 
@@ -57,7 +59,8 @@ enum SpectrumHeatmapLayout {
 
     static func rssi(forY y: CGFloat, in rect: CGRect, rssiRange: ClosedRange<Double>) -> Double? {
         guard rect.height > 0, y >= rect.minY, y <= rect.maxY,
-              rssiRange.lowerBound < rssiRange.upperBound else { return nil }
+            rssiRange.lowerBound < rssiRange.upperBound
+        else { return nil }
         let normalized = Double((rect.maxY - y) / rect.height)
         return rssiRange.lowerBound + normalized * (rssiRange.upperBound - rssiRange.lowerBound)
     }

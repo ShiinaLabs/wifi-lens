@@ -1,5 +1,5 @@
-import CoreBluetooth
 import AppKit
+import CoreBluetooth
 import Logging
 
 @MainActor

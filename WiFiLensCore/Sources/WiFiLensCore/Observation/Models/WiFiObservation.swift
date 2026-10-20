@@ -32,7 +32,8 @@ public struct WiFiObservation: Equatable, Sendable {
     ) {
         self.sourceObservationID = sourceObservationID
         self.timestamp = timestamp
-        self.sourceCycleID = sourceCycleID ?? environmentSnapshot?.sourceCycleID ?? currentStatus?.interfaceSnapshotCycleID
+        self.sourceCycleID =
+            sourceCycleID ?? environmentSnapshot?.sourceCycleID ?? currentStatus?.interfaceSnapshotCycleID
         self.currentStatus = currentStatus
         self.environmentSnapshot = environmentSnapshot
         self.gatewayLatency = gatewayLatency
@@ -44,23 +45,18 @@ public struct WiFiObservation: Equatable, Sendable {
     }
 
     public static func == (lhs: WiFiObservation, rhs: WiFiObservation) -> Bool {
-        lhs.sourceObservationID == rhs.sourceObservationID &&
-        lhs.hasSameContent(as: rhs)
+        lhs.sourceObservationID == rhs.sourceObservationID && lhs.hasSameContent(as: rhs)
     }
 
     /// Compares observation payload independently from source identity. Runtime
     /// admission uses this to detect accidental reuse of an identity.
     func hasSameContent(as other: WiFiObservation) -> Bool {
-        timestamp == other.timestamp &&
-        sourceCycleID == other.sourceCycleID &&
-        currentStatus == other.currentStatus &&
-        environmentSnapshot == other.environmentSnapshot &&
-        gatewayLatency == other.gatewayLatency &&
-        quality == other.quality &&
-        diagnosis == other.diagnosis &&
-        errors == other.errors &&
-        Self.channelQualityFingerprint(channelAnalysis) == Self.channelQualityFingerprint(other.channelAnalysis) &&
-        Self.channelRecommendationFingerprint(channelRecommendation) == Self.channelRecommendationFingerprint(other.channelRecommendation)
+        timestamp == other.timestamp && sourceCycleID == other.sourceCycleID && currentStatus == other.currentStatus
+            && environmentSnapshot == other.environmentSnapshot && gatewayLatency == other.gatewayLatency
+            && quality == other.quality && diagnosis == other.diagnosis && errors == other.errors
+            && Self.channelQualityFingerprint(channelAnalysis) == Self.channelQualityFingerprint(other.channelAnalysis)
+            && Self.channelRecommendationFingerprint(channelRecommendation)
+                == Self.channelRecommendationFingerprint(other.channelRecommendation)
     }
 
     private struct ChannelQualityFingerprint: Equatable {
@@ -110,20 +106,20 @@ public struct WiFiObservation: Equatable, Sendable {
         let deviceIncompatibilityReason: String?
 
         static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.channel == rhs.channel && lhs.band == rhs.band && lhs.bandDisplay == rhs.bandDisplay &&
-            lhs.rfScore == rhs.rfScore && lhs.rfLevel == rhs.rfLevel && lhs.apCount == rhs.apCount &&
-            lhs.coChannelCount == rhs.coChannelCount && lhs.adjacentCount == rhs.adjacentCount &&
-            lhs.interferenceScore == rhs.interferenceScore && lhs.overlapLevel == rhs.overlapLevel &&
-            lhs.strongestNeighborRSSI == rhs.strongestNeighborRSSI &&
-            lhs.isCurrentChannel == rhs.isCurrentChannel && lhs.showInSimpleView == rhs.showInSimpleView &&
-            lhs.scoreSelected == rhs.scoreSelected && lhs.recommendationScore == rhs.recommendationScore &&
-            lhs.recommendationLevel == rhs.recommendationLevel &&
-            lhs.recommendationConfidence == rhs.recommendationConfidence &&
-            lhs.recommendationState == rhs.recommendationState && lhs.classification == rhs.classification &&
-            lhs.restrictionReasons.elementsEqual(rhs.restrictionReasons, by: ==) &&
-            lhs.recommendationReasons == rhs.recommendationReasons &&
-            lhs.deviceCompatible == rhs.deviceCompatible &&
-            lhs.deviceIncompatibilityReason == rhs.deviceIncompatibilityReason
+            lhs.channel == rhs.channel && lhs.band == rhs.band && lhs.bandDisplay == rhs.bandDisplay
+                && lhs.rfScore == rhs.rfScore && lhs.rfLevel == rhs.rfLevel && lhs.apCount == rhs.apCount
+                && lhs.coChannelCount == rhs.coChannelCount && lhs.adjacentCount == rhs.adjacentCount
+                && lhs.interferenceScore == rhs.interferenceScore && lhs.overlapLevel == rhs.overlapLevel
+                && lhs.strongestNeighborRSSI == rhs.strongestNeighborRSSI
+                && lhs.isCurrentChannel == rhs.isCurrentChannel && lhs.showInSimpleView == rhs.showInSimpleView
+                && lhs.scoreSelected == rhs.scoreSelected && lhs.recommendationScore == rhs.recommendationScore
+                && lhs.recommendationLevel == rhs.recommendationLevel
+                && lhs.recommendationConfidence == rhs.recommendationConfidence
+                && lhs.recommendationState == rhs.recommendationState && lhs.classification == rhs.classification
+                && lhs.restrictionReasons.elementsEqual(rhs.restrictionReasons, by: ==)
+                && lhs.recommendationReasons == rhs.recommendationReasons
+                && lhs.deviceCompatible == rhs.deviceCompatible
+                && lhs.deviceIncompatibilityReason == rhs.deviceIncompatibilityReason
         }
     }
 
@@ -152,7 +148,9 @@ public struct WiFiObservation: Equatable, Sendable {
         }
     }
 
-    private static func channelRecommendationFingerprint(_ values: [ChannelRecommendation]?) -> [ChannelRecommendationFingerprint]? {
+    private static func channelRecommendationFingerprint(_ values: [ChannelRecommendation]?)
+        -> [ChannelRecommendationFingerprint]?
+    {
         values?.map {
             ChannelRecommendationFingerprint(
                 channel: $0.channel,

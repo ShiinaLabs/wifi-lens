@@ -9,7 +9,7 @@ public enum InterfaceViewMode: String, CaseIterable {
 
     public var displayName: String {
         switch self {
-        case .simple:  String(localized: "channels.mode.simple", comment: "Simple view mode for channel quality")
+        case .simple: String(localized: "channels.mode.simple", comment: "Simple view mode for channel quality")
         case .details: String(localized: "common.label.details", comment: "Details view mode label")
         case .monitor: String(localized: "interfaces.mode.monitor", comment: "Throughput monitor view mode")
         }
@@ -39,7 +39,8 @@ public struct InterfacesView: View {
 
     private var wifiInterface: NetworkInterfaceInfo? {
         if verifiedLinkState == .associated,
-           let interfaceName = store.currentStatus?.interfaceName {
+            let interfaceName = store.currentStatus?.interfaceName
+        {
             return interfaces.first {
                 $0.isWiFiInterface && $0.interfaceName == interfaceName
             }
@@ -49,44 +50,48 @@ public struct InterfacesView: View {
 
     private var verifiedLinkState: VerifiedWiFiLinkState {
         guard let status = store.currentStatus,
-              status.error == nil,
-              store.validity(at: Date())?.currentStatus == .current,
-              status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
-              let assessment = WiFiLinkEvidenceValidator.assessment(for: status) else { return .unknown }
+            status.error == nil,
+            store.validity(at: Date())?.currentStatus == .current,
+            status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
+            let assessment = WiFiLinkEvidenceValidator.assessment(for: status)
+        else { return .unknown }
         return assessment.state
     }
 
     private var verifiedGatewayLatency: Double? {
         let now = Date()
         guard let observation = store.currentObservation,
-              store.validity(at: now)?.currentStatus == .current,
-              store.validity(at: now)?.gatewayLatency == .current,
-              let status = observation.currentStatus,
-              status.interfaceSnapshotCycleID == observation.sourceCycleID,
-              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
-              let cycleID = status.interfaceSnapshotCycleID,
-              let target = WiFiGatewayProbeTarget.make(from: status, cycleID: cycleID),
-              let result = observation.gatewayLatency,
-              WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target) else { return nil }
+            store.validity(at: now)?.currentStatus == .current,
+            store.validity(at: now)?.gatewayLatency == .current,
+            let status = observation.currentStatus,
+            status.interfaceSnapshotCycleID == observation.sourceCycleID,
+            WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
+            let cycleID = status.interfaceSnapshotCycleID,
+            let target = WiFiGatewayProbeTarget.make(from: status, cycleID: cycleID),
+            let result = observation.gatewayLatency,
+            WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target)
+        else { return nil }
         return result.latencyMs
     }
 
     private var verifiedCurrentStatus: WiFiCurrentStatus? {
         guard let status = store.currentStatus,
-              store.validity(at: Date())?.currentStatus == .current,
-              status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
-              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else { return nil }
+            store.validity(at: Date())?.currentStatus == .current,
+            status.interfaceSnapshotCycleID == store.currentObservation?.sourceCycleID,
+            WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
+        else { return nil }
         return status
     }
 
     private func hasVerifiedMetrics(_ wifi: NetworkInterfaceInfo) -> Bool {
         guard let status = verifiedCurrentStatus,
-              status.metricsAttribution == .verified,
-              status.interfaceName == wifi.interfaceName,
-              status.bssid == wifi.bssid,
-              let statusIndex = status.interfaceIndex,
-              statusIndex != 0,
-              wifi.interfaceIndex == nil || wifi.interfaceIndex == statusIndex else { return false }
+            status.metricsAttribution == .verified,
+            status.interfaceName == wifi.interfaceName,
+            status.bssid == wifi.bssid,
+            let statusIndex = status.interfaceIndex,
+            statusIndex != 0,
+            wifi.interfaceIndex == nil || wifi.interfaceIndex == statusIndex
+        else { return false }
         return true
     }
 
@@ -95,7 +100,9 @@ public struct InterfacesView: View {
         case .associated:
             String(localized: "common.label.connected", comment: "Connected state indicator")
         case .disconnected:
-            String(localized: "overview.status.not_connected", comment: "Empty state when not connected to any Wi-Fi network")
+            String(
+                localized: "overview.status.not_connected",
+                comment: "Empty state when not connected to any Wi-Fi network")
         case .unknown:
             String(localized: "common.label.unknown", comment: "Generic unknown value label")
         }
@@ -108,8 +115,12 @@ public struct InterfacesView: View {
                 Image(systemName: "wifi.slash")
                     .font(.largeTitle)
                     .foregroundColor(.secondary)
-                Text(String(localized: "interfaces.empty.no_interfaces", comment: "Empty state when no network interfaces exist"))
-                    .foregroundColor(.secondary)
+                Text(
+                    String(
+                        localized: "interfaces.empty.no_interfaces",
+                        comment: "Empty state when no network interfaces exist")
+                )
+                .foregroundColor(.secondary)
                 Spacer()
             } else if mode == .simple {
                 dashboardView
@@ -155,17 +166,28 @@ public struct InterfacesView: View {
                     .foregroundColor(.accentColor)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verifiedLinkState == .associated ? (verifiedCurrentStatus?.ssid ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")) : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        // Same guardrail as OverviewView.connectionCard: a long SSID
-                        // is one unbreakable token that would widen the hero past the
-                        // detail column at the minimum window size.
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .help(verifiedLinkState == .associated ? (verifiedCurrentStatus?.ssid ?? String(localized: "common.label.unknown", comment: "Generic unknown value label")) : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
+                    Text(
+                        verifiedLinkState == .associated
+                            ? (verifiedCurrentStatus?.ssid
+                                ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"))
+                            : String(localized: "common.label.unknown", comment: "Generic unknown value label")
+                    )
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    // Same guardrail as OverviewView.connectionCard: a long SSID
+                    // is one unbreakable token that would widen the hero past the
+                    // detail column at the minimum window size.
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .help(
+                        verifiedLinkState == .associated
+                            ? (verifiedCurrentStatus?.ssid
+                                ?? String(localized: "common.label.unknown", comment: "Generic unknown value label"))
+                            : String(localized: "common.label.unknown", comment: "Generic unknown value label"))
                     HStack(spacing: 6) {
-                        Circle().fill(verifiedLinkState == .associated ? Color.green : Color.secondary).frame(width: 6, height: 6).accessibilityHidden(true)
+                        Circle().fill(verifiedLinkState == .associated ? Color.green : Color.secondary).frame(
+                            width: 6, height: 6
+                        ).accessibilityHidden(true)
                         Text(linkStateLabel)
                             .font(.caption)
                             .foregroundColor(.secondary)
@@ -183,9 +205,14 @@ public struct InterfacesView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     if let latency = verifiedGatewayLatency {
-                        Text(String(format: String(localized: "interfaces.field.gateway_latency_fmt", comment: "Gateway latency value with milliseconds"), latency))
-                            .font(.caption.monospacedDigit())
-                            .foregroundColor(latencyColor(latency))
+                        Text(
+                            String(
+                                format: String(
+                                    localized: "interfaces.field.gateway_latency_fmt",
+                                    comment: "Gateway latency value with milliseconds"), latency)
+                        )
+                        .font(.caption.monospacedDigit())
+                        .foregroundColor(latencyColor(latency))
                     }
                 }
             }
@@ -204,7 +231,8 @@ public struct InterfacesView: View {
                 title: String(localized: "channels.table.col.rssi", comment: "RSSI column header"),
                 value: hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.rssi.map { "\($0) dBm" } ?? "—") : "—",
                 subtitle: nil,
-                color: hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.rssi.map(rssiColor) ?? .secondary) : .secondary,
+                color: hasVerifiedMetrics(wifi)
+                    ? (verifiedCurrentStatus?.rssi.map(rssiColor) ?? .secondary) : .secondary,
                 bar: hasVerifiedMetrics(wifi) ? verifiedCurrentStatus?.rssi.map(rssiBar) : nil
             )
             .glassBackground(.regular, in: RoundedRectangle(cornerRadius: 12))
@@ -224,7 +252,8 @@ public struct InterfacesView: View {
             indicatorPill(
                 title: String(localized: "interfaces.field.stability", comment: "Connection stability field label"),
                 value: stab.label,
-                subtitle: String(format: String(localized: "format.score_fraction", comment: "Score value out of 100"), stab.score),
+                subtitle: String(
+                    format: String(localized: "format.score_fraction", comment: "Score value out of 100"), stab.score),
                 color: stab.color,
                 bar: scoreBar(stab.score, color: stab.color)
             )
@@ -232,7 +261,9 @@ public struct InterfacesView: View {
         }
     }
 
-    private func indicatorPill(title: String, value: String, subtitle: String?, color: Color, bar: AnyView?) -> some View {
+    private func indicatorPill(title: String, value: String, subtitle: String?, color: Color, bar: AnyView?)
+        -> some View
+    {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             Text(title).font(.caption2).foregroundColor(.secondary)
@@ -253,12 +284,19 @@ public struct InterfacesView: View {
         .frame(height: 100)
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel({
-            if let sub = subtitle {
-                return String(format: String(localized: "common.accessibility.metric_sub_fmt", comment: "Label: value, subtitle format for VoiceOver metric"), title, value, sub)
-            }
-            return String(format: String(localized: "common.accessibility.metric_fmt", comment: "Label: value format for VoiceOver metric"), title, value)
-        }())
+        .accessibilityLabel(
+            {
+                if let sub = subtitle {
+                    return String(
+                        format: String(
+                            localized: "common.accessibility.metric_sub_fmt",
+                            comment: "Label: value, subtitle format for VoiceOver metric"), title, value, sub)
+                }
+                return String(
+                    format: String(
+                        localized: "common.accessibility.metric_fmt",
+                        comment: "Label: value format for VoiceOver metric"), title, value)
+            }())
     }
 
     // MARK: - Link Details
@@ -266,18 +304,45 @@ public struct InterfacesView: View {
     private func linkDetails(_ wifi: NetworkInterfaceInfo) -> some View {
         HStack(alignment: .top, spacing: 24) {
             kvTable([
-                (String(localized: "interfaces.field.bssid", comment: "BSSID field label"), verifiedCurrentStatus?.bssid ?? "—"),
-                (String(localized: "overview.health.security_label", comment: "Security health indicator label"), hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.security ?? "—") : "—"),
-                (String(localized: "interfaces.field.mcs_nss", comment: "MCS/NSS field label"), hasVerifiedMetrics(wifi) ? mcsNssLabel(wifi) : "—"),
-                (String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.txRate.map { "\(Int($0)) Mbps" } ?? "—") : "—"),
-                (String(localized: "interfaces.field.krv", comment: "802.11 k/r/v roaming support field label"), hasVerifiedMetrics(wifi) ? kvrLabel(wifi) : "—"),
+                (
+                    String(localized: "interfaces.field.bssid", comment: "BSSID field label"),
+                    verifiedCurrentStatus?.bssid ?? "—"
+                ),
+                (
+                    String(localized: "overview.health.security_label", comment: "Security health indicator label"),
+                    hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.security ?? "—") : "—"
+                ),
+                (
+                    String(localized: "interfaces.field.mcs_nss", comment: "MCS/NSS field label"),
+                    hasVerifiedMetrics(wifi) ? mcsNssLabel(wifi) : "—"
+                ),
+                (
+                    String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"),
+                    hasVerifiedMetrics(wifi) ? (verifiedCurrentStatus?.txRate.map { "\(Int($0)) Mbps" } ?? "—") : "—"
+                ),
+                (
+                    String(localized: "interfaces.field.krv", comment: "802.11 k/r/v roaming support field label"),
+                    hasVerifiedMetrics(wifi) ? kvrLabel(wifi) : "—"
+                ),
             ])
             kvTable([
-                (String(localized: "interfaces.field.ipv4_address", comment: "IPv4 address field label"), wifi.displayIP),
-                (String(localized: "interfaces.field.subnet_mask", comment: "Subnet mask field label (full)"), wifi.displaySubnet),
-                (String(localized: "interfaces.field.router", comment: "Router/gateway address field label"), wifi.displayRouter),
+                (
+                    String(localized: "interfaces.field.ipv4_address", comment: "IPv4 address field label"),
+                    wifi.displayIP
+                ),
+                (
+                    String(localized: "interfaces.field.subnet_mask", comment: "Subnet mask field label (full)"),
+                    wifi.displaySubnet
+                ),
+                (
+                    String(localized: "interfaces.field.router", comment: "Router/gateway address field label"),
+                    wifi.displayRouter
+                ),
                 (String(localized: "interfaces.field.dns", comment: "DNS server field label"), wifi.displayDNS),
-                (String(localized: "interfaces.field.hardware_mac", comment: "Hardware MAC address field label"), wifi.displayMAC),
+                (
+                    String(localized: "interfaces.field.hardware_mac", comment: "Hardware MAC address field label"),
+                    wifi.displayMAC
+                ),
             ])
         }
         .padding(16)
@@ -339,7 +404,8 @@ public struct InterfacesView: View {
 
     private var selectedMonitorRate: String {
         guard let name = selectedMonitorInterface,
-              let last = throughputMonitor.samples(for: name).last else { return "" }
+            let last = throughputMonitor.samples(for: name).last
+        else { return "" }
         let down = rateDown(last.rateIn)
         let up = rateUp(last.rateOut)
         return "\(down)  \(up)"
@@ -359,10 +425,12 @@ public struct InterfacesView: View {
             let activeWeight = (chartExpanded ? chartWeight : 0) + (tableExpanded ? tableWeight : 0)
             let totalWeight = max(1, activeWeight)
 
-            let chartContentH: CGFloat = chartExpanded
+            let chartContentH: CGFloat =
+                chartExpanded
                 ? max(60, contentPool * chartWeight / totalWeight)
                 : 0
-            let tableContentH: CGFloat = tableExpanded
+            let tableContentH: CGFloat =
+                tableExpanded
                 ? max(60, contentPool * tableWeight / totalWeight)
                 : 0
 
@@ -422,9 +490,13 @@ public struct InterfacesView: View {
                 Text(String(localized: "nav.interfaces", comment: "Interfaces sidebar navigation item"))
                     .font(.callout.weight(.semibold))
                 Spacer()
-                Text(String(format: String(localized: "interfaces.count_format", comment: "Interface count with number"), monitorInterfaces.count))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Text(
+                    String(
+                        format: String(localized: "interfaces.count_format", comment: "Interface count with number"),
+                        monitorInterfaces.count)
+                )
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
             .padding(.horizontal, 10)
             .frame(height: headerHeight)
@@ -438,9 +510,13 @@ public struct InterfacesView: View {
             if monitorSamples.isEmpty {
                 VStack {
                     Spacer()
-                    Text(String(localized: "interfaces.empty.select_to_monitor", comment: "Prompt to select interface for throughput monitoring"))
-                        .font(.callout)
-                        .foregroundColor(.secondary)
+                    Text(
+                        String(
+                            localized: "interfaces.empty.select_to_monitor",
+                            comment: "Prompt to select interface for throughput monitoring")
+                    )
+                    .font(.callout)
+                    .foregroundColor(.secondary)
                     Spacer()
                 }
                 .frame(height: height)
@@ -486,8 +562,8 @@ public struct InterfacesView: View {
                                     .frame(width: 72, alignment: .trailing)
                                     .lineLimit(1)
                             } else {
-                                Text("—").font(.callout).foregroundColor(.secondary).frame(width: 72)
-                                Text("—").font(.callout).foregroundColor(.secondary).frame(width: 72)
+                                Text(verbatim: "—").font(.callout).foregroundColor(.secondary).frame(width: 72)
+                                Text(verbatim: "—").font(.callout).foregroundColor(.secondary).frame(width: 72)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -570,7 +646,9 @@ public struct InterfacesView: View {
     private func channelLabel(_ wifi: NetworkInterfaceInfo) -> String {
         guard hasVerifiedMetrics(wifi) else { return "—" }
         guard let ch = wifi.channel else { return "—" }
-        return String(format: String(localized: "interfaces.field.channel_fmt", comment: "Formatted channel label with number"), String(ch))
+        return String(
+            format: String(localized: "interfaces.field.channel_fmt", comment: "Formatted channel label with number"),
+            String(ch))
     }
 
     private func rssiColor(_ rssi: Int) -> Color {
@@ -616,19 +694,16 @@ public struct InterfacesView: View {
             return (0, String(localized: "common.label.unknown", comment: "Generic unknown value label"), .secondary)
         }
         var score = 0
-        if rssi >= -50 { score += 40 }
-        else if rssi >= -70 { score += 30 }
-        else if rssi >= -85 { score += 15 }
+        if rssi >= -50 { score += 40 } else if rssi >= -70 { score += 30 } else if rssi >= -85 { score += 15 }
 
         // Trend bonus from signal history
         let bssid = wifi.bssid ?? ""
         if let trend = scannerViewModel.signalHistory.trend(for: bssid) {
             switch trend.direction {
-            case .up:   score += 15
+            case .up: score += 15
             case .down: score += 0
             case .stable:
-                if abs(trend.delta) <= 2 { score += 15 }
-                else { score += 5 }
+                if abs(trend.delta) <= 2 { score += 15 } else { score += 5 }
             }
         }
 
@@ -643,27 +718,32 @@ public struct InterfacesView: View {
         score += [0, 7, 14, 20][protoCount]
 
         score = min(100, score)
-        let label: String = switch score {
-        case 85...:  String(localized: "channels.quality.excellent", comment: "Excellent channel quality tier")
-        case 70...:  String(localized: "overview.signal.good", comment: "Good signal level label")
-        case 50...:  String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier")
-        default:     String(localized: "overview.signal.weak", comment: "Weak signal level label")
-        }
-        let color: Color = switch score {
-        case 85...: .green
-        case 70...: .mint
-        case 50...: .orange
-        default:    .red
-        }
+        let label: String =
+            switch score {
+            case 85...: String(localized: "channels.quality.excellent", comment: "Excellent channel quality tier")
+            case 70...: String(localized: "overview.signal.good", comment: "Good signal level label")
+            case 50...: String(localized: "channels.quality.moderate", comment: "Moderate channel quality tier")
+            default: String(localized: "overview.signal.weak", comment: "Weak signal level label")
+            }
+        let color: Color =
+            switch score {
+            case 85...: .green
+            case 70...: .mint
+            case 50...: .orange
+            default: .red
+            }
         return (score, label, color)
     }
 
     private func wifiModelabel(_ wifi: NetworkInterfaceInfo) -> String {
         switch wifi.displayPhyMode {
-        case "802.11be": return String(localized: "wifi.generation.wifi_7", comment: "Wi-Fi 7 (802.11be) generation name")
-        case "802.11ax": return String(localized: "wifi.generation.wifi_6", comment: "Wi-Fi 6 (802.11ax) generation name")
-        case "802.11ac": return String(localized: "wifi.generation.wifi_5", comment: "Wi-Fi 5 (802.11ac) generation name")
-        case "802.11n":  return String(localized: "wifi.generation.wifi_4", comment: "Wi-Fi 4 (802.11n) generation name")
+        case "802.11be":
+            return String(localized: "wifi.generation.wifi_7", comment: "Wi-Fi 7 (802.11be) generation name")
+        case "802.11ax":
+            return String(localized: "wifi.generation.wifi_6", comment: "Wi-Fi 6 (802.11ax) generation name")
+        case "802.11ac":
+            return String(localized: "wifi.generation.wifi_5", comment: "Wi-Fi 5 (802.11ac) generation name")
+        case "802.11n": return String(localized: "wifi.generation.wifi_4", comment: "Wi-Fi 4 (802.11n) generation name")
         default: return wifi.displayPhyMode
         }
     }
@@ -675,8 +755,11 @@ public struct InterfacesView: View {
             .flatMap { $0.ieData.map { IEParser.parse(data: $0) } }
         let mcs = ie?.mcsSummary ?? ""
         let nss = ie?.nssSummary ?? ""
-        if mcs.isEmpty && nss.isEmpty { return String(localized: "symbol.em_dash", comment: "Em dash symbol used as placeholder") }
-        return String(format: String(localized: "interfaces.field.mcs_nss_fmt", comment: "MCS/NSS formatted value"), mcs, nss)
+        if mcs.isEmpty && nss.isEmpty {
+            return String(localized: "symbol.em_dash", comment: "Em dash symbol used as placeholder")
+        }
+        return String(
+            format: String(localized: "interfaces.field.mcs_nss_fmt", comment: "MCS/NSS formatted value"), mcs, nss)
     }
 
     private func kvrLabel(_ wifi: NetworkInterfaceInfo) -> String {
@@ -713,7 +796,10 @@ private struct InterfaceCard: View {
 
     private var displayChannel: String {
         verifiedMetrics?.channel.map {
-            String(format: String(localized: "interfaces.field.channel_fmt", comment: "Formatted channel label with number"), String($0))
+            String(
+                format: String(
+                    localized: "interfaces.field.channel_fmt", comment: "Formatted channel label with number"),
+                String($0))
         } ?? "—"
     }
 
@@ -757,11 +843,18 @@ private struct InterfaceCard: View {
     }
 
     private func typeBadge(_ t: NetworkInterfaceInfo.InterfaceType) -> some View {
-        let (label, color): (String, Color) = switch t {
-        case .wifi:     (String(localized: "interfaces.label.wifi", comment: "Wi-Fi interface type label"), .accentColor)
-        case .ethernet: (String(localized: "interfaces.label.ethernet", comment: "Ethernet interface type label"), .secondary)
-        case .virtual:  (String(localized: "interfaces.label.virtual", comment: "Virtual interface type label"), .secondary.opacity(0.8))
-        }
+        let (label, color): (String, Color) =
+            switch t {
+            case .wifi:
+                (String(localized: "interfaces.label.wifi", comment: "Wi-Fi interface type label"), .accentColor)
+            case .ethernet:
+                (String(localized: "interfaces.label.ethernet", comment: "Ethernet interface type label"), .secondary)
+            case .virtual:
+                (
+                    String(localized: "interfaces.label.virtual", comment: "Virtual interface type label"),
+                    .secondary.opacity(0.8)
+                )
+            }
         return Text(label)
             .font(.caption2.weight(.semibold))
             .foregroundColor(color)
@@ -805,11 +898,23 @@ private struct InterfaceCard: View {
             // Body — two‑column compact rows
             VStack(spacing: 2) {
                 if t == .wifi {
-                    compactRow(label: String(localized: "interfaces.field.bssid", comment: "BSSID field label"), value: currentBSSID ?? "—")
-                    compactRow(label: String(localized: "overview.health.channel_label", comment: "Channel quality health indicator label"), value: displayChannel)
-                    compactRow(label: String(localized: "interfaces.field.phy", comment: "PHY mode field label (short)"), value: displayPHY)
-                    compactRow(label: String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"), value: displayTxRate)
-                    labelRow(label: String(localized: "overview.health.security_label", comment: "Security health indicator label"), value: displaySecurity)
+                    compactRow(
+                        label: String(localized: "interfaces.field.bssid", comment: "BSSID field label"),
+                        value: currentBSSID ?? "—")
+                    compactRow(
+                        label: String(
+                            localized: "overview.health.channel_label",
+                            comment: "Channel quality health indicator label"), value: displayChannel)
+                    compactRow(
+                        label: String(localized: "interfaces.field.phy", comment: "PHY mode field label (short)"),
+                        value: displayPHY)
+                    compactRow(
+                        label: String(localized: "interfaces.field.tx_rate", comment: "Transmit rate field label"),
+                        value: displayTxRate)
+                    labelRow(
+                        label: String(
+                            localized: "overview.health.security_label", comment: "Security health indicator label"),
+                        value: displaySecurity)
                 }
 
                 // Network section — shown for Wi‑Fi and any interface that has network data
@@ -817,15 +922,26 @@ private struct InterfaceCard: View {
                     if t == .wifi {
                         Divider().padding(.horizontal, 8).padding(.vertical, 2)
                     }
-                    compactRow(label: String(localized: "interfaces.field.ipv4", comment: "IPv4 section header"), value: info.displayIP)
-                    compactRow(label: String(localized: "interfaces.field.subnet", comment: "Subnet mask field label (short)"), value: info.displaySubnet)
-                    compactRow(label: String(localized: "interfaces.field.router", comment: "Router/gateway address field label"), value: info.displayRouter)
-                    compactRow(label: String(localized: "interfaces.field.dns", comment: "DNS server field label"), value: info.displayDNS)
+                    compactRow(
+                        label: String(localized: "interfaces.field.ipv4", comment: "IPv4 section header"),
+                        value: info.displayIP)
+                    compactRow(
+                        label: String(localized: "interfaces.field.subnet", comment: "Subnet mask field label (short)"),
+                        value: info.displaySubnet)
+                    compactRow(
+                        label: String(
+                            localized: "interfaces.field.router", comment: "Router/gateway address field label"),
+                        value: info.displayRouter)
+                    compactRow(
+                        label: String(localized: "interfaces.field.dns", comment: "DNS server field label"),
+                        value: info.displayDNS)
                 }
 
                 // MAC — only for Wi‑Fi and Ethernet (not virtual)
                 if t != .virtual {
-                    compactRow(label: String(localized: "interfaces.field.mac", comment: "MAC address field label (short)"), value: info.displayMAC)
+                    compactRow(
+                        label: String(localized: "interfaces.field.mac", comment: "MAC address field label (short)"),
+                        value: info.displayMAC)
                 }
             }
             .padding(.horizontal, 12)
@@ -855,17 +971,19 @@ enum InterfaceWiFiStatusResolver {
         currentStatusValidity: WiFiObservationFieldValidity?
     ) -> WiFiCurrentStatus? {
         guard interface.isWiFiInterface,
-              currentStatusValidity == .current,
-              let observation,
-              let status = observation.currentStatus,
-              status.error == nil,
-              status.interfaceSnapshotCycleID == observation.sourceCycleID,
-              status.interfaceName == interface.interfaceName,
-              WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated else { return nil }
+            currentStatusValidity == .current,
+            let observation,
+            let status = observation.currentStatus,
+            status.error == nil,
+            status.interfaceSnapshotCycleID == observation.sourceCycleID,
+            status.interfaceName == interface.interfaceName,
+            WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
+        else { return nil }
 
         if let interfaceIndex = interface.interfaceIndex, interfaceIndex != 0,
-           let statusIndex = status.interfaceIndex, statusIndex != 0,
-           interfaceIndex != statusIndex {
+            let statusIndex = status.interfaceIndex, statusIndex != 0,
+            interfaceIndex != statusIndex
+        {
             return nil
         }
         return status

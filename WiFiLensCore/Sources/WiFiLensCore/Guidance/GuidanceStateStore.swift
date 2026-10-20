@@ -50,8 +50,11 @@ public struct UserDefaultsGuidanceStateStore: GuidanceStateStoring {
             lastInvitationLaterDate: defaults.object(forKey: Key.lastInvitationLaterDate) as? Date,
             lastPurchaseExplorationDate: defaults.object(forKey: Key.lastPurchaseExplorationDate) as? Date,
             lastAcceleratedFollowUpDate: defaults.object(forKey: Key.lastAcceleratedFollowUpDate) as? Date,
-            lastAcceleratedFollowUpExplorationDate: defaults.object(forKey: Key.lastAcceleratedFollowUpExplorationDate) as? Date,
-            proInterestVisits: (defaults.data(forKey: Key.proInterestVisits).flatMap { try? JSONDecoder().decode([ProInterestVisit].self, from: $0) }) ?? []
+            lastAcceleratedFollowUpExplorationDate: defaults.object(forKey: Key.lastAcceleratedFollowUpExplorationDate)
+                as? Date,
+            proInterestVisits: (defaults.data(forKey: Key.proInterestVisits).flatMap {
+                try? JSONDecoder().decode([ProInterestVisit].self, from: $0)
+            }) ?? []
         )
     }
 

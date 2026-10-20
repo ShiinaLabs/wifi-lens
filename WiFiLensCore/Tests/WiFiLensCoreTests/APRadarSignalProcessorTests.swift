@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WiFiLensCore
 
 // MARK: - RSSI smoothing
@@ -264,7 +265,7 @@ struct APRadarPulseIntervalStochasticTests {
 
     @Test("duration seconds helper matches the duration components")
     func durationSecondsHelper() {
-        let duration = Duration.seconds(1) + .nanoseconds(250_000_000) // 1.25 s
+        let duration = Duration.seconds(1) + .nanoseconds(250_000_000)  // 1.25 s
         let seconds = APRadarPulseInterval.seconds(from: duration)
         #expect(abs(seconds - 1.25) < 0.0001)
     }

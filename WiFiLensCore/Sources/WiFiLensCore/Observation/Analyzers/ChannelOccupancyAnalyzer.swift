@@ -41,9 +41,9 @@ enum ChannelOccupancyAnalyzer {
     private static func channelWidthLabel(_ width: Int) -> String {
         switch width {
         case 160: return "160"
-        case 80:  return "80"
-        case 40:  return "40"
-        default:  return "20"
+        case 80: return "80"
+        case 40: return "40"
+        default: return "20"
         }
     }
 }

@@ -106,7 +106,8 @@ struct GuidanceState: Equatable, Sendable {
         let oldestKey = Self.dayKey(for: oldest, calendar: calendar)
         proInterestVisits = proInterestVisits.filter { $0.day >= oldestKey }
         if let lastPurchaseExplorationDate,
-           GuidancePolicy.localDaysBetween(lastPurchaseExplorationDate, now: now, calendar: calendar) >= 14 {
+            GuidancePolicy.localDaysBetween(lastPurchaseExplorationDate, now: now, calendar: calendar) >= 14
+        {
             self.lastPurchaseExplorationDate = nil
         }
     }

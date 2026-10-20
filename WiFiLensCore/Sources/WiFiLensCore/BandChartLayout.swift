@@ -1,5 +1,5 @@
-import Foundation
 import ChartLens
+import Foundation
 
 struct BandChartLayout {
     struct LabelPlacement {
@@ -38,7 +38,8 @@ struct BandChartLayout {
         let lineHeight: CGFloat = labelEstHeight + 2
         let hasSelection = selectedNetworkID != nil
 
-        let candidates = seriesData
+        let candidates =
+            seriesData
             .filter { $0.isVisible || $0.id == selectedNetworkID }
             .sorted { a, b in
                 if a.id == selectedNetworkID { return true }
@@ -132,10 +133,13 @@ struct BandChartLayout {
         return nil
     }
 
-    private static func estimatedLabelSize(for series: ChartSeriesData, kind: LabelPlacement.Kind, bounds: CGRect) -> CGSize {
+    private static func estimatedLabelSize(for series: ChartSeriesData, kind: LabelPlacement.Kind, bounds: CGRect)
+        -> CGSize
+    {
         switch kind {
         case .regular:
-            let labelCharacterCount = "\(series.channel) \(series.displaySSID)\(estimatedTrendSuffix(for: series))".count
+            let labelCharacterCount = "\(series.channel) \(series.displaySSID)\(estimatedTrendSuffix(for: series))"
+                .count
             let width = min(max(100, CGFloat(labelCharacterCount) * 6.5), 220)
             return CGSize(width: width, height: 14)
         case .compact:
@@ -182,7 +186,9 @@ struct BandChartLayout {
         return Swift.min(Swift.max(value, minValue), maxValue)
     }
 
-    static func nearestSeries(at location: CGPoint, in series: [ChartSeriesData], geometry: ChartGeometry, radius: CGFloat) -> (ChartSeriesData, CGPoint)? {
+    static func nearestSeries(
+        at location: CGPoint, in series: [ChartSeriesData], geometry: ChartGeometry, radius: CGFloat
+    ) -> (ChartSeriesData, CGPoint)? {
         guard geometry.chartRect.contains(location) else { return nil }
         var best: (ChartSeriesData, CGPoint)?
         var bestDist: CGFloat = radius

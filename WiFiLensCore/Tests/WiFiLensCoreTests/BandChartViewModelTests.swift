@@ -1,8 +1,10 @@
+import ChartLens
 import Foundation
 import SwiftUI
 import Testing
-import ChartLens
+
 @testable import WiFiLensCore
+
 @Suite @MainActor struct BandChartViewModelTests {
 
     private func makeSeries(
@@ -158,7 +160,7 @@ import ChartLens
     @Test func validateSelectionReturnsTrueForExistingSeries() {
         let vm = BandChartViewModel(band: .band24GHz)
         vm.debugInject(series: [
-            makeSeries(id: "valid-id", ssid: "Net"),
+            makeSeries(id: "valid-id", ssid: "Net")
         ])
         #expect(vm.validateSelection("valid-id"))
         #expect(!vm.validateSelection("missing-id"))
@@ -413,16 +415,17 @@ import ChartLens
         let vm = BandChartViewModel(band: .band5GHz)
         var series: [ChartSeriesData] = []
         for i in 0..<20 {
-            series.append(ChartSeriesData(
-                id: "ap\(i)",
-                ssid: "Network\(i)",
-                bssid: "00:11:22:33:44:\(String(format: "%02x", i))",
-                channel: 36,
-                left: 36,
-                apex: 36.0,
-                right: 40,
-                rssi: -50 - i
-            ))
+            series.append(
+                ChartSeriesData(
+                    id: "ap\(i)",
+                    ssid: "Network\(i)",
+                    bssid: "00:11:22:33:44:\(String(format: "%02x", i))",
+                    channel: 36,
+                    left: 36,
+                    apex: 36.0,
+                    right: 40,
+                    rssi: -50 - i
+                ))
         }
         vm.debugInject(series: series)
         #expect(vm.visibleSeriesData().count == 20)
@@ -432,16 +435,17 @@ import ChartLens
         let vm = BandChartViewModel(band: .band5GHz)
         var series: [ChartSeriesData] = []
         for i in 0..<10 {
-            series.append(ChartSeriesData(
-                id: "ap\(i)",
-                ssid: "Network\(i)",
-                bssid: "00:11:22:33:44:\(String(format: "%02x", i))",
-                channel: 36,
-                left: 36,
-                apex: 36.0,
-                right: 40,
-                rssi: -50 - i
-            ))
+            series.append(
+                ChartSeriesData(
+                    id: "ap\(i)",
+                    ssid: "Network\(i)",
+                    bssid: "00:11:22:33:44:\(String(format: "%02x", i))",
+                    channel: 36,
+                    left: 36,
+                    apex: 36.0,
+                    right: 40,
+                    rssi: -50 - i
+                ))
         }
         vm.debugInject(series: series)
         #expect(vm.visibleSeriesData().count == 10)
@@ -450,18 +454,22 @@ import ChartLens
     @Test func visibleSeriesDataSortsByRSSI() {
         let vm = BandChartViewModel(band: .band5GHz)
         var series: [ChartSeriesData] = []
-        series.append(ChartSeriesData(id: "strong", ssid: "Strong", bssid: "00:00:00:00:00:00", channel: 36, left: 36, apex: 36.0, right: 40, rssi: -30))
+        series.append(
+            ChartSeriesData(
+                id: "strong", ssid: "Strong", bssid: "00:00:00:00:00:00", channel: 36, left: 36, apex: 36.0, right: 40,
+                rssi: -30))
         for i in 1..<20 {
-            series.append(ChartSeriesData(
-                id: "ap\(i)",
-                ssid: "Network\(i)",
-                bssid: "00:11:22:33:44:\(String(format: "%02x", i))",
-                channel: 36,
-                left: 36,
-                apex: 36.0,
-                right: 40,
-                rssi: -80 - i
-            ))
+            series.append(
+                ChartSeriesData(
+                    id: "ap\(i)",
+                    ssid: "Network\(i)",
+                    bssid: "00:11:22:33:44:\(String(format: "%02x", i))",
+                    channel: 36,
+                    left: 36,
+                    apex: 36.0,
+                    right: 40,
+                    rssi: -80 - i
+                ))
         }
         vm.debugInject(series: series)
         let result = vm.visibleSeriesData()
@@ -519,7 +527,8 @@ import ChartLens
         let dict = ["bssid1": snap24, "bssid2": snap5]
         let hasher = SSIDColorHasher()
 
-        let series2G = SnapshotToChartAdapter.toSeriesData(snapshotsByBSSID: dict, band: .band24GHz, colorHasher: hasher)
+        let series2G = SnapshotToChartAdapter.toSeriesData(
+            snapshotsByBSSID: dict, band: .band24GHz, colorHasher: hasher)
         #expect(series2G.count == 1)
         #expect(series2G.first?.ssid == "Net2G")
 
@@ -585,7 +594,8 @@ import ChartLens
         vm.toggleVisibilityLocked(seriesID: locked.id)
         vm.setFilterQuery("Home", for: .primary)
 
-        #expect(vm.bandViewModel(for: .primary, band: .band5GHz).visibleSeriesData().map(\.id) == [locked.id, unlocked.id])
+        #expect(
+            vm.bandViewModel(for: .primary, band: .band5GHz).visibleSeriesData().map(\.id) == [locked.id, unlocked.id])
     }
 
     @Test func toggleVisibility() {

@@ -2,6 +2,7 @@ import CFNetwork
 import Foundation
 import Network
 import Testing
+
 @testable import WiFiLensCore
 @testable import WiFi_Lens
 
@@ -15,15 +16,16 @@ extension NetworkDiagnosticsTests {
 
         #expect(ipv6.id == .ipv6)
         #expect(ipv6.status == .skipped)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(
-                path: .normal,
-                dns: .normal,
-                internet: .normal,
-                ipv6: ipv6.status,
-                proxy: .normal
-            )
-        ) == .networkNormal)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(
+                    path: .normal,
+                    dns: .normal,
+                    internet: .normal,
+                    ipv6: ipv6.status,
+                    proxy: .normal
+                )
+            ) == .networkNormal)
 
         let failed = await IPv6ControlEndpointCheck(
             loader: StubIPv6Loader(.connectionFailed(route: route))
@@ -31,15 +33,16 @@ extension NetworkDiagnosticsTests {
 
         #expect(failed.status == .indeterminate)
         #expect(failed.evidence.contains(.init(code: "ipv6.connection-failure", value: nil)))
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            makeResults(
-                path: .normal,
-                dns: .normal,
-                internet: .normal,
-                ipv6: failed.status,
-                proxy: .normal
-            )
-        ) == .networkNormal)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                makeResults(
+                    path: .normal,
+                    dns: .normal,
+                    internet: .normal,
+                    ipv6: failed.status,
+                    proxy: .normal
+                )
+            ) == .networkNormal)
 
         let succeeded = await IPv6ControlEndpointCheck(
             loader: StubIPv6Loader(.succeeded(route: route))
@@ -214,10 +217,12 @@ extension NetworkDiagnosticsTests {
 
         #expect(timeout.status == .indeterminate)
         #expect(timeout.evidence.contains(.init(code: "https.available", value: "200")))
-        #expect(timeout.evidence.contains(.init(
-            code: "captive-portal.transport-error",
-            value: String(URLError.timedOut.rawValue)
-        )))
+        #expect(
+            timeout.evidence.contains(
+                .init(
+                    code: "captive-portal.transport-error",
+                    value: String(URLError.timedOut.rawValue)
+                )))
     }
 
     @Test("independent control endpoints load concurrently and preserve evidence order")
@@ -301,37 +306,51 @@ extension NetworkDiagnosticsTests {
             )
         ).run()
 
-        #expect(tlsFailure.evidence.contains(.init(
-            code: "https.tls-error",
-            value: String(URLError.secureConnectionFailed.rawValue)
-        )))
-        #expect(certificateTimeFailure.evidence.contains(.init(
-            code: "https.certificate-time-error",
-            value: String(URLError.serverCertificateNotYetValid.rawValue)
-        )))
-        #expect(certificateValidationFailure.evidence.contains(.init(
-            code: "https.certificate-error",
-            value: String(URLError.serverCertificateUntrusted.rawValue)
-        )))
-        #expect(connectivityFailure.evidence.contains(.init(
-            code: "https.connectivity-error",
-            value: String(URLError.timedOut.rawValue)
-        )))
+        #expect(
+            tlsFailure.evidence.contains(
+                .init(
+                    code: "https.tls-error",
+                    value: String(URLError.secureConnectionFailed.rawValue)
+                )))
+        #expect(
+            certificateTimeFailure.evidence.contains(
+                .init(
+                    code: "https.certificate-time-error",
+                    value: String(URLError.serverCertificateNotYetValid.rawValue)
+                )))
+        #expect(
+            certificateValidationFailure.evidence.contains(
+                .init(
+                    code: "https.certificate-error",
+                    value: String(URLError.serverCertificateUntrusted.rawValue)
+                )))
+        #expect(
+            connectivityFailure.evidence.contains(
+                .init(
+                    code: "https.connectivity-error",
+                    value: String(URLError.timedOut.rawValue)
+                )))
         #expect(httpsStatusFailure.evidence.contains(.init(code: "https.http-status", value: "503")))
         #expect(captivePortalRedirect.evidence.contains(.init(code: "captive-portal.redirect", value: "302")))
-        #expect(tlsFailure.summary == String(
-            localized: "network_diagnostics.internet.secure_connection_failure.summary",
-            comment: "Network self-check TLS or certificate failure summary"
-        ))
+        #expect(
+            tlsFailure.summary
+                == String(
+                    localized: "network_diagnostics.internet.secure_connection_failure.summary",
+                    comment: "Network self-check TLS or certificate failure summary"
+                ))
         #expect(certificateValidationFailure.summary == tlsFailure.summary)
-        #expect(certificateTimeFailure.summary == String(
-            localized: "network_diagnostics.internet.certificate_time_failure.summary",
-            comment: "Network self-check certificate time failure summary"
-        ))
-        #expect(connectivityFailure.summary == String(
-            localized: "network_diagnostics.internet.connectivity_failure.summary",
-            comment: "Network self-check connectivity failure summary"
-        ))
+        #expect(
+            certificateTimeFailure.summary
+                == String(
+                    localized: "network_diagnostics.internet.certificate_time_failure.summary",
+                    comment: "Network self-check certificate time failure summary"
+                ))
+        #expect(
+            connectivityFailure.summary
+                == String(
+                    localized: "network_diagnostics.internet.connectivity_failure.summary",
+                    comment: "Network self-check connectivity failure summary"
+                ))
 
         let baseResults = [
             NetworkDiagnosticResult(id: .path, status: .normal, summary: "path"),
@@ -342,18 +361,22 @@ extension NetworkDiagnosticsTests {
             NetworkDiagnosticResult(id: .ipv6, status: .skipped, summary: "ipv6"),
             NetworkDiagnosticResult(id: .proxy, status: .abnormal, summary: "proxy"),
         ]
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            baseResults + [tlsFailure] + trailingResults
-        ) == .needsAttention)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            baseResults + [certificateTimeFailure] + trailingResults
-        ) == .needsAttention)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            baseResults + [certificateValidationFailure] + trailingResults
-        ) == .needsAttention)
-        #expect(NetworkDiagnosticConclusion.evaluate(
-            baseResults + [connectivityFailure] + trailingResults
-        ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                baseResults + [tlsFailure] + trailingResults
+            ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                baseResults + [certificateTimeFailure] + trailingResults
+            ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                baseResults + [certificateValidationFailure] + trailingResults
+            ) == .needsAttention)
+        #expect(
+            NetworkDiagnosticConclusion.evaluate(
+                baseResults + [connectivityFailure] + trailingResults
+            ) == .needsAttention)
     }
 
     @Test("control check loads the approved endpoints with an explicit timeout")
@@ -370,10 +393,12 @@ extension NetworkDiagnosticsTests {
 
         _ = await check.run()
 
-        #expect(Set(await recorder.urls) == Set([
-            "https://www.apple.com/",
-            "https://captive.apple.com/hotspot-detect.html",
-        ]))
+        #expect(
+            Set(await recorder.urls)
+                == Set([
+                    "https://www.apple.com/",
+                    "https://captive.apple.com/hotspot-detect.html",
+                ]))
         #expect(await recorder.timeouts == [.seconds(5), .seconds(5)])
     }
 

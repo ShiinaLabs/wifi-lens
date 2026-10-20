@@ -1,7 +1,7 @@
-@testable import WiFiLensCore
-
 import Foundation
 import Testing
+
+@testable import WiFiLensCore
 @testable import WiFi_Lens
 
 struct ExternalLinksTests {
@@ -12,7 +12,9 @@ struct ExternalLinksTests {
 
     @Test("app store maps to the Pro product page")
     func appStoreURL() {
-        #expect(ExternalLinks.url(for: .appStore)?.absoluteString == "https://apps.apple.com/app/wifi-lens-pro/id6776590746")
+        #expect(
+            ExternalLinks.url(for: .appStore)?.absoluteString == "https://apps.apple.com/app/wifi-lens-pro/id6776590746"
+        )
     }
 
     @Test("app store write-review maps to the manual rating destination")
@@ -73,9 +75,13 @@ struct ExternalLinksTests {
 
     @Test("dependency repositories keep their current public locations")
     func dependencyRepositoryURLs() {
-        #expect(ExternalLinks.url(for: .chartLensRepository)?.absoluteString == "https://github.com/SHIINASAMA/chart-lens")
-        #expect(ExternalLinks.url(for: .mcpSwiftSDKRepository)?.absoluteString == "https://github.com/modelcontextprotocol/swift-sdk")
-        #expect(ExternalLinks.url(for: .sparkleRepository)?.absoluteString == "https://github.com/sparkle-project/Sparkle")
+        #expect(
+            ExternalLinks.url(for: .chartLensRepository)?.absoluteString == "https://github.com/SHIINASAMA/chart-lens")
+        #expect(
+            ExternalLinks.url(for: .mcpSwiftSDKRepository)?.absoluteString
+                == "https://github.com/modelcontextprotocol/swift-sdk")
+        #expect(
+            ExternalLinks.url(for: .sparkleRepository)?.absoluteString == "https://github.com/sparkle-project/Sparkle")
     }
 
     @Test("discord maps to the community invite link")
@@ -85,11 +91,14 @@ struct ExternalLinksTests {
 
     @Test("GitHub Issues maps to the project issue tracker")
     func githubIssuesURL() {
-        #expect(ExternalLinks.url(for: .githubIssues)?.absoluteString == "https://github.com/SHIINASAMA/wifi-lens/issues")
+        #expect(
+            ExternalLinks.url(for: .githubIssues)?.absoluteString == "https://github.com/SHIINASAMA/wifi-lens/issues")
     }
 
     @Test("Wi-Fi Calling feedback opens the dedicated issue template")
     func githubWiFiCallingIssueURL() {
-        #expect(ExternalLinks.url(for: .githubWiFiCallingIssue)?.absoluteString == "https://github.com/SHIINASAMA/wifi-lens/issues/new?template=wifi-calling.yml&labels=wifi-calling")
+        #expect(
+            ExternalLinks.url(for: .githubWiFiCallingIssue)?.absoluteString
+                == "https://github.com/SHIINASAMA/wifi-lens/issues/new?template=wifi-calling.yml&labels=wifi-calling")
     }
 }

@@ -61,7 +61,7 @@ public final class MACVendorResolver: MACVendorResolving {
 
     public func resolve(_ macAddress: String) -> MACVendorLookupResult {
         guard let normalized = Self.normalize(macAddress),
-              let numericAddress = UInt64(normalized, radix: 16)
+            let numericAddress = UInt64(normalized, radix: 16)
         else {
             return .invalid
         }
@@ -92,8 +92,8 @@ public final class MACVendorResolver: MACVendorResolving {
         var mappings: [Int: [UInt64: String]] = [:]
         for entry in entries where Self.supportedPrefixLengths.contains(entry.prefixLength) {
             guard entry.prefix.count == entry.prefixLength / 4,
-                  let numericPrefix = UInt64(entry.prefix, radix: 16),
-                  !entry.organization.isEmpty
+                let numericPrefix = UInt64(entry.prefix, radix: 16),
+                !entry.organization.isEmpty
             else {
                 continue
             }
@@ -123,7 +123,7 @@ public final class MACVendorResolver: MACVendorResolving {
                 omittingEmptySubsequences: false
             )
             guard octets.count == 6,
-                  octets.allSatisfy({ $0.count == 2 && $0.allSatisfy(\.isHexDigit) })
+                octets.allSatisfy({ $0.count == 2 && $0.allSatisfy(\.isHexDigit) })
             else {
                 continue
             }

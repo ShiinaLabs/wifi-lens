@@ -92,36 +92,54 @@ public struct SidebarView: View {
             }
             Section {
                 sidebarGroupTitle(.tools)
-                ForEach([SidebarPage.spectrum, .channels, .interfaces, .networkDiagnostics, .wifiCallingTest, .roaming, .bleScanner, .apRadar], id: \.self) { page in
+                ForEach(
+                    [
+                        SidebarPage.spectrum, .channels, .interfaces, .networkDiagnostics, .wifiCallingTest, .roaming,
+                        .bleScanner, .apRadar,
+                    ], id: \.self
+                ) { page in
                     if page == .bleScanner {
-                        Label(title: { Text(page.label) }, icon: {
-                            BluetoothIconShape()
-                                .stroke(.foreground, style: .init(lineWidth: 1.1, lineCap: .round, lineJoin: .round))
-                                .frame(width: 16, height: 16)
-                                .accessibilityHidden(true)
-                        })
-                            .tag(page)
-                            .disabled(!isUITestMode && page.requiresWiFi && !isWiFiAvailable)
-                            .opacity(!isUITestMode && page.requiresWiFi && !isWiFiAvailable ? 0.4 : 1.0)
-                            .accessibilityHint(!isUITestMode && page.requiresWiFi && !isWiFiAvailable
-                                ? String(localized: "sidebar.hint.requires_wifi", comment: "Accessibility hint when sidebar item is disabled due to no Wi‑Fi")
-                                : "")
-                            .accessibilityIdentifier("sidebar-bleScanner")
+                        Label(
+                            title: { Text(page.label) },
+                            icon: {
+                                BluetoothIconShape()
+                                    .stroke(
+                                        .foreground, style: .init(lineWidth: 1.1, lineCap: .round, lineJoin: .round)
+                                    )
+                                    .frame(width: 16, height: 16)
+                                    .accessibilityHidden(true)
+                            }
+                        )
+                        .tag(page)
+                        .disabled(!isUITestMode && page.requiresWiFi && !isWiFiAvailable)
+                        .opacity(!isUITestMode && page.requiresWiFi && !isWiFiAvailable ? 0.4 : 1.0)
+                        .accessibilityHint(
+                            !isUITestMode && page.requiresWiFi && !isWiFiAvailable
+                                ? String(
+                                    localized: "sidebar.hint.requires_wifi",
+                                    comment: "Accessibility hint when sidebar item is disabled due to no Wi‑Fi")
+                                : ""
+                        )
+                        .accessibilityIdentifier("sidebar-bleScanner")
                     } else {
                         sidebarRow(for: page)
                             .tag(page)
                             .disabled(!isUITestMode && page.requiresWiFi && !isWiFiAvailable)
                             .opacity(!isUITestMode && page.requiresWiFi && !isWiFiAvailable ? 0.4 : 1.0)
-                            .accessibilityHint(!isUITestMode && page.requiresWiFi && !isWiFiAvailable
-                                ? String(localized: "sidebar.hint.requires_wifi", comment: "Accessibility hint when sidebar item is disabled due to no Wi‑Fi")
-                                : "")
+                            .accessibilityHint(
+                                !isUITestMode && page.requiresWiFi && !isWiFiAvailable
+                                    ? String(
+                                        localized: "sidebar.hint.requires_wifi",
+                                        comment: "Accessibility hint when sidebar item is disabled due to no Wi‑Fi")
+                                    : ""
+                            )
                             .accessibilityIdentifier("sidebar-\(page.rawValue)")
                     }
                 }
             }
             Section {
                 sidebarGroupTitle(.analysis)
-                ForEach(SidebarPage.analysisPages, id: \.self) { page in
+                ForEach(configuration.analysisSidebarPages, id: \.self) { page in
                     sidebarRow(for: page)
                         .tag(page)
                         .accessibilityIdentifier("sidebar-\(page.rawValue)")
