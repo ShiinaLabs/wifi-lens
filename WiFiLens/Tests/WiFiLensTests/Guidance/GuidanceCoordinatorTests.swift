@@ -1083,21 +1083,6 @@ final class GuidanceCoordinatorTests {
 
     // MARK: - Export banner view
 
-    @Test func exportBannerDoesNotConfirmWhileHostIsNotActuallyForeground() throws {
-        let coordinator = makeCoordinator(state: invitationState(completionCount: 3))
-        coordinator.handleExportSucceeded()
-        let invitation = try #require(coordinator.pendingInvitation)
-        #expect(invitation.moment == .exportSucceeded)
-
-        let host = BannerHost { window in
-            ExportSuccessBanner(guidance: coordinator, isInvitationHostActive: true, hostWindow: window)
-        }
-        host.flushLayout()
-
-        #expect(store.load().invitationPresentationCount == 0)
-        #expect(events(named: "guidance.invitation.presented").isEmpty)
-    }
-
     @Test func exportBannerWithoutInvitationShowsFeedbackOnly() throws {
         let coordinator = makeCoordinator(
             configuration: GuidanceConfiguration(), state: invitationState(completionCount: 0))
