@@ -242,7 +242,7 @@ public struct SecondaryToolbarSelections: Equatable, Sendable {
         interfaces: SecondaryToolbarItemID = .interfacesSimple,
         spectrum: SecondaryToolbarItemID = .spectrumLive,
         networkExperience: SecondaryToolbarItemID = .networkExperienceReliability,
-        timeline: SecondaryToolbarItemID = .timelineToday
+        timeline: SecondaryToolbarItemID = .timelineAll
     ) {
         self.channels = channels
         self.interfaces = interfaces
