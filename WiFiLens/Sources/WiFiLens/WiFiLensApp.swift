@@ -1195,7 +1195,12 @@ struct WiFiLensApp: App {
     @State private var crashLogText: String = ""
 
     var body: some Scene {
-        WindowGroup(AppEnvironment.current.displayName, id: Self.mainWindowSceneID) { mainWindowContent }
+        // Single-window policy: `Window`, not `WindowGroup`, so macOS never offers
+        // File ▸ New Window. A second main window would give the user two
+        // independent scan views over the shared app-level view models. Window
+        // ownership in the guidance state still matters across close and reopen,
+        // because a reopened window registers a fresh scene id.
+        Window(AppEnvironment.current.displayName, id: Self.mainWindowSceneID) { mainWindowContent }
         // Keep a default launch size only. The app window must remain a normal
         // resizable macOS window; do not add `.windowResizability(.contentSize)`.
         .defaultSize(

@@ -151,6 +151,13 @@ The shipping app now follows these rules:
 4. Every restored frame is normalized against the current screen's `visibleFrame` before being shown.
 5. If a restored frame is obviously invalid, the app falls back to a centered default size.
 6. Page-level `idealWidth` / `idealHeight` values are allowed only as local layout hints.
+7. The app is single-window. The main scene is declared as `Window`, not `WindowGroup`, so macOS
+   never offers File ▸ New Window. A second main window would give the user two independent scan
+   views over the shared app-level view models. Do not switch back to `WindowGroup`.
+
+Window ownership in the guidance state is unaffected by this rule: the ownership model still
+matters across close and reopen, because a reopened window registers a fresh scene id and any
+invitation or export feedback owned by the previous id must be released.
 
 ## Current Implementation
 
@@ -172,7 +179,8 @@ Audit date: June 27, 2026
 ### Shipping app
 
 - `WiFiLensApp.swift`
-  - `WindowGroup` is the only shipping scene entry point for the main app window.
+  - The main app window ships as a single `Window` scene, the only shipping scene entry point
+    for the main app window (see Shipping Policy rule 7).
   - No remaining `.windowResizability(.contentSize)` usage exists in the shipping app.
   - `NSWindow` autosave remains in use, but all restored frames are now normalized.
 - `Spectrum/ContentView.swift`
