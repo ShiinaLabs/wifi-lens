@@ -333,7 +333,7 @@ struct SystemIPv6AddressResolver: IPv6AddressResolving {
                     configureDelivery: {
                         DNSServiceSetDispatchQueue(
                             serviceRef,
-                            DispatchQueue(label: "io.github.kaoru.wifi-lens.network-diagnostics.ipv6-dns")
+                            DispatchQueue(label: "wifi-lens.network-diagnostics.ipv6-dns")
                         )
                     },
                     installOwnership: {
@@ -513,7 +513,7 @@ struct NetworkIPv6HTTPSConnector: IPv6HTTPSConnecting {
                 }
                 connection.start(
                     queue: DispatchQueue(
-                        label: "io.github.kaoru.wifi-lens.network-diagnostics.ipv6-https"
+                        label: "wifi-lens.network-diagnostics.ipv6-https"
                     ))
                 let timeoutTask = Task { [context] in
                     do {

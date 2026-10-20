@@ -6,6 +6,13 @@ import SwiftUI
 public struct AppEnvironment: Equatable, Sendable {
     public static let productionMCPPort = 19840
 
+    /// Fallback OSLog subsystem for contexts that carry no bundle identity
+    /// (SPM consumers, previews, bare test hosts). Deliberately not an edition
+    /// identity: this type is shared by every edition, so naming one of them
+    /// here would misattribute the other's logs. An obviously unattributed
+    /// value keeps that case loud instead of looking like a real subsystem.
+    public static let unattributedBundleIdentity = "unattributed"
+
     public enum Kind: String, Sendable {
         case development
         case production
@@ -27,7 +34,7 @@ public struct AppEnvironment: Equatable, Sendable {
         !isNonProduction || port != Self.productionMCPPort
     }
     public var loggingSubsystem: String {
-        bundleIdentity ?? "com.kaoru.wifi-lens"
+        bundleIdentity ?? Self.unattributedBundleIdentity
     }
 
     public init(

@@ -84,7 +84,7 @@ public actor BLEScanner: BLEScanning {
     private func startScanning(batchInterval: Duration) async -> BLEScanSession {
         stopActiveSession()
         let sessionID = UUID()
-        let queue = DispatchQueue(label: "com.wifilens.blescanner", qos: .utility)
+        let queue = DispatchQueue(label: "wifi-lens.blescanner", qos: .utility)
         let del = BLEScannerDelegate(queue: queue)
         delegate = del
 

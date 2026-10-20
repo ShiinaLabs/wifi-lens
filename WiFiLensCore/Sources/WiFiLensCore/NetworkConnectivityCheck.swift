@@ -38,7 +38,7 @@ struct SystemNetworkPathChecker: NetworkPathChecking {
                 continuation.finish()
             }
             continuation.onTermination = { _ in monitor.cancel() }
-            monitor.start(queue: DispatchQueue(label: "io.github.kaoru.wifi-lens.network-diagnostics.path"))
+            monitor.start(queue: DispatchQueue(label: "wifi-lens.network-diagnostics.path"))
         }
 
         return await withTaskGroup(of: NetworkPathState?.self) { group in
@@ -67,7 +67,7 @@ struct SystemNetworkPathChecker: NetworkPathChecking {
                 continuation.finish()
             }
             continuation.onTermination = { _ in monitor.cancel() }
-            monitor.start(queue: DispatchQueue(label: "io.github.kaoru.wifi-lens.network-diagnostics.path-evidence"))
+            monitor.start(queue: DispatchQueue(label: "wifi-lens.network-diagnostics.path-evidence"))
         }
         return await withTaskGroup(of: [NetworkDiagnosticEvidence]?.self) { group in
             group.addTask {

@@ -306,7 +306,7 @@ struct SystemNetworkPathFingerprintSource: NetworkPathFingerprintSourcing {
             continuation.onTermination = { _ in monitor.cancel() }
             monitor.start(
                 queue: DispatchQueue(
-                    label: "io.github.kaoru.wifi-lens.network-diagnostics.fingerprint-path"
+                    label: "wifi-lens.network-diagnostics.fingerprint-path"
                 ))
         }
     }

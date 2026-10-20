@@ -411,7 +411,7 @@ private final class SystemPACCallbackExecution: PACCallbackExecution, @unchecked
         self.source = source
         lock.unlock()
 
-        DispatchQueue(label: "io.github.kaoru.wifi-lens.network-diagnostics.pac").async { [self] in
+        DispatchQueue(label: "wifi-lens.network-diagnostics.pac").async { [self] in
             run()
         }
     }

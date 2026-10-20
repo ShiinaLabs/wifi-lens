@@ -250,7 +250,7 @@ final class DiagnosticRouteProcessExecution: @unchecked Sendable {
     private let stderrPipe = Pipe()
     private let outputLimit: Int
     private let timeoutQueue = DispatchQueue(
-        label: "com.shiinalabs.wifi-lens.diagnostic-route-timeout",
+        label: "wifi-lens.network-diagnostics.route-timeout",
         qos: .utility
     )
     private var continuation: CheckedContinuation<DiagnosticRouteProcessResult, Never>?

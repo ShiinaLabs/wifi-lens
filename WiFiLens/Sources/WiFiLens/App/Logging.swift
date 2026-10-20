@@ -124,7 +124,11 @@ private struct OSLogHandler: LogHandler {
     var logLevel: Logging.Logger.Level = .info
     var metadata = Logging.Logger.Metadata()
 
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "io.github.kaoru.wifi-lens"
+    /// Resolved once by `AppEnvironment`, which reads the host bundle's
+    /// identifier. The app must not re-derive it here: two resolutions of the
+    /// same concept drift, and a hardcoded fallback can only ever be right for
+    /// one edition.
+    private static let subsystem = AppEnvironment.current.loggingSubsystem
 
     subscript(metadataKey key: String) -> Logging.Logger.Metadata.Value? {
         get { metadata[key] }
@@ -171,7 +175,7 @@ final class LogFileWriter: @unchecked Sendable {
     static let shared = LogFileWriter(logDirectory: AppLogger.logDirectory)
 
     private let logDirectory: URL
-    private let queue = DispatchQueue(label: "com.wifilens.logwriter", qos: .utility)
+    private let queue = DispatchQueue(label: "wifi-lens.logwriter", qos: .utility)
     private let maxSize: Int64 = 5 * 1024 * 1024
     private let maxFiles = 7
 

@@ -172,7 +172,7 @@ struct SystemProxyTunnelStateReader: ProxyTunnelStateReading {
                 continuation.finish()
             }
             continuation.onTermination = { _ in monitor.cancel() }
-            monitor.start(queue: DispatchQueue(label: "io.github.kaoru.wifi-lens.network-diagnostics.proxy-tunnel"))
+            monitor.start(queue: DispatchQueue(label: "wifi-lens.network-diagnostics.proxy-tunnel"))
         }
     }
 
@@ -233,7 +233,7 @@ struct NetworkProxyEndpointConnector: ProxyEndpointConnecting {
                         break
                     }
                 }
-                connection.start(queue: DispatchQueue(label: "io.github.kaoru.wifi-lens.network-diagnostics.proxy"))
+                connection.start(queue: DispatchQueue(label: "wifi-lens.network-diagnostics.proxy"))
                 let timeoutTask = Task { [context] in
                     do {
                         try await Task.sleep(for: timeout)

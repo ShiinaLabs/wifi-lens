@@ -46,7 +46,7 @@ struct SystemDNSResolver: DNSResolving {
 
                 DNSServiceSetDispatchQueue(
                     serviceRef,
-                    DispatchQueue(label: "io.github.kaoru.wifi-lens.network-diagnostics.dns")
+                    DispatchQueue(label: "wifi-lens.network-diagnostics.dns")
                 )
                 context.install(serviceRef: serviceRef)
 
