@@ -2,10 +2,10 @@
   "sourceLanguage" : "en",
   "strings" : {
     "—" : {
-
+      "shouldTranslate" : false
     },
     "%@" : {
-
+      "shouldTranslate" : false
     },
     "%@ – %@" : {
       "localizations" : {
@@ -15,7 +15,8 @@
             "value" : "%1$@ – %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "%@ — %@" : {
       "extractionState" : "manual",
@@ -62,7 +63,8 @@
             "value" : "%1$@ · %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "%@ %@" : {
       "localizations" : {
@@ -72,7 +74,8 @@
             "value" : "%1$@ %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "%@ APs" : {
       "comment" : "Access Point count with number",
@@ -136,7 +139,8 @@
             "value" : "%1$@: %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "analysis.insight.action.open_timeline" : {
       "extractionState" : "manual",
@@ -20075,16 +20079,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 個樣本"
-          }
-        }
-      }
-    },
-    "coverage=%@; inference=%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "coverage=%1$@; inference=%2$@"
           }
         }
       }
