@@ -35,7 +35,7 @@ struct MACVendorDatabaseDownloaderTests {
             #expect(request.value(forHTTPHeaderField: "Accept-Language") == "en")
             let userAgent = request.value(forHTTPHeaderField: "User-Agent")
             #expect(userAgent?.hasPrefix("WiFiLens/") == true)
-            #expect(userAgent?.hasSuffix(" (+https://github.com/SHIINASAMA/wifi-lens)") == true)
+            #expect(userAgent?.hasSuffix(" (+https://github.com/ShiinaLabs/wifi-lens)") == true)
 
             let serializedRequest = [
                 request.url?.absoluteString,

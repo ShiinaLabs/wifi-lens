@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Questions & discussions
-    url: https://github.com/SHIINASAMA/wifi-lens/discussions
+    url: https://github.com/ShiinaLabs/wifi-lens/discussions
     about: Ask questions or share ideas before creating an issue
   - name: Documentation
-    url: https://github.com/SHIINASAMA/wifi-lens/tree/master/docs
+    url: https://github.com/ShiinaLabs/wifi-lens/tree/master/docs
     about: Read the docs before filing an issue

@@ -94,7 +94,7 @@ WiFi Lensは、ローカルのWi-Fi環境を理解するための基本ツール
 
 ### オープンソース版
 
-オープンソース版は、GitHubからの配布を好む方や、コードを確認して貢献したい方に、充実したライブ分析機能を提供します。[GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest)から入手できます。
+オープンソース版は、GitHubからの配布を好む方や、コードを確認して貢献したい方に、充実したライブ分析機能を提供します。[GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest)から入手できます。
 
 | 機能 | WiFi Lens Pro | オープンソース版 |
 |------|---------------|------------------|
@@ -155,7 +155,7 @@ url = "http://127.0.0.1:19840/"
 
 オープンソース版は、ローカル分析、開発、ソースコードの確認、コミュニティへの貢献に利用できます。
 
-- **GitHub Releases** — [最新版をダウンロード](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- **GitHub Releases** — [最新版をダウンロード](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - **Homebrew** — `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - **ソースコードとドキュメント** — リポジトリと[アーキテクチャドキュメント](docs/)を参照
 
@@ -183,8 +183,8 @@ url = "http://127.0.0.1:19840/"
 
 </details>
 
-[![Downloads](https://img.shields.io/github/downloads/SHIINASAMA/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
-[![Latest release](https://img.shields.io/github/v/release/SHIINASAMA/wifi-lens?label=Latest&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/ShiinaLabs/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/ShiinaLabs/wifi-lens?label=Latest&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ---
@@ -199,7 +199,7 @@ WiFi Lensは、利用分析、クラッシュテレメトリー、Wi-Fiスキャ
 - **MCPサーバー：** `127.0.0.1`のみにバインドされます。有効化した後にローカルツールがデータへアクセスできます。
 - **アップデート確認：** GitHub版は、アップデート確認を要求したとき、または自動確認を有効にしたときにGitHubへ接続します。
 
-📋 [セキュリティポリシー](SECURITY.md) · 📝 [変更履歴](https://github.com/SHIINASAMA/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [プライバシーポリシー全文](https://wifi-lens.shiinalabs.com/privacy/)
+📋 [セキュリティポリシー](SECURITY.md) · 📝 [変更履歴](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [プライバシーポリシー全文](https://wifi-lens.shiinalabs.com/privacy/)
 
 ---
 
@@ -219,7 +219,7 @@ WiFi Lensは、利用分析、クラッシュテレメトリー、Wi-Fiスキャ
 
 GitHubからの配布とコミュニティ開発向けです。
 
-- [GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - Homebrew：`brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - ソースコード：このリポジトリ
 
@@ -231,7 +231,7 @@ GitHubからの配布とコミュニティ開発向けです。
 ## 開発
 
 ```sh
-git clone https://github.com/SHIINASAMA/wifi-lens
+git clone https://github.com/ShiinaLabs/wifi-lens
 cd wifi-lens
 git submodule update --init ChartLens
 cd WiFiLens
@@ -264,4 +264,4 @@ WiFi Lensやその他のプロジェクトの小さなコミュニティ **[Rabb
 
 [tiny-wifi-analyzer](https://github.com/nolze/tiny-wifi-analyzer)からフォークしています。MACベンダーデータは[IEEE Registration Authority](https://standards.ieee.org/products-programs/regauth/)のものです。詳しくは[サードパーティ通知](docs/THIRD-PARTY-NOTICES.md)をご覧ください。
 
-Apache License 2.0 © 2020 nolze, 2026 SHIINASAMA — [LICENSE](LICENSE)を参照してください。
+Apache License 2.0 © 2020 nolze, 2026 ShiinaLabs — [LICENSE](LICENSE)を参照してください。

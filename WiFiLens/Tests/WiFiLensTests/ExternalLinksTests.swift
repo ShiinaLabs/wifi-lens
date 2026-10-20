@@ -59,6 +59,10 @@ struct ExternalLinksTests {
             ExternalLinks.url(for: .appStoreCampaignSettingsAbout)?.absoluteString
                 == "https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=oss_settings_about&mt=8"
         )
+        #expect(
+            ExternalLinks.url(for: .appStoreCampaignBadge)?.absoluteString
+                == "https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=oss_badge&mt=8"
+        )
     }
 
     @Test("each preview surface has a unique campaign value")
@@ -76,7 +80,7 @@ struct ExternalLinksTests {
     @Test("dependency repositories keep their current public locations")
     func dependencyRepositoryURLs() {
         #expect(
-            ExternalLinks.url(for: .chartLensRepository)?.absoluteString == "https://github.com/SHIINASAMA/chart-lens")
+            ExternalLinks.url(for: .chartLensRepository)?.absoluteString == "https://github.com/ShiinaLabs/chart-lens")
         #expect(
             ExternalLinks.url(for: .mcpSwiftSDKRepository)?.absoluteString
                 == "https://github.com/modelcontextprotocol/swift-sdk")
@@ -92,13 +96,13 @@ struct ExternalLinksTests {
     @Test("GitHub Issues maps to the project issue tracker")
     func githubIssuesURL() {
         #expect(
-            ExternalLinks.url(for: .githubIssues)?.absoluteString == "https://github.com/SHIINASAMA/wifi-lens/issues")
+            ExternalLinks.url(for: .githubIssues)?.absoluteString == "https://github.com/ShiinaLabs/wifi-lens/issues")
     }
 
     @Test("Wi-Fi Calling feedback opens the dedicated issue template")
     func githubWiFiCallingIssueURL() {
         #expect(
             ExternalLinks.url(for: .githubWiFiCallingIssue)?.absoluteString
-                == "https://github.com/SHIINASAMA/wifi-lens/issues/new?template=wifi-calling.yml&labels=wifi-calling")
+                == "https://github.com/ShiinaLabs/wifi-lens/issues/new?template=wifi-calling.yml&labels=wifi-calling")
     }
 }

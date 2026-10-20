@@ -94,7 +94,7 @@ WiFi Lens 將理解本機 Wi-Fi 環境所需的基本工具整合在原生 Mac A
 
 ### 開放原始碼版
 
-開放原始碼版提供完整的即時分析功能，適合偏好透過 GitHub 取得 App、檢視原始碼並參與社群貢獻的使用者。請至 [GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest) 下載。
+開放原始碼版提供完整的即時分析功能，適合偏好透過 GitHub 取得 App、檢視原始碼並參與社群貢獻的使用者。請至 [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest) 下載。
 
 | 功能 | WiFi Lens Pro | 開放原始碼版 |
 |------|---------------|--------------|
@@ -155,7 +155,7 @@ url = "http://127.0.0.1:19840/"
 
 開放原始碼版適用於本機分析、開發、檢視原始碼和社群協作。
 
-- **GitHub Releases** — [下載最新版本](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- **GitHub Releases** — [下載最新版本](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - **Homebrew** — `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - **原始碼與文件** — 瀏覽本儲存庫和[架構文件](docs/)
 
@@ -183,8 +183,8 @@ url = "http://127.0.0.1:19840/"
 
 </details>
 
-[![Downloads](https://img.shields.io/github/downloads/SHIINASAMA/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
-[![Latest release](https://img.shields.io/github/v/release/SHIINASAMA/wifi-lens?label=Latest&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/ShiinaLabs/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/ShiinaLabs/wifi-lens?label=Latest&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ---
@@ -199,7 +199,7 @@ WiFi Lens 不會收集使用分析資料、當機遙測或 Wi-Fi 掃描資料。
 - **MCP 伺服器：** 僅繫結至 `127.0.0.1`。啟用後，本機工具才能存取資料。
 - **檢查更新：** GitHub 版本只會在你手動檢查更新或啟用自動檢查時連線至 GitHub。
 
-📋 [安全性政策](SECURITY.md) · 📝 [更新紀錄](https://github.com/SHIINASAMA/wifi-lens/releases) · ❓ [常見問題](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [完整隱私權政策](https://wifi-lens.shiinalabs.com/privacy/)
+📋 [安全性政策](SECURITY.md) · 📝 [更新紀錄](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [常見問題](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [完整隱私權政策](https://wifi-lens.shiinalabs.com/privacy/)
 
 ---
 
@@ -219,7 +219,7 @@ WiFi Lens 不會收集使用分析資料、當機遙測或 Wi-Fi 掃描資料。
 
 適合 GitHub 發行和社群開發：
 
-- [GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - Homebrew：`brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - 原始碼：本儲存庫
 
@@ -231,7 +231,7 @@ WiFi Lens 不會收集使用分析資料、當機遙測或 Wi-Fi 掃描資料。
 ## 開發
 
 ```sh
-git clone https://github.com/SHIINASAMA/wifi-lens
+git clone https://github.com/ShiinaLabs/wifi-lens
 cd wifi-lens
 git submodule update --init ChartLens
 cd WiFiLens
@@ -264,4 +264,4 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
 
 本專案 fork 自 [tiny-wifi-analyzer](https://github.com/nolze/tiny-wifi-analyzer)。MAC 廠商資料來自 [IEEE Registration Authority](https://standards.ieee.org/products-programs/regauth/)，詳情請參閱[第三方聲明](docs/THIRD-PARTY-NOTICES.md)。
 
-Apache License 2.0 © 2020 nolze, 2026 SHIINASAMA — 詳見 [LICENSE](LICENSE)。
+Apache License 2.0 © 2020 nolze, 2026 ShiinaLabs — 詳見 [LICENSE](LICENSE)。

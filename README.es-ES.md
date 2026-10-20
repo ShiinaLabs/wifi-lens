@@ -94,7 +94,7 @@ WiFi Lens reúne las herramientas esenciales para entender un entorno Wi-Fi loca
 
 ### Edición de código abierto
 
-La edición de código abierto ofrece un conjunto amplio de capacidades de análisis en directo para quienes prefieren la distribución por GitHub o quieren inspeccionar y contribuir al código. Está disponible en [GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest).
+La edición de código abierto ofrece un conjunto amplio de capacidades de análisis en directo para quienes prefieren la distribución por GitHub o quieren inspeccionar y contribuir al código. Está disponible en [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest).
 
 | Capacidad | WiFi Lens Pro | Edición de código abierto |
 |-----------|---------------|----------------------------|
@@ -155,7 +155,7 @@ Consulta la [guía de flujos de IA](https://wifi-lens.shiinalabs.com/ai-mcp/) pa
 
 La edición de código abierto está disponible para análisis local, desarrollo, inspección del código y contribuciones de la comunidad.
 
-- **GitHub Releases** — [Descargar la versión más reciente](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- **GitHub Releases** — [Descargar la versión más reciente](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - **Homebrew** — `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - **Código fuente y documentación** — Explora el repositorio y la [documentación de arquitectura](docs/)
 
@@ -183,8 +183,8 @@ La edición de código abierto está disponible para análisis local, desarrollo
 
 </details>
 
-[![Downloads](https://img.shields.io/github/downloads/SHIINASAMA/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
-[![Latest release](https://img.shields.io/github/v/release/SHIINASAMA/wifi-lens?label=Latest&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/ShiinaLabs/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/ShiinaLabs/wifi-lens?label=Latest&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ---
@@ -199,7 +199,7 @@ WiFi Lens no recopila analíticas de uso, telemetría de fallos ni datos de esca
 - **Servidor MCP:** Solo se vincula a `127.0.0.1`. Las herramientas locales acceden a los datos después de activarlo.
 - **Comprobaciones de actualización:** La edición de GitHub contacta con GitHub cuando solicitas una comprobación o activas las comprobaciones automáticas.
 
-📋 [Política de seguridad](SECURITY.md) · 📝 [Changelog](https://github.com/SHIINASAMA/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [Política de privacidad completa](https://wifi-lens.shiinalabs.com/privacy/)
+📋 [Política de seguridad](SECURITY.md) · 📝 [Changelog](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [Política de privacidad completa](https://wifi-lens.shiinalabs.com/privacy/)
 
 ---
 
@@ -219,7 +219,7 @@ La edición completa para monitorización continua, grabación, historial e inve
 
 Para la distribución por GitHub y el desarrollo de la comunidad:
 
-- [GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - Homebrew: `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - Código fuente: este repositorio
 
@@ -231,7 +231,7 @@ Para la distribución por GitHub y el desarrollo de la comunidad:
 ## Desarrollo
 
 ```sh
-git clone https://github.com/SHIINASAMA/wifi-lens
+git clone https://github.com/ShiinaLabs/wifi-lens
 cd wifi-lens
 git submodule update --init ChartLens
 cd WiFiLens
@@ -264,4 +264,4 @@ Son bienvenidos los informes de errores, las ideas de funciones y las preguntas.
 
 Bifurcado de [tiny-wifi-analyzer](https://github.com/nolze/tiny-wifi-analyzer). Los datos de fabricantes MAC proceden de [IEEE Registration Authority](https://standards.ieee.org/products-programs/regauth/); consulta los [avisos de terceros](docs/THIRD-PARTY-NOTICES.md).
 
-Apache License 2.0 © 2020 nolze, 2026 SHIINASAMA — consulta [LICENSE](LICENSE).
+Apache License 2.0 © 2020 nolze, 2026 ShiinaLabs — consulta [LICENSE](LICENSE).

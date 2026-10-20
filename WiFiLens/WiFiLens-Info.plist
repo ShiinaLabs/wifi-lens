@@ -5,7 +5,7 @@
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://github.com/SHIINASAMA/wifi-lens/releases/latest/download/appcast.xml</string>
+	<string>https://github.com/ShiinaLabs/wifi-lens/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>DUcvL7RzZrjRBNr+lIn15cbk0Uvm4SboSpvlz9H2z5g=</string>
 	<!-- Scoped ATS exception: Network Self-Check uses Microsoft's authoritative NCSI endpoint (HTTP-only) for captive-portal/proxy detection. WiFi Lens does not intentionally transmit user data; the endpoint is used only for connectivity verification. -->

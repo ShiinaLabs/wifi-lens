@@ -12,6 +12,7 @@ public enum ExternalDestination {
     case appStoreCampaignPreviewStatistics
     case appStoreCampaignPreviewInsights
     case appStoreCampaignSettingsAbout
+    case appStoreCampaignBadge
     case website
     case github
     case githubIssues
@@ -54,20 +55,22 @@ public enum ExternalLinks {
                 "https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=oss_preview_insights&mt=8"
             case .appStoreCampaignSettingsAbout:
                 "https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=oss_settings_about&mt=8"
+            case .appStoreCampaignBadge:
+                "https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=oss_badge&mt=8"
             case .website:
                 "https://wifi-lens.shiinalabs.com"
             case .github:
-                "https://github.com/SHIINASAMA/wifi-lens"
+                "https://github.com/ShiinaLabs/wifi-lens"
             case .githubIssues:
-                "https://github.com/SHIINASAMA/wifi-lens/issues"
+                "https://github.com/ShiinaLabs/wifi-lens/issues"
             case .githubWiFiCallingIssue:
-                "https://github.com/SHIINASAMA/wifi-lens/issues/new?template=wifi-calling.yml&labels=wifi-calling"
+                "https://github.com/ShiinaLabs/wifi-lens/issues/new?template=wifi-calling.yml&labels=wifi-calling"
             case .xAccount:
                 "https://x.com/WiFiLens"
             case .developerProfile:
                 "https://x.com/KAORU11843779"
             case .chartLensRepository:
-                "https://github.com/SHIINASAMA/chart-lens"
+                "https://github.com/ShiinaLabs/chart-lens"
             case .mcpSwiftSDKRepository:
                 "https://github.com/modelcontextprotocol/swift-sdk"
             case .sparkleRepository:

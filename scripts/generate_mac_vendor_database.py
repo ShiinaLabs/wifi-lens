@@ -147,7 +147,7 @@ def download_text(url: str) -> tuple[TextIO, str | None]:
         headers={
             "User-Agent": (
                 "WiFiLens-MACVendorDatabaseGenerator/1.0 "
-                "(+https://github.com/SHIINASAMA/wifi-lens)"
+                "(+https://github.com/ShiinaLabs/wifi-lens)"
             )
         },
     )

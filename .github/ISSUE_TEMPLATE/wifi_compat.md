@@ -27,5 +27,5 @@ assignees: ''
 
 **Logs**
 WiFi Lens writes structured logs via OSLog. You can export them with:
-`log show --predicate 'subsystem == "com.shiinasama.wifi-lens"' --last 5m > wifi-lens.log`
+`log show --predicate 'subsystem == "io.github.kaoru.wifi-lens"' --last 5m > wifi-lens.log`
 Attach the log file if possible.

@@ -94,7 +94,7 @@ WiFi Lens brings the essential tools for understanding a local Wi-Fi environment
 
 ### Open-source edition
 
-The open-source edition provides a substantial subset of live analysis capabilities for users who prefer GitHub distribution or want to inspect and contribute to the codebase. Get it from [GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest).
+The open-source edition provides a substantial subset of live analysis capabilities for users who prefer GitHub distribution or want to inspect and contribute to the codebase. Get it from [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest).
 
 | Capability | WiFi Lens Pro | Open-source edition |
 |------------|---------------|---------------------|
@@ -155,7 +155,7 @@ See the [AI Workflows guide](https://wifi-lens.shiinalabs.com/ai-mcp/) for more 
 
 The open-source edition is available for local analysis, development, source inspection, and community contributions.
 
-- **GitHub Releases** — [Download the latest release](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- **GitHub Releases** — [Download the latest release](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - **Homebrew** — `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - **Source code and documentation** — Browse the repository and [architecture docs](docs/)
 
@@ -183,8 +183,8 @@ The open-source edition is available for local analysis, development, source ins
 
 </details>
 
-[![Downloads](https://img.shields.io/github/downloads/SHIINASAMA/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
-[![Latest release](https://img.shields.io/github/v/release/SHIINASAMA/wifi-lens?label=Latest&color=2563eb)](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/ShiinaLabs/wifi-lens/WiFiLens.dmg?label=Downloads&displayAssetName=false&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/ShiinaLabs/wifi-lens?label=Latest&color=2563eb)](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ---
@@ -193,7 +193,7 @@ The open-source edition is available for local analysis, development, source ins
 
 WiFi Lens does not collect usage analytics, crash telemetry, or Wi-Fi scan data.
 
-- **Product guidance:** Preview categories, local dates, and invitation preferences are stored on this Mac in UserDefaults to tailor and pace Pro recommendations. This information is not linked to a user identity or uploaded.
+- **Product guidance:** Preview categories, local dates, invitation preferences, and whether you have opened the project's repository page are stored on this Mac in UserDefaults to tailor and pace Pro recommendations. This information is not linked to a user identity or uploaded.
 
 - **Location Services:** macOS requires this permission to expose Wi-Fi SSID names. WiFi Lens does not read GPS position.
 - **Region detection:** Uses system locale, hardware-reported channel list, and nearby AP country codes on-device.
@@ -201,7 +201,7 @@ WiFi Lens does not collect usage analytics, crash telemetry, or Wi-Fi scan data.
 - **MCP server:** Binds to `127.0.0.1` only. Local tools access data only after you enable it.
 - **Update checks:** The GitHub edition contacts GitHub when you request an update check or enable automatic checks.
 
-📋 [Security Policy](SECURITY.md) · 📝 [Changelog](https://github.com/SHIINASAMA/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [Full privacy policy](https://wifi-lens.shiinalabs.com/privacy/)
+📋 [Security Policy](SECURITY.md) · 📝 [Changelog](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [Full privacy policy](https://wifi-lens.shiinalabs.com/privacy/)
 
 ---
 
@@ -221,7 +221,7 @@ The complete edition for continuous monitoring, recording, history, and investig
 
 For GitHub distribution and community development:
 
-- [GitHub Releases](https://github.com/SHIINASAMA/wifi-lens/releases/latest)
+- [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - Homebrew: `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
 - Source code: this repository
 
@@ -233,7 +233,7 @@ For GitHub distribution and community development:
 ## Development
 
 ```sh
-git clone https://github.com/SHIINASAMA/wifi-lens
+git clone https://github.com/ShiinaLabs/wifi-lens
 cd wifi-lens
 git submodule update --init ChartLens
 cd WiFiLens
@@ -266,4 +266,4 @@ Join **[Rabbit Hole](https://discord.gg/gH6sTCYaJ7)**, a small community for WiF
 
 Forked from [tiny-wifi-analyzer](https://github.com/nolze/tiny-wifi-analyzer). MAC vendor data from the [IEEE Registration Authority](https://standards.ieee.org/products-programs/regauth/) — see [Third-Party Notices](docs/THIRD-PARTY-NOTICES.md).
 
-Apache License 2.0 © 2020 nolze, 2026 SHIINASAMA — see [LICENSE](LICENSE).
+Apache License 2.0 © 2020 nolze, 2026 ShiinaLabs — see [LICENSE](LICENSE).

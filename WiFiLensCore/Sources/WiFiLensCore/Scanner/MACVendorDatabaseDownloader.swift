@@ -230,7 +230,7 @@ struct MACVendorDatabaseDownloader: Sendable {
         let version =
             Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? "unknown"
-        return "WiFiLens/\(version) (+https://github.com/SHIINASAMA/wifi-lens)"
+        return "WiFiLens/\(version) (+https://github.com/ShiinaLabs/wifi-lens)"
     }()
 }
 
