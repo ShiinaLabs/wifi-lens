@@ -5,6 +5,19 @@ import WiFiLensCore
     import Sparkle
 #endif
 
+/// The main window hosting the current settings page. The shared app shell supplies it so an
+/// edition-specific settings contribution can present guidance relative to that window.
+struct GuidanceHostWindowKey: EnvironmentKey {
+    static let defaultValue: NSWindow? = nil
+}
+
+extension EnvironmentValues {
+    var guidanceHostWindow: NSWindow? {
+        get { self[GuidanceHostWindowKey.self] }
+        set { self[GuidanceHostWindowKey.self] = newValue }
+    }
+}
+
 /// Main-window sizing policy.
 ///
 /// P0 windowing guardrail: keep the app window on a standard macOS sizing model. Do not

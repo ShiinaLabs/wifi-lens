@@ -2,17 +2,6 @@ import AppKit
 import SwiftUI
 import WiFiLensCore
 
-struct GuidanceHostWindowKey: EnvironmentKey {
-    static let defaultValue: NSWindow? = nil
-}
-
-extension EnvironmentValues {
-    var guidanceHostWindow: NSWindow? {
-        get { self[GuidanceHostWindowKey.self] }
-        set { self[GuidanceHostWindowKey.self] = newValue }
-    }
-}
-
 struct ProBadge: View {
     var body: some View {
         HStack(spacing: 4) {
