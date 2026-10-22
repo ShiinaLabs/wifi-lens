@@ -21,15 +21,16 @@ struct PipelineTests {
             routerIP: "192.0.2.1"
         )
         let currentProvider = TestCountingCurrentConnectionProvider(result: status)
-        let latencyProvider = TestRecordingGatewayLatencyProvider(
-            result: GatewayLatencyResult(
-                timestamp: timestamp,
-                routerIP: "192.0.2.1",
-                latencyMs: 12
-            ))
+        let sampler = TestGatewayEvidenceSampler { context in
+            TestGatewayEvidence.sample(
+                before: context,
+                attribution: .linkNotAssociated,
+                rejectionReason: .linkNotAssociated
+            )
+        }
         let pipeline = makeCyclePipeline(
             currentProvider: currentProvider,
-            latencyProvider: latencyProvider
+            sampler: sampler
         )
 
         let result = await pipeline.produceCycle(
@@ -50,7 +51,7 @@ struct PipelineTests {
         #expect(
             result.observation.channelAnalysis?.first(where: { $0.channel == 36 })?.recommendationConfidence == .exact)
         #expect(await currentProvider.fetchCount == 1)
-        #expect(await latencyProvider.measuredRouterIPs.isEmpty)
+        #expect(await sampler.callCount == 1)
     }
 
     @Test("produceCycle marks the current channel only in the connected band")
@@ -207,20 +208,18 @@ struct PipelineTests {
             ),
             metricsAttribution: .verified
         )
-        let latency = GatewayLatencyResult(
-            timestamp: timestamp,
-            routerIP: "192.0.2.1",
-            latencyMs: 18,
-            probeOutcome: .replied(milliseconds: 18),
-            attemptID: UUID(),
-            cycleID: cycleID,
-            interfaceName: "en0",
-            interfaceBound: true
-        )
-        let latencyProvider = TestRecordingWiFiBoundGatewayMeasurer(result: latency)
+        let sampler = TestGatewayEvidenceSampler { context in
+            TestGatewayEvidence.sample(
+                before: context,
+                outcome: .replied(milliseconds: 18),
+                latencyMilliseconds: 18,
+                latencyValidity: .valid,
+                endedAt: timestamp.addingTimeInterval(0.01)
+            )
+        }
         let pipeline = makeCyclePipeline(
             currentProvider: TestCountingCurrentConnectionProvider(result: status),
-            latencyProvider: latencyProvider
+            sampler: sampler
         )
 
         let result = await pipeline.produceCycle(
@@ -232,18 +231,158 @@ struct PipelineTests {
         #expect(observation.timestamp == timestamp)
         #expect(observation.currentStatus == status)
         #expect(observation.environmentSnapshot?.timestamp == timestamp)
-        #expect(observation.gatewayLatency == latency)
-        #expect(await latencyProvider.measuredTargets.count == 1)
-        #expect(await latencyProvider.measuredTargets.first?.interfaceName == "en0")
-        #expect(await latencyProvider.measuredTargets.first?.address == "192.0.2.1")
-        #expect(await latencyProvider.measuredTargets.first?.snapshotCycleID == cycleID)
+        #expect(observation.gatewayLatency?.probeOutcome == .replied(milliseconds: 18))
+        #expect(observation.gatewayLatency?.latencyMs == 18)
+        #expect(observation.gatewayLatency?.cycleID == cycleID)
+        #expect(observation.gatewayLatency?.interfaceName == "en0")
+        #expect(await sampler.receivedCycleIDs == [cycleID])
         #expect(observation.quality != nil)
         #expect(observation.diagnosis != nil)
         #expect(observation.channelAnalysis?.isEmpty == false)
         #expect(observation.channelRecommendation?.isEmpty == false)
     }
 
-    @Test("produceCycle preserves current status when environment scan fails")
+    @Test("Rejected probe evidence never becomes a current gateway result")
+    func rejectedGatewayEvidenceStaysUntested() async {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_150)
+        let cycleID = UUID()
+        let status = associatedStatus(
+            timestamp: timestamp,
+            cycleID: cycleID,
+            ssid: "Current",
+            bssid: "AA:BB:CC:DD:EE:FF",
+            channel: 36,
+            band: .band5GHz,
+            rssi: -48,
+            routerIP: "192.0.2.1"
+        )
+        let sampler = TestGatewayEvidenceSampler { context in
+            TestGatewayEvidence.sample(
+                before: context,
+                attribution: .targetChanged,
+                outcome: .noReply,
+                rejectionReason: .networkIdentityChanged,
+                endedAt: timestamp.addingTimeInterval(0.01)
+            )
+        }
+        let pipeline = makeCyclePipeline(
+            currentProvider: TestCountingCurrentConnectionProvider(result: status),
+            sampler: sampler
+        )
+
+        let result = await pipeline.produceCycle(
+            networks: [],
+            context: cycleContext(timestamp: timestamp, cycleID: cycleID, supportedBands: [.band5GHz])
+        )
+
+        #expect(result.observation.gatewayLatency?.probeOutcome == .notTested)
+        #expect(result.observation.gatewayLatency?.latencyMs == nil)
+        #expect(result.observation.gatewayLatency?.interfaceBound == false)
+        #expect(result.observation.gatewayLatency?.attemptID == nil)
+    }
+
+    @Test("An attributed no-reply remains a current no-reply")
+    func attributedNoReplyStaysCurrent() async {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_160)
+        let cycleID = UUID()
+        let status = associatedStatus(
+            timestamp: timestamp,
+            cycleID: cycleID,
+            ssid: "Current",
+            bssid: "AA:BB:CC:DD:EE:FF",
+            channel: 36,
+            band: .band5GHz,
+            rssi: -48,
+            routerIP: "192.0.2.1"
+        )
+        let sampler = TestGatewayEvidenceSampler { context in
+            TestGatewayEvidence.sample(
+                before: context,
+                outcome: .noReply,
+                endedAt: timestamp.addingTimeInterval(0.01)
+            )
+        }
+        let pipeline = makeCyclePipeline(
+            currentProvider: TestCountingCurrentConnectionProvider(result: status),
+            sampler: sampler
+        )
+
+        let result = await pipeline.produceCycle(
+            networks: [],
+            context: cycleContext(timestamp: timestamp, cycleID: cycleID, supportedBands: [.band5GHz])
+        )
+
+        #expect(result.observation.gatewayLatency?.probeOutcome == .noReply)
+        #expect(result.observation.gatewayLatency?.attemptID != nil)
+        #expect(result.observation.gatewayLatency?.interfaceBound == true)
+        #expect(result.observation.gatewayLatency?.error == .gatewayPingFailed("192.0.2.1"))
+    }
+
+
+    @Test("Every rejection maps to an untested result regardless of probe outcome",
+          arguments: zip(
+            [
+                WiFiGatewayEvidenceAttribution.interfaceChanged,
+                .targetChanged,
+                .linkEpochChanged,
+                .linkEvidenceStale,
+                .linkLostDuringAttempt,
+                .captureUnavailable,
+                .resultUnattributed,
+            ],
+            [
+                WiFiGatewayEvidenceRejectionReason.interfaceChanged,
+                .networkIdentityChanged,
+                .linkEpochChanged,
+                .linkEvidenceStale,
+                .linkLostDuringAttempt,
+                .snapshotUnavailable,
+                .resultUnattributed,
+            ]
+          ))
+    func rejectionMatrix(
+        _ attribution: WiFiGatewayEvidenceAttribution,
+        _ reason: WiFiGatewayEvidenceRejectionReason
+    ) async {
+        let timestamp = Date(timeIntervalSince1970: 1_750_000_170)
+        let cycleID = UUID()
+        let status = associatedStatus(
+            timestamp: timestamp,
+            cycleID: cycleID,
+            ssid: "Current",
+            bssid: "AA:BB:CC:DD:EE:FF",
+            channel: 36,
+            band: .band5GHz,
+            rssi: -48,
+            routerIP: "192.0.2.1"
+        )
+        let sampler = TestGatewayEvidenceSampler { context in
+            TestGatewayEvidence.sample(
+                before: context,
+                attribution: attribution,
+                outcome: .noReply,
+                rejectionReason: reason,
+                endedAt: timestamp.addingTimeInterval(0.01)
+            )
+        }
+        let pipeline = makeCyclePipeline(
+            currentProvider: TestCountingCurrentConnectionProvider(result: status),
+            sampler: sampler
+        )
+
+        let result = await pipeline.produceCycle(
+            networks: [],
+            context: cycleContext(timestamp: timestamp, cycleID: cycleID, supportedBands: [.band5GHz])
+        )
+
+        #expect(result.observation.gatewayLatency?.probeOutcome == .notTested)
+        #expect(result.observation.gatewayLatency?.latencyMs == nil)
+        #expect(result.observation.gatewayLatency?.error == nil)
+        #expect(result.observation.gatewayLatency?.interfaceBound == false)
+        #expect(result.observation.gatewayLatency?.attemptID == nil)
+    }
+
+    @Test("Environment failure keeps the status and never samples the gateway")
     func productionCyclePreservesCurrentStatusOnEnvironmentFailure() async {
         let status = WiFiCurrentStatus(
             timestamp: Date(),
@@ -258,12 +397,7 @@ struct PipelineTests {
         )
         let environmentError = WiFiObservationError.environmentScanFailed("scan failed")
         let pipeline = makeCyclePipeline(
-            currentProvider: TestCountingCurrentConnectionProvider(result: status),
-            latencyProvider: TestRecordingGatewayLatencyProvider(
-                result: GatewayLatencyResult(
-                    timestamp: Date(),
-                    routerIP: "192.0.2.1"
-                ))
+            currentProvider: TestCountingCurrentConnectionProvider(result: status)
         )
 
         let result = await pipeline.produceCycle(
@@ -394,13 +528,17 @@ struct PipelineTests {
                 isWiFiPowerOn: true
             )
         ),
-        latencyProvider: some GatewayLatencyProviding = TestRecordingGatewayLatencyProvider(
-            result: GatewayLatencyResult(timestamp: Date())
-        )
+        sampler: any WiFiGatewayEvidenceSamplingWithContext = TestGatewayEvidenceSampler { context in
+            TestGatewayEvidence.sample(
+                before: context,
+                attribution: .linkNotAssociated,
+                rejectionReason: .linkNotAssociated
+            )
+        }
     ) -> WiFiObservationPipeline {
         WiFiObservationPipeline(
             currentConnectionProvider: currentProvider,
-            gatewayLatencyProvider: latencyProvider
+            gatewayEvidenceSampler: sampler
         )
     }
 

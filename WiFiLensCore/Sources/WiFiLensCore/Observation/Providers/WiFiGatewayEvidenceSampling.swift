@@ -12,6 +12,24 @@ public protocol WiFiGatewayEvidenceSampling: Sendable {
     func sample() async -> WiFiGatewayEvidenceSample
 }
 
+/// Caller-owned pre-probe context. The scanning pipeline already captured this
+/// snapshot and status for its observation cycle; passing them avoids a second
+/// capture and keeps the evidence attributed to the caller's cycle.
+struct WiFiGatewayEvidenceBefore: Sendable {
+    let cycleID: UUID
+    let snapshot: NetworkInterfaceSnapshot
+    let status: WiFiCurrentStatus
+    /// The agent supplies the link snapshot it fetched before the attempt so
+    /// the ordering and freshness window stay identical to `sample()`.
+    let linkSnapshot: WiFiLinkStateSnapshot?
+    let linkFetchedAt: Date?
+    let startedAt: Date
+}
+
+protocol WiFiGatewayEvidenceSamplingWithContext: Sendable {
+    func sample(before: WiFiGatewayEvidenceBefore) async -> WiFiGatewayEvidenceSample
+}
+
 /// The interface and link identity observed on one side of a probe attempt.
 public struct WiFiGatewayEvidenceIdentity: Equatable, Sendable {
     public let snapshotCycleID: UUID?
@@ -24,6 +42,7 @@ public struct WiFiGatewayEvidenceIdentity: Equatable, Sendable {
     public let linkRunSessionID: UUID?
     public let linkSequence: UInt64?
     public let linkEpoch: UInt64?
+    public let linkPublishedAt: Date?
 
     public init(
         snapshotCycleID: UUID?,
@@ -35,7 +54,8 @@ public struct WiFiGatewayEvidenceIdentity: Equatable, Sendable {
         linkState: VerifiedWiFiLinkState?,
         linkRunSessionID: UUID?,
         linkSequence: UInt64?,
-        linkEpoch: UInt64?
+        linkEpoch: UInt64?,
+        linkPublishedAt: Date? = nil
     ) {
         self.snapshotCycleID = snapshotCycleID
         self.interfaceName = interfaceName
@@ -47,12 +67,15 @@ public struct WiFiGatewayEvidenceIdentity: Equatable, Sendable {
         self.linkRunSessionID = linkRunSessionID
         self.linkSequence = linkSequence
         self.linkEpoch = linkEpoch
+        self.linkPublishedAt = linkPublishedAt
     }
 }
 
 public enum WiFiGatewayEvidenceAttribution: String, Equatable, Sendable {
     /// The probe ran against the confirmed interface, target, and link epoch.
     case attributed
+    /// The attempt was cancelled before its result could be attributed.
+    case cancelled
     /// No probe was attempted because the link was not confirmed associated.
     case linkNotAssociated
     /// No probe was attempted because no usable gateway target was available.
@@ -98,6 +121,14 @@ public enum WiFiGatewayEvidenceRejectionReason: String, Equatable, Sendable {
     case linkSnapshotNotAssociated
     case resultUnattributed
     case invalidLatency
+    case cancelled
+}
+
+/// The persisted evidence vocabulary. These raw values are a cross-repository
+/// contract: Pro stores them in SQLite and queries them by literal. Changing a
+/// raw value requires a new contract version and a migration.
+public enum WiFiGatewayEvidenceContract {
+    public static let version = 1
 }
 
 /// Immutable facts from one gateway evidence attempt.
@@ -116,6 +147,12 @@ public struct WiFiGatewayEvidenceSample: Equatable, Sendable {
     public let attribution: WiFiGatewayEvidenceAttribution
     public let latencyValidity: WiFiGatewayEvidenceLatencyValidity
     public let rejectionReason: WiFiGatewayEvidenceRejectionReason?
+    /// Whether the link snapshot used on each side of the probe was fresh
+    /// enough to prove the attempt's association. Nil when the caller supplied
+    /// only a status (the scanning path) and no link snapshot exists.
+    public let beforeLinkEvidenceFresh: Bool?
+    public let afterLinkEvidenceFresh: Bool?
+    public let evidenceContractVersion: Int
 
     public init(
         attemptID: UUID?,
@@ -129,7 +166,10 @@ public struct WiFiGatewayEvidenceSample: Equatable, Sendable {
         reportedLatencyMilliseconds: Double?,
         attribution: WiFiGatewayEvidenceAttribution,
         latencyValidity: WiFiGatewayEvidenceLatencyValidity,
-        rejectionReason: WiFiGatewayEvidenceRejectionReason?
+        rejectionReason: WiFiGatewayEvidenceRejectionReason?,
+        beforeLinkEvidenceFresh: Bool?,
+        afterLinkEvidenceFresh: Bool?,
+        evidenceContractVersion: Int = WiFiGatewayEvidenceContract.version
     ) {
         self.attemptID = attemptID
         self.startedAt = startedAt
@@ -143,17 +183,21 @@ public struct WiFiGatewayEvidenceSample: Equatable, Sendable {
         self.attribution = attribution
         self.latencyValidity = latencyValidity
         self.rejectionReason = rejectionReason
+        self.beforeLinkEvidenceFresh = beforeLinkEvidenceFresh
+        self.afterLinkEvidenceFresh = afterLinkEvidenceFresh
+        self.evidenceContractVersion = evidenceContractVersion
     }
 }
 
 /// The production sampler. It composes the existing public interface snapshot,
 /// connection interpretation, gateway target validation, and bound pinger
 /// without widening their access levels or starting the scanning runtime.
-public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
+public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling, WiFiGatewayEvidenceSamplingWithContext {
     /// A link snapshot older than this cannot prove which link a probe belonged
     /// to. The center publishes on an internal 5s schedule; 15s tolerates a
     /// missed publication without accepting evidence from an earlier network.
-    private static let maximumLinkEvidenceAge: TimeInterval = 15
+    /// The agent's link track and the probe's attribution must use one window.
+    public static let maximumLinkEvidenceAge: TimeInterval = 15
 
     private let linkSnapshot: @Sendable () async -> WiFiLinkStateSnapshot
     private let captureSnapshot: @Sendable (UUID, Date) -> NetworkInterfaceSnapshot
@@ -192,55 +236,100 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         let startedAt = Date()
         let beforeLink = await linkSnapshot()
         let beforeLinkFetch = Date()
-        let beforeLinkFresh = beforeLink.isFresh(
-            at: beforeLinkFetch,
-            maximumAge: Self.maximumLinkEvidenceAge
-        )
         let beforeCycleID = UUID()
         let beforeSnapshot = captureSnapshot(beforeCycleID, startedAt)
         let beforeStatus = await currentStatus(beforeSnapshot)
+        return await sample(
+            before: WiFiGatewayEvidenceBefore(
+                cycleID: beforeCycleID,
+                snapshot: beforeSnapshot,
+                status: beforeStatus,
+                linkSnapshot: beforeLink,
+                linkFetchedAt: beforeLinkFetch,
+                startedAt: startedAt
+            )
+        )
+    }
+
+    func sample(before context: WiFiGatewayEvidenceBefore) async -> WiFiGatewayEvidenceSample {
+        let startedAt = context.startedAt
+        let usesLinkState = context.linkSnapshot != nil
+        let beforeLink = context.linkSnapshot
+        let beforeLinkFresh = beforeLink.map {
+            $0.isFresh(
+                at: context.linkFetchedAt ?? startedAt,
+                maximumAge: Self.maximumLinkEvidenceAge
+            )
+        }
         let before = Self.identity(
-            snapshot: beforeSnapshot,
-            status: beforeStatus,
+            snapshot: context.snapshot,
+            status: context.status,
             link: beforeLink
         )
 
-        guard beforeSnapshot.interfaceEnumerationSucceeded else {
+        guard context.snapshot.interfaceEnumerationSucceeded else {
             return Self.untested(
                 startedAt: startedAt,
                 before: before,
                 attribution: .targetUnavailable,
-                reason: .snapshotUnavailable
+                reason: .snapshotUnavailable,
+                beforeLinkFresh: beforeLinkFresh
             )
         }
-        guard beforeStatus.linkAssessment?.state == .associated else {
+        guard WiFiLinkEvidenceValidator.assessment(for: context.status)?.state == .associated else {
             return Self.untested(
                 startedAt: startedAt,
                 before: before,
                 attribution: .linkNotAssociated,
-                reason: .linkNotAssociated
+                reason: .linkNotAssociated,
+                beforeLinkFresh: beforeLinkFresh
             )
         }
-        guard let target = WiFiGatewayProbeTarget.make(from: beforeStatus, cycleID: beforeCycleID) else {
+        guard let target = WiFiGatewayProbeTarget.make(from: context.status, cycleID: context.cycleID) else {
             return Self.untested(
                 startedAt: startedAt,
                 before: before,
                 attribution: .targetUnavailable,
-                reason: .missingGatewayTarget
+                reason: .missingGatewayTarget,
+                beforeLinkFresh: beforeLinkFresh
+            )
+        }
+        if Task.isCancelled {
+            return Self.cancelled(
+                startedAt: startedAt,
+                endedAt: Date(),
+                before: before,
+                attemptID: nil,
+                interfaceBound: false,
+                beforeLinkFresh: beforeLinkFresh
             )
         }
 
         let result = await measure(target)
         let endedAt = result.timestamp
+        if Task.isCancelled {
+            return Self.cancelled(
+                startedAt: startedAt,
+                endedAt: endedAt,
+                before: before,
+                attemptID: result.attemptID,
+                interfaceBound: result.interfaceBound,
+                beforeLinkFresh: beforeLinkFresh
+            )
+        }
         let afterCycleID = UUID()
         let afterSnapshot = captureSnapshot(afterCycleID, endedAt)
         let afterStatus = await currentStatus(afterSnapshot)
-        let afterLink = await linkSnapshot()
-        let afterLinkFetch = Date()
-        let afterLinkFresh = afterLink.isFresh(
-            at: afterLinkFetch,
-            maximumAge: Self.maximumLinkEvidenceAge
-        )
+        let afterLink: WiFiLinkStateSnapshot?
+        let afterLinkFresh: Bool?
+        if usesLinkState {
+            let link = await linkSnapshot()
+            afterLink = link
+            afterLinkFresh = link.isFresh(at: Date(), maximumAge: Self.maximumLinkEvidenceAge)
+        } else {
+            afterLink = nil
+            afterLinkFresh = nil
+        }
         let after = Self.identity(
             snapshot: afterSnapshot,
             status: afterStatus,
@@ -252,13 +341,13 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         if !afterSnapshot.interfaceEnumerationSucceeded {
             attribution = .captureUnavailable
             reason = .snapshotUnavailable
-        } else if afterStatus.linkAssessment?.state != .associated {
+        } else if WiFiLinkEvidenceValidator.assessment(for: afterStatus)?.state != .associated {
             attribution = .linkLostDuringAttempt
             reason = .linkLostDuringAttempt
-        } else if !beforeLinkFresh || !afterLinkFresh {
+        } else if let beforeLinkFresh, let afterLinkFresh, !beforeLinkFresh || !afterLinkFresh {
             attribution = .linkEvidenceStale
             reason = .linkEvidenceStale
-        } else if beforeLink.state != .associated || afterLink.state != .associated {
+        } else if usesLinkState, beforeLink?.state != .associated || afterLink?.state != .associated {
             attribution = .linkEvidenceUnavailable
             reason = .linkSnapshotNotAssociated
         } else if after.interfaceName != before.interfaceName || after.interfaceIndex != before.interfaceIndex {
@@ -273,7 +362,7 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         } else if after.linkRunSessionID != before.linkRunSessionID || after.linkEpoch != before.linkEpoch {
             attribution = .linkEpochChanged
             reason = .linkEpochChanged
-        } else if !WiFiGatewayProbeTarget.isAttributedToWiFiTarget(result, target) {
+        } else if !WiFiGatewayEvidenceValidator.isAttributed(result, to: context.status) {
             attribution = .resultUnattributed
             reason = .resultUnattributed
         } else {
@@ -285,7 +374,7 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         let validatedLatency: Double?
         let reportedLatency = result.latencyMs
         if attribution == .attributed, case .replied = result.probeOutcome {
-            if WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target) {
+            if WiFiGatewayEvidenceValidator.isValidReply(result, to: context.status) {
                 latencyValidity = .valid
                 validatedLatency = reportedLatency
             } else {
@@ -309,14 +398,16 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
             reportedLatencyMilliseconds: reportedLatency,
             attribution: attribution,
             latencyValidity: latencyValidity,
-            rejectionReason: reason ?? (latencyValidity == .invalid ? .invalidLatency : nil)
+            rejectionReason: reason ?? (latencyValidity == .invalid ? .invalidLatency : nil),
+            beforeLinkEvidenceFresh: beforeLinkFresh,
+            afterLinkEvidenceFresh: afterLinkFresh
         )
     }
 
     private static func identity(
         snapshot: NetworkInterfaceSnapshot,
         status: WiFiCurrentStatus,
-        link: WiFiLinkStateSnapshot
+        link: WiFiLinkStateSnapshot?
     ) -> WiFiGatewayEvidenceIdentity {
         WiFiGatewayEvidenceIdentity(
             snapshotCycleID: snapshot.cycleID,
@@ -325,10 +416,11 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
             routerIP: status.routerIP,
             ssid: status.ssid,
             bssid: status.bssid,
-            linkState: status.linkAssessment?.state,
-            linkRunSessionID: link.runSessionID,
-            linkSequence: link.sequence,
-            linkEpoch: link.linkEpoch
+            linkState: WiFiLinkEvidenceValidator.assessment(for: status)?.state,
+            linkRunSessionID: link?.runSessionID,
+            linkSequence: link?.sequence,
+            linkEpoch: link?.linkEpoch,
+            linkPublishedAt: link?.publishedAt ?? status.linkEvidence?.capturedAt
         )
     }
 
@@ -336,7 +428,8 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         startedAt: Date,
         before: WiFiGatewayEvidenceIdentity,
         attribution: WiFiGatewayEvidenceAttribution,
-        reason: WiFiGatewayEvidenceRejectionReason
+        reason: WiFiGatewayEvidenceRejectionReason,
+        beforeLinkFresh: Bool?
     ) -> WiFiGatewayEvidenceSample {
         WiFiGatewayEvidenceSample(
             attemptID: nil,
@@ -350,7 +443,35 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
             reportedLatencyMilliseconds: nil,
             attribution: attribution,
             latencyValidity: .notApplicable,
-            rejectionReason: reason
+            rejectionReason: reason,
+            beforeLinkEvidenceFresh: beforeLinkFresh,
+            afterLinkEvidenceFresh: nil
+        )
+    }
+
+    private static func cancelled(
+        startedAt: Date,
+        endedAt: Date,
+        before: WiFiGatewayEvidenceIdentity,
+        attemptID: UUID?,
+        interfaceBound: Bool,
+        beforeLinkFresh: Bool?
+    ) -> WiFiGatewayEvidenceSample {
+        WiFiGatewayEvidenceSample(
+            attemptID: attemptID,
+            startedAt: startedAt,
+            endedAt: endedAt,
+            before: before,
+            after: nil,
+            outcome: .cancelled,
+            interfaceBound: interfaceBound,
+            latencyMilliseconds: nil,
+            reportedLatencyMilliseconds: nil,
+            attribution: .cancelled,
+            latencyValidity: .notApplicable,
+            rejectionReason: .cancelled,
+            beforeLinkEvidenceFresh: beforeLinkFresh,
+            afterLinkEvidenceFresh: nil
         )
     }
 
@@ -360,5 +481,90 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         case (let lhs?, let rhs?): return lhs.caseInsensitiveCompare(rhs) == .orderedSame
         default: return false
         }
+    }
+}
+
+extension WiFiGatewayEvidenceSample {
+    /// The legacy transport form. Only an attributed, non-invalid attempt may
+    /// carry a real probe outcome; every rejected attempt stays untested so a
+    /// stale or re-attributed result can never be read as current evidence.
+    func gatewayLatencyResult(for status: WiFiCurrentStatus) -> GatewayLatencyResult {
+        let candidate = candidateLatencyResult
+        switch candidate.probeOutcome {
+        case .some(.notTested), .some(.cancelled):
+            return candidate
+        default:
+            guard WiFiGatewayEvidenceValidator.isAttributed(candidate, to: status) else {
+                return untrustedResult
+            }
+            return candidate
+        }
+    }
+
+    private var candidateLatencyResult: GatewayLatencyResult {
+        switch attribution {
+        case .attributed:
+            switch (outcome, latencyValidity) {
+            case (.some(.replied(let milliseconds)), .valid):
+                return GatewayLatencyResult(
+                    timestamp: endedAt,
+                    routerIP: before.routerIP,
+                    latencyMs: milliseconds,
+                    error: nil,
+                    probeOutcome: .replied(milliseconds: milliseconds),
+                    attemptID: attemptID,
+                    cycleID: before.snapshotCycleID,
+                    interfaceName: before.interfaceName,
+                    interfaceBound: true
+                )
+            case (.some(.notTested), _):
+                return untrustedResult
+            case (.some(let outcome), .notApplicable):
+                let error: WiFiObservationError? = before.routerIP.map {
+                    WiFiObservationError.gatewayPingFailed($0)
+                }
+                return GatewayLatencyResult(
+                    timestamp: endedAt,
+                    routerIP: before.routerIP,
+                    latencyMs: nil,
+                    error: error,
+                    probeOutcome: outcome,
+                    attemptID: attemptID,
+                    cycleID: before.snapshotCycleID,
+                    interfaceName: before.interfaceName,
+                    interfaceBound: true
+                )
+            default:
+                return untrustedResult
+            }
+        case .cancelled:
+            return GatewayLatencyResult(
+                timestamp: endedAt,
+                routerIP: before.routerIP,
+                latencyMs: nil,
+                error: nil,
+                probeOutcome: .cancelled,
+                attemptID: attemptID,
+                cycleID: before.snapshotCycleID,
+                interfaceName: before.interfaceName,
+                interfaceBound: interfaceBound
+            )
+        default:
+            return untrustedResult
+        }
+    }
+
+    private var untrustedResult: GatewayLatencyResult {
+        GatewayLatencyResult(
+            timestamp: startedAt,
+            routerIP: before.routerIP,
+            latencyMs: nil,
+            error: nil,
+            probeOutcome: .notTested,
+            attemptID: nil,
+            cycleID: before.snapshotCycleID,
+            interfaceName: before.interfaceName,
+            interfaceBound: false
+        )
     }
 }

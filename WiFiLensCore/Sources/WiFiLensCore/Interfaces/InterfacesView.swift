@@ -64,14 +64,13 @@ public struct InterfacesView: View {
             store.validity(at: now)?.currentStatus == .current,
             store.validity(at: now)?.gatewayLatency == .current,
             let status = observation.currentStatus,
-            status.interfaceSnapshotCycleID == observation.sourceCycleID,
-            WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
-            let cycleID = status.interfaceSnapshotCycleID,
-            let target = WiFiGatewayProbeTarget.make(from: status, cycleID: cycleID),
-            let result = observation.gatewayLatency,
-            WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target)
+            status.interfaceSnapshotCycleID == observation.sourceCycleID
         else { return nil }
-        return result.latencyMs
+        guard case .replied(let latency) = WiFiGatewayEvidenceValidator.verdict(
+            for: observation.gatewayLatency,
+            currentStatus: status
+        ) else { return nil }
+        return latency
     }
 
     private var verifiedCurrentStatus: WiFiCurrentStatus? {

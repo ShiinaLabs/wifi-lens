@@ -487,9 +487,7 @@ struct RuntimeTests {
         let runtime = WiFiObservationRuntime(
             store: WiFiObservationStore(),
             pipeline: WiFiObservationPipeline(
-                gatewayLatencyProvider: MockGatewayLatencyProvider(
-                    result: GatewayLatencyResult(timestamp: capturedAt)
-                )
+                gatewayEvidenceSampler: MockGatewayEvidenceSampler()
             ),
             scanSource: source,
             interfaceSource: interfaceSource
@@ -522,9 +520,7 @@ struct RuntimeTests {
             capturedAt: capturedAt
         )
         let pipeline = WiFiObservationPipeline(
-            gatewayLatencyProvider: MockGatewayLatencyProvider(
-                result: GatewayLatencyResult(timestamp: capturedAt)
-            )
+            gatewayEvidenceSampler: MockGatewayEvidenceSampler()
         )
         let store = WiFiObservationStore()
         let runtime = WiFiObservationRuntime(
@@ -1334,9 +1330,7 @@ struct ScannerRuntimeMigrationTests {
         let runtime = WiFiObservationRuntime(
             store: WiFiObservationStore(),
             pipeline: WiFiObservationPipeline(
-                gatewayLatencyProvider: MockGatewayLatencyProvider(
-                    result: GatewayLatencyResult(timestamp: capturedAt)
-                )
+                gatewayEvidenceSampler: MockGatewayEvidenceSampler()
             ),
             scanSource: source,
             interfaceSource: interfaceSource
@@ -1409,9 +1403,7 @@ struct ScannerRuntimeMigrationTests {
             ]
         )
         let pipeline = WiFiObservationPipeline(
-            gatewayLatencyProvider: MockGatewayLatencyProvider(
-                result: GatewayLatencyResult(timestamp: firstCapturedAt)
-            )
+            gatewayEvidenceSampler: MockGatewayEvidenceSampler()
         )
         let store = WiFiObservationStore()
         let runtime = WiFiObservationRuntime(

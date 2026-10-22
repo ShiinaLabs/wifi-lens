@@ -54,28 +54,79 @@ struct WiFiGatewayProbeTarget: Equatable, Sendable {
             capturedAt: status.timestamp
         )
     }
-
-    static func isValidWiFiGatewayResult(_ result: GatewayLatencyResult, for target: WiFiGatewayProbeTarget) -> Bool {
-        guard isAttributedToWiFiTarget(result, target),
-            result.timestamp >= target.capturedAt,
-            let latency = result.latencyMs,
-            latency.isFinite, latency >= 0,
-            case .replied(let reportedLatency) = result.probeOutcome,
-            reportedLatency.isFinite, reportedLatency >= 0,
-            latency == reportedLatency
-        else { return false }
-        return true
-    }
-
-    static func isAttributedToWiFiTarget(_ result: GatewayLatencyResult, _ target: WiFiGatewayProbeTarget) -> Bool {
-        result.interfaceBound && result.cycleID == target.snapshotCycleID
-            && result.interfaceName == target.interfaceName && result.routerIP == target.address
-            && result.attemptID != nil
-    }
 }
 
 protocol WiFiBoundGatewayMeasuring: Sendable {
     func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult
+}
+
+/// One interpretation of a gateway result against the status it was delivered
+/// with. Every consumer that needs to know whether a latency is current uses
+/// this, so the rule cannot drift between quality, analysis, and display.
+public enum WiFiGatewayEvidenceVerdict: Equatable, Sendable {
+    case notTested
+    case failed
+    case noReply
+    case replied(milliseconds: Double)
+}
+
+public enum WiFiGatewayEvidenceValidator {
+    /// The result belongs to the exact link and interface snapshot carried by
+    /// `status`, and is recent enough to describe it.
+    public static func isAttributed(
+        _ result: GatewayLatencyResult,
+        to status: WiFiCurrentStatus
+    ) -> Bool {
+        guard WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated,
+            let cycleID = status.interfaceSnapshotCycleID,
+            status.linkEvidence?.snapshotCycleID == cycleID,
+            let interfaceName = status.interfaceName, !interfaceName.isEmpty,
+            let routerIP = status.routerIP, !routerIP.isEmpty,
+            result.interfaceBound,
+            result.attemptID != nil,
+            result.cycleID == cycleID,
+            result.cycleID == status.linkEvidence?.snapshotCycleID,
+            result.interfaceName == interfaceName,
+            result.routerIP == routerIP,
+            result.timestamp >= status.timestamp
+        else { return false }
+        return true
+    }
+
+    public static func isValidReply(
+        _ result: GatewayLatencyResult,
+        to status: WiFiCurrentStatus
+    ) -> Bool {
+        guard isAttributed(result, to: status),
+            case .replied(let reportedLatency) = result.probeOutcome,
+            let latency = result.latencyMs,
+            latency.isFinite, latency >= 0,
+            reportedLatency.isFinite, reportedLatency >= 0,
+            latency.bitPattern == reportedLatency.bitPattern
+        else { return false }
+        return true
+    }
+
+    public static func verdict(
+        for result: GatewayLatencyResult?,
+        currentStatus: WiFiCurrentStatus
+    ) -> WiFiGatewayEvidenceVerdict {
+        guard let result, isAttributed(result, to: currentStatus) else {
+            return .notTested
+        }
+        switch result.probeOutcome {
+        case .some(.replied(let reportedLatency)):
+            guard isValidReply(result, to: currentStatus) else { return .notTested }
+            return .replied(milliseconds: reportedLatency)
+        case .some(.noReply):
+            guard result.latencyMs == nil else { return .notTested }
+            return .noReply
+        case .some(.executionFailed), .some(.localTimeout), .some(.cancelled):
+            return .failed
+        case .some(.notTested), .none:
+            return .notTested
+        }
+    }
 }
 
 protocol DiagnosticGatewayMeasuring: Sendable {

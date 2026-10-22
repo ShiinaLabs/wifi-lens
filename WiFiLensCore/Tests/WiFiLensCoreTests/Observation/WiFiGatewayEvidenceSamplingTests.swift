@@ -289,7 +289,190 @@ struct WiFiGatewayEvidenceSamplingTests {
         #expect(sample.rejectionReason == .invalidLatency)
     }
 
+    @Test("The caller-owned cycle is preserved and the status-only seam never reads the link center")
+    func callerOwnedCycleAndNoLinkCenterRead() async {
+        let cycleID = UUID()
+        let capturedAt = Date(timeIntervalSince1970: 1_750_000_500)
+        let snapshot = Self.snapshot(from: .associated, cycleID: cycleID, capturedAt: capturedAt)
+        let status = await WiFiCurrentConnectionProvider().fetchCurrentStatus(from: snapshot)
+        let linkReads = CallCounter()
+        let sampler = SystemWiFiGatewayEvidenceSampler(
+            linkSnapshot: {
+                await linkReads.increment()
+                return Self.linkSnapshot()
+            },
+            captureSnapshot: { cycleID, capturedAt in
+                Self.snapshot(from: .associated, cycleID: cycleID, capturedAt: capturedAt)
+            },
+            currentStatus: { snapshot in
+                await WiFiCurrentConnectionProvider().fetchCurrentStatus(from: snapshot)
+            },
+            measure: { target in
+                GatewayLatencyResult(
+                    timestamp: target.capturedAt.addingTimeInterval(0.01),
+                    routerIP: target.address,
+                    latencyMs: 23,
+                    probeOutcome: .replied(milliseconds: 23),
+                    attemptID: UUID(),
+                    cycleID: target.snapshotCycleID,
+                    interfaceName: target.interfaceName,
+                    interfaceBound: true
+                )
+            }
+        )
+
+        let sample = await sampler.sample(
+            before: WiFiGatewayEvidenceBefore(
+                cycleID: cycleID,
+                snapshot: snapshot,
+                status: status,
+                linkSnapshot: nil,
+                linkFetchedAt: nil,
+                startedAt: capturedAt
+            )
+        )
+
+        #expect(sample.before.snapshotCycleID == cycleID)
+        #expect(sample.before.linkRunSessionID == nil)
+        #expect(sample.before.linkEpoch == nil)
+        #expect(sample.attribution == .attributed)
+        #expect(sample.latencyMilliseconds == 23)
+        #expect(sample.beforeLinkEvidenceFresh == nil)
+        #expect(sample.afterLinkEvidenceFresh == nil)
+        #expect(await linkReads.count() == 0)
+    }
+
+    @Test("The legacy mapping keeps attributed outcomes and rejects the rest")
+    func legacyMapping() async {
+        let replied = await mappedSample(result: .replied(milliseconds: 23))
+        #expect(replied.probeOutcome == .replied(milliseconds: 23))
+        #expect(replied.latencyMs == 23)
+        #expect(replied.interfaceBound)
+
+        let noReply = await mappedSample(result: .noReply)
+        #expect(noReply.probeOutcome == .noReply)
+        #expect(noReply.latencyMs == nil)
+        #expect(noReply.error == .gatewayPingFailed("192.0.2.1"))
+
+        let failed = await mappedSample(result: .executionFailed)
+        #expect(failed.probeOutcome == .executionFailed)
+        #expect(failed.error == .gatewayPingFailed("192.0.2.1"))
+
+        let invalid = await mappedSample(
+            result: .replied(milliseconds: 12),
+            reportedLatencyOverride: 18
+        )
+        #expect(invalid.probeOutcome == .notTested)
+        #expect(invalid.attemptID == nil)
+        #expect(invalid.interfaceBound == false)
+
+        var after = SnapshotVariant.associated
+        after.interfaceName = "en1"
+        after.interfaceIndex = 5
+        let rejected = await mappedSample(result: .noReply, after: after)
+        #expect(rejected.probeOutcome == .notTested)
+        #expect(rejected.attemptID == nil)
+        #expect(rejected.interfaceBound == false)
+    }
+
+    @Test("Cancellation returns a cancelled sample without an after capture")
+    func cancellation() async {
+        let cycleID = UUID()
+        let capturedAt = Date(timeIntervalSince1970: 1_750_000_700)
+        let snapshot = Self.snapshot(from: .associated, cycleID: cycleID, capturedAt: capturedAt)
+        let status = await WiFiCurrentConnectionProvider().fetchCurrentStatus(from: snapshot)
+        let sampler = SystemWiFiGatewayEvidenceSampler(
+            linkSnapshot: { Self.linkSnapshot() },
+            captureSnapshot: { cycleID, capturedAt in
+                Self.snapshot(from: .associated, cycleID: cycleID, capturedAt: capturedAt)
+            },
+            currentStatus: { snapshot in
+                await WiFiCurrentConnectionProvider().fetchCurrentStatus(from: snapshot)
+            },
+            measure: { target in
+                try? await Task.sleep(for: .seconds(5))
+                return GatewayLatencyResult(
+                    timestamp: target.capturedAt.addingTimeInterval(0.01),
+                    routerIP: target.address,
+                    latencyMs: 12,
+                    probeOutcome: .replied(milliseconds: 12),
+                    attemptID: UUID(),
+                    cycleID: target.snapshotCycleID,
+                    interfaceName: target.interfaceName,
+                    interfaceBound: true
+                )
+            }
+        )
+        let task = Task {
+            await sampler.sample(
+                before: WiFiGatewayEvidenceBefore(
+                    cycleID: cycleID,
+                    snapshot: snapshot,
+                    status: status,
+                    linkSnapshot: nil,
+                    linkFetchedAt: nil,
+                    startedAt: capturedAt
+                )
+            )
+        }
+        try? await Task.sleep(for: .milliseconds(50))
+        task.cancel()
+        let sample = await task.value
+
+        #expect(sample.attribution == .cancelled)
+        #expect(sample.outcome == .cancelled)
+        #expect(sample.after == nil)
+        #expect(sample.latencyValidity == .notApplicable)
+    }
+
     // MARK: - Fixtures
+
+    private func mappedSample(
+        result: GatewayProbeOutcome,
+        reportedLatencyOverride: Double? = nil,
+        after: SnapshotVariant = .associated
+    ) async -> GatewayLatencyResult {
+        let cycleID = UUID()
+        let capturedAt = Date(timeIntervalSince1970: 1_750_000_650)
+        let snapshot = Self.snapshot(from: .associated, cycleID: cycleID, capturedAt: capturedAt)
+        let status = await WiFiCurrentConnectionProvider().fetchCurrentStatus(from: snapshot)
+        let sampler = makeSampler(
+            variants: [after],
+            links: [.associated(epoch: 7)],
+            result: result,
+            reportedLatencyOverride: reportedLatencyOverride
+        )
+        let sample = await sampler.sample(
+            before: WiFiGatewayEvidenceBefore(
+                cycleID: cycleID,
+                snapshot: snapshot,
+                status: status,
+                linkSnapshot: nil,
+                linkFetchedAt: nil,
+                startedAt: capturedAt
+            )
+        )
+        return sample.gatewayLatencyResult(for: status)
+    }
+
+    private static func linkSnapshot() -> WiFiLinkStateSnapshot {
+        let now = Date()
+        return WiFiLinkStateSnapshot(
+            runSessionID: UUID(),
+            sequence: 1,
+            linkEpoch: 1,
+            interfaceName: "en0",
+            interfaceIndex: 4,
+            radio: .reportedOn,
+            state: .associated,
+            networkIdentity: WiFiNetworkIdentity(ssid: "Lab", bssid: "AA:BB:CC:DD:EE:FF"),
+            reason: .stationMode,
+            evidenceSourceIDs: [],
+            sampledAt: now,
+            publishedAt: now
+        )
+    }
+
 
     fileprivate enum LinkState {
         case associated(epoch: UInt64, age: TimeInterval = 0)
@@ -452,5 +635,17 @@ private final class LinkSequence: @unchecked Sendable {
         let link = links[min(index, links.count - 1)]
         index += 1
         return link
+    }
+}
+
+private actor CallCounter {
+    private var value = 0
+
+    func increment() {
+        value += 1
+    }
+
+    func count() -> Int {
+        value
     }
 }

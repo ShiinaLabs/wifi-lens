@@ -48,14 +48,14 @@ protocol WiFiObservationPipelining: Sendable {
 
 struct WiFiObservationPipeline: WiFiObservationPipelining {
     let currentConnectionProvider: WiFiCurrentConnectionProviding
-    let gatewayLatencyProvider: GatewayLatencyProviding
+    let gatewayEvidenceSampler: any WiFiGatewayEvidenceSamplingWithContext
 
     public init(
         currentConnectionProvider: WiFiCurrentConnectionProviding = WiFiCurrentConnectionProvider(),
-        gatewayLatencyProvider: GatewayLatencyProviding = GatewayLatencyProvider()
+        gatewayEvidenceSampler: any WiFiGatewayEvidenceSamplingWithContext = SystemWiFiGatewayEvidenceSampler()
     ) {
         self.currentConnectionProvider = currentConnectionProvider
-        self.gatewayLatencyProvider = gatewayLatencyProvider
+        self.gatewayEvidenceSampler = gatewayEvidenceSampler
     }
 
     func produceCycle(
@@ -66,37 +66,18 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
         let status = Self.sanitizingUnverifiedMetrics(in: capturedStatus)
         let confirmedLink = WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated
         let latency: GatewayLatencyResult
-        if confirmedLink,
-            context.environmentError == nil,
-            let target = WiFiGatewayProbeTarget.make(from: status, cycleID: context.interfaceSnapshot.cycleID),
-            let boundMeasurer = gatewayLatencyProvider as? WiFiBoundGatewayMeasuring
-        {
-            let measured = await boundMeasurer.measure(target: target)
-            if Task.isCancelled {
-                latency = GatewayLatencyResult(
-                    timestamp: context.timestamp,
-                    routerIP: target.address,
-                    probeOutcome: .cancelled,
-                    attemptID: measured.attemptID,
-                    cycleID: target.snapshotCycleID,
-                    interfaceName: target.interfaceName,
-                    interfaceBound: true
+        if confirmedLink, context.environmentError == nil {
+            let sample = await gatewayEvidenceSampler.sample(
+                before: WiFiGatewayEvidenceBefore(
+                    cycleID: context.interfaceSnapshot.cycleID,
+                    snapshot: context.interfaceSnapshot,
+                    status: status,
+                    linkSnapshot: nil,
+                    linkFetchedAt: nil,
+                    startedAt: status.timestamp
                 )
-            } else {
-                if WiFiGatewayProbeTarget.isValidWiFiGatewayResult(measured, for: target)
-                    || (WiFiGatewayProbeTarget.isAttributedToWiFiTarget(measured, target) && measured.latencyMs == nil)
-                {
-                    latency = measured
-                } else {
-                    latency = GatewayLatencyResult(
-                        timestamp: context.timestamp,
-                        routerIP: target.address,
-                        probeOutcome: .notTested,
-                        cycleID: target.snapshotCycleID,
-                        interfaceName: target.interfaceName
-                    )
-                }
-            }
+            )
+            latency = sample.gatewayLatencyResult(for: status)
         } else {
             latency = GatewayLatencyResult(
                 timestamp: context.timestamp,

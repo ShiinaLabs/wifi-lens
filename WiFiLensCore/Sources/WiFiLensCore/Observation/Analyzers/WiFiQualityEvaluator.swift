@@ -25,19 +25,10 @@ enum WiFiQualityEvaluator {
     }
 
     private static func validLatency(_ result: GatewayLatencyResult?, for status: WiFiCurrentStatus) -> Double? {
-        guard let result,
-            case .replied(let reportedMilliseconds)? = result.probeOutcome,
-            let latency = result.latencyMs,
-            latency.isFinite, latency >= 0,
-            reportedMilliseconds.isFinite, reportedMilliseconds >= 0,
-            latency == reportedMilliseconds,
-            result.attemptID != nil,
-            result.interfaceBound,
-            result.cycleID == status.interfaceSnapshotCycleID,
-            result.interfaceName == status.interfaceName,
-            result.routerIP == status.routerIP,
-            result.timestamp >= status.timestamp
-        else { return nil }
+        guard case .replied(let latency) = WiFiGatewayEvidenceValidator.verdict(
+            for: result,
+            currentStatus: status
+        ) else { return nil }
         return latency
     }
 

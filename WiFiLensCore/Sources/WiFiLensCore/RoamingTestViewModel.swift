@@ -266,10 +266,15 @@ public final class RoamingTestViewModel {
             guard state == .running, generation == sampleGeneration,
                 lastProcessedProbeTimestamp == status.timestamp
             else { return }
-            let latency =
-                WiFiGatewayProbeTarget.isValidWiFiGatewayResult(result, for: target)
-                ? result.latencyMs
-                : nil
+            let latency: Double?
+            if case .replied(let milliseconds) = WiFiGatewayEvidenceValidator.verdict(
+                for: result,
+                currentStatus: status
+            ) {
+                latency = milliseconds
+            } else {
+                latency = nil
+            }
             gatewayLatency = latency
             if currentSegmentIndex >= 0,
                 currentSegmentIndex < segments.count,

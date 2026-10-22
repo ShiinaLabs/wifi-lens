@@ -547,7 +547,11 @@ public actor WiFiLinkStateCenter {
     private let reviewClock: any WiFiLinkReviewClock
     private var trigger: (any WiFiLinkChangeTriggering)?
     private var runSessionID = UUID()
-    private var sequence: UInt64 = 0
+    /// Snapshots and events have independent counters. Persisted link evidence
+    /// uses `snapshotSequence`; sharing one counter made routine identity events
+    /// look like missing snapshots to the recorder.
+    private var snapshotSequence: UInt64 = 0
+    private var eventSequence: UInt64 = 0
     private var linkEpoch: UInt64 = 0
     private var lifecycleGeneration: UInt64 = 0
     private var isRunning = false
@@ -685,7 +689,8 @@ public actor WiFiLinkStateCenter {
         lifecycleGeneration &+= 1
         let sessionID = runSessionID
         let generation = lifecycleGeneration
-        sequence = 0
+        snapshotSequence = 0
+        eventSequence = 0
         linkEpoch = 0
         previousEvidence = nil
         clearTrustedAssociations()
@@ -1379,9 +1384,9 @@ public actor WiFiLinkStateCenter {
         state: VerifiedWiFiLinkState, evidence: WiFiLinkRawEvidence?, reason: WiFiLinkEvidenceReason,
         sources: [UUID], identity: WiFiNetworkIdentity?, radio: WiFiRadioEvidence
     ) -> WiFiLinkStateSnapshot {
-        sequence &+= 1
+        snapshotSequence &+= 1
         return WiFiLinkStateSnapshot(
-            runSessionID: runSessionID, sequence: sequence, linkEpoch: linkEpoch,
+            runSessionID: runSessionID, sequence: snapshotSequence, linkEpoch: linkEpoch,
             interfaceName: evidence?.interfaceName, interfaceIndex: evidence?.interfaceIndex,
             radio: radio, state: state, networkIdentity: identity, reason: reason,
             evidenceSourceIDs: sources, sampledAt: evidence?.capturedAt, publishedAt: Date()
@@ -1397,9 +1402,9 @@ public actor WiFiLinkStateCenter {
         previous: WiFiLinkRawEvidence?, current: WiFiLinkRawEvidence?, firstAt: Date?, previousAt: Date? = nil,
         identityComparisonContinuity: WiFiIdentityComparisonContinuity? = nil
     ) {
-        sequence &+= 1
+        eventSequence &+= 1
         let event = WiFiLinkStateEvent(
-            type: type, runSessionID: runSessionID, sequence: sequence,
+            type: type, runSessionID: runSessionID, sequence: eventSequence,
             interfaceName: current?.interfaceName ?? previous?.interfaceName,
             interfaceIndex: current?.interfaceIndex ?? previous?.interfaceIndex,
             linkEpoch: linkEpoch, previousEvidence: previous, currentEvidence: current,

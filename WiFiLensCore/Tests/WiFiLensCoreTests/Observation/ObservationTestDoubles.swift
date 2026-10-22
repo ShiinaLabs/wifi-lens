@@ -51,3 +51,62 @@ actor TestRecordingGatewayLatencyProvider: GatewayLatencyProviding {
         return result
     }
 }
+
+actor TestGatewayEvidenceSampler: WiFiGatewayEvidenceSamplingWithContext {
+    private let makeSample: @Sendable (WiFiGatewayEvidenceBefore) -> WiFiGatewayEvidenceSample
+    private(set) var receivedCycleIDs: [UUID] = []
+    private(set) var callCount = 0
+
+    init(_ makeSample: @escaping @Sendable (WiFiGatewayEvidenceBefore) -> WiFiGatewayEvidenceSample) {
+        self.makeSample = makeSample
+    }
+
+    func sample(before context: WiFiGatewayEvidenceBefore) async -> WiFiGatewayEvidenceSample {
+        callCount += 1
+        receivedCycleIDs.append(context.cycleID)
+        return makeSample(context)
+    }
+}
+
+enum TestGatewayEvidence {
+    static func sample(
+        before context: WiFiGatewayEvidenceBefore,
+        attribution: WiFiGatewayEvidenceAttribution = .attributed,
+        outcome: GatewayProbeOutcome? = nil,
+        latencyMilliseconds: Double? = nil,
+        latencyValidity: WiFiGatewayEvidenceLatencyValidity = .notApplicable,
+        rejectionReason: WiFiGatewayEvidenceRejectionReason? = nil,
+        interfaceBound: Bool = true,
+        attemptID: UUID? = UUID(),
+        endedAt: Date? = nil
+    ) -> WiFiGatewayEvidenceSample {
+        let identity = WiFiGatewayEvidenceIdentity(
+            snapshotCycleID: context.cycleID,
+            interfaceName: context.status.interfaceName,
+            interfaceIndex: context.status.interfaceIndex,
+            routerIP: context.status.routerIP,
+            ssid: context.status.ssid,
+            bssid: context.status.bssid,
+            linkState: context.status.linkAssessment?.state,
+            linkRunSessionID: UUID(),
+            linkSequence: 1,
+            linkEpoch: 1
+        )
+        return WiFiGatewayEvidenceSample(
+            attemptID: attemptID,
+            startedAt: context.startedAt,
+            endedAt: endedAt ?? Date(),
+            before: identity,
+            after: nil,
+            outcome: outcome,
+            interfaceBound: interfaceBound,
+            latencyMilliseconds: latencyMilliseconds,
+            reportedLatencyMilliseconds: latencyMilliseconds,
+            attribution: attribution,
+            latencyValidity: latencyValidity,
+            rejectionReason: rejectionReason,
+            beforeLinkEvidenceFresh: true,
+            afterLinkEvidenceFresh: nil
+        )
+    }
+}
