@@ -152,7 +152,7 @@ struct WiFiGatewayEvidenceSamplingTests {
         before.linkActive = false
         let sample = await makeSampler(
             variants: [before, .associated],
-            links: [.disconnected, .disconnected],
+            links: [.disconnected(), .disconnected()],
             result: .replied(milliseconds: 12)
         ).sample()
 
@@ -193,6 +193,68 @@ struct WiFiGatewayEvidenceSamplingTests {
         #expect(sample.outcome == nil)
     }
 
+    @Test("A stale link snapshot keeps the probe result but drops attribution")
+    func staleLinkEvidenceBeforeProbe() async {
+        let sample = await makeSampler(
+            variants: [.associated, .associated],
+            links: [.associated(epoch: 7, age: 20), .associated(epoch: 7)],
+            result: .replied(milliseconds: 12)
+        ).sample()
+
+        #expect(sample.attribution == .linkEvidenceStale)
+        #expect(sample.rejectionReason == .linkEvidenceStale)
+        #expect(sample.outcome == .replied(milliseconds: 12))
+        #expect(sample.attemptID != nil)
+        #expect(sample.reportedLatencyMilliseconds == 12)
+        #expect(sample.latencyValidity == .notApplicable)
+        #expect(sample.latencyMilliseconds == nil)
+    }
+
+    @Test("A fresh unassociated snapshot does not masquerade as stale evidence")
+    func unassociatedLinkSnapshot() async {
+        let sample = await makeSampler(
+            variants: [.associated, .associated],
+            links: [.disconnected(), .associated(epoch: 7)],
+            result: .replied(milliseconds: 12)
+        ).sample()
+
+        #expect(sample.attribution == .linkEvidenceUnavailable)
+        #expect(sample.rejectionReason == .linkSnapshotNotAssociated)
+        #expect(sample.outcome == .replied(milliseconds: 12))
+        #expect(sample.latencyMilliseconds == nil)
+    }
+
+    @Test("A failed after-probe enumeration is not reported as a target failure")
+    func afterCaptureUnavailable() async {
+        var after = SnapshotVariant.associated
+        after.enumerationSucceeded = false
+        let sample = await makeSampler(
+            variants: [.associated, after],
+            links: [.associated(epoch: 7), .associated(epoch: 7)],
+            result: .replied(milliseconds: 12)
+        ).sample()
+
+        #expect(sample.attribution == .captureUnavailable)
+        #expect(sample.rejectionReason == .snapshotUnavailable)
+        #expect(sample.outcome == .replied(milliseconds: 12))
+    }
+
+    @Test("A stale confirmation snapshot keeps the probe result but drops attribution")
+    func staleLinkEvidenceAfterProbe() async {
+        let sample = await makeSampler(
+            variants: [.associated, .associated],
+            links: [.associated(epoch: 7), .associated(epoch: 7, age: 20)],
+            result: .replied(milliseconds: 12)
+        ).sample()
+
+        #expect(sample.attribution == .linkEvidenceStale)
+        #expect(sample.rejectionReason == .linkEvidenceStale)
+        #expect(sample.outcome == .replied(milliseconds: 12))
+        #expect(sample.latencyValidity == .notApplicable)
+        #expect(sample.latencyMilliseconds == nil)
+        #expect(sample.reportedLatencyMilliseconds == 12)
+    }
+
     @Test("A result without the target identity is not attributed")
     func resultUnattributed() async {
         let sampler = makeSampler(
@@ -230,15 +292,15 @@ struct WiFiGatewayEvidenceSamplingTests {
     // MARK: - Fixtures
 
     fileprivate enum LinkState {
-        case associated(epoch: UInt64)
-        case disconnected
+        case associated(epoch: UInt64, age: TimeInterval = 0)
+        case disconnected(age: TimeInterval = 0)
 
-        var snapshot: (UInt64, UInt64, VerifiedWiFiLinkState) {
+        var snapshot: (UInt64, UInt64, VerifiedWiFiLinkState, TimeInterval) {
             switch self {
-            case .associated(let epoch):
-                return (7, epoch, .associated)
-            case .disconnected:
-                return (7, 0, .disconnected)
+            case .associated(let epoch, let age):
+                return (7, epoch, .associated, age)
+            case .disconnected(let age):
+                return (7, 0, .disconnected, age)
             }
         }
     }
@@ -268,7 +330,8 @@ struct WiFiGatewayEvidenceSamplingTests {
         let sessionID = UUID()
         return SystemWiFiGatewayEvidenceSampler(
             linkSnapshot: {
-                let (sequence, epoch, state) = linkSequence.next().snapshot
+                let (sequence, epoch, state, age) = linkSequence.next().snapshot
+                let publishedAt = Date().addingTimeInterval(-age)
                 return WiFiLinkStateSnapshot(
                     runSessionID: sessionID,
                     sequence: sequence,
@@ -280,8 +343,8 @@ struct WiFiGatewayEvidenceSamplingTests {
                     networkIdentity: WiFiNetworkIdentity(ssid: "Lab", bssid: "AA:BB:CC:DD:EE:FF"),
                     reason: .stationMode,
                     evidenceSourceIDs: [],
-                    sampledAt: Date(timeIntervalSince1970: 1_750_000_000),
-                    publishedAt: Date(timeIntervalSince1970: 1_750_000_000)
+                    sampledAt: publishedAt,
+                    publishedAt: publishedAt
                 )
             },
             captureSnapshot: { cycleID, capturedAt in

@@ -65,6 +65,14 @@ public enum WiFiGatewayEvidenceAttribution: String, Equatable, Sendable {
     case linkEpochChanged
     /// The link became unassociated while the probe was in flight.
     case linkLostDuringAttempt
+    /// The link-state evidence used for attribution was too old to prove
+    /// anything about this attempt.
+    case linkEvidenceStale
+    /// The link snapshot contradicted the confirmed association.
+    case linkEvidenceUnavailable
+    /// The interface could not be enumerated when the probe result was
+    /// re-checked; the probe may have run, so this is not a target failure.
+    case captureUnavailable
     /// The probe result does not carry the source identity of the target.
     case resultUnattributed
 }
@@ -86,6 +94,8 @@ public enum WiFiGatewayEvidenceRejectionReason: String, Equatable, Sendable {
     case networkIdentityChanged
     case linkEpochChanged
     case linkLostDuringAttempt
+    case linkEvidenceStale
+    case linkSnapshotNotAssociated
     case resultUnattributed
     case invalidLatency
 }
@@ -140,6 +150,11 @@ public struct WiFiGatewayEvidenceSample: Equatable, Sendable {
 /// connection interpretation, gateway target validation, and bound pinger
 /// without widening their access levels or starting the scanning runtime.
 public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
+    /// A link snapshot older than this cannot prove which link a probe belonged
+    /// to. The center publishes on an internal 5s schedule; 15s tolerates a
+    /// missed publication without accepting evidence from an earlier network.
+    private static let maximumLinkEvidenceAge: TimeInterval = 15
+
     private let linkSnapshot: @Sendable () async -> WiFiLinkStateSnapshot
     private let captureSnapshot: @Sendable (UUID, Date) -> NetworkInterfaceSnapshot
     private let currentStatus: @Sendable (NetworkInterfaceSnapshot) async -> WiFiCurrentStatus
@@ -176,6 +191,11 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
     public func sample() async -> WiFiGatewayEvidenceSample {
         let startedAt = Date()
         let beforeLink = await linkSnapshot()
+        let beforeLinkFetch = Date()
+        let beforeLinkFresh = beforeLink.isFresh(
+            at: beforeLinkFetch,
+            maximumAge: Self.maximumLinkEvidenceAge
+        )
         let beforeCycleID = UUID()
         let beforeSnapshot = captureSnapshot(beforeCycleID, startedAt)
         let beforeStatus = await currentStatus(beforeSnapshot)
@@ -216,6 +236,11 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         let afterSnapshot = captureSnapshot(afterCycleID, endedAt)
         let afterStatus = await currentStatus(afterSnapshot)
         let afterLink = await linkSnapshot()
+        let afterLinkFetch = Date()
+        let afterLinkFresh = afterLink.isFresh(
+            at: afterLinkFetch,
+            maximumAge: Self.maximumLinkEvidenceAge
+        )
         let after = Self.identity(
             snapshot: afterSnapshot,
             status: afterStatus,
@@ -225,11 +250,17 @@ public struct SystemWiFiGatewayEvidenceSampler: WiFiGatewayEvidenceSampling {
         let attribution: WiFiGatewayEvidenceAttribution
         let reason: WiFiGatewayEvidenceRejectionReason?
         if !afterSnapshot.interfaceEnumerationSucceeded {
-            attribution = .targetUnavailable
+            attribution = .captureUnavailable
             reason = .snapshotUnavailable
         } else if afterStatus.linkAssessment?.state != .associated {
             attribution = .linkLostDuringAttempt
             reason = .linkLostDuringAttempt
+        } else if !beforeLinkFresh || !afterLinkFresh {
+            attribution = .linkEvidenceStale
+            reason = .linkEvidenceStale
+        } else if beforeLink.state != .associated || afterLink.state != .associated {
+            attribution = .linkEvidenceUnavailable
+            reason = .linkSnapshotNotAssociated
         } else if after.interfaceName != before.interfaceName || after.interfaceIndex != before.interfaceIndex {
             attribution = .interfaceChanged
             reason = .interfaceChanged
