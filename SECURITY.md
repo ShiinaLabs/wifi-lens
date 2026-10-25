@@ -26,7 +26,7 @@ feature:
 
 If private vulnerability reporting is unavailable, contact:
 
-**wifi-lens@shiinalabs.com**
+**contacts@shiinalabs.com**
 
 Please use a subject such as:
 

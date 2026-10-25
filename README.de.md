@@ -256,7 +256,7 @@ Fragen, Fehlerberichte und Funktionsideen sind willkommen. Siehe [Beitragsrichtl
 
 Tritt **[Rabbit Hole](https://discord.gg/gH6sTCYaJ7)** bei, einer kleinen Community für WiFi Lens und andere Projekte.
 
-**Kontakt:** [@WiFiLens auf X](https://x.com/WiFiLens) · [wifi-lens@shiinalabs.com](mailto:wifi-lens@shiinalabs.com)
+**Kontakt:** [@WiFiLens auf X](https://x.com/WiFiLens) · [contacts@shiinalabs.com](mailto:contacts@shiinalabs.com)
 
 ---
 

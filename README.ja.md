@@ -256,7 +256,7 @@ xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
 
 WiFi Lensやその他のプロジェクトの小さなコミュニティ **[Rabbit Hole](https://discord.gg/gH6sTCYaJ7)** にも参加できます。
 
-**連絡先：** [Xの@WiFiLens](https://x.com/WiFiLens) · [wifi-lens@shiinalabs.com](mailto:wifi-lens@shiinalabs.com)
+**連絡先：** [Xの@WiFiLens](https://x.com/WiFiLens) · [contacts@shiinalabs.com](mailto:contacts@shiinalabs.com)
 
 ---
 

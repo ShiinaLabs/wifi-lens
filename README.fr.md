@@ -256,7 +256,7 @@ Les questions, rapports de bugs et idées de fonctionnalités sont les bienvenus
 
 Rejoignez **[Rabbit Hole](https://discord.gg/gH6sTCYaJ7)**, une petite communauté pour WiFi Lens et d’autres projets.
 
-**Contact :** [@WiFiLens sur X](https://x.com/WiFiLens) · [wifi-lens@shiinalabs.com](mailto:wifi-lens@shiinalabs.com)
+**Contact :** [@WiFiLens sur X](https://x.com/WiFiLens) · [contacts@shiinalabs.com](mailto:contacts@shiinalabs.com)
 
 ---
 
