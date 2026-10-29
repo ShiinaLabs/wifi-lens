@@ -469,6 +469,9 @@ private struct AppRootView: View {
             )
         )
         .task {
+            #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--r1-headless-acceptance") { return }
+            #endif
             installMainWindowOpenAction {
                 openWindow(id: WiFiLensApp.mainWindowSceneID)
             }
@@ -1306,11 +1309,22 @@ struct WiFiLensApp: App {
             stopRuntime: { await scannerViewModel.stopForTermination() },
             terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
         )
+        #if DEBUG
+            let r1HeadlessArguments = ProcessInfo.processInfo.arguments
+            let isR1Headless = r1HeadlessArguments.contains("--r1-headless-acceptance")
+                || r1HeadlessArguments.contains("--r1-location-authorization-check")
+            if isR1Headless {
+                EditionAssemblyProvider.configuration.shellHooks.startLifecycle(observationRuntime)
+            }
+        #else
+            let isR1Headless = false
+        #endif
         AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
         if EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
             !EditionAppShell.isControlledDemoSession,
             !UITestMode.isActive,
-            !ProcessInfo.processInfo.isRunningUnderTestHost
+            !ProcessInfo.processInfo.isRunningUnderTestHost,
+            !isR1Headless
         {
             Task { await WiFiLinkStateCenter.shared.start() }
         }
