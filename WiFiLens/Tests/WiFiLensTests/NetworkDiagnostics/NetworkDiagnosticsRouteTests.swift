@@ -199,7 +199,7 @@ extension NetworkDiagnosticsTests {
         #expect(await runner.executablePath == "/sbin/ping")
         #expect(
             await runner.arguments == [
-                "-b", "en7", "-c", "1", "-W", "1000", "192.0.2.1",
+                "-b", "en7", "-c", "1", "-W", "1000", "-t", "1", "192.0.2.1",
             ])
     }
 
