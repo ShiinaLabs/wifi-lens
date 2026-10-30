@@ -1216,6 +1216,10 @@ final class ApplicationTerminationCoordinator: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         requestTermination()
     }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        sender.activationPolicy() != .accessory
+    }
 }
 
 @main
