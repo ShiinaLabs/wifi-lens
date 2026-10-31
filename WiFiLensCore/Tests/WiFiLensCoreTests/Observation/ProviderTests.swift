@@ -433,6 +433,49 @@ struct ProviderTests {
         #expect(GatewayPinger.interpret(.localTimeout) == .localTimeout)
     }
 
+    @Test("diagnostic ping arguments bound the child's total runtime")
+    func diagnosticPingArgumentsBoundTotalRuntime() {
+        let target = DiagnosticGatewayTarget(
+            interfaceName: "en0",
+            interfaceIndex: 4,
+            address: "192.0.2.1"
+        )
+        #expect(
+            DiagnosticPingArguments.make(target: target)
+                == ["-b", "en0", "-c", "1", "-W", "1000", "-t", "1", "192.0.2.1"]
+        )
+    }
+
+    @Test("an unanswered ping exits on its own instead of localTimeout")
+    func unansweredPingExitsWithinBudget() async {
+        let runner = SystemGatewayPingProcessRunner()
+        let outcome = await runner.run(
+            executablePath: "/sbin/ping",
+            arguments: ["-c", "1", "-W", "1000", "-t", "1", "192.0.2.1"],
+            attemptID: UUID()
+        )
+        guard case .exited = outcome else {
+            Issue.record("Expected ping to exit within the 1.5s budget, got \(outcome)")
+            return
+        }
+        let interpreted = GatewayPinger.interpret(outcome)
+        #expect(interpreted == .noReply || interpreted == .executionFailed)
+    }
+
+    @Test("the production bound probe reports noReply for an unanswered target")
+    func productionBoundProbeUnansweredIsNoReply() async {
+        let pinger = GatewayPinger()
+        let outcome = await pinger.probe(
+            target: DiagnosticGatewayTarget(
+                interfaceName: "en0",
+                interfaceIndex: 4,
+                address: "192.0.2.1"
+            ),
+            attemptID: UUID()
+        )
+        #expect(outcome == .noReply || outcome == .executionFailed)
+    }
+
     @Test("a cancelled task does not launch its ping process")
     func cancelledBeforeProbeDoesNotLaunchRunner() async {
         let runner = ControlledGatewayPingProcessRunner()

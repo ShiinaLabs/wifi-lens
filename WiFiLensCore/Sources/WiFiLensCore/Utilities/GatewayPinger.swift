@@ -39,7 +39,7 @@ actor GatewayPinger {
     }
 
     func probe(host: String, attemptID: UUID) async -> GatewayProbeOutcome {
-        await probe(arguments: ["-c", "1", "-W", "1000", host], attemptID: attemptID)
+        await probe(arguments: ["-c", "1", "-W", "1000", "-t", "1", host], attemptID: attemptID)
     }
 
     func probe(target: DiagnosticGatewayTarget, attemptID: UUID) async -> GatewayProbeOutcome {
@@ -149,7 +149,10 @@ actor GatewayPinger {
 }
 
 actor SystemGatewayPingProcessRunner: GatewayPingProcessRunning {
-    /// Overall budget for a single ping, including process startup.
+    /// Overall budget for a single ping, including process startup. The child
+    /// is bounded by `-t 1`, so an unanswered probe exits at about one second.
+    /// `-W 1000` alone is not enough: ping keeps waiting an extra second for
+    /// late replies before it prints statistics and exits.
     private static let pingTimeout: Duration = .milliseconds(1500)
     private var states: [UUID: PingWaitState] = [:]
 

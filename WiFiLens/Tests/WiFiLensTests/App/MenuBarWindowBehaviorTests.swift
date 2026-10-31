@@ -155,6 +155,23 @@ struct MenuBarWindowBehaviorTests {
         #expect(closeAction(menuBarEnabled: false) == .keepCurrentPolicy)
     }
 
+    @MainActor
+    @Test("closing the last main window leaves the menu-bar app available to reopen")
+    func lastWindowCloseDoesNotTerminateApp() {
+        let originalPolicy = NSApp.activationPolicy()
+        #expect(NSApp.setActivationPolicy(.accessory))
+        defer { NSApp.setActivationPolicy(originalPolicy) }
+
+        let coordinator = ApplicationTerminationCoordinator(reply: { _ in })
+        let delegate: any NSApplicationDelegate = coordinator
+        let shouldTerminate = delegate.applicationShouldTerminateAfterLastWindowClosed?(NSApp) ?? true
+        #expect(!shouldTerminate)
+
+        #expect(NSApp.setActivationPolicy(.regular))
+        let shouldTerminateInRegularMode = delegate.applicationShouldTerminateAfterLastWindowClosed?(NSApp) ?? true
+        #expect(shouldTerminateInRegularMode)
+    }
+
     @Test("reopen action switches to regular only from accessory mode with menu bar enabled")
     func reopenActionDependsOnCurrentPolicy() {
         #expect(reopenAction(menuBarEnabled: true, currentPolicy: .accessory) == .switchToRegular)
