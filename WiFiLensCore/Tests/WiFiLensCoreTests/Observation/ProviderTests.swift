@@ -447,11 +447,25 @@ struct ProviderTests {
     }
 
     @Test("an unanswered ping exits on its own instead of localTimeout")
-    func unansweredPingExitsWithinBudget() async {
+    func unansweredPingExitsWithinBudget() async throws {
+        // Bind the probe to the Wi-Fi interface, as production does. An unbound
+        // ping follows the default route, which a tunnel can own and answer, so
+        // the target would reply instead of staying unanswered.
+        let interface = try #require(
+            NetworkInfoService.fetch(),
+            "No Wi-Fi interface is available to bind the probe"
+        )
         let runner = SystemGatewayPingProcessRunner()
         let outcome = await runner.run(
             executablePath: "/sbin/ping",
-            arguments: ["-c", "1", "-W", "1000", "-t", "1", "192.0.2.1"],
+            arguments: DiagnosticPingArguments.make(
+                target: DiagnosticGatewayTarget(
+                    interfaceName: interface.interfaceName,
+                    interfaceIndex: interface.interfaceIndex
+                        ?? if_nametoindex(interface.interfaceName),
+                    address: "192.0.2.1"
+                )
+            ),
             attemptID: UUID()
         )
         guard case .exited = outcome else {
@@ -463,12 +477,17 @@ struct ProviderTests {
     }
 
     @Test("the production bound probe reports noReply for an unanswered target")
-    func productionBoundProbeUnansweredIsNoReply() async {
+    func productionBoundProbeUnansweredIsNoReply() async throws {
+        let interface = try #require(
+            NetworkInfoService.fetch(),
+            "No Wi-Fi interface is available to bind the probe"
+        )
         let pinger = GatewayPinger()
         let outcome = await pinger.probe(
             target: DiagnosticGatewayTarget(
-                interfaceName: "en0",
-                interfaceIndex: 4,
+                interfaceName: interface.interfaceName,
+                interfaceIndex: interface.interfaceIndex
+                    ?? if_nametoindex(interface.interfaceName),
                 address: "192.0.2.1"
             ),
             attemptID: UUID()
