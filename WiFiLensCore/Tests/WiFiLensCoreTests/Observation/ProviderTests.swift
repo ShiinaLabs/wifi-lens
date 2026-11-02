@@ -433,6 +433,65 @@ struct ProviderTests {
         #expect(GatewayPinger.interpret(.localTimeout) == .localTimeout)
     }
 
+    @Test("diagnostic ping arguments bound the child's total runtime")
+    func diagnosticPingArgumentsBoundTotalRuntime() {
+        let target = DiagnosticGatewayTarget(
+            interfaceName: "en0",
+            interfaceIndex: 4,
+            address: "192.0.2.1"
+        )
+        #expect(
+            DiagnosticPingArguments.make(target: target)
+                == ["-b", "en0", "-c", "1", "-W", "1000", "-t", "1", "192.0.2.1"]
+        )
+    }
+
+    @Test("an unanswered ping exits on its own instead of localTimeout")
+    func unansweredPingExitsWithinBudget() async {
+        // Bind the probe to the Wi-Fi interface when the host exposes one, as
+        // production does. An unbound ping follows the default route, which a
+        // tunnel can own and answer, so the target would reply instead of
+        // staying unanswered. A host without a Wi-Fi interface, such as a CI
+        // virtual machine, keeps the unbound probe.
+        let arguments =
+            boundGatewayTarget().map { DiagnosticPingArguments.make(target: $0) }
+            ?? ["-c", "1", "-W", "1000", "-t", "1", "192.0.2.1"]
+        let runner = SystemGatewayPingProcessRunner()
+        let outcome = await runner.run(
+            executablePath: "/sbin/ping",
+            arguments: arguments,
+            attemptID: UUID()
+        )
+        guard case .exited = outcome else {
+            Issue.record("Expected ping to exit within the 1.5s budget, got \(outcome)")
+            return
+        }
+        let interpreted = GatewayPinger.interpret(outcome)
+        #expect(interpreted == .noReply || interpreted == .executionFailed)
+    }
+
+    @Test("the production bound probe reports noReply for an unanswered target")
+    func productionBoundProbeUnansweredIsNoReply() async throws {
+        guard let target = boundGatewayTarget() else {
+            try Test.cancel("The host exposes no Wi-Fi interface to bind the probe to")
+        }
+        let pinger = GatewayPinger()
+        let outcome = await pinger.probe(target: target, attemptID: UUID())
+        #expect(outcome == .noReply || outcome == .executionFailed)
+    }
+
+    /// The gateway probe target production would use on this host, or nil when
+    /// no Wi-Fi interface is available to bind to.
+    private func boundGatewayTarget(address: String = "192.0.2.1") -> DiagnosticGatewayTarget? {
+        guard let interface = NetworkInfoService.fetch() else { return nil }
+        return DiagnosticGatewayTarget(
+            interfaceName: interface.interfaceName,
+            interfaceIndex: interface.interfaceIndex
+                ?? if_nametoindex(interface.interfaceName),
+            address: address
+        )
+    }
+
     @Test("a cancelled task does not launch its ping process")
     func cancelledBeforeProbeDoesNotLaunchRunner() async {
         let runner = ControlledGatewayPingProcessRunner()
