@@ -17,11 +17,16 @@ extension GatewayPinging {
 
 extension GatewayPinger: GatewayPinging, GatewayProbeProviding {}
 
-struct WiFiGatewayProbeTarget: Equatable, Sendable {
-    let interfaceName: String
-    let interfaceIndex: UInt32
-    let address: String
-    let snapshotCycleID: UUID
+/// A gateway measurement target validated against one associated Wi-Fi snapshot.
+///
+/// Only `WiFiLensCore` can construct this value. Consumers use its read-only
+/// identity fields to bind a probe to the verified interface and attribute the
+/// result to the same target.
+public struct WiFiGatewayProbeTarget: Equatable, Sendable {
+    public let interfaceName: String
+    public let interfaceIndex: UInt32
+    public let address: String
+    public let snapshotCycleID: UUID
     let capturedAt: Date
 
     var diagnosticTarget: DiagnosticGatewayTarget {
@@ -56,7 +61,11 @@ struct WiFiGatewayProbeTarget: Equatable, Sendable {
     }
 }
 
-protocol WiFiBoundGatewayMeasuring: Sendable {
+public protocol WiFiBoundGatewayMeasuring: Sendable {
+    /// Measures a gateway using the target's verified interface.
+    ///
+    /// Implementations must bind the underlying probe to `target.interfaceName`
+    /// and `target.interfaceIndex`, then return matching target attribution.
     func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult
 }
 
@@ -189,7 +198,7 @@ public struct GatewayLatencyProvider: GatewayLatencyProviding {
         )
     }
 
-    func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult {
+    public func measure(target: WiFiGatewayProbeTarget) async -> GatewayLatencyResult {
         let attemptID = UUID()
         guard let typedPinger = pinger as? GatewayProbeProviding else {
             return GatewayLatencyResult(
