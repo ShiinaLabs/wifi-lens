@@ -290,6 +290,7 @@ extension NetworkDiagnosticsTests {
     func fingerprintChangeRestartsOnce() async {
         let initial = makeFingerprint(interfaceName: "en0", dnsHash: 1)
         let fingerprintMonitor = ControlledNetworkFingerprintMonitor(initial: initial)
+        let clock = ManualDiagnosticClock()
         let guidance = IsolatedGuidance()
         let configurationProbe = RestartableDiagnosticProbe()
         let networkProbe = RestartableDiagnosticProbe(blockFirstInvocation: true)
@@ -310,6 +311,7 @@ extension NetworkDiagnosticsTests {
         let viewModel = NetworkDiagnosticsViewModel(
             checks: checks,
             fingerprintMonitor: fingerprintMonitor,
+            clock: clock,
             onDiagnosticsCompleted: { guidance.coordinator.record(.diagnosticsCompleted) }
         )
 
@@ -317,13 +319,21 @@ extension NetworkDiagnosticsTests {
         await networkProbe.waitForInvocationCount(1)
         await fingerprintMonitor.send(makeFingerprint(interfaceName: "en1", dnsHash: 2))
         await fingerprintMonitor.send(makeFingerprint(interfaceName: "en2", dnsHash: 3))
+        let restartLogMessage = "Network changed; restarting"
+        let restartDeadline = ContinuousClock().now.advanced(by: .seconds(5))
+        while viewModel.logText.components(separatedBy: restartLogMessage).count < 3,
+            ContinuousClock().now < restartDeadline
+        {
+            await Task.yield()
+        }
+        #expect(viewModel.logText.components(separatedBy: restartLogMessage).count == 3)
+        await clock.set(clock.origin.advanced(by: .milliseconds(500)))
         await viewModel.waitForCompletion()
 
         #expect(viewModel.phase == .completed)
         #expect(viewModel.conclusion == .networkNormal)
         #expect(viewModel.automaticRestartCount == 1)
         #expect(viewModel.logText.contains("Run 2"))
-        #expect(viewModel.logText.contains("Network changed; restarting"))
         #expect(viewModel.logText.contains("retained: System Proxy"))
         #expect(await configurationProbe.invocationCount == 1)
         #expect(await networkProbe.invocationCount == 2)
