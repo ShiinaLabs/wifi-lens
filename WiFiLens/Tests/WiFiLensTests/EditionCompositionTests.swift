@@ -17,6 +17,42 @@ struct EditionCompositionTests {
     }
 
     @MainActor
+    @Test("explicit hidden sidebar badge override suppresses the capability fallback")
+    func hiddenSidebarBadgeOverrideSuppressesFallback() {
+        let base = EditionAssemblyProvider.configuration
+        #expect(base.sidebarBadgeStyle(for: .wifiCallingTest) == .pro)
+
+        func configuration(hiddenBadgePages: Set<SidebarPage> = []) -> WiFiLensEditionConfiguration {
+            WiFiLensEditionConfiguration(
+                identity: base.identity,
+                capabilities: base.capabilities.union([.wifiCalling]),
+                shouldStartObservationRuntime: base.shouldStartObservationRuntime,
+                requiresLiveWiFiAuthorization: base.requiresLiveWiFiAuthorization,
+                analysisSidebarIsLockedPreview: base.analysisSidebarIsLockedPreview,
+                initialMainWindowRoute: base.initialMainWindowRoute,
+                timelineToolbarDescriptor: base.timelineToolbarDescriptor,
+                spectrumToolbarDescriptor: base.spectrumToolbarDescriptor,
+                exportSuccessPresentation: base.exportSuccessPresentation,
+                onboardingConfiguration: base.onboardingConfiguration,
+                guidanceConfiguration: base.guidanceConfiguration,
+                guidanceCoordinator: base.guidanceCoordinator,
+                shellHooks: base.shellHooks,
+                menuBarWindowManagementEnabled: base.menuBarWindowManagementEnabled,
+                analysisSidebarPages: base.analysisSidebarPages,
+                sidebarBadgeOverrides: base.sidebarBadgeOverrides,
+                networkExperienceToolbarDescriptor: base.networkExperienceToolbarDescriptor,
+                hiddenSidebarBadgePages: hiddenBadgePages
+            )
+        }
+
+        let defaulted = configuration()
+        let hidden = configuration(hiddenBadgePages: [.wifiCallingTest])
+        #expect(defaulted.sidebarBadgeStyle(for: .wifiCallingTest) == .preview)
+        #expect(hidden.capabilities.contains(.wifiCalling))
+        #expect(hidden.sidebarBadgeStyle(for: .wifiCallingTest) == nil)
+    }
+
+    @MainActor
     @Test("edition composition creates the roaming presentation model")
     func editionCompositionCreatesRoamingViewModel() {
         let viewModel = EditionAssemblyProvider.configuration.shellHooks.makeRoamingViewModel(ScannerViewModel())

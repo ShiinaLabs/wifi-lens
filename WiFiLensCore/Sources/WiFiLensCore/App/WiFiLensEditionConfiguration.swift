@@ -130,6 +130,8 @@ public struct WiFiLensEditionConfiguration {
     /// Badge styles an edition attaches to individual destinations. Editions supply these at
     /// construction so the decision stays with the edition that makes it.
     public let sidebarBadgeOverrides: [SidebarPage: SidebarBadge.Style]
+    /// Pages whose badges are intentionally hidden, overriding capability defaults and styles.
+    public let hiddenSidebarBadgePages: Set<SidebarPage>
     public let shouldStartObservationRuntime: Bool
     public let requiresLiveWiFiAuthorization: Bool
     public let initialMainWindowRoute: SidebarPage
@@ -153,6 +155,7 @@ public struct WiFiLensEditionConfiguration {
     public let menuBarWindowManagementEnabled: Bool
 
     func sidebarBadgeStyle(for page: SidebarPage) -> SidebarBadge.Style? {
+        guard !hiddenSidebarBadgePages.contains(page) else { return nil }
         if let override = sidebarBadgeOverrides[page] {
             return override
         }
@@ -186,12 +189,14 @@ public struct WiFiLensEditionConfiguration {
         menuBarWindowManagementEnabled: Bool,
         analysisSidebarPages: [SidebarPage] = [.networkExperience, .problemHistory],
         sidebarBadgeOverrides: [SidebarPage: SidebarBadge.Style] = [:],
-        networkExperienceToolbarDescriptor: SecondaryToolbarDescriptor? = nil
+        networkExperienceToolbarDescriptor: SecondaryToolbarDescriptor? = nil,
+        hiddenSidebarBadgePages: Set<SidebarPage> = []
     ) {
         self.identity = identity
         self.capabilities = capabilities
         self.analysisSidebarPages = analysisSidebarPages
         self.sidebarBadgeOverrides = sidebarBadgeOverrides
+        self.hiddenSidebarBadgePages = hiddenSidebarBadgePages
         self.shouldStartObservationRuntime = shouldStartObservationRuntime
         self.requiresLiveWiFiAuthorization = requiresLiveWiFiAuthorization
         self.analysisSidebarIsLockedPreview = analysisSidebarIsLockedPreview
