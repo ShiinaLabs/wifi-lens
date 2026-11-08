@@ -19,9 +19,6 @@ public enum ExternalDestination {
     case githubWiFiCallingIssue
     case xAccount
     case developerProfile
-    case chartLensRepository
-    case mcpSwiftSDKRepository
-    case sparkleRepository
     case discord
 }
 
@@ -69,12 +66,6 @@ public enum ExternalLinks {
                 "https://x.com/WiFiLens"
             case .developerProfile:
                 "https://x.com/KAORU11843779"
-            case .chartLensRepository:
-                "https://github.com/ShiinaLabs/chart-lens"
-            case .mcpSwiftSDKRepository:
-                "https://github.com/modelcontextprotocol/swift-sdk"
-            case .sparkleRepository:
-                "https://github.com/sparkle-project/Sparkle"
             case .discord:
                 "https://discord.gg/gH6sTCYaJ7"
             }

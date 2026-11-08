@@ -209,6 +209,10 @@
 		B5013A8844DBB4CFC56136AE /* BLEChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A494C5B629325664F0AF03F3 /* BLEChannel.swift */; };
 		B58EC5394108B563F6F6FE91 /* ChannelSpanCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F421038A23025A629A498B47 /* ChannelSpanCalculator.swift */; };
 		B5F054FF766F419F3C260AA7 /* ExternalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBA0934EF69F6766E3C53A4 /* ExternalLinks.swift */; };
+		9E503E52C97C64FFE1DD5A90 /* OpenSourceLicenseCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */; };
+		30CA1D61AE3635CAEFCB1F48 /* OpenSourceLicenseTexts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */; };
+		D0A4A6769A3FA312CBB06078 /* OpenSourceLicensesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */; };
+		F6E23A53B7E2F9654AA6AC38 /* OpenSourceLicenseCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */; };
 		B83A01F49EB684415C8C69C2 /* NetworkDiagnosticEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BBE7A16D3534B73BF80F65F /* NetworkDiagnosticEvent.swift */; };
 		B89BCDE0766C4998B46372B /* LoggingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D4F1A65F0142A18B9C161 /* LoggingTests.swift */; };
 		B8F9DAF28D1143794564A0B3 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4C633EAD2670D0C4A957180F /* MarkdownKit */; };
@@ -452,6 +456,10 @@
 		3E0069C108C9CFCCD39B7898 /* ChannelBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelBand.swift; sourceTree = "<group>"; };
 		3EAF444453E304ABB57AF3AA /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		3EBA0934EF69F6766E3C53A4 /* ExternalLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalLinks.swift; sourceTree = "<group>"; };
+		68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseCatalog.swift; sourceTree = "<group>"; };
+		AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseTexts.swift; sourceTree = "<group>"; };
+		EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicensesView.swift; sourceTree = "<group>"; };
+		6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseCatalogTests.swift; sourceTree = "<group>"; };
 		3FA64E6D34972FDA4A66AF17 /* BLERSSISample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLERSSISample.swift; sourceTree = "<group>"; };
 		3FF2C94DCFE0C5A733D8447D /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
 		406D6574ACE5DD5BB9BC0943 /* SpectrumHeatmapPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapPanel.swift; sourceTree = "<group>"; };
@@ -912,6 +920,24 @@
 			path = Regulatory;
 			sourceTree = "<group>";
 		};
+		2DBE5FA4FFF39D810AB3C998 /* Licenses */ = {
+			isa = PBXGroup;
+			children = (
+				68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */,
+				AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */,
+				EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */,
+			);
+			path = Licenses;
+			sourceTree = "<group>";
+		};
+		B96DCB4B00E98C49CA430707 /* Licenses */ = {
+			isa = PBXGroup;
+			children = (
+				6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */,
+			);
+			path = Licenses;
+			sourceTree = "<group>";
+		};
 		33375FB8C61E7F08CE1F632D /* WiFiLensCore */ = {
 			isa = PBXGroup;
 			children = (
@@ -1001,6 +1027,7 @@
 			children = (
 				710000000000000000000002 /* StorageLocationsTests.swift */,
 				2CF8F9B5DD7A847BE1145FCE /* Channels */,
+				B96DCB4B00E98C49CA430707 /* Licenses */,
 				487F4EEE86781884383EB1F3 /* Observation */,
 				B514D3472A83210B9FE6883B /* Regulatory */,
 				DBAEBE6204B2651A3FD0396B /* Spectrum */,
@@ -1195,6 +1222,7 @@
 				0D38C99A0528A24B31EFEF38 /* Filter */,
 				D9E8ABBBF894F86A8443DBBC /* Guidance */,
 				04FFB88D86CBC8871502AE25 /* Interfaces */,
+				2DBE5FA4FFF39D810AB3C998 /* Licenses */,
 				3ADDF412007038FEBF26D538 /* NetworkDiagnostics */,
 				40BE7EF1F571485DE0D08FF4 /* Observation */,
 				943BF1FD8E244BE95A46C2B4 /* Onboarding */,
@@ -1755,6 +1783,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				710000000000000000000005 /* StorageLocationsTests.swift in Sources */,
+				F6E23A53B7E2F9654AA6AC38 /* OpenSourceLicenseCatalogTests.swift in Sources */,
 				C94E78B4E1D29F278D5A4BFD /* APRadarSignalProcessorTests.swift in Sources */,
 				F5CB685AD7407C0619390870 /* APRadarSoundSynthesizerTests.swift in Sources */,
 				28199D9AC03B2660F3A03F2B /* APRadarViewModelTests.swift in Sources */,
@@ -1971,6 +2000,9 @@
 				F278475192B81A60F8A4225C /* ThroughputMonitor.swift in Sources */,
 				704EDF76C83324B538B0B921 /* DiagnosticPingArguments.swift in Sources */,
 				B5F054FF766F419F3C260AA7 /* ExternalLinks.swift in Sources */,
+				9E503E52C97C64FFE1DD5A90 /* OpenSourceLicenseCatalog.swift in Sources */,
+				30CA1D61AE3635CAEFCB1F48 /* OpenSourceLicenseTexts.swift in Sources */,
+				D0A4A6769A3FA312CBB06078 /* OpenSourceLicensesView.swift in Sources */,
 				4417595E275CFEB3171B2861 /* GatewayPinger.swift in Sources */,
 				DF2B80F2768EF8164A6F46B5 /* GlassBackground.swift in Sources */,
 				3923C2C456E8B6B0B33DB97D /* MarkdownRenderer.swift in Sources */,

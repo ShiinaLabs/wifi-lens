@@ -77,17 +77,6 @@ struct ExternalLinksTests {
         #expect(insights != settings)
     }
 
-    @Test("dependency repositories keep their current public locations")
-    func dependencyRepositoryURLs() {
-        #expect(
-            ExternalLinks.url(for: .chartLensRepository)?.absoluteString == "https://github.com/ShiinaLabs/chart-lens")
-        #expect(
-            ExternalLinks.url(for: .mcpSwiftSDKRepository)?.absoluteString
-                == "https://github.com/modelcontextprotocol/swift-sdk")
-        #expect(
-            ExternalLinks.url(for: .sparkleRepository)?.absoluteString == "https://github.com/sparkle-project/Sparkle")
-    }
-
     @Test("discord maps to the community invite link")
     func discordURL() {
         #expect(ExternalLinks.url(for: .discord)?.absoluteString == "https://discord.gg/gH6sTCYaJ7")

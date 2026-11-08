@@ -6,10 +6,10 @@ This file lists third-party data sources bundled with or downloaded by WiFi Lens
 
 ### ChartLens
 
-WiFi Lens uses the MIT-licensed [ChartLens](https://github.com/ShiinaLabs/chart-lens) Swift package from ShiinaLabs.
+WiFi Lens uses the Apache-2.0-licensed [ChartLens](https://github.com/ShiinaLabs/chart-lens) Swift package from ShiinaLabs.
 
 - Pinned revision: `e2e00e5253a51e7031d30cf41015ff146cd9a886`
-- License: [MIT](https://github.com/ShiinaLabs/chart-lens/blob/master/LICENSE)
+- License: [Apache-2.0](https://github.com/ShiinaLabs/chart-lens/blob/master/LICENSE)
 
 ### SplitView
 
