@@ -26,6 +26,7 @@ public struct SettingsView: View {
     /// One-shot preview player for the selected AP Radar pulse sound. Created
     /// lazily on first use so opening Settings never touches the audio stack.
     @State private var soundPreviewer: APRadarSoundPreviewer?
+    @State private var showsOpenSourceLicenses = false
 
     @State private var autoCheck: Bool
     @AppStorage("scanIntervalSeconds") private var scanInterval: Int = 3
@@ -600,21 +601,27 @@ public struct SettingsView: View {
 
                             Divider()
 
-                            Text(
-                                String(
-                                    localized: "settings.about.dependencies_header",
-                                    comment: "Core dependencies section header")
-                            )
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
-                            aboutLinkRow(
-                                icon: "chart.xyaxis.line", title: "ChartLens", destination: .chartLensRepository)
-                            aboutLinkRow(
-                                icon: "server.rack", title: "MCP Swift SDK", destination: .mcpSwiftSDKRepository)
-                            if configuration.identity == .openSource {
-                                aboutLinkRow(icon: "sparkles", title: "Sparkle", destination: .sparkleRepository)
+                            Button {
+                                showsOpenSourceLicenses = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "doc.text")
+                                        .foregroundColor(.accentColor)
+                                        .frame(width: 20)
+                                    Text(
+                                        String(
+                                            localized: "settings.about.licenses",
+                                            comment: "Open source licenses settings row and page title")
+                                    )
+                                    .foregroundColor(.primary)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("settings-open-source-licenses")
                         }
                         .padding(.vertical, 4)
                     } header: {
@@ -629,6 +636,9 @@ public struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityIdentifier("settings-scroll-view")
+        .sheet(isPresented: $showsOpenSourceLicenses) {
+            OpenSourceLicensesView(identity: configuration.identity)
+        }
         .onAppear {
             refreshPermissionStatuses()
         }
