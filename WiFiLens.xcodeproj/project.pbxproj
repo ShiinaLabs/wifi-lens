@@ -56,6 +56,7 @@
 		2FFE4B4FCFDB22FA0BEC935B /* BLERSSISample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA64E6D34972FDA4A66AF17 /* BLERSSISample.swift */; };
 		302192CB6034FD068AA5CA48 /* zh-Hans.md in Resources */ = {isa = PBXBuildFile; fileRef = 0A9C31FB0FFE9D2F4673EAED /* zh-Hans.md */; };
 		30313563A800753036185D61 /* BandPanelSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B43379B9F528046AF8AEBB61 /* BandPanelSelectionTests.swift */; };
+		30CA1D61AE3635CAEFCB1F48 /* OpenSourceLicenseTexts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */; };
 		3133602FE4CC434E065E5D25 /* RegionInferenceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321D09948A0187C8E573B54B /* RegionInferenceEngine.swift */; };
 		31426C5CC87025F0DD966546 /* ProxyResolution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6252D5AA989DB55DB631C246 /* ProxyResolution.swift */; };
 		320C7806268F9852B0E4AAB1 /* ColorExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6E25B8012F80B63AC9EDA4 /* ColorExtensionTests.swift */; };
@@ -162,8 +163,8 @@
 		9BD2B2F4F57A4CCF8F385AC6 /* GuidancePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C28E9E516DF63C4DCE4917E /* GuidancePolicy.swift */; };
 		9D617E1CE8A1AF901C125831 /* MACVendorDatabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0E9D778D115CFC1749548C /* MACVendorDatabaseService.swift */; };
 		9E2F89530D1114DBFAB705F3 /* WiFiLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831E90D5B9D07C478A35DD14 /* WiFiLensApp.swift */; };
+		9E503E52C97C64FFE1DD5A90 /* OpenSourceLicenseCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */; };
 		A08F1354CF188374AE208340 /* GatewayLatencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B642F492A3537A8A43BBFE94 /* GatewayLatencyProvider.swift */; };
-		E1C0A0010000000000000001 /* WiFiGatewayEvidenceSampling.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C0A0010000000000000003 /* WiFiGatewayEvidenceSampling.swift */; };
 		A10000000000000000000011 /* SecondaryToolbarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* SecondaryToolbarTests.swift */; };
 		A10000000000000000000012 /* SecondaryToolbarCapsuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* SecondaryToolbarCapsuleTests.swift */; };
 		A10000000000000000000013 /* SecondaryToolbarAttachmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* SecondaryToolbarAttachmentTests.swift */; };
@@ -172,7 +173,6 @@
 		A10000000000000000000016 /* App/MenuBarWindowBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */; };
 		A1B2C3D4E5F60718293A4B5C /* WiFiLinkStateCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */; };
 		A1B2C3D4E5F60718293A4B5E /* WiFiLinkStateCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */; };
-		E1C0A0010000000000000002 /* WiFiGatewayEvidenceSamplingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C0A0010000000000000004 /* WiFiGatewayEvidenceSamplingTests.swift */; };
 		A1C0DE0000000000000000F2 /* WiFi Lens.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1C0DE0000000000000000F1 /* WiFi Lens.icon */; };
 		A1C4E7BA2F0148D3B6E90A22 /* DetailPageMinimumHeightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C4E7B92F0148D3B6E90A21 /* DetailPageMinimumHeightTests.swift */; };
 		A1C4E7BC2F0148D3B6E90A24 /* MainWindowMinimumSizeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C4E7BB2F0148D3B6E90A23 /* MainWindowMinimumSizeTests.swift */; };
@@ -209,10 +209,6 @@
 		B5013A8844DBB4CFC56136AE /* BLEChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A494C5B629325664F0AF03F3 /* BLEChannel.swift */; };
 		B58EC5394108B563F6F6FE91 /* ChannelSpanCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F421038A23025A629A498B47 /* ChannelSpanCalculator.swift */; };
 		B5F054FF766F419F3C260AA7 /* ExternalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBA0934EF69F6766E3C53A4 /* ExternalLinks.swift */; };
-		9E503E52C97C64FFE1DD5A90 /* OpenSourceLicenseCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */; };
-		30CA1D61AE3635CAEFCB1F48 /* OpenSourceLicenseTexts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */; };
-		D0A4A6769A3FA312CBB06078 /* OpenSourceLicensesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */; };
-		F6E23A53B7E2F9654AA6AC38 /* OpenSourceLicenseCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */; };
 		B83A01F49EB684415C8C69C2 /* NetworkDiagnosticEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BBE7A16D3534B73BF80F65F /* NetworkDiagnosticEvent.swift */; };
 		B89BCDE0766C4998B46372B /* LoggingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D4F1A65F0142A18B9C161 /* LoggingTests.swift */; };
 		B8F9DAF28D1143794564A0B3 /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4C633EAD2670D0C4A957180F /* MarkdownKit */; };
@@ -239,6 +235,7 @@
 		CF2945F2B6BB27E1A056852D /* SpectrumHeatmapMetalBackendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7173CE6AE63BE7EC49A5E5D /* SpectrumHeatmapMetalBackendTests.swift */; };
 		CF7FBB4303EED828F74801BB /* ReasonPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11112E776DFA9E5DBED4DD84 /* ReasonPopover.swift */; };
 		D03EFEBFABBBB7343651979B /* SpectrumTablePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0218918BBFA65D8998888E /* SpectrumTablePanel.swift */; };
+		D0A4A6769A3FA312CBB06078 /* OpenSourceLicensesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */; };
 		D10000000000000000000002 /* OverviewVisualStyleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000001 /* OverviewVisualStyleTests.swift */; };
 		D1B3AF7378C9AE72104D74A9 /* APFilterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1702CA5FFE9220F80B82CC3F /* APFilterService.swift */; };
 		D292E13EC1921A409F4A4F75 /* MACVendorDatabaseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 197FB87CAE1348C3E2A1DCEE /* MACVendorDatabaseModels.swift */; };
@@ -256,6 +253,8 @@
 		DF36CDBD66183790C08E35F5 /* SpectrumHeatmapRenderCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFEC658553DB5272DFCD6E53 /* SpectrumHeatmapRenderCoordinatorTests.swift */; };
 		DF818CE5F0516824BB3AEC12 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74D52DF64E5A25BED1AF63C0 /* SidebarView.swift */; };
 		E106C3AD129D828F6610F1DA /* BLEDeviceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82F9B10EA42ACAFC1177FD86 /* BLEDeviceTracker.swift */; };
+		E1C0A0010000000000000001 /* WiFiGatewayEvidenceSampling.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C0A0010000000000000003 /* WiFiGatewayEvidenceSampling.swift */; };
+		E1C0A0010000000000000002 /* WiFiGatewayEvidenceSamplingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C0A0010000000000000004 /* WiFiGatewayEvidenceSamplingTests.swift */; };
 		E286512AE0D7D9665915418C /* MACVendorCSVParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA9A004B124C029C6A10984F /* MACVendorCSVParser.swift */; };
 		E4A2B3C4D5E6F708112233B1 /* SpectrumPanelViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A2B3C4D5E6F708112233B0 /* SpectrumPanelViewTests.swift */; };
 		E663045A0F58E417EBA03F1A /* BLEScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50FE94143742CA25A83159F /* BLEScanner.swift */; };
@@ -274,6 +273,7 @@
 		F56B743685AC2A26C571BD86 /* TrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5291FB547CBD7D931C665B62 /* TrendChartView.swift */; };
 		F5CB685AD7407C0619390870 /* APRadarSoundSynthesizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F1F9D749C0EF27ECB86119 /* APRadarSoundSynthesizerTests.swift */; };
 		F60691EB101E7082F620FFC9 /* BandChartViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21FF1FB96DA89AF017B4B4FF /* BandChartViewModel.swift */; };
+		F6E23A53B7E2F9654AA6AC38 /* OpenSourceLicenseCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */; };
 		F8E24D391BECA0D9BD85FA0A /* KalmanFilter1D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6308398E710A45119C510D1C /* KalmanFilter1D.swift */; };
 		F9A000000000000000000001 /* WiFiLensCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88181B172C615AC4EF6C93E6 /* WiFiLensCore.framework */; };
 		F9A000000000000000000007 /* WiFiLensCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88181B172C615AC4EF6C93E6 /* WiFiLensCore.framework */; };
@@ -456,10 +456,6 @@
 		3E0069C108C9CFCCD39B7898 /* ChannelBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelBand.swift; sourceTree = "<group>"; };
 		3EAF444453E304ABB57AF3AA /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		3EBA0934EF69F6766E3C53A4 /* ExternalLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalLinks.swift; sourceTree = "<group>"; };
-		68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseCatalog.swift; sourceTree = "<group>"; };
-		AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseTexts.swift; sourceTree = "<group>"; };
-		EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicensesView.swift; sourceTree = "<group>"; };
-		6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseCatalogTests.swift; sourceTree = "<group>"; };
 		3FA64E6D34972FDA4A66AF17 /* BLERSSISample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLERSSISample.swift; sourceTree = "<group>"; };
 		3FF2C94DCFE0C5A733D8447D /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
 		406D6574ACE5DD5BB9BC0943 /* SpectrumHeatmapPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapPanel.swift; sourceTree = "<group>"; };
@@ -499,11 +495,13 @@
 		6380D911A7E63125CD14686A /* MCPServerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServerTests.swift; sourceTree = "<group>"; };
 		63FCEC1885414EF2B025A613 /* SpectrumHeatmapFieldGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapFieldGeneratorTests.swift; sourceTree = "<group>"; };
 		665164CF38FD5C48CFF43B32 /* RegulatoryDomainResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegulatoryDomainResolver.swift; sourceTree = "<group>"; };
+		68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseCatalog.swift; sourceTree = "<group>"; };
 		68A4D99B2988566E68A226CD /* FilterCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterCondition.swift; sourceTree = "<group>"; };
 		68FC38B70C5DDFB6A65B99CB /* RoamingRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamingRecord.swift; sourceTree = "<group>"; };
 		6B4329871EFADE8EC1AFAD0A /* GuidanceStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidanceStateStore.swift; sourceTree = "<group>"; };
 		6BC5B625E97A7CAC9BE33311 /* LocationPermissionRequiredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermissionRequiredView.swift; sourceTree = "<group>"; };
 		6C28E9E516DF63C4DCE4917E /* GuidancePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidancePolicy.swift; sourceTree = "<group>"; };
+		6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseCatalogTests.swift; sourceTree = "<group>"; };
 		6D2BD8FE53864BBF8415FB54 /* OnboardingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingConfiguration.swift; sourceTree = "<group>"; };
 		6DA5763F2B6D48DEABAA0B76 /* es.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = es.md; sourceTree = "<group>"; };
 		6FF09DD63C317B52E73F20F0 /* ChannelOccupancyAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelOccupancyAnalyzer.swift; sourceTree = "<group>"; };
@@ -562,7 +560,6 @@
 		A10000000000000000000017 /* App/MenuBarWindowBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/MenuBarWindowBehaviorTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5D /* WiFiLinkStateCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenter.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5F /* WiFiLinkStateCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiLinkStateCenterTests.swift; sourceTree = "<group>"; };
-		E1C0A0010000000000000004 /* WiFiGatewayEvidenceSamplingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiGatewayEvidenceSamplingTests.swift; sourceTree = "<group>"; };
 		A1C0DE0000000000000000F1 /* WiFi Lens.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "WiFi Lens.icon"; sourceTree = "<group>"; };
 		A1C4E7B92F0148D3B6E90A21 /* DetailPageMinimumHeightTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailPageMinimumHeightTests.swift; sourceTree = "<group>"; };
 		A1C4E7BB2F0148D3B6E90A23 /* MainWindowMinimumSizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowMinimumSizeTests.swift; sourceTree = "<group>"; };
@@ -583,6 +580,7 @@
 		A7EC08C2B231FB27936C1B51 /* NetworkInfoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfoService.swift; sourceTree = "<group>"; };
 		A836B5C01C1823F10857DEA2 /* SpectrumHeatmapLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapLayoutTests.swift; sourceTree = "<group>"; };
 		AA061F3F3FD36C549459A2C6 /* ChannelQualityCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelQualityCalculatorTests.swift; sourceTree = "<group>"; };
+		AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicenseTexts.swift; sourceTree = "<group>"; };
 		AB62360B0F457F395CC2124E /* BandChartLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandChartLayout.swift; sourceTree = "<group>"; };
 		AB6E25B8012F80B63AC9EDA4 /* ColorExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensionTests.swift; sourceTree = "<group>"; };
 		AD3DEBF2363CBD3278EACB5B /* fr.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = fr.md; sourceTree = "<group>"; };
@@ -592,7 +590,6 @@
 		AFEC658553DB5272DFCD6E53 /* SpectrumHeatmapRenderCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapRenderCoordinatorTests.swift; sourceTree = "<group>"; };
 		B43379B9F528046AF8AEBB61 /* BandPanelSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandPanelSelectionTests.swift; sourceTree = "<group>"; };
 		B642F492A3537A8A43BBFE94 /* GatewayLatencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayLatencyProvider.swift; sourceTree = "<group>"; };
-		E1C0A0010000000000000003 /* WiFiGatewayEvidenceSampling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiGatewayEvidenceSampling.swift; sourceTree = "<group>"; };
 		B67B7DC71DB3CD507CA1683D /* DiagnosticPingArguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticPingArguments.swift; sourceTree = "<group>"; };
 		B887B571F2E1D4FDD179E18C /* RegulatoryDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegulatoryDatabase.swift; sourceTree = "<group>"; };
 		B897B8089C302790CC1E5CDC /* ChannelSpanCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelSpanCalculatorTests.swift; sourceTree = "<group>"; };
@@ -631,6 +628,8 @@
 		D92298452F334CDAAA9695D3 /* WindowFramePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicyTests.swift; sourceTree = "<group>"; };
 		DD807DCE2C45FF4E6C9559D4 /* WiFiEnvironmentSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiEnvironmentSnapshot.swift; sourceTree = "<group>"; };
 		DFCAEB452D1D143784DBABF6 /* ChartSeriesData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartSeriesData.swift; sourceTree = "<group>"; };
+		E1C0A0010000000000000003 /* WiFiGatewayEvidenceSampling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiGatewayEvidenceSampling.swift; sourceTree = "<group>"; };
+		E1C0A0010000000000000004 /* WiFiGatewayEvidenceSamplingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiGatewayEvidenceSamplingTests.swift; sourceTree = "<group>"; };
 		E36C8AC67CE895FF120AE135 /* WindowFramePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePolicy.swift; sourceTree = "<group>"; };
 		E46C490CC700608CBFE6EBCA /* DeviceCompatibilityFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceCompatibilityFilterTests.swift; sourceTree = "<group>"; };
 		E4A2B3C4D5E6F708112233B0 /* SpectrumPanelViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumPanelViewTests.swift; sourceTree = "<group>"; };
@@ -640,6 +639,7 @@
 		E6B9079FE1EE516966F62103 /* SpectrumHeatmapFieldGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumHeatmapFieldGenerator.swift; sourceTree = "<group>"; };
 		E83547C1A36ADDD9E827B26A /* ChartUtilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartUtilityTests.swift; sourceTree = "<group>"; };
 		E8E5DAC72C03831AA180D7CC /* ConsoleSplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleSplitView.swift; sourceTree = "<group>"; };
+		EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicensesView.swift; sourceTree = "<group>"; };
 		EC10000000000000000000002 /* EditionCompositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditionCompositionTests.swift; sourceTree = "<group>"; };
 		EC10000000000000000000006 /* OSSEditionComposition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSSEditionComposition.swift; sourceTree = "<group>"; };
 		EE3D797244183B6335A2079F /* SignalProcessingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalProcessingTests.swift; sourceTree = "<group>"; };
@@ -905,6 +905,16 @@
 			path = Channels;
 			sourceTree = "<group>";
 		};
+		2DBE5FA4FFF39D810AB3C998 /* Licenses */ = {
+			isa = PBXGroup;
+			children = (
+				68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */,
+				AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */,
+				EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */,
+			);
+			path = Licenses;
+			sourceTree = "<group>";
+		};
 		32BDD82D029B234840D8E8BA /* Regulatory */ = {
 			isa = PBXGroup;
 			children = (
@@ -918,24 +928,6 @@
 				A1F67ACB472A4CD3A63FEBE6 /* RegulatoryPipeline.swift */,
 			);
 			path = Regulatory;
-			sourceTree = "<group>";
-		};
-		2DBE5FA4FFF39D810AB3C998 /* Licenses */ = {
-			isa = PBXGroup;
-			children = (
-				68409281884F17A438D8C488 /* OpenSourceLicenseCatalog.swift */,
-				AA13FDA48ABB25789B035C0C /* OpenSourceLicenseTexts.swift */,
-				EB0B437D6FA9E4A2763AB85B /* OpenSourceLicensesView.swift */,
-			);
-			path = Licenses;
-			sourceTree = "<group>";
-		};
-		B96DCB4B00E98C49CA430707 /* Licenses */ = {
-			isa = PBXGroup;
-			children = (
-				6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */,
-			);
-			path = Licenses;
 			sourceTree = "<group>";
 		};
 		33375FB8C61E7F08CE1F632D /* WiFiLensCore */ = {
@@ -1175,6 +1167,14 @@
 				C29B7DBD09D2566957F89AA6 /* RegulatoryModelTests.swift */,
 			);
 			path = Regulatory;
+			sourceTree = "<group>";
+		};
+		B96DCB4B00E98C49CA430707 /* Licenses */ = {
+			isa = PBXGroup;
+			children = (
+				6CCCC56857015C3581A1083B /* OpenSourceLicenseCatalogTests.swift */,
+			);
+			path = Licenses;
 			sourceTree = "<group>";
 		};
 		BAE3498F2590636A7D6F5147 /* Channels */ = {
@@ -1679,7 +1679,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 2660;
-				LastUpgradeCheck = 2710;
+				LastUpgradeCheck = 2720;
 				TargetAttributes = {
 					FBA000070000000000000007 = {
 						TestTargetID = 4815C3B026D255EF85C56198;
@@ -2218,7 +2218,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -2488,7 +2488,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
