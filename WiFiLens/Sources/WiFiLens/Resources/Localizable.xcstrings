@@ -61,16 +61,6 @@
         }
       }
     },
-    "%@ · %@ observations" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · %2$@ observations"
-          }
-        }
-      }
-    },
     "%@ APs" : {
       "comment" : "Access Point count with number",
       "extractionState" : "manual",
@@ -125,38 +115,8 @@
         }
       }
     },
-    "%@ gateway observations · %@ groups" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ gateway observations · %2$@ groups"
-          }
-        }
-      }
-    },
-    "%@ groups · %@ observations" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ groups · %2$@ observations"
-          }
-        }
-      }
-    },
     "%@ ms" : {
 
-    },
-    "%@ Wi-Fi disconnection observations · %@ groups" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ Wi-Fi disconnection observations · %2$@ groups"
-          }
-        }
-      }
     },
     "%@: %@" : {
       "localizations" : {
@@ -8225,12 +8185,6 @@
           }
         }
       }
-    },
-    "Anomaly groups by date" : {
-
-    },
-    "Anomaly groups: %@" : {
-
     },
     "apRadar.accessibility.signalLost" : {
       "comment" : "VoiceOver summary for the signal lost state",
@@ -20115,21 +20069,6 @@
         }
       }
     },
-    "Continuous measurement summaries and verified events could not be read." : {
-
-    },
-    "Continuous measurement summaries and verified events were retrieved." : {
-
-    },
-    "Continuous measurement summaries could not be read." : {
-
-    },
-    "Continuous measurement summaries were retrieved; no verified events were retrieved." : {
-
-    },
-    "Events were retrieved, but continuous observation coverage is incomplete or sparse." : {
-
-    },
     "export.default_image_filename" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -21068,13 +21007,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "·  %1$@  ·  Ch %2$lld"
+            "value" : "·  %1$@  ·  信道 %2$lld"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "·  %1$@  ·  Ch %2$lld"
+            "value" : "·  %1$@  ·  信道 %2$lld"
           }
         }
       },
@@ -21157,10 +21096,16 @@
             "value" : "Канал %@"
           }
         },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信道 %@"
+          }
+        },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ch %@"
+            "value" : "信道 %@"
           }
         }
       },
@@ -21922,9 +21867,6 @@
           }
         }
       }
-    },
-    "Groups are display summaries of the same type and network, separated by no more than 60 seconds; they do not establish a single fault." : {
-
     },
     "guidance.badge_bar.dismiss" : {
       "extractionState" : "manual",
@@ -22773,12 +22715,6 @@
           }
         }
       }
-    },
-    "High-latency observations: %@" : {
-
-    },
-    "Highest observed latency: %@ ms" : {
-
     },
     "interfaces.count_format" : {
       "extractionState" : "manual",
@@ -34198,12 +34134,6 @@
         }
       }
     },
-    "No continuous measurement summaries or verified events were retrieved for this date." : {
-
-    },
-    "No-response observations: %@" : {
-
-    },
     "observation.diagnosis.congested.message_fmt" : {
       "comment" : "Congested channel with details",
       "extractionState" : "manual",
@@ -35916,16 +35846,6 @@
         }
       }
     },
-    "Observed %@ – %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Observed %1$@ – %2$@"
-          }
-        }
-      }
-    },
     "onboarding.welcome.body" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -36667,9 +36587,6 @@
           }
         }
       }
-    },
-    "One or more evidence sources are unavailable." : {
-
     },
     "overview.accessibility.globe_label" : {
       "comment" : "3D visualization of Wi‑Fi networks around the globe",
@@ -38928,9 +38845,6 @@
         }
       }
     },
-    "Recorded threshold: %@ ms" : {
-
-    },
     "recording.chart.empty" : {
       "comment" : "Empty state when no data has been recorded yet for the timeline chart",
       "extractionState" : "manual",
@@ -40638,7 +40552,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ch %lld"
+            "value" : "信道 %lld"
           }
         },
         "zh-Hant" : {
@@ -51637,9 +51551,6 @@
         }
       }
     },
-    "Sparse event observations do not establish continuous observation coverage." : {
-
-    },
     "spectrum.accessibility.aggregate_heatmap_label" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -58941,12 +58852,6 @@
           }
         }
       }
-    },
-    "Verified events could not be read." : {
-
-    },
-    "Verified events were retrieved, but no continuous measurement summaries were retrieved." : {
-
     },
     "whatsnew.close" : {
       "comment" : "Close What's New sheet",
