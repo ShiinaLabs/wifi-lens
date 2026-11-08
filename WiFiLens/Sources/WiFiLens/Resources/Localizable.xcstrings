@@ -21068,13 +21068,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "·  %1$@  ·  Ch %2$lld"
+            "value" : "·  %1$@  ·  信道 %2$lld"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "·  %1$@  ·  Ch %2$lld"
+            "value" : "·  %1$@  ·  信道 %2$lld"
           }
         }
       },
@@ -21157,10 +21157,16 @@
             "value" : "Канал %@"
           }
         },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信道 %@"
+          }
+        },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ch %@"
+            "value" : "信道 %@"
           }
         }
       },
@@ -40260,7 +40266,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ch %lld"
+            "value" : "信道 %lld"
           }
         },
         "zh-Hant" : {
