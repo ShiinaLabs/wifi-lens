@@ -1,48 +1,49 @@
-# Neu in Version 2.0.1
+# Neu in WiFi Lens 2.1.0
 
-## Dieses Update
+## Überarbeitete Analyse
 
-Diese Aktualisierung sorgt dafür, dass WiFi Lens nur noch Informationen anzeigt, die sich bestätigen lassen. Verbindungszustände und einzelne Messwerte, die nicht bestätigt werden können, werden jetzt als „Unbekannt“ angezeigt, veraltete Messwerte gelten nicht mehr als aktueller Wert, bei einem fehlgeschlagenen Scan wird die Netzwerkliste geleert, und wenn der Wi-Fi-Status unbekannt ist, wird der Scan pausiert und der Grund dafür erklärt.
+* Die Analyse bietet jetzt Netzwerkerlebnis und Problemverlauf. Damit kannst du die Zuverlässigkeit deines Netzwerks und historische Basiswerte nachvollziehen sowie aufgezeichnete Probleme mit den zugehörigen Belegen prüfen.
+* Statistics und Insights wurden eingestellt.
+* Timeline bleibt verfügbar, damit du vorhandene historische Ereignisse ansehen und exportieren kannst. Die Funktion ist veraltet und erstellt keine neuen Timeline-Einträge oder Analysen mehr.
 
-Der Roaming-Test folgt demselben Prinzip: Wechsel werden nur zwischen aufeinanderfolgenden verbundenen Messungen erfasst, die Signalkurve wird in Zeiträumen ohne Messung unterbrochen, und beim Überfahren mit dem Zeiger siehst du gleichzeitig die Messwerte aller APs zu diesem Zeitpunkt.
+## Optionale Hintergrundbeobachtung
 
-In der Oberfläche wurden bei AP-Radar und Netzwerktest die Titel entfernt, die den Fenstertitel wiederholt haben, die Gruppe Analyse wurde zu Netzwerkerlebnis und Problemverlauf aktualisiert, und die Titel-Badges in der Symbolleiste unterstützen jetzt VoiceOver.
+* Wenn du sie aktivierst, zeichnet WiFi Lens Pro den WLAN-Verbindungsstatus und Antworten des Gateways auf, während die App geschlossen ist. Standardmäßig ist diese Funktion ausgeschaltet.
+* Während dein Mac im Ruhezustand ist, werden keine Daten erfasst. Nach dem Aufwachen wird die Erfassung automatisch fortgesetzt. Die Daten bleiben auf deinem Mac und werden nicht hochgeladen.
+* Schalte diese Einstellung aus, um die Hintergrundbeobachtung zu beenden.
+
+## Open-Source-Lizenzen
+
+In der App kannst du Informationen zu den verwendeten Open-Source-Komponenten und ihren Lizenzen ansehen. Wir respektieren Open-Source-Lizenzen und schätzen die Arbeit der Open-Source-Community und ihrer Maintainer.
+
+## WiFi Lens 2.0.1 – Dieses Update
+
+Dieses Update stellt bestätigte Informationen klarer dar. Verbindungszustände und einzelne Messwerte, die nicht bestätigt werden können, erscheinen als „Unbekannt“; veraltete Messwerte werden nicht mehr als aktuelle Werte angezeigt; und bei einem fehlgeschlagenen Scan wird die Netzwerkliste geleert, damit alte Messwerte nicht für aktuelle Ergebnisse gehalten werden.
+
+Roaming-Tests erfassen einen Wechsel jetzt nur zwischen Messungen, die sich lückenlos bestätigen lassen. Signalkurven werden bei Zeiträumen ohne Messung unterbrochen. Beim Überfahren mit dem Zeiger siehst du die Messwerte aller APs zu diesem Zeitpunkt.
+
+Bei AP Radar und Network Check wurden Titel entfernt, die den Fenstertitel wiederholten. Außerdem wurde die VoiceOver-Unterstützung des Titel-Badges in der Symbolleiste verbessert.
 
 ## Rückblick auf WiFi Lens 2.0
 
-WiFi Lens 2.0 ist eine umfassende Grundlage für präzisere, zuverlässigere und konsistentere Wi-Fi-Analysen.
+WiFi Lens 2.0 verbesserte die Erkennung von Wi-Fi-Informationen und die Möglichkeiten zur Netzwerkdiagnose.
 
-### Detailliertere Wi-Fi-Protokollanalyse
+### Vollständigere Wi-Fi-Informationen
 
-* WiFi Lens wertet jetzt die von nahegelegenen Access Points angekündigten 802.11-Informationselemente robuster auf niedriger Ebene aus.
-* Die Erkennung der verwendeten Kanalbreite wurde verbessert, einschließlich 20, 40, 80, 160 und 80+80 MHz.
-* WPA3-Sicherheit, Verschlüsselungssuiten, 802.11k/r/v/w-Funktionen, Wi-Fi-Generationen, MCS und Spatial Streams werden zuverlässiger erkannt.
-* Fehlerhafte oder unvollständige Funkmetadaten werden jetzt vorsichtiger behandelt, anstatt Werte zu erraten. Das verringert irreführende Angaben zu Funktionen.
+* Die von nahegelegenen Access Points angekündigten Informationen werden besser ausgewertet.
+* Die verwendete Kanalbreite wird genauer erkannt, einschließlich 20, 40, 80, 160 und 80+80 MHz.
+* WPA3, Verschlüsselungssuiten, 802.11k/r/v/w, Wi-Fi-Generationen, MCS und Spatial Streams werden besser erkannt.
+* Fehlende, abgeschnittene oder fehlerhafte Funkinformationen werden klar als unsicher dargestellt, statt durch Vermutungen ergänzt zu werden.
 
-### Eine stärkere Grundlage für die Fehlerbehebung
+### Verständlichere Netzwerkdiagnose
 
-* Network Self-Check wurde mit klareren, evidenzbasierten Diagnosen für Konnektivität, DNS, HTTPS, IPv6 und konfigurierte Proxys neu aufgebaut.
-* Die Wi-Fi-Analysefunktionen nutzen jetzt eine klarere gemeinsame Architektur. Das verbessert die Konsistenz von Spectrum, Channels, Interfaces, AP Radar und Diagnosen.
-* Laufzeit- und Speicherverwaltung wurden neu gestaltet, um Nutzerdaten besser zu schützen und die Zuverlässigkeit in verschiedenen App-Umgebungen zu erhöhen.
-
-### WiFi Lens Pro
-
-* Timeline-Speicherung und der Umgang mit Verlaufsdaten sind zuverlässiger, einschließlich einer sichereren Migration bestehender Installationen.
-* Die Infrastruktur für Langzeitbeobachtungen wurde gestärkt und bildet eine verlässlichere Grundlage für Verlauf, Statistics, Insights und Untersuchungsabläufe.
-* Produktions- und Entwicklungsumgebungen verwenden jetzt getrennte Identitäten, Speicherorte und MCP-Endpunkte.
+* Network Self-Check wurde verbessert und prüft Konnektivität, DNS, HTTPS, IPv6 und konfigurierte Proxys.
+* Wi-Fi-Informationen werden in Spectrum, Channels, Interfaces, AP Radar und der Netzwerkdiagnose konsistenter dargestellt.
+* WiFi Lens Pro liest und übernimmt vorhandene Verlaufsdaten zuverlässiger, damit du sie nach einem Upgrade weiterhin ansehen kannst.
 
 ### AI und MCP
 
-* Der integrierte MCP-Server ist sauberer in die App-Laufzeit eingebunden.
-* Kompatible KI-Clients können weiterhin lokal über den in den Einstellungen aktivierten MCP-Endpunkt auf Live-Wi-Fi-Daten zugreifen.
-* MCP-Umgebungen sind zwischen Entwicklungs- und Produktions-Builds jetzt besser voneinander getrennt.
-
-### Zuverlässigkeit
-
-* Verbesserte Grenzen für persistente Daten, Startvalidierung, Protokollierung, Absturzdiagnose und MetricKit-Speicherung.
-* Zahlreiche Korrekturen und Tests für Netzwerke, Diagnosen, Lokalisierung, Barrierefreiheit und Laufzeitverhalten.
-
-WiFi Lens 2.0 schafft eine vertrauenswürdigere Grundlage, um zu verstehen, welche Fähigkeiten deine WLAN-Umgebung tatsächlich ankündigt – und um Probleme zu untersuchen, wenn sie auftreten.
+Wenn MCP Server aktiviert ist, können kompatible KI-Clients über eine lokale Verbindung auf Live-Wi-Fi-Informationen zugreifen.
 
 ## Der Community beitreten
 
