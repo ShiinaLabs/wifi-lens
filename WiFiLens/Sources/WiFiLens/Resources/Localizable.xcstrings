@@ -2,7 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "%@" : {
-
+      "shouldTranslate" : false
     },
     "%@ – %@" : {
       "localizations" : {
@@ -12,7 +12,8 @@
             "value" : "%1$@ – %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "%@ — %@" : {
       "extractionState" : "manual",
@@ -59,7 +60,8 @@
             "value" : "%1$@ · %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "%@ APs" : {
       "comment" : "Access Point count with number",
@@ -116,7 +118,7 @@
       }
     },
     "%@ ms" : {
-
+      "shouldTranslate" : false
     },
     "%@: %@" : {
       "localizations" : {
@@ -126,7 +128,8 @@
             "value" : "%1$@: %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "analysis.insight.action.open_timeline" : {
       "extractionState" : "manual",
