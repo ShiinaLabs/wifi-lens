@@ -8,7 +8,7 @@
 
 ## Optionale Hintergrundbeobachtung
 
-* Wenn du sie aktivierst, zeichnet WiFi Lens Pro den WLAN-Verbindungsstatus und Antworten des Gateways auf, während die App geschlossen ist. Standardmäßig ist diese Funktion ausgeschaltet.
+* Wenn du sie aktivierst, beobachtet WiFi Lens Pro dein Netzwerk weiter, während die App geschlossen ist. Standardmäßig ist diese Funktion ausgeschaltet.
 * Während dein Mac im Ruhezustand ist, werden keine Daten erfasst. Nach dem Aufwachen wird die Erfassung automatisch fortgesetzt. Die Daten bleiben auf deinem Mac und werden nicht hochgeladen.
 * Schalte diese Einstellung aus, um die Hintergrundbeobachtung zu beenden.
 

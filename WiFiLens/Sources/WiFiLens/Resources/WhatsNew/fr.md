@@ -8,7 +8,7 @@
 
 ## Observation en arrière-plan facultative
 
-* Lorsqu’elle est activée, WiFi Lens Pro enregistre l’état de la connexion Wi-Fi et les réponses de la passerelle pendant que l’app est fermée. Cette fonction est désactivée par défaut.
+* Lorsqu’elle est activée, WiFi Lens Pro continue d’observer votre réseau pendant que l’app est fermée. Cette fonction est désactivée par défaut.
 * Aucune donnée n’est collectée lorsque votre Mac est en veille. La collecte reprend automatiquement au réveil. Les données restent sur votre Mac et ne sont jamais envoyées.
 * Désactivez ce réglage pour arrêter l’observation en arrière-plan.
 

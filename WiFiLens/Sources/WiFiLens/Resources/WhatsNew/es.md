@@ -8,7 +8,7 @@
 
 ## Observación en segundo plano opcional
 
-* Al activarla, WiFi Lens Pro registra el estado de la conexión Wi-Fi y las respuestas de la puerta de enlace mientras la app está cerrada. Esta función está desactivada de forma predeterminada.
+* Al activarla, WiFi Lens Pro sigue observando tu red mientras la app está cerrada. Esta función está desactivada de forma predeterminada.
 * No se recopilan datos mientras el Mac está en reposo; la recopilación continúa automáticamente al reactivarse. Los datos se guardan en el Mac y nunca se cargan.
 * Desactiva este ajuste para detener la observación en segundo plano.
 

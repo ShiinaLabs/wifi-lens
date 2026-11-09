@@ -8,7 +8,7 @@
 
 ## Optional Background Observation
 
-* When enabled, WiFi Lens Pro records Wi-Fi connection state and gateway responses while the app is closed. This feature is off by default.
+* When enabled, WiFi Lens Pro continues observing your network while the app is closed. This feature is off by default.
 * Collection does not run while your Mac sleeps and continues automatically after wake. Data stays on your Mac and is never uploaded.
 * Turn off this setting to stop background observation.
 
