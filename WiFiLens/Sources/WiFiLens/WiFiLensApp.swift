@@ -76,7 +76,9 @@ private struct AppRootView: View {
     @AppStorage("bleEnabled") private var bleEnabled: Bool = false
     @State private var sceneState = MainWindowSceneState()
     @State private var hostWindow: NSWindow?
-    @State private var sidebarVisibility = NavigationSplitViewVisibility.automatic
+    @State private var sidebarVisibility = EditionAppShell.shouldStartWithCollapsedSidebar
+        ? NavigationSplitViewVisibility.detailOnly
+        : .automatic
     @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
     @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel(
         onDiagnosticsCompletedWithOwner: { ownerWindowID in

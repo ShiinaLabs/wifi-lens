@@ -367,6 +367,7 @@ enum EditionAssemblyProvider {
 enum EditionAppShell {
     static var isControlledDemoSession: Bool { false }
     static var opensMainWindowAtLaunch: Bool { false }
+    static var shouldStartWithCollapsedSidebar: Bool { false }
 
     @MainActor
     static func startProductDiagnostics() -> String? {
