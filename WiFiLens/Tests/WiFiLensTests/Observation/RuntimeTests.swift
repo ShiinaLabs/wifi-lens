@@ -115,7 +115,7 @@ struct RuntimeTests {
         await consumer.waitUntilEntered()
         #expect(store.currentStatus == status)
         consumer.resume()
-        await acceptance.value
+        #expect(await acceptance.value)
         await runtime.drainConsumers()
     }
 
@@ -160,7 +160,7 @@ struct RuntimeTests {
         #expect(consumer.isSuspended)
         #expect(await stopCompletion.isCompleted == false)
         consumer.resume()
-        await acceptance.value
+        #expect(await acceptance.value)
         await stopTask.value
 
         #expect(await stopCompletion.isCompleted)

@@ -1070,13 +1070,13 @@ struct APRadarPulseSchedulerTests {
         let sleeper = ManualSleeper()
         let scheduler = APRadarPulseScheduler(sleep: sleeper.sleep(for:))
         let counter = PulseCounter()
-        var shouldContinue = true
+        let continuation = PulseContinuation()
         let interval: Duration = .milliseconds(80)
 
         // Preset changes / cadence-mode switches call start() twice back to
         // back. Loop A starts and reaches its first sleep.
         scheduler.start(
-            shouldContinue: { shouldContinue },
+            shouldContinue: { continuation.shouldContinue },
             intervalProvider: { interval },
             playPulse: { counter.increment() },
             stochastic: false
@@ -1087,7 +1087,7 @@ struct APRadarPulseSchedulerTests {
         // Replace the loop while A is mid-sleep; B takes over but cannot run
         // until A's sleep is driven to completion.
         scheduler.start(
-            shouldContinue: { shouldContinue },
+            shouldContinue: { continuation.shouldContinue },
             intervalProvider: { interval },
             playPulse: { counter.increment() },
             stochastic: false
@@ -1110,7 +1110,7 @@ struct APRadarPulseSchedulerTests {
         #expect(scheduler.isActive)
         #expect(counter.count == 4)
 
-        shouldContinue = false
+        continuation.shouldContinue = false
         scheduler.cancel()
         #expect(!scheduler.isActive)
     }
@@ -1124,4 +1124,9 @@ private final class PulseCounter {
     func increment() {
         count += 1
     }
+}
+
+@MainActor
+private final class PulseContinuation {
+    var shouldContinue = true
 }

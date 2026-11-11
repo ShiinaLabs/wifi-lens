@@ -64,7 +64,7 @@ import Testing
         let guidance = RoamingGuidanceHarness()
         let vm = makeConnectedViewModel(guidance: guidance.coordinator)
 
-        await vm.checkReadiness()
+        vm.checkReadiness()
         await waitUntil { vm.state == .ready }
         vm.startTest()
         await waitUntil { vm.state == .running }
@@ -82,7 +82,7 @@ import Testing
         let guidance = RoamingGuidanceHarness()
         let vm = makeConnectedViewModel(guidance: guidance.coordinator)
 
-        await vm.checkReadiness()
+        vm.checkReadiness()
         await waitUntil { vm.state == .ready }
         vm.startTest()
         await waitUntil { vm.state == .running }

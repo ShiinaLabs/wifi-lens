@@ -164,7 +164,7 @@ struct APRadarSignalProcessorTrendTests {
 
     @Test("measuring while history is younger than 2 seconds or absent")
     func measuring() {
-        var empty = APRadarSignalProcessor()
+        let empty = APRadarSignalProcessor()
         #expect(empty.trend(at: t0) == .measuring)
 
         var fresh = APRadarSignalProcessor()

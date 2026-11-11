@@ -308,7 +308,7 @@ struct BudgetAwareDiagnosticCheck: DiagnosticCheck {
     let probe: BudgetAwareDiagnosticProbe
 
     func run() async throws -> NetworkDiagnosticResult {
-        try await probe.run()
+        await probe.run()
         return .init(id: id, status: .normal, summary: id.rawValue)
     }
 }

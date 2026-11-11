@@ -3,6 +3,7 @@ import XCTest
 /// Shared helpers for WiFiLens UI tests.
 /// Each page-specific test file's `XCTestCase` subclass can call these free functions
 /// to avoid duplicating setup boilerplate.
+@MainActor
 extension XCTestCase {
 
     @discardableResult

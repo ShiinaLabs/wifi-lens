@@ -146,7 +146,7 @@ struct WiFiScanFailureBackoffTests {
             return
         }
         #expect(networks.isEmpty)
-        #expect(await attempt.callCount == 3)
+        #expect(attempt.callCount == 3)
         await scanner.stopScanning()
     }
 }
