@@ -64,19 +64,16 @@ private struct AppRootView: View {
     let whatsNewCoordinator: WhatsNewCoordinator
     let sparkleUpdater: SparkleUpdater
     let updateMCPServer: @MainActor () -> Void
-    let installMainWindowOpenAction: (@escaping () -> Void) -> Void
-    let registerMainWindow: @MainActor (NSWindow?, MainWindowSceneState) -> Void
-    let updateMainWindowRoute: @MainActor (UUID, SidebarPage) -> Void
+    @Bindable var sceneState: MainWindowSceneState
+    let hostWindow: NSWindow?
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.openWindow) private var openWindow
 
     @AppStorage("hideTitleBadge") private var hideTitleBadge = true
     @AppStorage("bleEnabled") private var bleEnabled: Bool = false
-    @State private var sceneState = MainWindowSceneState()
-    @State private var hostWindow: NSWindow?
-    @State private var sidebarVisibility = EditionAppShell.shouldStartWithCollapsedSidebar
+    @State private var sidebarVisibility =
+        EditionAppShell.shouldStartWithCollapsedSidebar
         ? NavigationSplitViewVisibility.detailOnly
         : .automatic
     @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
@@ -155,7 +152,6 @@ private struct AppRootView: View {
             newPage == .networkDiagnostics ? sceneState.id : nil
         )
         EditionAssemblyProvider.configuration.guidanceCoordinator.endInvitation(forHostID: sceneState.id)
-        updateMainWindowRoute(sceneState.id, newPage)
     }
 
     /// Opens the launch-time badge-bar callout when the policy allows it. The
@@ -460,23 +456,10 @@ private struct AppRootView: View {
         .toolbar {
             secondaryToolbarContent
         }
-        .mainWindowMinimumSize()
-        .background(
-            WindowAccessor(
-                defaultSize: MainWindowSizing.defaultSize,
-                onResolveWindow: { window in
-                    hostWindow = window
-                    registerMainWindow(window, sceneState)
-                }
-            )
-        )
         .task {
             #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--r1-headless-acceptance") { return }
             #endif
-            installMainWindowOpenAction {
-                openWindow(id: WiFiLensApp.mainWindowSceneID)
-            }
             // Under `xcodebuild test` the app process hosts the unit test
             // bundle, so the real scanner must not start: CoreWLAN and
             // NetworkInfoService are synchronous XPC calls that can stall the
@@ -1224,35 +1207,229 @@ final class ApplicationTerminationCoordinator: NSObject, NSApplicationDelegate {
     }
 }
 
+@MainActor
+@Observable
+private final class AppRuntime {
+    let viewModel: ScannerViewModel
+    let macVendorDatabaseManager: MACVendorDatabaseManager
+    let macVendorDatabaseSummary: MACVendorBundledDatabaseSummary?
+    let roamingViewModel: RoamingTestViewModel
+    let apRadarViewModel: APRadarViewModel
+    var bleViewModel: BLEViewModel?
+    let onboardingCoordinator: OnboardingCoordinator
+    let whatsNewCoordinator = WhatsNewCoordinator.shared
+    let sparkleUpdater: SparkleUpdater
+    var showCrashLog = false
+    var crashLogText = ""
+
+    init(database: MACVendorBundledDatabase?) {
+        let configuration = EditionAssemblyProvider.configuration
+        let onboardingCoordinator = EditionAssemblyProvider.onboardingCoordinator
+        if !UITestMode.isActive,
+            !EditionAppShell.isControlledDemoSession,
+            !ProcessInfo.processInfo.isRunningUnderTestHost
+        {
+            // Existing-install detection must precede Sparkle's first write.
+            onboardingCoordinator.migrateExistingInstallationIfNeeded()
+        }
+        self.onboardingCoordinator = onboardingCoordinator
+        sparkleUpdater = SparkleUpdater()
+
+        let vendorResolver = MACVendorResolver(database: database)
+        let databaseSummary = database?.summary
+        macVendorDatabaseSummary = databaseSummary
+        let observationRuntime = configuration.shellHooks.makeObservationRuntime(WiFiObservationStore.shared)
+        let scannerViewModel = ScannerViewModel(
+            observationRuntime: observationRuntime,
+            vendorResolver: vendorResolver,
+            requiresLiveWiFiAuthorization: configuration.requiresLiveWiFiAuthorization
+        )
+        viewModel = scannerViewModel
+        roamingViewModel = configuration.shellHooks.makeRoamingViewModel(scannerViewModel)
+        apRadarViewModel = APRadarViewModel(observationRuntime: observationRuntime)
+        macVendorDatabaseManager = MACVendorDatabaseManager(
+            resolver: vendorResolver,
+            service: MACVendorDatabaseService(),
+            initialAvailability: databaseSummary.map { .installed($0.legacyDatabaseSummary) } ?? .notInstalled
+        )
+        let bleOn =
+            UserDefaults.standard.bool(forKey: "bleEnabled")
+            && configuration.shouldStartObservationRuntime
+            && !EditionAppShell.isControlledDemoSession
+            && !UITestMode.isActive
+        bleViewModel = bleOn ? BLEViewModel() : nil
+
+        AppLogger.bootstrap()
+        if let log = EditionAppShell.startProductDiagnostics() {
+            crashLogText = log
+            showCrashLog = true
+        }
+    }
+}
+
+@MainActor
+@Observable
+private final class AppStartupCoordinator {
+    private(set) var runtime: AppRuntime?
+    private(set) var failure: String?
+    @ObservationIgnored private var task: Task<Void, Never>?
+    @ObservationIgnored private var isTerminating = false
+
+    func start() {
+        guard runtime == nil, task == nil, !isTerminating else { return }
+        failure = nil
+        task = Task {
+            defer { task = nil }
+            do {
+                let configuration = EditionAssemblyProvider.configuration
+                if !ProcessInfo.processInfo.isRunningUnderTestHost {
+                    try await configuration.shellHooks.prepareForStartup()
+                }
+                let database = await Self.loadVendorDatabase()
+                try Task.checkCancellation()
+                guard !isTerminating else { return }
+                let runtime = AppRuntime(database: database)
+                self.runtime = runtime
+                #if DEBUG
+                    let arguments = ProcessInfo.processInfo.arguments
+                    let isHeadless =
+                        arguments.contains("--r1-headless-acceptance")
+                        || arguments.contains("--r1-location-authorization-check")
+                    if isHeadless {
+                        configuration.shellHooks.startLifecycle(runtime.viewModel.observationRuntime)
+                    }
+                #else
+                    let isHeadless = false
+                #endif
+                AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
+                if configuration.shouldStartObservationRuntime,
+                    !EditionAppShell.isControlledDemoSession,
+                    !UITestMode.isActive,
+                    !ProcessInfo.processInfo.isRunningUnderTestHost,
+                    !isHeadless
+                {
+                    Task { await WiFiLinkStateCenter.shared.start() }
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                failure = error.localizedDescription
+            }
+        }
+    }
+
+    @concurrent
+    nonisolated private static func loadVendorDatabase() async -> MACVendorBundledDatabase? {
+        MACVendorBundledDatabase.load()
+    }
+
+    func stopForTermination() async {
+        isTerminating = true
+        task?.cancel()
+        await task?.value
+        if let runtime { await runtime.viewModel.stopForTermination() }
+    }
+}
+
+private struct MainWindowLaunchView<Content: View>: View {
+    let startup: AppStartupCoordinator
+    let installMainWindowOpenAction: (@escaping () -> Void) -> Void
+    let registerMainWindow: @MainActor (NSWindow?, MainWindowSceneState) -> Void
+    let updateMainWindowRoute: @MainActor (UUID, SidebarPage) -> Void
+    @ViewBuilder let content: (AppRuntime, MainWindowSceneState, NSWindow?) -> Content
+
+    @Environment(\.openWindow) private var openWindow
+    @State private var sceneState = MainWindowSceneState()
+    @State private var hostWindow: NSWindow?
+    @State private var sidebarVisibility =
+        EditionAppShell.shouldStartWithCollapsedSidebar
+        ? NavigationSplitViewVisibility.detailOnly : .automatic
+
+    var body: some View {
+        Group {
+            if let runtime = startup.runtime {
+                content(runtime, sceneState, hostWindow)
+            } else {
+                NavigationSplitView(columnVisibility: $sidebarVisibility) {
+                    SidebarView(
+                        selectedPage: $sceneState.selectedPage,
+                        isWiFiAvailable: true,
+                        configuration: EditionAssemblyProvider.configuration,
+                        isUITestMode: UITestMode.isActive
+                    )
+                    .navigationSplitViewColumnWidth(min: 160, ideal: 180)
+                    .allowsHitTesting(false)
+                } detail: {
+                    if let failure = startup.failure {
+                        ContentUnavailableView {
+                            Label(
+                                String(localized: "startup.failure.title", comment: "App startup failure title"),
+                                systemImage: "exclamationmark.triangle"
+                            )
+                        } description: {
+                            Text(failure).textSelection(.enabled)
+                        } actions: {
+                            Button(String(localized: "common.action.retry", comment: "Retry a failed operation")) {
+                                startup.start()
+                            }
+                            .keyboardShortcut(.defaultAction)
+                            Button(String(localized: "common.action.quit", comment: "Quit the application")) {
+                                NSApp.terminate(nil)
+                            }
+                        }
+                        .accessibilityIdentifier("startup-failure")
+                    } else {
+                        VStack(spacing: 16) {
+                            Image(systemName: "wifi")
+                                .font(.system(size: 30, weight: .medium))
+                                .foregroundStyle(.tint)
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                Text(
+                                    String(
+                                        localized: "startup.preparing.title",
+                                        comment: "App startup progress message while preparing Wi-Fi tools")
+                                )
+                                .font(.title3.weight(.semibold))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("startup-preparing")
+                    }
+                }
+                .listStyle(.sidebar)
+                .navigationTitle("")
+            }
+        }
+        .mainWindowMinimumSize()
+        .background(
+            WindowAccessor(
+                defaultSize: MainWindowSizing.defaultSize,
+                onResolveWindow: { window in
+                    hostWindow = window
+                    registerMainWindow(window, sceneState)
+                }
+            )
+        )
+        .onChange(of: sceneState.selectedPage) { _, page in
+            updateMainWindowRoute(sceneState.id, page)
+        }
+        .task {
+            installMainWindowOpenAction { openWindow(id: WiFiLensApp.mainWindowSceneID) }
+            startup.start()
+        }
+    }
+}
+
 @main
 struct WiFiLensApp: App {
     static let mainWindowSceneID = "WiFiLensMainWindowScene"
 
     @NSApplicationDelegateAdaptor(ApplicationTerminationCoordinator.self)
     private var terminationCoordinator
-    @State private var viewModel: ScannerViewModel
-    @State private var macVendorDatabaseManager: MACVendorDatabaseManager
-    private let macVendorDatabaseSummary: MACVendorBundledDatabaseSummary?
-    @State private var roamingViewModel: RoamingTestViewModel
-    @State private var apRadarViewModel: APRadarViewModel
-    @State private var bleViewModel: BLEViewModel?
-    /// Declared before `sparkleUpdater` so the existing-install migration
-    /// observes `SUEnableAutomaticChecks` before Sparkle writes it on a
-    /// brand-new install (Swift storage properties initialize in declaration
-    /// order).
-    private let onboardingCoordinator: OnboardingCoordinator = {
-        let coordinator = EditionAssemblyProvider.onboardingCoordinator
-        if !UITestMode.isActive,
-            !EditionAppShell.isControlledDemoSession,
-            ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
-        {
-            coordinator.migrateExistingInstallationIfNeeded()
-        }
-        return coordinator
-    }()
-    private let whatsNewCoordinator: WhatsNewCoordinator = WhatsNewCoordinator.shared
-    @State private var sparkleUpdater = SparkleUpdater()
-    @State private var showCrashLog: Bool = false
+    @State private var startup: AppStartupCoordinator
     @State private var mainWindowLifecycle = MainWindowLifecycleCoordinator()
     @State private var routeResources = MainWindowRouteResourceCoordinator()
     @State private var pendingResolvedMainWindowFocus = false
@@ -1272,71 +1449,21 @@ struct WiFiLensApp: App {
             UserDefaults.standard.register(defaults: ["ApplePersistenceIgnoreState": true])
         }
 
-        let database = MACVendorBundledDatabase.load()
-        let vendorResolver = MACVendorResolver(database: database)
-        let databaseSummary = database?.summary
-        macVendorDatabaseSummary = databaseSummary
-        let observationRuntime = EditionAssemblyProvider.configuration.shellHooks.makeObservationRuntime(
-            WiFiObservationStore.shared)
-        let scannerViewModel = ScannerViewModel(
-            observationRuntime: observationRuntime,
-            vendorResolver: vendorResolver,
-            requiresLiveWiFiAuthorization: EditionAssemblyProvider.configuration.requiresLiveWiFiAuthorization
-        )
-        _viewModel = State(initialValue: scannerViewModel)
-        _roamingViewModel = State(
-            initialValue: EditionAssemblyProvider.configuration.shellHooks.makeRoamingViewModel(scannerViewModel))
-        _apRadarViewModel = State(
-            initialValue: APRadarViewModel(
-                observationRuntime: observationRuntime
-            ))
-        _macVendorDatabaseManager = State(
-            initialValue: MACVendorDatabaseManager(
-                resolver: vendorResolver,
-                service: MACVendorDatabaseService(),
-                initialAvailability: databaseSummary.map {
-                    .installed($0.legacyDatabaseSummary)
-                } ?? .notInstalled
-            )
-        )
-
-        AppLogger.bootstrap()
-        if let log = EditionAppShell.startProductDiagnostics() {
-            _crashLogText = State(initialValue: log)
-            _showCrashLog = State(initialValue: true)
-        }
-        let bleOn =
-            UserDefaults.standard.bool(forKey: "bleEnabled")
-            && EditionAssemblyProvider.configuration.shouldStartObservationRuntime
-            && !EditionAppShell.isControlledDemoSession
-            && !UITestMode.isActive
-        _bleViewModel = State(initialValue: bleOn ? BLEViewModel() : nil)
+        let startup = AppStartupCoordinator()
+        _startup = State(initialValue: startup)
         terminationCoordinator.configure(
-            stopRuntime: { await scannerViewModel.stopForTermination() },
+            stopRuntime: { await startup.stopForTermination() },
             terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
         )
         #if DEBUG
-            let r1HeadlessArguments = ProcessInfo.processInfo.arguments
-            let isR1Headless = r1HeadlessArguments.contains("--r1-headless-acceptance")
-                || r1HeadlessArguments.contains("--r1-location-authorization-check")
-            if isR1Headless {
-                EditionAssemblyProvider.configuration.shellHooks.startLifecycle(observationRuntime)
+            let arguments = ProcessInfo.processInfo.arguments
+            if arguments.contains("--r1-headless-acceptance")
+                || arguments.contains("--r1-location-authorization-check")
+            {
+                startup.start()
             }
-        #else
-            let isR1Headless = false
         #endif
-        AppLogger.app.info("WiFi Lens launched\(UITestMode.isActive ? " (UI test mode)" : "")")
-        if EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
-            !EditionAppShell.isControlledDemoSession,
-            !UITestMode.isActive,
-            !ProcessInfo.processInfo.isRunningUnderTestHost,
-            !isR1Headless
-        {
-            Task { await WiFiLinkStateCenter.shared.start() }
-        }
     }
-
-    @State private var crashLogText: String = ""
 
     var body: some Scene {
         // Single-window policy: `Window`, not `WindowGroup`, so macOS never offers
@@ -1373,18 +1500,19 @@ struct WiFiLensApp: App {
                 }
             }
             .onChange(of: bleEnabled) { _, enabled in
-                guard EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
+                guard let runtime = startup.runtime,
+                    EditionAssemblyProvider.configuration.shouldStartObservationRuntime,
                     !EditionAppShell.isControlledDemoSession
                 else { return }
                 if enabled {
-                    bleViewModel = BLEViewModel()
+                    runtime.bleViewModel = BLEViewModel()
                 } else {
-                    bleViewModel?.stopScanning()
-                    bleViewModel = nil
+                    runtime.bleViewModel?.stopScanning()
+                    runtime.bleViewModel = nil
                 }
                 routeResources.bind(
-                    spectrumViewModels: viewModel.allBandViewModels,
-                    bleViewModel: bleViewModel
+                    spectrumViewModels: runtime.viewModel.allBandViewModels,
+                    bleViewModel: runtime.bleViewModel
                 )
             }
             .onChange(of: mcpEnabled) { _, enabled in
@@ -1449,7 +1577,7 @@ struct WiFiLensApp: App {
                                     localized: "export.snapshot_markdown",
                                     comment: "Export as self-contained Markdown report")
                             ) {
-                                export(viewModel)
+                                if let viewModel = startup.runtime?.viewModel { export(viewModel) }
                             }
                             .keyboardShortcut("m", modifiers: [.command, .shift])
                         case .lockedPreview:
@@ -1474,7 +1602,7 @@ struct WiFiLensApp: App {
 
                         Divider()
 
-                        ForEach(viewModel.bandViewModels, id: \.band.id) { vm in
+                        ForEach(startup.runtime?.viewModel.bandViewModels ?? [], id: \.band.id) { vm in
                             Button(
                                 String(
                                     format: String(
@@ -1485,7 +1613,7 @@ struct WiFiLensApp: App {
                             }
                         }
                     }
-                    .disabled(viewModel.bandViewModels.isEmpty)
+                    .disabled(startup.runtime?.viewModel.bandViewModels.isEmpty ?? true)
                 }
 
                 CommandGroup(replacing: .appSettings) {
@@ -1504,7 +1632,7 @@ struct WiFiLensApp: App {
                         Button(
                             String(localized: "common.action.check_for_updates", comment: "Check for updates menu item")
                         ) {
-                            sparkleUpdater.checkForUpdates()
+                            startup.runtime?.sparkleUpdater.checkForUpdates()
                         }
                     }
                 #endif
@@ -1524,25 +1652,30 @@ struct WiFiLensApp: App {
     }
 
     private var mainWindowContent: some View {
-        Group {
+        MainWindowLaunchView(
+            startup: startup,
+            installMainWindowOpenAction: mainWindowLifecycle.installOpenSceneAction,
+            registerMainWindow: registerMainWindow,
+            updateMainWindowRoute: { windowID, route in
+                routeResources.update(windowID: windowID, route: route)
+            }
+        ) { runtime, sceneState, hostWindow in
+            @Bindable var runtime = runtime
             AppRootView(
-                viewModel: viewModel,
-                macVendorDatabaseManager: macVendorDatabaseManager,
-                macVendorDatabaseSummary: macVendorDatabaseSummary,
-                roamingViewModel: roamingViewModel,
-                apRadarViewModel: apRadarViewModel,
-                bleViewModel: bleViewModel,
-                showCrashLog: $showCrashLog,
-                crashLogText: $crashLogText,
-                onboardingCoordinator: onboardingCoordinator,
-                whatsNewCoordinator: whatsNewCoordinator,
-                sparkleUpdater: sparkleUpdater,
+                viewModel: runtime.viewModel,
+                macVendorDatabaseManager: runtime.macVendorDatabaseManager,
+                macVendorDatabaseSummary: runtime.macVendorDatabaseSummary,
+                roamingViewModel: runtime.roamingViewModel,
+                apRadarViewModel: runtime.apRadarViewModel,
+                bleViewModel: runtime.bleViewModel,
+                showCrashLog: $runtime.showCrashLog,
+                crashLogText: $runtime.crashLogText,
+                onboardingCoordinator: runtime.onboardingCoordinator,
+                whatsNewCoordinator: runtime.whatsNewCoordinator,
+                sparkleUpdater: runtime.sparkleUpdater,
                 updateMCPServer: updateMCPServer,
-                installMainWindowOpenAction: mainWindowLifecycle.installOpenSceneAction,
-                registerMainWindow: registerMainWindow,
-                updateMainWindowRoute: { windowID, route in
-                    routeResources.update(windowID: windowID, route: route)
-                }
+                sceneState: sceneState,
+                hostWindow: hostWindow
             )
         }
         .preferredColorScheme(colorScheme)
@@ -1621,10 +1754,10 @@ struct WiFiLensApp: App {
     private func registerMainWindow(_ window: NSWindow?, sceneState: MainWindowSceneState) {
         guard let window else { return }
 
-        if EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
+        if let runtime = startup.runtime, EditionAssemblyProvider.configuration.shouldStartObservationRuntime {
             routeResources.bind(
-                spectrumViewModels: viewModel.allBandViewModels,
-                bleViewModel: bleViewModel
+                spectrumViewModels: runtime.viewModel.allBandViewModels,
+                bleViewModel: runtime.bleViewModel
             )
         }
 
@@ -1699,6 +1832,7 @@ struct WiFiLensApp: App {
 
     @MainActor
     private func updateMCPServer() {
+        guard let viewModel = startup.runtime?.viewModel else { return }
         // Serialize stop→start on a single lifecycle task so only one start() is
         // ever in flight: NWListener releases its port asynchronously, so rapid
         // setting toggles must not race a fresh start against a pending stop.
@@ -1727,6 +1861,7 @@ struct WiFiLensApp: App {
 
     @MainActor
     private func exportSnapshotImage() {
+        guard let viewModel = startup.runtime?.viewModel else { return }
         let ownerWindowID = mainWindowLifecycle.activeWindow.flatMap {
             mainWindowLifecycle.sceneState(for: $0)?.id
         }
