@@ -1439,7 +1439,6 @@ private struct MainWindowLaunchView<Content: View>: View {
     @ViewBuilder let content: (AppRuntime, MainWindowSceneState, NSWindow?) -> Content
 
     @Environment(\.openWindow) private var openWindow
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sceneState = MainWindowSceneState()
     @State private var hostWindow: NSWindow?
     @State private var sidebarVisibility =
@@ -1450,7 +1449,6 @@ private struct MainWindowLaunchView<Content: View>: View {
         Group {
             if let runtime = startup.runtime {
                 content(runtime, sceneState, hostWindow)
-                    .transition(.opacity)
             } else {
                 NavigationSplitView(columnVisibility: $sidebarVisibility) {
                     SidebarView(
@@ -1486,10 +1484,8 @@ private struct MainWindowLaunchView<Content: View>: View {
                 }
                 .listStyle(.sidebar)
                 .navigationTitle("")
-                .transition(.opacity)
             }
         }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: startup.runtime != nil)
         .mainWindowMinimumSize()
         .background(
             WindowAccessor(
