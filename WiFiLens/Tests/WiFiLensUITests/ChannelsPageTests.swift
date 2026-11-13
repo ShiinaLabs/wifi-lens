@@ -5,13 +5,13 @@ import XCTest
 final class ChannelsPageTests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         launchAppForUITest(app)
     }
 
-    override func tearDownWithError() throws {
+    override func tearDown() async throws {
         app.terminate()
     }
 
