@@ -1331,6 +1331,106 @@ private final class AppStartupCoordinator {
     }
 }
 
+private struct OverviewStartupSkeleton: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isPulsing = false
+
+    private var fill: Color { Color.primary.opacity(0.045) }
+    private var innerFill: Color { Color.primary.opacity(0.055) }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            LinearGradient(
+                colors: colorScheme == .dark
+                    ? [Color(red: 0.10, green: 0.12, blue: 0.20), .clear]
+                    : [Color(red: 0.94, green: 0.95, blue: 0.98), .clear],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 360)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    Circle()
+                        .fill(fill)
+                        .frame(width: 240, height: 240)
+
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(fill)
+                        .frame(height: 96)
+                        .overlay(alignment: .leading) {
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(innerFill)
+                                    .frame(width: 28, height: 28)
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Capsule().fill(innerFill).frame(width: 120, height: 12)
+                                    Capsule().fill(innerFill.opacity(0.7)).frame(width: 190, height: 8)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 18)
+                        }
+
+                    HStack(spacing: 12) {
+                        ForEach(0..<3, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(fill)
+                                .frame(height: 96)
+                                .overlay {
+                                    VStack(spacing: 10) {
+                                        Circle().fill(innerFill).frame(width: 22, height: 22)
+                                        Capsule().fill(innerFill).frame(width: 54, height: 8)
+                                    }
+                                }
+                        }
+                    }
+
+                    ForEach(0..<2, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(fill)
+                            .frame(height: 68)
+                            .overlay(alignment: .leading) {
+                                HStack(spacing: 12) {
+                                    Circle().fill(innerFill).frame(width: 24, height: 24)
+                                    VStack(alignment: .leading, spacing: 7) {
+                                        Capsule().fill(innerFill).frame(width: 150, height: 10)
+                                        Capsule().fill(innerFill.opacity(0.7)).frame(width: 240, height: 8)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 18)
+                            }
+                    }
+                }
+                .padding(16)
+                .padding(.top, 24)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
+                .opacity(isPulsing ? 1 : 0.72)
+            }
+        }
+        .onAppear {
+            guard !reduceMotion else { return }
+            isPulsing = true
+        }
+        .animation(
+            reduceMotion ? nil : .easeInOut(duration: 1.2).repeatForever(autoreverses: true),
+            value: isPulsing
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            String(
+                localized: "startup.preparing.title",
+                comment: "App startup progress message while preparing Wi-Fi tools")
+        )
+        .accessibilityIdentifier("startup-preparing")
+    }
+}
+
 private struct MainWindowLaunchView<Content: View>: View {
     let startup: AppStartupCoordinator
     let installMainWindowOpenAction: (@escaping () -> Void) -> Void
@@ -1339,6 +1439,7 @@ private struct MainWindowLaunchView<Content: View>: View {
     @ViewBuilder let content: (AppRuntime, MainWindowSceneState, NSWindow?) -> Content
 
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sceneState = MainWindowSceneState()
     @State private var hostWindow: NSWindow?
     @State private var sidebarVisibility =
@@ -1349,6 +1450,7 @@ private struct MainWindowLaunchView<Content: View>: View {
         Group {
             if let runtime = startup.runtime {
                 content(runtime, sceneState, hostWindow)
+                    .transition(.opacity)
             } else {
                 NavigationSplitView(columnVisibility: $sidebarVisibility) {
                     SidebarView(
@@ -1379,30 +1481,15 @@ private struct MainWindowLaunchView<Content: View>: View {
                         }
                         .accessibilityIdentifier("startup-failure")
                     } else {
-                        VStack(spacing: 16) {
-                            Image(systemName: "wifi")
-                                .font(.system(size: 30, weight: .medium))
-                                .foregroundStyle(.tint)
-                            HStack(spacing: 8) {
-                                ProgressView()
-                                    .controlSize(.small)
-                                Text(
-                                    String(
-                                        localized: "startup.preparing.title",
-                                        comment: "App startup progress message while preparing Wi-Fi tools")
-                                )
-                                .font(.title3.weight(.semibold))
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityIdentifier("startup-preparing")
+                        OverviewStartupSkeleton()
                     }
                 }
                 .listStyle(.sidebar)
                 .navigationTitle("")
+                .transition(.opacity)
             }
         }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: startup.runtime != nil)
         .mainWindowMinimumSize()
         .background(
             WindowAccessor(
