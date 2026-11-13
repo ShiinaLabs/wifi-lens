@@ -758,6 +758,7 @@ final class MainWindowLifecycleCoordinator {
     private(set) weak var activeWindow: NSWindow?
     private var openSceneAction: (() -> Void)?
     private var pendingRoute: SidebarPage?
+    private var pendingExternalActivation = false
     private let isActiveAtRegistration: @MainActor (NSWindow) -> Bool
 
     var hasWindows: Bool { !registrations.isEmpty }
@@ -829,6 +830,10 @@ final class MainWindowLifecycleCoordinator {
         if registration.activationPending, let window = registration.window {
             activateRegistration(for: key, window: window)
         }
+        if pendingExternalActivation, let window = registration.window {
+            pendingExternalActivation = false
+            focus(window)
+        }
         return true
     }
 
@@ -887,6 +892,23 @@ final class MainWindowLifecycleCoordinator {
         openSceneAction?()
     }
 
+    /// Shows the main window for a duplicate launch, including an accessory instance with no window.
+    func activateMainWindow() {
+        if NSApp.activationPolicy() == .accessory {
+            NSApp.setActivationPolicy(.regular)
+        }
+        NSRunningApplication.current.activate(options: [.activateAllWindows])
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let window = activeWindow {
+            focus(window)
+            return
+        }
+
+        pendingExternalActivation = true
+        requestMainWindow(route: .overview)
+    }
+
     func sceneState(for window: NSWindow) -> MainWindowSceneState? {
         registrations[ObjectIdentifier(window)]?.sceneState
     }
@@ -924,6 +946,16 @@ final class MainWindowLifecycleCoordinator {
         activeWindow = window
         registration.activationPending = false
         registration.onActivate(registration.sceneID)
+    }
+
+    private func focus(_ window: NSWindow) {
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+        window.orderFrontRegardless()
+        window.makeMain()
+        window.makeKey()
+        window.makeKeyAndOrderFront(nil)
     }
 
     private func closeRegistration(for key: ObjectIdentifier) {
@@ -1134,6 +1166,8 @@ final class ApplicationTerminationCoordinator: NSObject, NSApplicationDelegate {
     private var terminationTask: Task<Void, Never>?
     private var deadlineTask: Task<Void, Never>?
     private var hasReplied = false
+    private var externalActivationHandler: (@MainActor () -> Void)?
+    private var externalActivationObserver: NSObjectProtocol?
 
     override convenience init() {
         self.init(
@@ -1162,6 +1196,20 @@ final class ApplicationTerminationCoordinator: NSObject, NSApplicationDelegate {
         guard terminationTask == nil, !hasReplied else { return }
         self.stopRuntime = stopRuntime
         self.terminateEdition = terminateEdition
+    }
+
+    func configureExternalActivation(handler: @escaping @MainActor () -> Void) {
+        guard externalActivationObserver == nil, let bundleIdentifier = Bundle.main.bundleIdentifier else { return }
+        externalActivationHandler = handler
+        externalActivationObserver = DistributedNotificationCenter.default().addObserver(
+            forName: mainWindowActivationNotification(for: bundleIdentifier),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.externalActivationHandler?()
+            }
+        }
     }
 
     func requestTermination() -> NSApplication.TerminateReply {
@@ -1508,6 +1556,10 @@ private struct MainWindowLaunchView<Content: View>: View {
     }
 }
 
+private func mainWindowActivationNotification(for bundleIdentifier: String) -> Notification.Name {
+    Notification.Name("\(bundleIdentifier).main-window.activation")
+}
+
 @main
 private enum WiFiLensAppEntry {
     @MainActor
@@ -1528,29 +1580,43 @@ private enum WiFiLensAppEntry {
                 )
             }
 
-            // Older versions do not hold the lock; reject a previously launched instance as well.
             let current = NSRunningApplication.current
-            let existing = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
-                .first { application in
-                    guard application.processIdentifier != current.processIdentifier, !application.isTerminated else {
-                        return false
+            let isTestHost = ProcessInfo.processInfo.isRunningUnderTestHost
+            let activationNotification = mainWindowActivationNotification(for: bundleIdentifier)
+
+            // Older versions do not hold the lock; reject a previously launched instance as well.
+            if !isTestHost {
+                let existing = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
+                    .first { application in
+                        guard application.processIdentifier != current.processIdentifier, !application.isTerminated
+                        else {
+                            return false
+                        }
+                        guard let otherDate = application.launchDate, let currentDate = current.launchDate else {
+                            return true
+                        }
+                        return otherDate < currentDate
+                            || (otherDate == currentDate && application.processIdentifier < current.processIdentifier)
                     }
-                    guard let otherDate = application.launchDate, let currentDate = current.launchDate else {
-                        return true
-                    }
-                    return otherDate < currentDate
-                        || (otherDate == currentDate && application.processIdentifier < current.processIdentifier)
+                if let existing {
+                    DistributedNotificationCenter.default().post(name: activationNotification, object: nil)
+                    _ = existing.activate()
+                    return
                 }
-            if let existing {
-                _ = existing.activate()
-                return
             }
 
-            let lockURL = supportDirectory.appendingPathComponent(".\(bundleIdentifier).main-instance.lock")
+            // Hosted unit tests run inside the app bundle but must not block a running app.
+            let instanceKind = isTestHost ? "test-host" : "main"
+            let lockURL = supportDirectory.appendingPathComponent(
+                ".\(bundleIdentifier).\(instanceKind)-instance.lock"
+            )
             guard let lock = try ApplicationInstanceLock(at: lockURL) else {
-                let existing = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
-                    .first { $0.processIdentifier != current.processIdentifier && !$0.isTerminated }
-                _ = existing?.activate()
+                if !isTestHost {
+                    DistributedNotificationCenter.default().post(name: activationNotification, object: nil)
+                    let existing = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
+                        .first { $0.processIdentifier != current.processIdentifier && !$0.isTerminated }
+                    _ = existing?.activate()
+                }
                 return
             }
             // SwiftUI's main loop returns only when the application finishes.
@@ -1600,6 +1666,10 @@ struct WiFiLensApp: App {
             stopRuntime: { await startup.stopForTermination() },
             terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
         )
+        let lifecycle = mainWindowLifecycle
+        terminationCoordinator.configureExternalActivation {
+            lifecycle.activateMainWindow()
+        }
         #if DEBUG
             let arguments = ProcessInfo.processInfo.arguments
             if arguments.contains("--r1-headless-acceptance")
