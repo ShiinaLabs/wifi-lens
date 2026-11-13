@@ -1,3 +1,5 @@
+import AppKit
+import Darwin
 import SwiftUI
 import WiFiLensCore
 
@@ -1507,6 +1509,66 @@ private struct MainWindowLaunchView<Content: View>: View {
 }
 
 @main
+private enum WiFiLensAppEntry {
+    @MainActor
+    static func main() {
+        do {
+            guard let bundleIdentifier = Bundle.main.bundleIdentifier,
+                let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+                    .first
+            else {
+                throw NSError(
+                    domain: NSCocoaErrorDomain,
+                    code: NSFileNoSuchFileError,
+                    userInfo: [
+                        NSLocalizedDescriptionKey: String(
+                            localized: "startup.instance.unavailable",
+                            comment: "Unable to find the application identity or support directory")
+                    ]
+                )
+            }
+
+            // Older versions do not hold the lock; reject a previously launched instance as well.
+            let current = NSRunningApplication.current
+            let existing = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
+                .first { application in
+                    guard application.processIdentifier != current.processIdentifier, !application.isTerminated else {
+                        return false
+                    }
+                    guard let otherDate = application.launchDate, let currentDate = current.launchDate else {
+                        return true
+                    }
+                    return otherDate < currentDate
+                        || (otherDate == currentDate && application.processIdentifier < current.processIdentifier)
+                }
+            if let existing {
+                _ = existing.activate()
+                return
+            }
+
+            let lockURL = supportDirectory.appendingPathComponent(".\(bundleIdentifier).main-instance.lock")
+            guard let lock = try ApplicationInstanceLock(at: lockURL) else {
+                let existing = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
+                    .first { $0.processIdentifier != current.processIdentifier && !$0.isTerminated }
+                _ = existing?.activate()
+                return
+            }
+            // SwiftUI's main loop returns only when the application finishes.
+            withExtendedLifetime(lock) {
+                WiFiLensApp.main()
+            }
+        } catch {
+            let application = NSApplication.shared
+            application.setActivationPolicy(.regular)
+            _ = NSRunningApplication.current.activate()
+            let alert = NSAlert(error: error)
+            alert.messageText = String(localized: "startup.failure.title", comment: "App startup failure title")
+            alert.runModal()
+            exit(EXIT_FAILURE)
+        }
+    }
+}
+
 struct WiFiLensApp: App {
     static let mainWindowSceneID = "WiFiLensMainWindowScene"
 
