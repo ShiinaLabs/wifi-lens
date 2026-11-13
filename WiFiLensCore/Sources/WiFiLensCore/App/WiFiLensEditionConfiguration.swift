@@ -77,6 +77,8 @@ public struct WiFiLensEditionShellHooks {
     public let registerMainWindowState: @MainActor (AnyObject, UUID) -> Bool
     public let unregisterMainWindowState: @MainActor (AnyObject, UUID) -> Void
     public let startLifecycle: @MainActor (WiFiObservationRuntime) -> Void
+    /// Completes edition-owned preparation before the full main-window content is created.
+    public let prepareForStartup: @MainActor () async throws -> Void
     public let prepareForTermination: @MainActor () async -> Void
     public let mainWindowDidBecomeActive: @MainActor (UUID) -> Void
     public let mainWindowWillClose: @MainActor (UUID) -> Void
@@ -98,7 +100,8 @@ public struct WiFiLensEditionShellHooks {
         mainWindowDidBecomeActive: @escaping @MainActor (UUID) -> Void,
         mainWindowWillClose: @escaping @MainActor (UUID) -> Void,
         detailContribution: @escaping @MainActor (EditionCompositionContext) -> AnyView,
-        settingsContribution: @escaping @MainActor () -> AnyView
+        settingsContribution: @escaping @MainActor () -> AnyView,
+        prepareForStartup: @escaping @MainActor () async throws -> Void = {}
     ) {
         self.markdownExportCommandContribution = markdownExportCommandContribution
         self.makeMainWindowState = makeMainWindowState
@@ -110,6 +113,7 @@ public struct WiFiLensEditionShellHooks {
         self.registerMainWindowState = registerMainWindowState
         self.unregisterMainWindowState = unregisterMainWindowState
         self.startLifecycle = startLifecycle
+        self.prepareForStartup = prepareForStartup
         self.prepareForTermination = prepareForTermination
         self.mainWindowDidBecomeActive = mainWindowDidBecomeActive
         self.mainWindowWillClose = mainWindowWillClose

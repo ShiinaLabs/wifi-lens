@@ -64,7 +64,7 @@ extension XCTestCase {
     }
 
     /// Standard UI test launch: purge saved state, set launch arguments, and launch.
-    /// Call from `setUpWithError`.
+    /// Call from `setUp`.
     func launchAppForUITest(
         _ app: XCUIApplication,
         bundleID: String = "io.github.kaoru.wifi-lens"

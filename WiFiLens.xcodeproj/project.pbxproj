@@ -119,6 +119,7 @@
 		705A69FF4A444471A62F39FF /* MACVendorDatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6B32FF2A0F53B0FC4984B8 /* MACVendorDatabaseManager.swift */; };
 		70994623CD4135FAAD441569 /* HysteresisEMA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F58041A91102E937BBECCE /* HysteresisEMA.swift */; };
 		710000000000000000000004 /* StorageLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000001 /* StorageLocations.swift */; };
+		710000000000000000000007 /* ApplicationInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000006 /* ApplicationInstanceLock.swift */; };
 		710000000000000000000005 /* StorageLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000002 /* StorageLocationsTests.swift */; };
 		712BAAA7E857992BBD82FED9 /* ChartSeriesData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCAEB452D1D143784DBABF6 /* ChartSeriesData.swift */; };
 		7136F0EDFCA248F06FB74954 /* WhatsNewCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48BFBB66E40F9C535B69FCA0 /* WhatsNewCoordinator.swift */; };
@@ -506,6 +507,7 @@
 		6DA5763F2B6D48DEABAA0B76 /* es.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = es.md; sourceTree = "<group>"; };
 		6FF09DD63C317B52E73F20F0 /* ChannelOccupancyAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelOccupancyAnalyzer.swift; sourceTree = "<group>"; };
 		710000000000000000000001 /* StorageLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocations.swift; sourceTree = "<group>"; };
+		710000000000000000000006 /* ApplicationInstanceLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationInstanceLock.swift; sourceTree = "<group>"; };
 		710000000000000000000002 /* StorageLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocationsTests.swift; sourceTree = "<group>"; };
 		727B5B7628CA7133937ECA2E /* BandPanelSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandPanelSelection.swift; sourceTree = "<group>"; };
 		7343A5D84BBD9A02C08690A6 /* OnboardingStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStateStore.swift; sourceTree = "<group>"; };
@@ -1076,6 +1078,7 @@
 		710000000000000000000003 /* Storage */ = {
 			isa = PBXGroup;
 			children = (
+				710000000000000000000006 /* ApplicationInstanceLock.swift */,
 				710000000000000000000001 /* StorageLocations.swift */,
 			);
 			path = Storage;
@@ -1826,6 +1829,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				710000000000000000000007 /* ApplicationInstanceLock.swift in Sources */,
 				710000000000000000000004 /* StorageLocations.swift in Sources */,
 				1BFF89425A53EF7DA96988D7 /* APDisplayState.swift in Sources */,
 				0E0000F1524FC2B3BD876330 /* APRadarView.swift in Sources */,
