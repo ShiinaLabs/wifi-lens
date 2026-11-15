@@ -241,6 +241,22 @@ public final class NetworkDiagnosticsViewModel {
         ]
     }
 
+    @_spi(ProCapture)
+    public func stageCompletedCaptureResult() {
+        activeTask?.cancel()
+        activeTask = nil
+        let staged = checkIDs.map { id in
+            NetworkDiagnosticResult(id: id, status: .normal, summary: "Normal")
+        }
+        results = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, $0) })
+        executionPhases = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, .completed) })
+        conclusion = NetworkDiagnosticConclusion.evaluate(
+            staged,
+            requiredIDs: Set(checkIDs)
+        )
+        phase = .completed
+    }
+
     deinit {
         activeTask?.cancel()
     }
@@ -866,18 +882,7 @@ actor NetworkDiagnosticRestartController {
         /// `record(.diagnosticsCompleted)` path is not invoked (Debug triggers
         /// schedule invitations explicitly).
         func debugStageCompletedResult() {
-            activeTask?.cancel()
-            activeTask = nil
-            let staged = checkIDs.map { id in
-                NetworkDiagnosticResult(id: id, status: .normal, summary: "Debug staged result")
-            }
-            results = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, $0) })
-            executionPhases = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, .completed) })
-            conclusion = NetworkDiagnosticConclusion.evaluate(
-                staged,
-                requiredIDs: Set(checkIDs)
-            )
-            phase = .completed
+            stageCompletedCaptureResult()
         }
     }
 #endif

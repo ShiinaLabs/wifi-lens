@@ -368,6 +368,7 @@ enum EditionAppShell {
     static var isControlledDemoSession: Bool { false }
     static var opensMainWindowAtLaunch: Bool { false }
     static var shouldStartWithCollapsedSidebar: Bool { false }
+    static var initialSecondaryToolbarSelections: SecondaryToolbarSelections { SecondaryToolbarSelections() }
 
     @MainActor
     static func startProductDiagnostics() -> String? {
