@@ -1624,6 +1624,7 @@
 				984558EACE79DA154CBABA43 /* Logging */,
 				C9E8118E23D34060B848E9AB /* SplitView */,
 				4C633EAD2670D0C4A957180F /* MarkdownKit */,
+				F9A00000000000000000000E /* SwiftFTR */,
 			);
 			productName = WiFiLensCore;
 			productReference = 88181B172C615AC4EF6C93E6 /* WiFiLensCore.framework */;
@@ -1712,6 +1713,7 @@
 				C0A7A1B2C3D4E5F678900002 /* XCRemoteSwiftPackageReference "SplitView" */,
 				FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
+				F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BD4D8FFAAD7E961D9EE4F5FE /* Products */;
@@ -2666,6 +2668,14 @@
 				minimumVersion = 2.10.0;
 			};
 		};
+		F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ShiinaLabs/MiniFTR.git";
+			requirement = {
+				kind = revision;
+				revision = 8eb7cbfe01cbac74cf82ce5f33c65a819266768f;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -2748,6 +2758,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
+		};
+		F9A00000000000000000000E /* SwiftFTR */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */;
+			productName = SwiftFTR;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
