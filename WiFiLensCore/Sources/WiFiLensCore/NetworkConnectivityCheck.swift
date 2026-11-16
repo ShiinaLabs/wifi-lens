@@ -246,6 +246,25 @@ struct NetworkConnectivityCheck: DiagnosticCheck {
     }
 }
 
+enum GatewayTraceMode: String, Equatable, Sendable {
+    case automatic
+    case always
+    case never
+}
+
+#if DEBUG
+    @_spi(GatewayTraceDebug)
+    public enum GatewayTraceDebugOverride {
+        public enum Mode: String, CaseIterable, Equatable, Hashable, Sendable {
+            case automatic
+            case always
+            case never
+        }
+
+        @MainActor public static var mode = Mode.automatic
+    }
+#endif
+
 struct GatewayReachabilityCheck: DiagnosticCheck {
     let id = NetworkDiagnosticCheckID.gatewayReachability
     private let interfaceSource: any NetworkInterfaceInfoSourcing
@@ -254,6 +273,7 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
     private let diagnosticGatewayMeasuring: (any DiagnosticGatewayMeasuring)?
     private let routeSource: (any DiagnosticRouteSourcing)?
     private let interfaceIndexProvider: @Sendable (String) -> UInt32
+    private let traceMode: GatewayTraceMode
 
     init(
         interfaceSource: any NetworkInterfaceInfoSourcing = SystemNetworkInterfaceInfoSource(),
@@ -265,13 +285,15 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         self.diagnosticGatewayMeasuring = nil
         self.routeSource = nil
         self.interfaceIndexProvider = { _ in 0 }
+        self.traceMode = .automatic
     }
 
     init(
         context: DiagnosticNetworkContext,
         gatewayMeasuring: any DiagnosticGatewayMeasuring = GatewayLatencyProvider(),
         routeSource: (any DiagnosticRouteSourcing)? = SystemDiagnosticRouteSource(),
-        interfaceIndexProvider: @escaping @Sendable (String) -> UInt32 = { if_nametoindex($0) }
+        interfaceIndexProvider: @escaping @Sendable (String) -> UInt32 = { if_nametoindex($0) },
+        traceMode: GatewayTraceMode = .automatic
     ) {
         self.interfaceSource = SystemNetworkInterfaceInfoSource()
         self.gatewayLatency = GatewayLatencyProvider()
@@ -279,6 +301,7 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         self.diagnosticGatewayMeasuring = gatewayMeasuring
         self.routeSource = routeSource
         self.interfaceIndexProvider = interfaceIndexProvider
+        self.traceMode = traceMode
     }
 
     func run() async -> NetworkDiagnosticResult {
@@ -364,6 +387,45 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
             outcome = .unverified
         }
 
+        targetEvidence.append(.init(code: "gateway.trace.mode", value: traceMode.rawValue))
+        let shouldTrace: Bool
+        switch traceMode {
+        case .automatic:
+            switch outcome {
+            case .replied, .cancelled: shouldTrace = false
+            default: shouldTrace = !Task.isCancelled
+            }
+        case .always:
+            shouldTrace = !Task.isCancelled
+        case .never:
+            shouldTrace = false
+        }
+
+        if shouldTrace {
+            let traceOutcome = await supplementalGatewayTrace(to: target)
+            if Task.isCancelled {
+                targetEvidence.append(.init(code: "gateway.trace.result", value: GatewayTraceOutcome.cancelled.rawValue))
+                return indeterminateResult(code: "gateway.probe.cancelled", evidence: targetEvidence)
+            }
+            if let routeSource, await routeSource.currentRoute(timeout: .seconds(1)) != context.route {
+                return NetworkDiagnosticResult(
+                    id: id,
+                    status: .indeterminate,
+                    summary: indeterminateSummary,
+                    detail: String(
+                        localized: "network_diagnostics.gateway.route_changed",
+                        comment: "Gateway route changed during the supplemental trace"
+                    ),
+                    evidence: targetEvidence + [.init(code: "gateway.route-changed", value: nil)]
+                )
+            }
+            targetEvidence.append(.init(code: "gateway.trace.result", value: traceOutcome.rawValue))
+        } else {
+            let traceState = Task.isCancelled
+                ? "skipped-cancelled"
+                : traceMode == .never ? "skipped-never" : "skipped-not-needed"
+            targetEvidence.append(.init(code: "gateway.trace.result", value: traceState))
+        }
 
         return result(
             for: outcome,
@@ -371,6 +433,41 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
             evidence: targetEvidence,
             detail: underlayDetail
         )
+    }
+
+    private func supplementalGatewayTrace(to target: DiagnosticGatewayTarget) async -> GatewayTraceOutcome {
+        guard !Task.isCancelled else { return .cancelled }
+        let tracer = SwiftFTR(
+            config: SwiftFTRConfig(maxHops: 1, maxWaitMs: 1500, noReverseDNS: true, interface: target.interfaceName)
+        )
+        let config = StreamingTraceConfig(
+            probeTimeout: 1.5,
+            retryAfter: nil,
+            emitTimeouts: true,
+            maxHops: 1
+        )
+        do {
+            for try await hop in tracer.traceStream(to: target.address, config: config) where hop.ttl == 1 {
+                switch hop.outcome {
+                case .replied, .unreachable:
+                    return hop.ipAddress == target.address ? .gatewayReplied : .otherResponder
+                case .timedOut: return .noResponse
+                case .notSent: return .notSent
+                }
+            }
+            return .noResponse
+        } catch {
+            return Task.isCancelled ? .cancelled : .failed
+        }
+    }
+
+    private enum GatewayTraceOutcome: String {
+        case gatewayReplied = "gateway-replied"
+        case otherResponder = "other-responder"
+        case noResponse = "no-response"
+        case notSent = "not-sent"
+        case failed
+        case cancelled
     }
 
     private enum GatewayProbeInterpretation: Equatable {

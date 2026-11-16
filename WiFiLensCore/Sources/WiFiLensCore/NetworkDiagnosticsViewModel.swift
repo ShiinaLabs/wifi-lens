@@ -533,11 +533,21 @@ public final class NetworkDiagnosticsViewModel {
 
     private func checksForRun(context: DiagnosticNetworkContext?) -> [any DiagnosticCheck] {
         guard usesProductionChecks, let context else { return checks }
+        #if DEBUG
+            let traceMode: GatewayTraceMode = switch GatewayTraceDebugOverride.mode {
+            case .automatic: .automatic
+            case .always: .always
+            case .never: .never
+            }
+        #else
+            let traceMode: GatewayTraceMode = .automatic
+        #endif
         return [
             NetworkConnectivityCheck(context: context),
             GatewayReachabilityCheck(
                 context: context,
-                gatewayMeasuring: diagnosticGatewayMeasuring
+                gatewayMeasuring: diagnosticGatewayMeasuring,
+                traceMode: traceMode
             ),
             GatewayTCPReachabilityCheck(context: context),
             DNSResolutionCheck(),

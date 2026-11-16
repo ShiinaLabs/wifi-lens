@@ -207,6 +207,24 @@ struct DiagnosticLogResult: Equatable, Sendable {
             let port = String(code.dropFirst("gateway.tcp.rtt-ms.".count))
             return "Gateway TCP port \(port) response time: " + String(number) + " ms"
         }
+        if code == "gateway.trace.mode" {
+            let modes = ["automatic": "Automatic", "always": "Always", "never": "Never"]
+            return modes[value].map { "Supplemental gateway trace mode: " + $0 }
+        }
+        if code == "gateway.trace.result" {
+            let results = [
+                "gateway-replied": "Supplemental trace received a reply from the gateway",
+                "other-responder": "Supplemental trace received a first-hop reply from another address",
+                "no-response": "Supplemental trace received no first-hop reply",
+                "not-sent": "Supplemental trace probe was not sent",
+                "failed": "Supplemental trace could not run",
+                "cancelled": "Supplemental trace was cancelled",
+                "skipped-never": "Supplemental trace skipped by Debug setting",
+                "skipped-not-needed": "Supplemental trace skipped by Automatic mode",
+                "skipped-cancelled": "Supplemental trace skipped because the check was cancelled",
+            ]
+            return results[value]
+        }
         if code == "blocked.by", let check = NetworkDiagnosticCheckID(rawValue: value) {
             return "Not tested because " + check.logTitle + " failed"
         }
