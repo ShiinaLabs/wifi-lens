@@ -1,5 +1,5 @@
 {
-  "originHash" : "bca8dba2fdc9353a65c0688fac83c678ce09bf01c65f4601352f7ccd1661da79",
+  "originHash" : "c83a2a756648591d03e0d0d8ede7a38e2240f8a557860ab6b370fa34fc9468d4",
   "pins" : [
     {
       "identity" : "chart-lens",
@@ -24,6 +24,14 @@
       "location" : "https://github.com/ShiinaLabs/MarkdownKit.git",
       "state" : {
         "revision" : "f399a6674d6efb5a7d9b2f1dfb8e1e6504f3bba2"
+      }
+    },
+    {
+      "identity" : "miniftr",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ShiinaLabs/MiniFTR.git",
+      "state" : {
+        "revision" : "8eb7cbfe01cbac74cf82ce5f33c65a819266768f"
       }
     },
     {
@@ -59,6 +67,15 @@
       "state" : {
         "revision" : "a66de878e87ef5a3d5d390e0f6d9002aa5541a43",
         "version" : "1.7.0"
+      }
+    },
+    {
+      "identity" : "swift-ip2asn",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/network-weather/swift-ip2asn",
+      "state" : {
+        "revision" : "13bd5ca88df89ac56fb8ea531eef578dbd1bf1b2",
+        "version" : "0.5.2"
       }
     },
     {

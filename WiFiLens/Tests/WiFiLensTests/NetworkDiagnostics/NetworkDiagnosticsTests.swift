@@ -1420,59 +1420,6 @@ struct StubNetworkInterfaceSource: NetworkInterfaceInfoSourcing {
     }
 }
 
-actor RecordingGatewayPingProcessRunner: GatewayPingProcessRunning {
-    let latency: Double?
-    private(set) var executablePath: String?
-    private(set) var arguments: [String] = []
-
-    init(latency: Double?) {
-        self.latency = latency
-    }
-
-    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
-        self.executablePath = executablePath
-        self.arguments = arguments
-        guard let latency else {
-            return .exited(status: 2, output: "1 packets transmitted, 0 packets received, 100.0% packet loss")
-        }
-        return .exited(status: 0, output: "64 bytes from target: time=\(latency) ms")
-    }
-
-    func cancel(attemptID: UUID) async {}
-}
-
-actor ControlledGatewayPingProcessRunner: GatewayPingProcessRunning {
-    private var activeContinuations: [UUID: CheckedContinuation<GatewayPingProcessOutcome, Never>] = [:]
-    private var invocationWaiters: [(target: Int, continuation: CheckedContinuation<Void, Never>)] = []
-    private(set) var invocationIDs: [UUID] = []
-    private(set) var cancelledInvocationIDs: [UUID] = []
-
-    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
-        invocationIDs.append(attemptID)
-        resumeInvocationWaiters()
-        return await withCheckedContinuation { continuation in
-            activeContinuations[attemptID] = continuation
-        }
-    }
-
-    func cancel(attemptID: UUID) {
-        guard let continuation = activeContinuations.removeValue(forKey: attemptID) else { return }
-        cancelledInvocationIDs.append(attemptID)
-        continuation.resume(returning: .cancelled)
-    }
-
-    func waitUntilInvocationCount(_ target: Int) async {
-        if invocationIDs.count >= target { return }
-        await withCheckedContinuation { invocationWaiters.append((target, $0)) }
-    }
-
-    private func resumeInvocationWaiters() {
-        let ready = invocationWaiters.filter { invocationIDs.count >= $0.target }
-        invocationWaiters.removeAll { invocationIDs.count >= $0.target }
-        ready.forEach { $0.continuation.resume() }
-    }
-}
-
 actor RecordingDiagnosticGatewayMeasurer: DiagnosticGatewayMeasuring {
     private(set) var targets: [DiagnosticGatewayTarget] = []
 

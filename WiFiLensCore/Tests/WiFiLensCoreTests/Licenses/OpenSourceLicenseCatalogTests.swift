@@ -17,11 +17,13 @@ struct OpenSourceLicenseCatalogTests {
             identifiers == [
                 "chart-lens",
                 "eventsource",
+                "miniftr",
                 "markdownkit",
                 "swift-sdk",
                 "sparkle",
                 "splitview",
                 "swift-system",
+                "swift-ip2asn",
                 "swift-log",
             ])
     }
