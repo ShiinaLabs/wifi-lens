@@ -119,8 +119,8 @@
 		705A69FF4A444471A62F39FF /* MACVendorDatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6B32FF2A0F53B0FC4984B8 /* MACVendorDatabaseManager.swift */; };
 		70994623CD4135FAAD441569 /* HysteresisEMA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F58041A91102E937BBECCE /* HysteresisEMA.swift */; };
 		710000000000000000000004 /* StorageLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000001 /* StorageLocations.swift */; };
-		710000000000000000000007 /* ApplicationInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000006 /* ApplicationInstanceLock.swift */; };
 		710000000000000000000005 /* StorageLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000002 /* StorageLocationsTests.swift */; };
+		710000000000000000000007 /* ApplicationInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000006 /* ApplicationInstanceLock.swift */; };
 		712BAAA7E857992BBD82FED9 /* ChartSeriesData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCAEB452D1D143784DBABF6 /* ChartSeriesData.swift */; };
 		7136F0EDFCA248F06FB74954 /* WhatsNewCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48BFBB66E40F9C535B69FCA0 /* WhatsNewCoordinator.swift */; };
 		73A4252B79B42ABAC02D4683 /* MACVendorResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFD8364A0686E1E59690A7F6 /* MACVendorResolver.swift */; };
@@ -288,6 +288,7 @@
 		FB0573C422FBBEAE4005F8214 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = FB0573C412FBBEAE4005F8214 /* Logging */; };
 		FB23154C304D9B6400619D14 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */; };
 		FB2E3B2E2FC5ACDA00D2610E /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB2E3B2D2FC5ACDA00D2610E /* CoreBluetooth.framework */; };
+		FB5FFF9730AB4CE300B6F42F /* SwiftFTR in Frameworks */ = {isa = PBXBuildFile; productRef = FB5FFF9630AB4CE300B6F42F /* SwiftFTR */; };
 		FB7F34783071E43900FC37BC /* zh-Hant.md in Resources */ = {isa = PBXBuildFile; fileRef = FB7F34773071E42D00FC37BC /* zh-Hant.md */; };
 		FB85B8A92FE6526D00D2D391 /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FB85B8A82FE6526D00D2D391 /* ChartLens */; };
 		FB8FCB212FF6C5DF00BB2929 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FB8FCB202FF6C5DF00BB2929 /* Sparkle */; };
@@ -507,8 +508,8 @@
 		6DA5763F2B6D48DEABAA0B76 /* es.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = es.md; sourceTree = "<group>"; };
 		6FF09DD63C317B52E73F20F0 /* ChannelOccupancyAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelOccupancyAnalyzer.swift; sourceTree = "<group>"; };
 		710000000000000000000001 /* StorageLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocations.swift; sourceTree = "<group>"; };
-		710000000000000000000006 /* ApplicationInstanceLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationInstanceLock.swift; sourceTree = "<group>"; };
 		710000000000000000000002 /* StorageLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocationsTests.swift; sourceTree = "<group>"; };
+		710000000000000000000006 /* ApplicationInstanceLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationInstanceLock.swift; sourceTree = "<group>"; };
 		727B5B7628CA7133937ECA2E /* BandPanelSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandPanelSelection.swift; sourceTree = "<group>"; };
 		7343A5D84BBD9A02C08690A6 /* OnboardingStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStateStore.swift; sourceTree = "<group>"; };
 		73952B4D6C1E88514FD78907 /* ChannelRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelRecommendationEngine.swift; sourceTree = "<group>"; };
@@ -750,6 +751,7 @@
 				23B23A9DDEF1001DBE2F43B0 /* Logging in Frameworks */,
 				50CE50E9A0BD56799A7EDF0C /* SplitView in Frameworks */,
 				B8F9DAF28D1143794564A0B3 /* MarkdownKit in Frameworks */,
+				FB5FFF9730AB4CE300B6F42F /* SwiftFTR in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1624,7 +1626,7 @@
 				984558EACE79DA154CBABA43 /* Logging */,
 				C9E8118E23D34060B848E9AB /* SplitView */,
 				4C633EAD2670D0C4A957180F /* MarkdownKit */,
-				F9A00000000000000000000E /* SwiftFTR */,
+				FB5FFF9630AB4CE300B6F42F /* SwiftFTR */,
 			);
 			productName = WiFiLensCore;
 			productReference = 88181B172C615AC4EF6C93E6 /* WiFiLensCore.framework */;
@@ -1713,7 +1715,7 @@
 				C0A7A1B2C3D4E5F678900002 /* XCRemoteSwiftPackageReference "SplitView" */,
 				FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
-				F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */,
+				FB5FFF9530AB4CE300B6F42F /* XCRemoteSwiftPackageReference "MiniFTR" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BD4D8FFAAD7E961D9EE4F5FE /* Products */;
@@ -2660,20 +2662,20 @@
 				minimumVersion = 1.15.1;
 			};
 		};
+		FB5FFF9530AB4CE300B6F42F /* XCRemoteSwiftPackageReference "MiniFTR" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ShiinaLabs/MiniFTR.git";
+			requirement = {
+				kind = revision;
+				revision = 8eb7cbfe01cbac74cf82ce5f33c65a819266768f;
+			};
+		};
 		FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.10.0;
-			};
-		};
-		F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ShiinaLabs/MiniFTR.git";
-			requirement = {
-				kind = revision;
-				revision = 8eb7cbfe01cbac74cf82ce5f33c65a819266768f;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -2749,6 +2751,11 @@
 			package = FB0573C402FBBEAE4005F8214 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
 		};
+		FB5FFF9630AB4CE300B6F42F /* SwiftFTR */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FB5FFF9530AB4CE300B6F42F /* XCRemoteSwiftPackageReference "MiniFTR" */;
+			productName = SwiftFTR;
+		};
 		FB85B8A82FE6526D00D2D391 /* ChartLens */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C0A7A1B2C3D4E5F678900001 /* XCRemoteSwiftPackageReference "chart-lens" */;
@@ -2758,11 +2765,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
-		};
-		F9A00000000000000000000E /* SwiftFTR */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */;
-			productName = SwiftFTR;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
