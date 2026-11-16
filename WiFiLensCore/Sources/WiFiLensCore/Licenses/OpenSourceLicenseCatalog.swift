@@ -75,7 +75,7 @@ enum OpenSourceLicenseCatalog {
             copyright: "Copyright (c) 2025 SwiftFTR contributors; Copyright (c) 2026 ShiinaLabs",
             repositoryURL: URL(string: "https://github.com/ShiinaLabs/MiniFTR"),
             additionalNotices: [],
-            editions: [.openSource]
+            editions: [.openSource, .pro]
         ),
         OpenSourceComponent(
             id: "grdb.swift",

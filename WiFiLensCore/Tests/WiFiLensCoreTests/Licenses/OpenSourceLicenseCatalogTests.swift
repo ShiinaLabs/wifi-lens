@@ -35,6 +35,7 @@ struct OpenSourceLicenseCatalogTests {
             identifiers == [
                 "chart-lens",
                 "eventsource",
+                "miniftr",
                 "grdb.swift",
                 "hdrhistogram-swift",
                 "markdownkit",
