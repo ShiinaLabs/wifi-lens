@@ -20,7 +20,7 @@ enum NetworkDiagnosticStatus: String, CaseIterable, Equatable, Sendable {
 }
 
 enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable, Sendable {
-    case path, gatewayReachability, dns, internet, ipv6, proxy
+    case path, gatewayReachability, gatewayTCPReachability, dns, internet, ipv6, proxy
 
     var logTitle: String {
         switch self {
@@ -28,6 +28,8 @@ enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable, Sendab
             "Network Path"
         case .gatewayReachability:
             "Gateway Reachability"
+        case .gatewayTCPReachability:
+            "Gateway TCP Response"
         case .dns:
             "DNS Resolution"
         case .internet:
@@ -47,6 +49,10 @@ enum NetworkDiagnosticCheckID: String, CaseIterable, Equatable, Hashable, Sendab
             String(
                 localized: "network_diagnostics.check.gateway_reachability.title",
                 comment: "Gateway reachability check title")
+        case .gatewayTCPReachability:
+            String(
+                localized: "network_diagnostics.check.gateway_tcp.title",
+                comment: "Gateway TCP response check title")
         case .dns:
             String(localized: "network_diagnostics.check.dns.title", comment: "DNS resolution check title")
         case .internet:
@@ -267,7 +273,7 @@ enum NetworkDiagnosticStage: CaseIterable, Equatable, Sendable {
     var contributingCheckIDs: [NetworkDiagnosticCheckID] {
         switch self {
         case .thisMac: [.path, .dns, .proxy]
-        case .lan: [.gatewayReachability]
+        case .lan: [.gatewayReachability, .gatewayTCPReachability]
         case .internet: [.internet]
         }
     }

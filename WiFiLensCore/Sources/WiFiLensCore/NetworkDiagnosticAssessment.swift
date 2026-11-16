@@ -18,8 +18,8 @@ struct DiagnosticProxyFacts: Equatable, Sendable {
 }
 
 enum DiagnosticActionPriority: Int, Comparable, Sendable {
-    case pathUnavailable = 0
-    case captivePortal = 1
+    case captivePortal = 0
+    case pathUnavailable = 1
     case proxyAuthentication = 2
     case certificateTime = 3
     case proxyRoute = 4
@@ -94,6 +94,9 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         if contributors.contains(where: { $0.status == .blocked }) {
             return .init(stage: stage, status: .blocked, qualificationCode: nil)
         }
+        if stage == .lan, contributors.contains(where: { $0.status == .normal }) {
+            return .init(stage: stage, status: .normal, qualificationCode: nil)
+        }
         if contributors.contains(where: { $0.status == .indeterminate }) {
             let nonProxyContributors = contributors.filter { $0.id != .proxy }
             if stage == .thisMac,
@@ -136,6 +139,11 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         let dns = results[.dns]
         let proxy = results[.proxy]
         let externalSuccess = hasExternalSuccess(internet: internet, proxy: proxy)
+        if internet?.evidence.contains(where: {
+            $0.code == "captive-portal.redirect" || $0.code == "captive-portal.suspected"
+        }) == true {
+            return .needsAttention
+        }
 
         if path?.status == .abnormal, !externalSuccess {
             return .networkUnavailable
@@ -155,9 +163,12 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 case .path:
                     result.status != .normal
                 case .gatewayReachability:
-                    !isNeutralGateway(result, externalSuccess: externalSuccess)
+                    results[.gatewayTCPReachability]?.status != .normal
+                        && !isNeutralGateway(result, externalSuccess: externalSuccess)
                         && result.status != .normal
                         && result.status != .skipped
+                case .gatewayTCPReachability:
+                    false
                 case .dns, .internet:
                     result.status != .normal
                 case .proxy:
@@ -183,8 +194,14 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 result.status == .abnormal || result.status == .indeterminate
             case .gatewayReachability:
                 (result.status == .abnormal || result.status == .indeterminate)
+                    && results[.gatewayTCPReachability]?.status != .normal
                     && !isNeutralGateway(result, externalSuccess: externalSuccess)
-            case .dns, .internet, .proxy:
+            case .gatewayTCPReachability:
+                false
+            case .dns:
+                result.status == .indeterminate
+                    || (result.status == .abnormal && hasCorroboratedDNSFailure(result, internet: results[.internet]))
+            case .internet, .proxy:
                 result.status == .abnormal || result.status == .indeterminate
             case .ipv6:
                 false
@@ -235,6 +252,19 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
 
     private func hasDirectHTTPS(_ result: NetworkDiagnosticResult?) -> Bool {
         result?.evidence.contains { $0.code == "https.available" } == true
+    }
+
+    private func hasCorroboratedDNSFailure(
+        _ dns: NetworkDiagnosticResult,
+        internet: NetworkDiagnosticResult?
+    ) -> Bool {
+        let samples = dns.evidence.filter { $0.code.hasPrefix("dns.sample.") }
+        return samples.count == 3
+            && samples.allSatisfy { $0.value == "failed" }
+            && internet?.evidence.contains {
+                $0.code == "https.connectivity-error"
+                    && $0.value == String(URLError.dnsLookupFailed.rawValue)
+            } == true
     }
 
     private func hasAvailableHTTPSProxy(_ result: NetworkDiagnosticResult?) -> Bool {

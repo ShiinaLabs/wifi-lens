@@ -174,6 +174,39 @@ struct DiagnosticLogResult: Equatable, Sendable {
             "proxy.authentication-required": "Proxy authentication required (HTTP 407)",
         ]
         if let description = fixed[code] { return description }
+        let tcpStates = [
+            "open": "responded with an open connection",
+            "closed": "responded with a connection refusal",
+            "filtered": "returned no response",
+            "error": "probe could not complete",
+            "probe-error": "probe could not determine a response",
+        ]
+        if code.hasPrefix("gateway.tcp.state."),
+            let state = tcpStates[value],
+            ["80", "443"].contains(String(code.dropFirst("gateway.tcp.state.".count)))
+        {
+            let port = String(code.dropFirst("gateway.tcp.state.".count))
+            return "Gateway TCP port \(port) " + state
+        }
+        if code == "gateway.tcp.state" {
+            let states = [
+                "route-unavailable": "Gateway TCP probe had no usable route",
+                "interface-changed": "Gateway TCP probe interface changed",
+                "probe-error": "Gateway TCP probe could not determine a response",
+                "route-changed": "Route changed during the gateway TCP probe",
+            ]
+            return states[value]
+        }
+        if code == "gateway.tcp.response.port", ["80", "443"].contains(value) {
+            return "Gateway responded on TCP port: " + value
+        }
+        if code.hasPrefix("gateway.tcp.rtt-ms."),
+            ["80", "443"].contains(String(code.dropFirst("gateway.tcp.rtt-ms.".count))),
+            let number = Double(value), number.isFinite, number >= 0, value.count <= 24
+        {
+            let port = String(code.dropFirst("gateway.tcp.rtt-ms.".count))
+            return "Gateway TCP port \(port) response time: " + String(number) + " ms"
+        }
         if code == "blocked.by", let check = NetworkDiagnosticCheckID(rawValue: value) {
             return "Not tested because " + check.logTitle + " failed"
         }

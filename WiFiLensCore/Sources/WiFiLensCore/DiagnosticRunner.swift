@@ -17,11 +17,6 @@ extension DiagnosticCheck {
 
 extension NetworkDiagnosticStatus: Hashable {}
 
-private struct DiagnosticDependency {
-    let id: NetworkDiagnosticCheckID
-    let blockingStatuses: Set<NetworkDiagnosticStatus>
-}
-
 private struct DiagnosticCheckRunResult: Sendable {
     let result: NetworkDiagnosticResult?
     let endReason: DiagnosticRunEndReason?
@@ -118,18 +113,6 @@ struct DiagnosticRunner: Sendable {
             }
             if let retainedResult = retainedByID[check.id] {
                 results.append(retainedResult)
-                continue
-            }
-            if let blocker = blockingResult(for: check.id, from: results) {
-                let result = NetworkDiagnosticResult(
-                    id: check.id,
-                    status: .blocked,
-                    summary: blocker.summary,
-                    detail: blocker.summary,
-                    evidence: [.init(code: "blocked.by", value: blocker.id.rawValue)]
-                )
-                results.append(result)
-                await onResult(result)
                 continue
             }
             await onCheckStarted?(check.id)
@@ -229,31 +212,4 @@ struct DiagnosticRunner: Sendable {
         }
     }
 
-    private func blockingResult(
-        for id: NetworkDiagnosticCheckID,
-        from results: [NetworkDiagnosticResult]
-    ) -> NetworkDiagnosticResult? {
-        let hardFailureStatuses: Set<NetworkDiagnosticStatus> = [.abnormal, .blocked]
-        let dependencies: [DiagnosticDependency] =
-            switch id {
-            case .path:
-                []
-            case .gatewayReachability:
-                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-            case .dns:
-                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-            case .internet, .ipv6:
-                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-            case .proxy:
-                [.init(id: .path, blockingStatuses: hardFailureStatuses)]
-            }
-        return dependencies.compactMap { dependency -> NetworkDiagnosticResult? in
-            guard let result = results.first(where: { $0.id == dependency.id }),
-                dependency.blockingStatuses.contains(result.status)
-            else {
-                return nil
-            }
-            return result
-        }.first
-    }
 }

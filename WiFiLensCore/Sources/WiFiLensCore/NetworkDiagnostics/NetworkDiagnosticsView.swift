@@ -8,7 +8,6 @@ public struct NetworkDiagnosticsView: View {
     let isInvitationHostActive: Bool
     let hostWindow: NSWindow?
     let ownerWindowID: UUID?
-    @State private var expandedGroupOverride: [String: Bool] = [:]
     @State private var renderedInvitationID: UUID?
     @State private var consolePanelController = ConsolePanelController(
         statusBarHeight: 30,
@@ -488,7 +487,7 @@ public struct NetworkDiagnosticsView: View {
         Group {
             switch mode {
             case .regular:
-                Table(workbenchItems) {
+                Table(workbenchRows) {
                     TableColumn(columnCheckTitle) { item in
                         checkCell(item)
                             .padding(.vertical, 7)
@@ -507,7 +506,7 @@ public struct NetworkDiagnosticsView: View {
                     }
                 }
             case .condensed:
-                Table(workbenchItems) {
+                Table(workbenchRows) {
                     TableColumn(columnCheckTitle) { item in
                         VStack(alignment: .leading, spacing: 5) {
                             checkCell(item)
@@ -523,7 +522,7 @@ public struct NetworkDiagnosticsView: View {
                     }
                 }
             case .compact:
-                Table(workbenchItems) {
+                Table(workbenchRows) {
                     TableColumn(columnResultTitle) { item in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(alignment: .center, spacing: 12) {
@@ -555,15 +554,6 @@ public struct NetworkDiagnosticsView: View {
                 .frame(width: 18)
         }
         .accessibilityElement(children: .combine)
-    }
-
-    @ViewBuilder
-    private func checkCell(_ item: NetworkDiagnosticsWorkbenchItem) -> some View {
-        switch item {
-        case .stageHeader(let stage): stageHeaderCell(stage)
-        case .additionalHeader: additionalHeaderCell
-        case .check(let row): checkCell(row)
-        }
     }
 
     @ViewBuilder
@@ -601,14 +591,6 @@ public struct NetworkDiagnosticsView: View {
     }
 
     @ViewBuilder
-    private func statusCell(_ item: NetworkDiagnosticsWorkbenchItem) -> some View {
-        switch item {
-        case .stageHeader, .additionalHeader: EmptyView()
-        case .check(let row): statusCell(row)
-        }
-    }
-
-    @ViewBuilder
     private func resultCell(_ row: NetworkDiagnosticsWorkbenchRow) -> some View {
         if let result = row.result {
             VStack(alignment: .leading, spacing: 3) {
@@ -640,105 +622,7 @@ public struct NetworkDiagnosticsView: View {
         }
     }
 
-    @ViewBuilder
-    private func resultCell(_ item: NetworkDiagnosticsWorkbenchItem) -> some View {
-        switch item {
-        case .stageHeader, .additionalHeader: EmptyView()
-        case .check(let row): resultCell(row)
-        }
-    }
 
-    private func stageTitle(_ stage: NetworkDiagnosticStage) -> String {
-        switch stage {
-        case .thisMac:
-            String(
-                localized: "network_diagnostics.stage.this_mac.title",
-                comment: "Network self-check local environment stage title")
-        case .lan:
-            String(
-                localized: "network_diagnostics.stage.lan.title",
-                comment: "Network self-check LAN connectivity stage title")
-        case .internet:
-            String(
-                localized: "network_diagnostics.stage.internet.title",
-                comment: "Network self-check internet connectivity stage title")
-        }
-    }
-
-    private var additionalTitle: String {
-        String(
-            localized: "network_diagnostics.stage.additional.title",
-            comment: "Network self-check additional checks group title")
-    }
-
-    private func stageIcon(_ stage: NetworkDiagnosticStage) -> String {
-        switch stage {
-        case .thisMac: "macbook"
-        case .lan: "wifi"
-        case .internet: "globe"
-        }
-    }
-
-    private func stageHeaderCell(_ stage: NetworkDiagnosticStage) -> some View {
-        groupHeaderCell(
-            id: "stage.\(String(describing: stage))",
-            title: stageTitle(stage),
-            icon: stageIcon(stage)
-        )
-    }
-
-    private var additionalHeaderCell: some View {
-        groupHeaderCell(id: "additional", title: additionalTitle, icon: "square.grid.2x2")
-    }
-
-    private func groupHeaderCell(id: String, title: String, icon: String) -> some View {
-        Button {
-            expandedGroupOverride[id] = !isExpanded(id: id, items: rawWorkbenchItems)
-        } label: {
-            HStack(spacing: 8) {
-                Label {
-                    Text(title)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                } icon: {
-                    Image(systemName: icon)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: isExpanded(id: id, items: rawWorkbenchItems) ? "chevron.down" : "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(.isHeader)
-    }
-
-    private func isExpanded(id: String, items: [NetworkDiagnosticsWorkbenchItem]) -> Bool {
-        expandedGroupOverride[id] ?? !defaultsToCollapsed(id: id, items: items)
-    }
-
-    private func defaultsToCollapsed(id: String, items: [NetworkDiagnosticsWorkbenchItem]) -> Bool {
-        guard viewModel.phase == .completed else { return false }
-        var inGroup = false
-        var allClear = true
-        for item in items {
-            switch item {
-            case .stageHeader(let stage):
-                inGroup = id == "stage.\(String(describing: stage))"
-            case .additionalHeader:
-                inGroup = id == "additional"
-            case .check(let row):
-                if inGroup, let result = row.result,
-                    result.status != .normal, result.status != .skipped
-                {
-                    allClear = false
-                }
-            }
-        }
-        return allClear
-    }
 
     private func remediationView(for result: NetworkDiagnosticResult) -> some View {
         let remediation = NetworkDiagnosticRemediation.forResult(result)
@@ -768,34 +652,14 @@ public struct NetworkDiagnosticsView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var rawWorkbenchItems: [NetworkDiagnosticsWorkbenchItem] {
-        NetworkDiagnosticsPresentation.workbenchItems(
+    private var workbenchRows: [NetworkDiagnosticsWorkbenchRow] {
+        NetworkDiagnosticsPresentation.workbenchRows(
             pagePhase: viewModel.phase,
             executionPhases: viewModel.executionPhases,
             results: viewModel.results,
             checkIDs: viewModel.checkIDs,
             endReason: viewModel.endReason
         )
-    }
-
-    private var workbenchItems: [NetworkDiagnosticsWorkbenchItem] {
-        var filtered: [NetworkDiagnosticsWorkbenchItem] = []
-        var groupCollapsed = false
-        for item in rawWorkbenchItems {
-            switch item {
-            case .stageHeader(let stage):
-                groupCollapsed = !isExpanded(id: "stage.\(String(describing: stage))", items: rawWorkbenchItems)
-                filtered.append(item)
-            case .additionalHeader:
-                groupCollapsed = !isExpanded(id: "additional", items: rawWorkbenchItems)
-                filtered.append(item)
-            case .check:
-                if !groupCollapsed {
-                    filtered.append(item)
-                }
-            }
-        }
-        return filtered
     }
 
     private var activeCheckID: NetworkDiagnosticCheckID? {
@@ -846,6 +710,7 @@ public struct NetworkDiagnosticsView: View {
         switch id {
         case .path: "network"
         case .gatewayReachability: "point.3.connected.trianglepath.dotted"
+        case .gatewayTCPReachability: "arrow.left.arrow.right"
         case .dns: "globe"
         case .internet: "globe"
         case .ipv6: "6.circle"
@@ -902,7 +767,7 @@ public struct NetworkDiagnosticsView: View {
     }
 
     private func gatewayTargetText(for result: NetworkDiagnosticResult) -> String? {
-        guard result.id == .gatewayReachability else { return nil }
+        guard result.id == .gatewayReachability || result.id == .gatewayTCPReachability else { return nil }
         let evidence = result.evidence.reduce(into: [String: String]()) { values, evidence in
             if let value = evidence.value {
                 values[evidence.code] = value
