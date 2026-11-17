@@ -1,6 +1,7 @@
 import Darwin
 import Foundation
 import Network
+import SwiftFTR
 
 protocol NetworkInterfaceInfoSourcing: Sendable {
     func currentInterface() async -> NetworkInterfaceInfo?
@@ -245,6 +246,25 @@ struct NetworkConnectivityCheck: DiagnosticCheck {
     }
 }
 
+enum GatewayTraceMode: String, Equatable, Sendable {
+    case automatic
+    case always
+    case never
+}
+
+#if DEBUG
+    @_spi(GatewayTraceDebug)
+    public enum GatewayTraceDebugOverride {
+        public enum Mode: String, CaseIterable, Equatable, Hashable, Sendable {
+            case automatic
+            case always
+            case never
+        }
+
+        @MainActor public static var mode = Mode.automatic
+    }
+#endif
+
 struct GatewayReachabilityCheck: DiagnosticCheck {
     let id = NetworkDiagnosticCheckID.gatewayReachability
     private let interfaceSource: any NetworkInterfaceInfoSourcing
@@ -253,6 +273,7 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
     private let diagnosticGatewayMeasuring: (any DiagnosticGatewayMeasuring)?
     private let routeSource: (any DiagnosticRouteSourcing)?
     private let interfaceIndexProvider: @Sendable (String) -> UInt32
+    private let traceMode: GatewayTraceMode
 
     init(
         interfaceSource: any NetworkInterfaceInfoSourcing = SystemNetworkInterfaceInfoSource(),
@@ -264,13 +285,15 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         self.diagnosticGatewayMeasuring = nil
         self.routeSource = nil
         self.interfaceIndexProvider = { _ in 0 }
+        self.traceMode = .automatic
     }
 
     init(
         context: DiagnosticNetworkContext,
         gatewayMeasuring: any DiagnosticGatewayMeasuring = GatewayLatencyProvider(),
         routeSource: (any DiagnosticRouteSourcing)? = SystemDiagnosticRouteSource(),
-        interfaceIndexProvider: @escaping @Sendable (String) -> UInt32 = { if_nametoindex($0) }
+        interfaceIndexProvider: @escaping @Sendable (String) -> UInt32 = { if_nametoindex($0) },
+        traceMode: GatewayTraceMode = .automatic
     ) {
         self.interfaceSource = SystemNetworkInterfaceInfoSource()
         self.gatewayLatency = GatewayLatencyProvider()
@@ -278,6 +301,7 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         self.diagnosticGatewayMeasuring = gatewayMeasuring
         self.routeSource = routeSource
         self.interfaceIndexProvider = interfaceIndexProvider
+        self.traceMode = traceMode
     }
 
     func run() async -> NetworkDiagnosticResult {
@@ -296,26 +320,18 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
             return indeterminateRouteResult(for: context.route)
         }
 
-        let target: DiagnosticGatewayTarget
-        let probeScope: String
-        switch context.route {
-        case .selected(let selectedTarget):
-            target = selectedTarget
-            probeScope = "selected-route"
-        case .tunneled(let tunnel):
-            guard
-                let underlayTarget = underlyingGatewayTarget(
-                    for: tunnel,
-                    interfaces: context.interfaces.interfaces
-                )
-            else {
+        guard let resolvedTarget = DiagnosticGatewayProbeTargetResolver.resolve(
+            route: context.route,
+            interfaces: context.interfaces.interfaces,
+            interfaceIndexProvider: interfaceIndexProvider
+        ) else {
+            if case .tunneled(let tunnel) = context.route {
                 return skippedTunnelResult(tunnel)
             }
-            target = underlayTarget
-            probeScope = "underlying-lan"
-        case .unavailable, .ambiguous, .unsupported:
             return indeterminateRouteResult(for: context.route)
         }
+        let target = resolvedTarget.target
+        let probeScope = resolvedTarget.scope
 
         let gateway = await diagnosticGatewayMeasuring.measure(target: target)
         if let routeSource,
@@ -370,12 +386,88 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         {
             outcome = .unverified
         }
+
+        targetEvidence.append(.init(code: "gateway.trace.mode", value: traceMode.rawValue))
+        let shouldTrace: Bool
+        switch traceMode {
+        case .automatic:
+            switch outcome {
+            case .replied, .cancelled: shouldTrace = false
+            default: shouldTrace = !Task.isCancelled
+            }
+        case .always:
+            shouldTrace = !Task.isCancelled
+        case .never:
+            shouldTrace = false
+        }
+
+        if shouldTrace {
+            let traceOutcome = await supplementalGatewayTrace(to: target)
+            if Task.isCancelled {
+                targetEvidence.append(.init(code: "gateway.trace.result", value: GatewayTraceOutcome.cancelled.rawValue))
+                return indeterminateResult(code: "gateway.probe.cancelled", evidence: targetEvidence)
+            }
+            if let routeSource, await routeSource.currentRoute(timeout: .seconds(1)) != context.route {
+                return NetworkDiagnosticResult(
+                    id: id,
+                    status: .indeterminate,
+                    summary: indeterminateSummary,
+                    detail: String(
+                        localized: "network_diagnostics.gateway.route_changed",
+                        comment: "Gateway route changed during the supplemental trace"
+                    ),
+                    evidence: targetEvidence + [.init(code: "gateway.route-changed", value: nil)]
+                )
+            }
+            targetEvidence.append(.init(code: "gateway.trace.result", value: traceOutcome.rawValue))
+        } else {
+            let traceState = Task.isCancelled
+                ? "skipped-cancelled"
+                : traceMode == .never ? "skipped-never" : "skipped-not-needed"
+            targetEvidence.append(.init(code: "gateway.trace.result", value: traceState))
+        }
+
         return result(
             for: outcome,
             value: target.address,
             evidence: targetEvidence,
             detail: underlayDetail
         )
+    }
+
+    private func supplementalGatewayTrace(to target: DiagnosticGatewayTarget) async -> GatewayTraceOutcome {
+        guard !Task.isCancelled else { return .cancelled }
+        let tracer = SwiftFTR(
+            config: SwiftFTRConfig(maxHops: 1, maxWaitMs: 1500, noReverseDNS: true, interface: target.interfaceName)
+        )
+        let config = StreamingTraceConfig(
+            probeTimeout: 1.5,
+            retryAfter: nil,
+            emitTimeouts: true,
+            maxHops: 1
+        )
+        do {
+            for try await hop in tracer.traceStream(to: target.address, config: config) where hop.ttl == 1 {
+                switch hop.outcome {
+                case .replied, .unreachable:
+                    return hop.ipAddress == target.address ? .gatewayReplied : .otherResponder
+                case .timedOut: return .noResponse
+                case .notSent: return .notSent
+                }
+            }
+            return .noResponse
+        } catch {
+            return Task.isCancelled ? .cancelled : .failed
+        }
+    }
+
+    private enum GatewayTraceOutcome: String {
+        case gatewayReplied = "gateway-replied"
+        case otherResponder = "other-responder"
+        case noResponse = "no-response"
+        case notSent = "not-sent"
+        case failed
+        case cancelled
     }
 
     private enum GatewayProbeInterpretation: Equatable {
@@ -540,30 +632,6 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         )
     }
 
-    private func underlyingGatewayTarget(
-        for tunnel: DiagnosticTunnelRouteTarget,
-        interfaces: [NetworkInterfaceInfo]
-    ) -> DiagnosticGatewayTarget? {
-        let candidates = interfaces.compactMap { interface -> DiagnosticGatewayTarget? in
-            guard interface.interfaceName != tunnel.interfaceName,
-                !DiagnosticRouteInterface.isTunnel(interface.interfaceName),
-                interface.interfaceType != .virtual,
-                let address = interface.router
-            else {
-                return nil
-            }
-            let interfaceIndex = interfaceIndexProvider(interface.interfaceName)
-            guard interfaceIndex != 0 else { return nil }
-            return DiagnosticGatewayTarget(
-                interfaceName: interface.interfaceName,
-                interfaceIndex: interfaceIndex,
-                address: address
-            )
-        }
-        guard candidates.count == 1 else { return nil }
-        return candidates[0]
-    }
-
     private func routeSelectionCode(_ route: DiagnosticRouteSelection) -> String {
         switch route {
         case .selected: "selected"
@@ -572,6 +640,203 @@ struct GatewayReachabilityCheck: DiagnosticCheck {
         case .ambiguous: "ambiguous"
         case .unsupported: "unsupported"
         }
+    }
+}
+
+private struct ResolvedDiagnosticGatewayTarget {
+    let target: DiagnosticGatewayTarget
+    let scope: String
+}
+
+private enum DiagnosticGatewayProbeTargetResolver {
+    static func resolve(
+        route: DiagnosticRouteSelection,
+        interfaces: [NetworkInterfaceInfo],
+        interfaceIndexProvider: @Sendable (String) -> UInt32
+    ) -> ResolvedDiagnosticGatewayTarget? {
+        switch route {
+        case .selected(let target):
+            return ResolvedDiagnosticGatewayTarget(target: target, scope: "selected-route")
+        case .tunneled(let tunnel):
+            let candidates = interfaces.compactMap { interface -> DiagnosticGatewayTarget? in
+                guard interface.interfaceName != tunnel.interfaceName,
+                    !DiagnosticRouteInterface.isTunnel(interface.interfaceName),
+                    interface.interfaceType != .virtual,
+                    let address = interface.router
+                else {
+                    return nil
+                }
+                let interfaceIndex = interfaceIndexProvider(interface.interfaceName)
+                guard interfaceIndex != 0 else { return nil }
+                return DiagnosticGatewayTarget(
+                    interfaceName: interface.interfaceName,
+                    interfaceIndex: interfaceIndex,
+                    address: address
+                )
+            }
+            guard candidates.count == 1, let target = candidates.first else { return nil }
+            return ResolvedDiagnosticGatewayTarget(target: target, scope: "underlying-lan")
+        case .unavailable, .ambiguous, .unsupported:
+            return nil
+        }
+    }
+}
+
+struct GatewayTCPReachabilityCheck: DiagnosticCheck {
+    static let ports = [80, 443]
+    static let timeout: TimeInterval = 1
+
+    let id = NetworkDiagnosticCheckID.gatewayTCPReachability
+    private let context: DiagnosticNetworkContext?
+    private let contextSource: any DiagnosticNetworkContextSourcing
+    private let routeSource: any DiagnosticRouteSourcing
+    private let interfaceIndexProvider: @Sendable (String) -> UInt32
+    private let probe: @Sendable (TCPProbeConfig) async throws -> TCPProbeResult
+
+    init(
+        context: DiagnosticNetworkContext? = nil,
+        contextSource: any DiagnosticNetworkContextSourcing = SystemDiagnosticNetworkContextSource(),
+        routeSource: any DiagnosticRouteSourcing = SystemDiagnosticRouteSource(),
+        interfaceIndexProvider: @escaping @Sendable (String) -> UInt32 = { if_nametoindex($0) },
+        probe: @escaping @Sendable (TCPProbeConfig) async throws -> TCPProbeResult = { try await tcpProbe(config: $0) }
+    ) {
+        self.context = context
+        self.contextSource = contextSource
+        self.routeSource = routeSource
+        self.interfaceIndexProvider = interfaceIndexProvider
+        self.probe = probe
+    }
+
+    func run() async throws -> NetworkDiagnosticResult {
+        let networkContext: DiagnosticNetworkContext?
+        if let context {
+            networkContext = context
+        } else {
+            networkContext = await contextSource.capture(runID: UUID(), timeout: .seconds(2))
+        }
+        guard let networkContext,
+            let resolved = DiagnosticGatewayProbeTargetResolver.resolve(
+                route: networkContext.route,
+                interfaces: networkContext.interfaces.interfaces,
+                interfaceIndexProvider: interfaceIndexProvider
+            )
+        else {
+            return indeterminateResult(state: "route-unavailable", target: nil)
+        }
+        let target = resolved.target
+        guard interfaceIndexProvider(target.interfaceName) == target.interfaceIndex else {
+            return indeterminateResult(state: "interface-changed", target: target)
+        }
+
+        async let port80 = runProbe(port: 80, target: target)
+        async let port443 = runProbe(port: 443, target: target)
+        let probeResults = await [port80, port443]
+        guard !Task.isCancelled else { throw CancellationError() }
+        guard await routeSource.currentRoute(timeout: .seconds(1)) == networkContext.route else {
+            return indeterminateResult(state: "route-changed", target: target)
+        }
+
+        var evidence = [
+            NetworkDiagnosticEvidence(code: "gateway.interface", value: target.interfaceName),
+            NetworkDiagnosticEvidence(code: "gateway.address", value: target.address),
+            NetworkDiagnosticEvidence(code: "gateway.probe-scope", value: resolved.scope),
+        ]
+        for (port, result) in probeResults {
+            evidence.append(.init(code: "gateway.tcp.state.\(port)", value: result?.connectionState.rawValue ?? "probe-error"))
+            if let rtt = result?.rtt, rtt.isFinite, rtt >= 0 {
+                evidence.append(.init(code: "gateway.tcp.rtt-ms.\(port)", value: String((rtt * 1_000).rounded())))
+            }
+        }
+
+        if let open = probeResults.first(where: { $0.result?.connectionState == .open }) {
+            return NetworkDiagnosticResult(
+                id: id,
+                status: .normal,
+                summary: String(
+                    localized: "network_diagnostics.gateway_tcp.responded.summary",
+                    comment: "Gateway TCP response summary"
+                ),
+                detail: String(
+                    localized: "network_diagnostics.gateway_tcp.open.detail",
+                    comment: "At least one checked gateway TCP port accepted a connection"
+                ),
+                evidence: evidence + [.init(code: "gateway.tcp.response.port", value: String(open.port))]
+            )
+        }
+        if let closed = probeResults.first(where: { $0.result?.connectionState == .closed }) {
+            return NetworkDiagnosticResult(
+                id: id,
+                status: .normal,
+                summary: String(
+                    localized: "network_diagnostics.gateway_tcp.responded.summary",
+                    comment: "Gateway TCP response summary"
+                ),
+                detail: String(
+                    localized: "network_diagnostics.gateway_tcp.closed.detail",
+                    comment: "At least one checked gateway TCP port refused a connection"
+                ),
+                evidence: evidence + [.init(code: "gateway.tcp.response.port", value: String(closed.port))]
+            )
+        }
+
+        let hasFilteredPort = probeResults.contains { $0.result?.connectionState == .filtered }
+        return NetworkDiagnosticResult(
+            id: id,
+            status: .indeterminate,
+            summary: String(
+                localized: "network_diagnostics.gateway.indeterminate.summary",
+                comment: "Gateway TCP reachability unknown summary"
+            ),
+            detail: String(
+                localized: hasFilteredPort
+                    ? "network_diagnostics.gateway_tcp.filtered.detail"
+                    : "network_diagnostics.gateway_tcp.error.detail",
+                comment: "Gateway TCP probes did not confirm gateway reachability"
+            ),
+            evidence: evidence
+        )
+    }
+
+    private func runProbe(
+        port: Int,
+        target: DiagnosticGatewayTarget
+    ) async -> (port: Int, result: TCPProbeResult?) {
+        guard !Task.isCancelled else { return (port, nil) }
+        let config = TCPProbeConfig(
+            host: target.address,
+            port: port,
+            timeout: Self.timeout,
+            interface: target.interfaceName
+        )
+        do {
+            return (port, try await probe(config))
+        } catch {
+            return (port, nil)
+        }
+    }
+
+    private func indeterminateResult(
+        state: String,
+        target: DiagnosticGatewayTarget?
+    ) -> NetworkDiagnosticResult {
+        var evidence = [NetworkDiagnosticEvidence(code: "gateway.tcp.state", value: state)]
+        if let target {
+            evidence.append(.init(code: "gateway.interface", value: target.interfaceName))
+            evidence.append(.init(code: "gateway.address", value: target.address))
+        }
+        return NetworkDiagnosticResult(
+            id: id,
+            status: .indeterminate,
+            summary: String(
+                localized: "network_diagnostics.gateway.indeterminate.summary",
+                comment: "Gateway TCP reachability unknown summary"
+            ),
+            detail: String(
+                localized: "network_diagnostics.gateway_tcp.error.detail",
+                comment: "Gateway TCP probe could not determine reachability detail"
+            ),
+            evidence: evidence
+        )
     }
 }
 

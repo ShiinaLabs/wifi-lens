@@ -27724,6 +27724,59 @@
         }
       }
     },
+    "network_diagnostics.check.gateway_tcp.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gateway-TCP-Antwort"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gateway TCP Response"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respuesta TCP de la puerta de enlace"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réponse TCP de la passerelle"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲートウェイ TCP 応答"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ответ TCP от шлюза"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网关 TCP 响应"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閘道器 TCP 回應"
+          }
+        }
+      }
+    },
     "network_diagnostics.check.internet.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -29045,6 +29098,271 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所有測試名稱的 DNS 解析都失敗"
+          }
+        }
+      }
+    },
+    "network_diagnostics.gateway_tcp.closed.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keiner der geprüften Ports hat eine Verbindung angenommen, aber eine Ablehnung bestätigt eine Gateway-Antwort."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No checked port accepted a connection, but a refusal confirms the gateway responded."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ningún puerto comprobado aceptó la conexión, pero un rechazo confirma que respondió la puerta de enlace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun port vérifié n’a accepté la connexion, mais un refus confirme la réponse de la passerelle."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続を受け入れたポートはありませんが、拒否応答によりゲートウェイの応答を確認できました。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ни один проверенный порт не принял соединение, но отказ подтверждает, что шлюз ответил."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测的端口都未接受连接，但收到拒绝响应，说明网关有回应。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查的連接埠都未接受連線，但收到拒絕回應，表示閘道器有回應。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.gateway_tcp.error.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit den TCP-Prüfungen ließ sich nicht feststellen, ob das Gateway geantwortet hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The TCP probes could not determine whether the gateway responded."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las pruebas TCP no pudieron determinar si respondió la puerta de enlace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les sondes TCP n’ont pas permis de déterminer si la passerelle a répondu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TCP プローブではゲートウェイの応答を確認できませんでした。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TCP-проверки не смогли определить, ответил ли шлюз."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TCP 探测无法确定网关是否有响应。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TCP 探測無法確認閘道器是否有回應。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.gateway_tcp.filtered.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Antwort auf TCP-Ports 80 oder 443; die Erreichbarkeit des Gateways bleibt unbestätigt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No response on TCP ports 80 or 443; gateway reachability remains unconfirmed."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin respuesta en los puertos TCP 80 ni 443; no se pudo confirmar el acceso a la puerta de enlace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune réponse sur les ports TCP 80 ou 443 ; la joignabilité de la passerelle reste indéterminée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TCP ポート 80 と 443 のどちらからも応答がなく、ゲートウェイの到達性は未確認です。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет ответа на TCP-порты 80 и 443; доступность шлюза не подтверждена."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TCP 80 和 443 端口均无响应；尚无法确认网关是否可达。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TCP 80 和 443 連接埠皆無回應；尚無法確認閘道器是否可連線。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.gateway_tcp.open.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestens einer der geprüften Ports 80 oder 443 hat eine Verbindung angenommen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least one checked port, 80 or 443, accepted a connection."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al menos uno de los puertos comprobados, 80 o 443, aceptó una conexión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au moins l’un des ports vérifiés, 80 ou 443, a accepté une connexion."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認した TCP ポート 80 または 443 の少なくとも一方が接続を受け入れました。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Как минимум один из проверенных портов 80 или 443 принял соединение."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测的 80 或 443 端口至少有一个接受了连接。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查的 80 或 443 連接埠至少有一個接受了連線。"
+          }
+        }
+      }
+    },
+    "network_diagnostics.gateway_tcp.responded.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gateway hat auf eine TCP-Prüfung geantwortet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gateway responded to a TCP probe."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La puerta de enlace respondió a una prueba TCP."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La passerelle a répondu à une sonde TCP."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲートウェイは TCP プローブに応答しました。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шлюз ответил на TCP-проверку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网关响应了 TCP 探测。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閘道器回應了 TCP 探測。"
           }
         }
       }

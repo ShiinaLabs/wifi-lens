@@ -1,18 +1,6 @@
+import Darwin
 import Foundation
-
-enum GatewayPingProcessOutcome: Equatable, Sendable {
-    case exited(status: Int32, output: String)
-    case terminatedBySignal(Int32)
-    case failedToLaunch
-    case outputReadFailed
-    case cancelled
-    case localTimeout
-}
-
-protocol GatewayPingProcessRunning: Sendable {
-    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome
-    func cancel(attemptID: UUID) async
-}
+import SwiftFTR
 
 protocol GatewayProbeProviding: Sendable {
     func probe(host: String, attemptID: UUID) async -> GatewayProbeOutcome
@@ -20,12 +8,24 @@ protocol GatewayProbeProviding: Sendable {
 }
 
 actor GatewayPinger {
-    private let processRunner: any GatewayPingProcessRunning
+    private static let totalTimeout: Duration = .milliseconds(1500)
+    private let performPing: @Sendable (String, PingConfig) async throws -> PingResult
+    private let interfaceIndex: @Sendable (String) -> UInt32
 
-    public init() { self.processRunner = SystemGatewayPingProcessRunner() }
+    public init() {
+        let swiftFTR = SwiftFTR()
+        self.performPing = { host, config in
+            try await swiftFTR.ping(to: host, config: config)
+        }
+        self.interfaceIndex = { if_nametoindex($0) }
+    }
 
-    init(processRunner: any GatewayPingProcessRunning) {
-        self.processRunner = processRunner
+    init(
+        performPing: @escaping @Sendable (String, PingConfig) async throws -> PingResult,
+        interfaceIndex: @escaping @Sendable (String) -> UInt32 = { if_nametoindex($0) }
+    ) {
+        self.performPing = performPing
+        self.interfaceIndex = interfaceIndex
     }
 
     func ping(host: String) async -> Double? {
@@ -39,249 +39,48 @@ actor GatewayPinger {
     }
 
     func probe(host: String, attemptID: UUID) async -> GatewayProbeOutcome {
-        await probe(arguments: ["-c", "1", "-W", "1000", "-t", "1", host], attemptID: attemptID)
+        await probe(host: host, interface: nil)
     }
 
     func probe(target: DiagnosticGatewayTarget, attemptID: UUID) async -> GatewayProbeOutcome {
-        await probe(arguments: DiagnosticPingArguments.make(target: target), attemptID: attemptID)
-    }
-
-    private func probe(arguments: [String], attemptID: UUID) async -> GatewayProbeOutcome {
-        guard !Task.isCancelled else { return .cancelled }
-        let result = await withTaskCancellationHandler {
-            await processRunner.run(
-                executablePath: "/sbin/ping",
-                arguments: arguments,
-                attemptID: attemptID
-            )
-        } onCancel: {
-            Task { await processRunner.cancel(attemptID: attemptID) }
-        }
-        return Self.interpret(result)
-    }
-
-    static func interpret(_ outcome: GatewayPingProcessOutcome) -> GatewayProbeOutcome {
-        switch outcome {
-        case .failedToLaunch, .terminatedBySignal, .outputReadFailed:
+        guard interfaceIndex(target.interfaceName) == target.interfaceIndex else {
             return .executionFailed
-        case .cancelled:
-            return .cancelled
-        case .localTimeout:
-            return .localTimeout
-        case .exited(let status, let output):
-            switch status {
-            case 0:
-                guard let milliseconds = parseLatency(from: output),
-                    milliseconds.isFinite,
-                    milliseconds >= 0
-                else {
-                    return .executionFailed
-                }
-                return .replied(milliseconds: milliseconds)
-            case 2:
-                return confirmsNoReply(output) ? .noReply : .executionFailed
-            default:
-                return .executionFailed
-            }
         }
+        return await probe(host: target.address, interface: target.interfaceName)
     }
 
-    private static func parseLatency(from output: String) -> Double? {
-        for line in output.components(separatedBy: "\n") {
-            guard let range = line.range(of: "time=") else { continue }
-            let rest = line[range.upperBound...]
-            let milliseconds = rest.components(separatedBy: " ").first ?? ""
-            return Double(milliseconds)
-        }
-        return nil
-    }
-
-    private static func confirmsNoReply(_ output: String) -> Bool {
-        let normalized = output.lowercased()
-        let localErrors = [
-            "sendto:",
-            "sendmsg:",
-            "no route to host",
-            "network is unreachable",
-            "permission denied",
-            "operation not permitted",
-            "can't assign requested address",
-            "cannot assign requested address",
-            "message too long",
-            "invalid argument",
-        ]
-        guard !localErrors.contains(where: normalized.contains) else { return false }
-
-        let statisticsLines =
-            normalized
-            .components(separatedBy: .newlines)
-            .filter { $0.contains("packets transmitted") || $0.contains("packet loss") }
-        guard statisticsLines.count == 1,
-            let statisticsLine = statisticsLines.first
-        else {
-            return false
-        }
-
-        let fields = statisticsLine.components(separatedBy: ", ")
-        guard fields.count == 3,
-            let sent = integerValue(in: fields[0], suffix: " packets transmitted"),
-            let received = integerValue(in: fields[1], suffix: " packets received"),
-            let packetLoss = percentageValue(in: fields[2], suffix: "% packet loss")
-        else {
-            return false
-        }
-        return sent == 1 && received == 0 && packetLoss == 100
-    }
-
-    private static func integerValue(in field: String, suffix: String) -> Int? {
-        guard field.hasSuffix(suffix) else { return nil }
-        let value = field.dropLast(suffix.count)
-        guard !value.isEmpty, value.allSatisfy({ $0 >= "0" && $0 <= "9" }) else { return nil }
-        return Int(value)
-    }
-
-    private static func percentageValue(in field: String, suffix: String) -> Double? {
-        guard field.hasSuffix(suffix) else { return nil }
-        let value = field.dropLast(suffix.count)
-        guard !value.isEmpty, let percentage = Double(value), percentage.isFinite else { return nil }
-        return percentage
-    }
-}
-
-actor SystemGatewayPingProcessRunner: GatewayPingProcessRunning {
-    /// Overall budget for a single ping, including process startup. The child
-    /// is bounded by `-t 1`, so an unanswered probe exits at about one second.
-    /// `-W 1000` alone is not enough: ping keeps waiting an extra second for
-    /// late replies before it prints statistics and exits.
-    private static let pingTimeout: Duration = .milliseconds(1500)
-    private var states: [UUID: PingWaitState] = [:]
-
-    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
+    private func probe(host: String, interface: String?) async -> GatewayProbeOutcome {
         guard !Task.isCancelled else { return .cancelled }
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: executablePath)
-        process.arguments = arguments
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        let state = PingWaitState(process: process)
-        states[attemptID] = state
-        guard !Task.isCancelled else {
-            if states[attemptID] === state { states[attemptID] = nil }
-            return .cancelled
-        }
-
-        do {
-            try process.run()
-        } catch {
-            if states[attemptID] === state { states[attemptID] = nil }
-            return .failedToLaunch
-        }
-
-        let exit = await Self.waitForExit(state)
-        if states[attemptID] === state { states[attemptID] = nil }
-        switch exit.stopReason {
-        case .cancelled:
-            return .cancelled
-        case .localTimeout:
-            return .localTimeout
-        case nil:
-            break
-        }
-        if exit.terminatedBySignal {
-            return .terminatedBySignal(exit.status)
-        }
-
-        do {
-            let data = try pipe.fileHandleForReading.readToEnd() ?? Data()
-            guard let output = String(data: data, encoding: .utf8) else { return .outputReadFailed }
-            return .exited(status: exit.status, output: output)
-        } catch {
-            return .outputReadFailed
-        }
-    }
-
-    func cancel(attemptID: UUID) {
-        states[attemptID]?.terminate(reason: .cancelled)
-    }
-
-    private static func waitForExit(_ state: PingWaitState) async -> PingProcessExit {
-        let timeoutTask = Task { [state] in
-            do {
-                try await Task.sleep(for: Self.pingTimeout)
-            } catch {
-                return
-            }
-            state.terminate(reason: .localTimeout)
-        }
-
-        let exit = await withCheckedContinuation { (continuation: CheckedContinuation<PingProcessExit, Never>) in
-            state.process.terminationHandler = { [state] terminatedProcess in
-                _ = state.resumeIfNeeded(continuation, process: terminatedProcess)
-            }
-            if !state.process.isRunning {
-                _ = state.resumeIfNeeded(continuation, process: state.process)
-            }
-        }
-        timeoutTask.cancel()
-        return exit
-    }
-}
-
-private enum PingStopReason: Equatable, Sendable {
-    case cancelled
-    case localTimeout
-}
-
-private struct PingProcessExit: Sendable {
-    let status: Int32
-    let terminatedBySignal: Bool
-    let stopReason: PingStopReason?
-}
-
-/// Thread-safe bridge between process termination, cancellation, timeout, and the continuation.
-private final class PingWaitState: @unchecked Sendable {
-    private let lock = NSLock()
-    private var didResume = false
-    private var stopReason: PingStopReason?
-
-    let process: Process
-
-    init(process: Process) {
-        self.process = process
-    }
-
-    func terminate(reason: PingStopReason) {
-        lock.lock()
-        guard !didResume else {
-            lock.unlock()
-            return
-        }
-        if stopReason == nil { stopReason = reason }
-        let shouldTerminate = process.isRunning
-        lock.unlock()
-        if shouldTerminate { process.terminate() }
-    }
-
-    func resumeIfNeeded(
-        _ continuation: CheckedContinuation<PingProcessExit, Never>,
-        process: Process
-    ) -> Bool {
-        lock.lock()
-        guard !didResume else {
-            lock.unlock()
-            return false
-        }
-        didResume = true
-        let exit = PingProcessExit(
-            status: process.terminationStatus,
-            terminatedBySignal: process.terminationReason == .uncaughtSignal,
-            stopReason: stopReason
+        let config = PingConfig(
+            count: 1,
+            interval: 0,
+            timeout: 1,
+            interface: interface
         )
-        process.terminationHandler = nil
-        lock.unlock()
-        continuation.resume(returning: exit)
-        return true
+        let performPing = self.performPing
+        return await withTaskGroup(of: GatewayProbeOutcome.self) { group in
+            group.addTask {
+                do {
+                    let result = try await performPing(host, config)
+                    guard let response = result.responses.first else { return .executionFailed }
+                    guard let seconds = response.rtt else { return .noReply }
+                    guard seconds.isFinite, seconds >= 0 else { return .executionFailed }
+                    return .replied(milliseconds: seconds * 1000)
+                } catch {
+                    return Task.isCancelled ? .cancelled : .executionFailed
+                }
+            }
+            group.addTask {
+                do {
+                    try await Task.sleep(for: Self.totalTimeout)
+                    return .localTimeout
+                } catch {
+                    return .cancelled
+                }
+            }
+            let outcome = await group.next() ?? .executionFailed
+            group.cancelAll()
+            return outcome
+        }
     }
 }

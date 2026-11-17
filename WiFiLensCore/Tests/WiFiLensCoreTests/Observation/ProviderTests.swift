@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import SwiftFTR
 
 @testable import WiFiLensCore
 
@@ -43,7 +44,7 @@ struct ProviderTests {
             security: "WPA3"
         )
 
-        let snapshot = NetworkInterfaceSnapshot(
+        let snapshot = WiFiLensCore.NetworkInterfaceSnapshot(
             cycleID: UUID(),
             capturedAt: timestamp,
             interfaces: [interface]
@@ -74,7 +75,7 @@ struct ProviderTests {
         )
         let status = WiFiCurrentConnectionProvider.makeStatus(
             from: interface,
-            snapshot: NetworkInterfaceSnapshot(cycleID: cycleID, capturedAt: timestamp, interfaces: [interface])
+            snapshot: WiFiLensCore.NetworkInterfaceSnapshot(cycleID: cycleID, capturedAt: timestamp, interfaces: [interface])
         )
 
         #expect(WiFiLinkEvidenceValidator.assessment(for: status)?.state == .associated)
@@ -102,7 +103,7 @@ struct ProviderTests {
             ssid: "Deterministic",
             bssid: "AA:BB:CC:DD:EE:FF"
         )
-        let snapshot = NetworkInterfaceSnapshot(
+        let snapshot = WiFiLensCore.NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
             interfaces: [
@@ -145,7 +146,7 @@ struct ProviderTests {
             radio: .reportedOn,
             linkActive: true
         )
-        let snapshot = NetworkInterfaceSnapshot(
+        let snapshot = WiFiLensCore.NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
             interfaces: [
@@ -192,7 +193,7 @@ struct ProviderTests {
         )
         let status = WiFiCurrentConnectionProvider.makeStatus(
             from: interface,
-            snapshot: NetworkInterfaceSnapshot(cycleID: cycleID, capturedAt: timestamp, interfaces: [interface])
+            snapshot: WiFiLensCore.NetworkInterfaceSnapshot(cycleID: cycleID, capturedAt: timestamp, interfaces: [interface])
         )
 
         #expect(status.linkAssessment?.state == .unknown)
@@ -213,7 +214,7 @@ struct ProviderTests {
                 radio: .reportedOn,
                 linkActive: false
             )
-            return NetworkInterfaceSnapshot(
+            return WiFiLensCore.NetworkInterfaceSnapshot(
                 cycleID: cycleID,
                 capturedAt: capturedAt,
                 interfaces: [
@@ -246,7 +247,7 @@ struct ProviderTests {
                 radio: .reportedOn,
                 linkActive: true
             )
-            return NetworkInterfaceSnapshot(
+            return WiFiLensCore.NetworkInterfaceSnapshot(
                 cycleID: cycleID,
                 capturedAt: capturedAt,
                 interfaces: [
@@ -277,7 +278,7 @@ struct ProviderTests {
             mode: .noneOrReadFailure,
             radio: .reportedOffOrReadFailure
         )
-        let snapshot = NetworkInterfaceSnapshot(
+        let snapshot = WiFiLensCore.NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
             interfaces: [
@@ -344,7 +345,7 @@ struct ProviderTests {
     func failedEnumerationStaysUnknown() async {
         let cycleID = UUID()
         let capturedAt = Date(timeIntervalSince1970: 1_750_000_370)
-        let snapshot = NetworkInterfaceSnapshot(
+        let snapshot = WiFiLensCore.NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
             interfaces: [],
@@ -361,7 +362,7 @@ struct ProviderTests {
     func emptyInterfaceSnapshotPreservesDisconnectedProvenance() async {
         let cycleID = UUID()
         let capturedAt = Date(timeIntervalSince1970: 1_752_000_456)
-        let snapshot = NetworkInterfaceSnapshot(
+        let snapshot = WiFiLensCore.NetworkInterfaceSnapshot(
             cycleID: cycleID,
             capturedAt: capturedAt,
             interfaces: []
@@ -376,189 +377,98 @@ struct ProviderTests {
         #expect(status.timestamp == capturedAt)
     }
 
-    @Test("ping process outcomes require a valid exit-specific interpretation")
-    func pingProcessOutcomeMapping() {
-        let noReplyOutput = "1 packets transmitted, 0 packets received, 100.0% packet loss"
-        #expect(
-            GatewayPinger.interpret(
-                .exited(
-                    status: 0,
-                    output: "64 bytes from 192.0.2.1: icmp_seq=0 ttl=64 time=12.5 ms"
-                )) == .replied(milliseconds: 12.5))
-        #expect(GatewayPinger.interpret(.exited(status: 0, output: "unparseable")) == .executionFailed)
-        #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=-1 ms")) == .executionFailed)
-        #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=nan ms")) == .executionFailed)
-        #expect(GatewayPinger.interpret(.exited(status: 0, output: "64 bytes time=inf ms")) == .executionFailed)
+    @Test("SwiftFTR ping results map to gateway probe outcomes")
+    func swiftFTRResultMapping() async {
+        let replying = GatewayPinger { _, _ in pingResult(rtt: 0.0125) }
+        #expect(await replying.probe(host: "192.0.2.1", attemptID: UUID()) == .replied(milliseconds: 12.5))
 
-        #expect(GatewayPinger.interpret(.exited(status: 2, output: noReplyOutput)) == .noReply)
-        #expect(GatewayPinger.interpret(.exited(status: 2, output: "")) == .executionFailed)
-        #expect(
-            GatewayPinger.interpret(
-                .exited(
-                    status: 2,
-                    output: "0 packets received, 100.0% packet loss"
-                )) == .executionFailed)
-        for localError in [
-            "sendto: No buffer space available",
-            "sendmsg: Network is unreachable",
-            "No route to host",
-            "network is unreachable",
-            "permission denied",
-            "Operation not permitted",
-            "can't assign requested address",
-            "cannot assign requested address",
-            "message too long",
-            "invalid argument",
-        ] {
-            #expect(
-                GatewayPinger.interpret(
-                    .exited(
-                        status: 2,
-                        output: localError + "\n" + noReplyOutput
-                    )) == .executionFailed)
-        }
-        for status: Int32 in [1, 64, 68] {
-            #expect(
-                GatewayPinger.interpret(
-                    .exited(
-                        status: status,
-                        output: noReplyOutput
-                    )) == .executionFailed)
-        }
+        let unanswered = GatewayPinger { _, _ in pingResult(rtt: nil) }
+        #expect(await unanswered.probe(host: "192.0.2.1", attemptID: UUID()) == .noReply)
 
-        #expect(GatewayPinger.interpret(.failedToLaunch) == .executionFailed)
-        #expect(GatewayPinger.interpret(.terminatedBySignal(15)) == .executionFailed)
-        #expect(GatewayPinger.interpret(.outputReadFailed) == .executionFailed)
-        #expect(GatewayPinger.interpret(.cancelled) == .cancelled)
-        #expect(GatewayPinger.interpret(.localTimeout) == .localTimeout)
+        let failed = GatewayPinger { _, _ in throw TestPingError.failed }
+        #expect(await failed.probe(host: "192.0.2.1", attemptID: UUID()) == .executionFailed)
     }
 
-    @Test("diagnostic ping arguments bound the child's total runtime")
-    func diagnosticPingArgumentsBoundTotalRuntime() {
-        let target = DiagnosticGatewayTarget(
-            interfaceName: "en0",
-            interfaceIndex: 4,
-            address: "192.0.2.1"
+    @Test("host probes use one packet without interface binding")
+    func hostProbeUsesSingleUnboundPacket() async {
+        let recorder = GatewayPingRequestRecorder()
+        let pinger = GatewayPinger { host, config in
+            await recorder.record(host: host, config: config)
+            return pingResult(rtt: 0.0045)
+        }
+
+        #expect(await pinger.probe(host: "192.0.2.1", attemptID: UUID()) == .replied(milliseconds: 4.5))
+        let request = await recorder.requests.first
+        #expect(request?.host == "192.0.2.1")
+        #expect(request?.config.count == 1)
+        #expect(request?.config.interval == 0)
+        #expect(request?.config.interface == nil)
+    }
+
+    @Test("gateway probes bind by interface name only when its index still matches")
+    func gatewayProbeBindsMatchingInterface() async {
+        let recorder = GatewayPingRequestRecorder()
+        let pinger = GatewayPinger(
+            performPing: { host, config in
+                await recorder.record(host: host, config: config)
+                return pingResult(rtt: 0.0045)
+            },
+            interfaceIndex: { _ in 4 }
         )
-        #expect(
-            DiagnosticPingArguments.make(target: target)
-                == ["-b", "en0", "-c", "1", "-W", "1000", "-t", "1", "192.0.2.1"]
+        let target = DiagnosticGatewayTarget(interfaceName: "en0", interfaceIndex: 4, address: "192.0.2.1")
+
+        #expect(await pinger.probe(target: target, attemptID: UUID()) == .replied(milliseconds: 4.5))
+        #expect(await recorder.requests.first?.config.interface == "en0")
+
+        let mismatched = GatewayPinger(
+            performPing: { _, _ in
+                Issue.record("A stale interface index must not start a ping")
+                return pingResult(rtt: 0.0045)
+            },
+            interfaceIndex: { _ in 5 }
         )
+        #expect(await mismatched.probe(target: target, attemptID: UUID()) == .executionFailed)
     }
 
-    @Test("an unanswered ping exits on its own instead of localTimeout")
-    func unansweredPingExitsWithinBudget() async {
-        // Bind the probe to the Wi-Fi interface when the host exposes one, as
-        // production does. An unbound ping follows the default route, which a
-        // tunnel can own and answer, so the target would reply instead of
-        // staying unanswered. A host without a Wi-Fi interface, such as a CI
-        // virtual machine, keeps the unbound probe.
-        let arguments =
-            boundGatewayTarget().map { DiagnosticPingArguments.make(target: $0) }
-            ?? ["-c", "1", "-W", "1000", "-t", "1", "192.0.2.1"]
-        let runner = SystemGatewayPingProcessRunner()
-        let outcome = await runner.run(
-            executablePath: "/sbin/ping",
-            arguments: arguments,
-            attemptID: UUID()
-        )
-        guard case .exited = outcome else {
-            Issue.record("Expected ping to exit within the 1.5s budget, got \(outcome)")
-            return
-        }
-        let interpreted = GatewayPinger.interpret(outcome)
-        #expect(interpreted == .noReply || interpreted == .executionFailed)
-    }
-
-    @Test("the production bound probe reports noReply for an unanswered target")
-    func productionBoundProbeUnansweredIsNoReply() async throws {
-        guard let target = boundGatewayTarget() else {
-            try Test.cancel("The host exposes no Wi-Fi interface to bind the probe to")
-        }
-        let pinger = GatewayPinger()
-        let outcome = await pinger.probe(target: target, attemptID: UUID())
-        #expect(outcome == .noReply || outcome == .executionFailed)
-    }
-
-    /// The gateway probe target production would use on this host, or nil when
-    /// no Wi-Fi interface is available to bind to.
-    private func boundGatewayTarget(address: String = "192.0.2.1") -> DiagnosticGatewayTarget? {
-        guard let interface = NetworkInfoService.fetch() else { return nil }
-        return DiagnosticGatewayTarget(
-            interfaceName: interface.interfaceName,
-            interfaceIndex: interface.interfaceIndex
-                ?? if_nametoindex(interface.interfaceName),
-            address: address
-        )
-    }
-
-    @Test("a cancelled task does not launch its ping process")
-    func cancelledBeforeProbeDoesNotLaunchRunner() async {
-        let runner = ControlledGatewayPingProcessRunner()
-        let pinger = GatewayPinger(processRunner: runner)
-        let gate = AsyncInvocationGate()
-        let attemptID = UUID()
-
-        let task = Task {
-            await gate.wait()
-            return await pinger.probe(host: "gateway.example", attemptID: attemptID)
-        }
-        await gate.waitUntilEntered()
-        task.cancel()
-        await gate.release()
-
-        #expect(await task.value == .cancelled)
-        #expect(await runner.invocationIDs.isEmpty)
-    }
-
-    @Test("cancelling one concurrent ping leaves the other attempt independent")
+    @Test("cancelling one concurrent probe leaves another attempt independent")
     func concurrentProbeCancellationIsAttemptScoped() async {
-        let runner = ControlledGatewayPingProcessRunner()
-        let pinger = GatewayPinger(processRunner: runner)
-        let firstID = UUID()
-        let secondID = UUID()
-
-        let first = Task { await pinger.probe(host: "first.example", attemptID: firstID) }
-        await runner.waitUntilInvocationCount(1)
-        let second = Task { await pinger.probe(host: "second.example", attemptID: secondID) }
-        await runner.waitUntilInvocationCount(2)
+        let pinger = GatewayPinger { host, _ in
+            if host == "slow.example" { try await Task.sleep(for: .seconds(60)) }
+            return pingResult(rtt: 0.0045)
+        }
+        let first = Task { await pinger.probe(host: "slow.example", attemptID: UUID()) }
+        let second = Task { await pinger.probe(host: "fast.example", attemptID: UUID()) }
 
         first.cancel()
         #expect(await first.value == .cancelled)
-        #expect(await runner.cancelledInvocationIDs == [firstID])
-
-        await runner.complete(
-            secondID,
-            with: .exited(
-                status: 0,
-                output: "64 bytes from 192.0.2.2: icmp_seq=0 ttl=64 time=4.5 ms"
-            ))
         #expect(await second.value == .replied(milliseconds: 4.5))
-        #expect(await runner.cancelledInvocationIDs == [firstID])
     }
 
-    @Test("normal ping completion racing cancellation is delivered once")
-    func normalCompletionCancellationRaceCompletesOnce() async {
-        let runner = ControlledGatewayPingProcessRunner()
-        let pinger = GatewayPinger(processRunner: runner)
-        let attemptID = UUID()
-        let task = Task { await pinger.probe(host: "gateway.example", attemptID: attemptID) }
-        await runner.waitUntilInvocationCount(1)
-
-        let finish = Task {
-            await runner.complete(
-                attemptID,
-                with: .exited(
-                    status: 2,
-                    output: "1 packets transmitted, 0 packets received, 100.0% packet loss"
-                ))
+    @Test("ping has an overall local timeout")
+    func pingHasOverallLocalTimeout() async {
+        let pinger = GatewayPinger { _, _ in
+            try await Task.sleep(for: .seconds(60))
+            return pingResult(rtt: 0.0045)
         }
-        task.cancel()
-        await finish.value
-        let result = await task.value
 
-        #expect(result == .cancelled || result == .noReply)
-        #expect(await runner.invocationIDs == [attemptID])
+        #expect(await pinger.probe(host: "slow.example", attemptID: UUID()) == .localTimeout)
+    }
+
+    private func pingResult(rtt: TimeInterval?) -> PingResult {
+        PingResult(
+            target: "192.0.2.1",
+            resolvedIP: "192.0.2.1",
+            responses: [PingResponse(sequence: 1, rtt: rtt, ttl: nil, timestamp: Date())],
+            statistics: PingStatistics(
+                sent: 1,
+                received: rtt == nil ? 0 : 1,
+                packetLoss: rtt == nil ? 1 : 0,
+                minRTT: rtt,
+                avgRTT: rtt,
+                maxRTT: rtt,
+                jitter: nil
+            )
+        )
     }
 
     @Test("GatewayLatencyProvider returns result with routerIP")
@@ -582,56 +492,26 @@ struct ProviderTests {
 }
 
 private struct FixedNetworkInterfaceSnapshotSource: NetworkInterfaceSnapshotSourcing {
-    let makeSnapshot: @Sendable (UUID) -> NetworkInterfaceSnapshot
+    let makeSnapshot: @Sendable (UUID) -> WiFiLensCore.NetworkInterfaceSnapshot
 
-    func capture(cycleID: UUID) async -> NetworkInterfaceSnapshot {
+    func capture(cycleID: UUID) async -> WiFiLensCore.NetworkInterfaceSnapshot {
         makeSnapshot(cycleID)
     }
 }
 
-private actor AsyncInvocationGate {
-    private var continuation: CheckedContinuation<Void, Never>?
-    private var didEnter = false
-
-    func wait() async {
-        await withCheckedContinuation { continuation in
-            self.continuation = continuation
-            didEnter = true
-        }
-    }
-
-    func waitUntilEntered() async {
-        while !didEnter { await Task.yield() }
-    }
-
-    func release() {
-        continuation?.resume()
-        continuation = nil
-    }
+private enum TestPingError: Error {
+    case failed
 }
 
-private actor ControlledGatewayPingProcessRunner: GatewayPingProcessRunning {
-    private(set) var invocationIDs: [UUID] = []
-    private(set) var cancelledInvocationIDs: [UUID] = []
-    private var continuations: [UUID: CheckedContinuation<GatewayPingProcessOutcome, Never>] = [:]
-
-    func run(executablePath: String, arguments: [String], attemptID: UUID) async -> GatewayPingProcessOutcome {
-        await withCheckedContinuation { continuation in
-            invocationIDs.append(attemptID)
-            continuations[attemptID] = continuation
-        }
+private actor GatewayPingRequestRecorder {
+    struct Request {
+        let host: String
+        let config: PingConfig
     }
 
-    func cancel(attemptID: UUID) {
-        cancelledInvocationIDs.append(attemptID)
-        continuations.removeValue(forKey: attemptID)?.resume(returning: .cancelled)
-    }
+    private(set) var requests: [Request] = []
 
-    func waitUntilInvocationCount(_ count: Int) async {
-        while invocationIDs.count < count { await Task.yield() }
-    }
-
-    func complete(_ attemptID: UUID, with outcome: GatewayPingProcessOutcome) {
-        continuations.removeValue(forKey: attemptID)?.resume(returning: outcome)
+    func record(host: String, config: PingConfig) {
+        requests.append(Request(host: host, config: config))
     }
 }

@@ -51,20 +51,6 @@ struct NetworkDiagnosticsWorkbenchRow: Equatable, Identifiable, Sendable {
     }
 }
 
-enum NetworkDiagnosticsWorkbenchItem: Equatable, Identifiable {
-    case stageHeader(NetworkDiagnosticStage)
-    case additionalHeader
-    case check(NetworkDiagnosticsWorkbenchRow)
-
-    var id: String {
-        switch self {
-        case .stageHeader(let stage): "header.\(String(describing: stage))"
-        case .additionalHeader: "header.additional"
-        case .check(let row): "check.\(row.id.rawValue)"
-        }
-    }
-}
-
 enum NetworkDiagnosticsPresentation {
     static func workbenchRows(
         pagePhase: NetworkDiagnosticsPagePhase,
@@ -75,7 +61,7 @@ enum NetworkDiagnosticsPresentation {
     ) -> [NetworkDiagnosticsWorkbenchRow] {
         guard pagePhase != .idle else { return [] }
 
-        return checkIDs.compactMap { id in
+        let rows: [NetworkDiagnosticsWorkbenchRow] = checkIDs.compactMap { id in
             let executionPhase = executionPhases[id] ?? .waiting
             if pagePhase == .running, executionPhase == .waiting {
                 return nil
@@ -87,46 +73,19 @@ enum NetworkDiagnosticsPresentation {
                 pendingReason: pagePhase == .completed && results[id] == nil ? endReason : nil
             )
         }
+        let ordered = NetworkDiagnosticStage.allCases.flatMap { stage in
+            rows.filter { Self.stage(for: $0.id) == stage }
+        }
+        return ordered + rows.filter { Self.stage(for: $0.id) == nil }
     }
 
     static func stage(for checkID: NetworkDiagnosticCheckID) -> NetworkDiagnosticStage? {
         switch checkID {
         case .path, .dns, .proxy: .thisMac
-        case .gatewayReachability: .lan
+        case .gatewayReachability, .gatewayTCPReachability: .lan
         case .internet: .internet
         case .ipv6: nil
         }
-    }
-
-    static func workbenchItems(
-        pagePhase: NetworkDiagnosticsPagePhase,
-        executionPhases: [NetworkDiagnosticCheckID: NetworkDiagnosticExecutionPhase],
-        results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
-        checkIDs: [NetworkDiagnosticCheckID] = NetworkDiagnosticCheckID.allCases,
-        endReason: DiagnosticRunEndReason? = nil
-    ) -> [NetworkDiagnosticsWorkbenchItem] {
-        let rows = workbenchRows(
-            pagePhase: pagePhase,
-            executionPhases: executionPhases,
-            results: results,
-            checkIDs: checkIDs,
-            endReason: endReason
-        )
-        guard !rows.isEmpty else { return [] }
-
-        var items: [NetworkDiagnosticsWorkbenchItem] = []
-        for currentStage in NetworkDiagnosticStage.allCases {
-            let stageRows = rows.filter { stage(for: $0.id) == currentStage }
-            if stageRows.isEmpty { continue }
-            items.append(.stageHeader(currentStage))
-            items.append(contentsOf: stageRows.map { .check($0) })
-        }
-        let additionalRows = rows.filter { stage(for: $0.id) == nil }
-        if !additionalRows.isEmpty {
-            items.append(.additionalHeader)
-            items.append(contentsOf: additionalRows.map { .check($0) })
-        }
-        return items
     }
 
 }
@@ -234,11 +193,28 @@ public final class NetworkDiagnosticsViewModel {
         [
             NetworkConnectivityCheck(),
             GatewayReachabilityCheck(),
+            GatewayTCPReachabilityCheck(),
             DNSResolutionCheck(),
             HTTPSControlEndpointCheck(),
             SystemProxyCheck(),
             IPv6ControlEndpointCheck(),
         ]
+    }
+
+    @_spi(ProCapture)
+    public func stageCompletedCaptureResult() {
+        activeTask?.cancel()
+        activeTask = nil
+        let staged = checkIDs.map { id in
+            NetworkDiagnosticResult(id: id, status: .normal, summary: "Normal")
+        }
+        results = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, $0) })
+        executionPhases = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, .completed) })
+        conclusion = NetworkDiagnosticConclusion.evaluate(
+            staged,
+            requiredIDs: Set(checkIDs)
+        )
+        phase = .completed
     }
 
     deinit {
@@ -573,12 +549,23 @@ public final class NetworkDiagnosticsViewModel {
 
     private func checksForRun(context: DiagnosticNetworkContext?) -> [any DiagnosticCheck] {
         guard usesProductionChecks, let context else { return checks }
+        #if DEBUG
+            let traceMode: GatewayTraceMode = switch GatewayTraceDebugOverride.mode {
+            case .automatic: .automatic
+            case .always: .always
+            case .never: .never
+            }
+        #else
+            let traceMode: GatewayTraceMode = .automatic
+        #endif
         return [
             NetworkConnectivityCheck(context: context),
             GatewayReachabilityCheck(
                 context: context,
-                gatewayMeasuring: diagnosticGatewayMeasuring
+                gatewayMeasuring: diagnosticGatewayMeasuring,
+                traceMode: traceMode
             ),
+            GatewayTCPReachabilityCheck(context: context),
             DNSResolutionCheck(),
             HTTPSControlEndpointCheck(),
             SystemProxyCheck(),
@@ -866,18 +853,7 @@ actor NetworkDiagnosticRestartController {
         /// `record(.diagnosticsCompleted)` path is not invoked (Debug triggers
         /// schedule invitations explicitly).
         func debugStageCompletedResult() {
-            activeTask?.cancel()
-            activeTask = nil
-            let staged = checkIDs.map { id in
-                NetworkDiagnosticResult(id: id, status: .normal, summary: "Debug staged result")
-            }
-            results = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, $0) })
-            executionPhases = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, .completed) })
-            conclusion = NetworkDiagnosticConclusion.evaluate(
-                staged,
-                requiredIDs: Set(checkIDs)
-            )
-            phase = .completed
+            stageCompletedCaptureResult()
         }
     }
 #endif

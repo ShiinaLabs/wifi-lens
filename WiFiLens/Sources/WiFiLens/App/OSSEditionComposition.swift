@@ -1,6 +1,10 @@
 import AppKit
 import SwiftUI
-import WiFiLensCore
+#if DEBUG
+    @_spi(GatewayTraceDebug) import WiFiLensCore
+#else
+    import WiFiLensCore
+#endif
 
 enum OSSEditionAssembly {
     @MainActor
@@ -236,6 +240,17 @@ enum OSSEditionAssembly {
             showMainWindow: @escaping (SidebarPage) -> Void
         ) -> some Commands {
             CommandMenu("Debug") {
+                Picker(
+                    "Gateway Supplemental Trace",
+                    selection: Binding(
+                        get: { GatewayTraceDebugOverride.mode },
+                        set: { GatewayTraceDebugOverride.mode = $0 }
+                    )
+                ) {
+                    Text("Automatic").tag(GatewayTraceDebugOverride.Mode.automatic)
+                    Text("Always").tag(GatewayTraceDebugOverride.Mode.always)
+                    Text("Never").tag(GatewayTraceDebugOverride.Mode.never)
+                }
                 Menu("Onboarding") {
                     Button("Reset Welcome State") {
                         EditionAssemblyProvider.onboardingCoordinator.debugReset()
@@ -368,6 +383,7 @@ enum EditionAppShell {
     static var isControlledDemoSession: Bool { false }
     static var opensMainWindowAtLaunch: Bool { false }
     static var shouldStartWithCollapsedSidebar: Bool { false }
+    static var initialSecondaryToolbarSelections: SecondaryToolbarSelections { SecondaryToolbarSelections() }
 
     @MainActor
     static func startProductDiagnostics() -> String? {
