@@ -38,7 +38,8 @@ enum OSSEditionAssembly {
             detailContribution: { AnyView(detailContribution(context: $0)) },
             settingsContribution: { AnyView(settingsContribution()) }
         ),
-        menuBarWindowManagementEnabled: false
+        menuBarWindowManagementEnabled: false,
+        sidebarBadgeOverrides: [.targetedDiagnostics: .pro]
     )
 
     @ViewBuilder
@@ -223,7 +224,7 @@ enum OSSEditionAssembly {
                 campaign: .appStoreCampaignPreviewLock,
                 interestCategory: .advancedDiagnostics,
                 hostWindow: context.mainWindow,
-                customSkeleton: { EmptyView() }
+                customSkeleton: { TargetedDiagnosticsSkeletonView() }
             )
             .accessibilityIdentifier("page-targetedDiagnostics")
         case .wifiCallingTest:

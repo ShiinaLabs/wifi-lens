@@ -855,6 +855,84 @@ struct WiFiCallingSkeletonView: View {
     }
 }
 
+struct TargetedDiagnosticsSkeletonView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            commandBar
+            resultRows
+            logPanel
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var commandBar: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ProSkeletonChrome.line(0.16, widthRatio: 0.54, height: 8)
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(Color.primary.opacity(0.12))
+                    .frame(width: 76, height: 26)
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(Color.primary.opacity(0.08))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 26)
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.primary.opacity(0.18))
+                    .frame(width: 72, height: 26)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
+    }
+
+    private var resultRows: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ProSkeletonChrome.line(0.24, widthRatio: 0.28, height: 10)
+            ForEach(0..<4, id: \.self) { index in
+                resultRow(index: index)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
+    }
+
+    private func resultRow(index: Int) -> some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(Color.primary.opacity(0.16))
+                .frame(width: 8, height: 8)
+            ProSkeletonChrome.line(index == 0 ? 0.22 : 0.14, widthRatio: index == 0 ? 0.34 : 0.48)
+            Spacer(minLength: 8)
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.primary.opacity(0.10))
+                .frame(width: 44, height: 8)
+        }
+    }
+
+    private var logPanel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(Color.primary.opacity(0.16))
+                    .frame(width: 6, height: 6)
+                ProSkeletonChrome.line(0.20, widthRatio: 0.24)
+                Spacer(minLength: 8)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color.primary.opacity(0.10))
+                    .frame(width: 22, height: 8)
+            }
+            Divider()
+            ProSkeletonChrome.line(0.12, widthRatio: 0.68)
+            ProSkeletonChrome.line(0.12, widthRatio: 0.46)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProSkeletonChrome.card)
+    }
+}
+
 struct RecordingSkeletonView: View {
     var body: some View {
         VStack(spacing: 0) {
