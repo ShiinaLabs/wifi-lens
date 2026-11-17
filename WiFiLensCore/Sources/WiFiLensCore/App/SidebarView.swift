@@ -94,8 +94,8 @@ public struct SidebarView: View {
                 sidebarGroupTitle(.tools)
                 ForEach(
                     [
-                        SidebarPage.spectrum, .channels, .interfaces, .networkDiagnostics, .wifiCallingTest, .roaming,
-                        .bleScanner, .apRadar,
+                        SidebarPage.spectrum, .channels, .interfaces, .networkDiagnostics, .targetedDiagnostics,
+                        .wifiCallingTest, .roaming, .bleScanner, .apRadar,
                     ], id: \.self
                 ) { page in
                     if page == .bleScanner {
