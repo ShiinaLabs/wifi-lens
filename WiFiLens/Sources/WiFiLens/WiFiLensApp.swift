@@ -1,7 +1,13 @@
 import AppKit
 import Darwin
 import SwiftUI
-import WiFiLensCore
+
+#if PRO_STATIC_CAPTURE
+    @_spi(ProCapture) import WiFiLensCore
+    import WiFiLensCaptureSupport
+#else
+    import WiFiLensCore
+#endif
 
 #if OSS
     import Sparkle
@@ -78,7 +84,7 @@ private struct AppRootView: View {
         EditionAppShell.shouldStartWithCollapsedSidebar
         ? NavigationSplitViewVisibility.detailOnly
         : .automatic
-    @State private var secondaryToolbarSelections = SecondaryToolbarSelections()
+    @State private var secondaryToolbarSelections = EditionAppShell.initialSecondaryToolbarSelections
     @State private var networkDiagnosticsViewModel = NetworkDiagnosticsViewModel(
         onDiagnosticsCompletedWithOwner: { ownerWindowID in
             EditionAssemblyProvider.configuration.guidanceCoordinator.record(
@@ -316,6 +322,13 @@ private struct AppRootView: View {
                     .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
                     .allowsHitTesting(selectedPage == .networkDiagnostics)
                     .accessibilityIdentifier("page-networkDiagnostics")
+                    #if PRO_STATIC_CAPTURE
+                        .onAppear {
+                            guard ProDemoLaunch.isNetworkSelfCheckDemo else { return }
+                            networkDiagnosticsViewModel.stageCompletedCaptureResult()
+                            ProDemoLaunch.reportStaticCapturePageReady(for: ProDemoLaunch.networkSelfCheckScenario)
+                        }
+                    #endif
 
                     EditionAppShell.roamingPageContent {
                         RoamingTestView(viewModel: roamingViewModel)

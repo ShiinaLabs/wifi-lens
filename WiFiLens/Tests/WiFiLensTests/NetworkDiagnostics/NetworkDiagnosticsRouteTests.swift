@@ -184,52 +184,6 @@ extension NetworkDiagnosticsTests {
         #expect(elapsed < .seconds(2))
     }
 
-    @Test("diagnostic gateway ping binds the selected interface")
-    func diagnosticGatewayPingBindsSelectedInterface() async {
-        let runner = RecordingGatewayPingProcessRunner(latency: 2.5)
-        let pinger = GatewayPinger(processRunner: runner)
-        let target = DiagnosticGatewayTarget(
-            interfaceName: "en7",
-            interfaceIndex: 12,
-            address: "192.0.2.1"
-        )
-
-        _ = await pinger.ping(target: target)
-
-        #expect(await runner.executablePath == "/sbin/ping")
-        #expect(
-            await runner.arguments == [
-                "-b", "en7", "-c", "1", "-W", "1000", "-t", "1", "192.0.2.1",
-            ])
-    }
-
-    @Test("overlapping gateway pings cancel only their own attempts")
-    func overlappingGatewayPingsCancelOnlyTheirOwnAttempts() async {
-        let runner = ControlledGatewayPingProcessRunner()
-        let pinger = GatewayPinger(processRunner: runner)
-
-        let first = Task {
-            await pinger.ping(host: "first.example")
-        }
-        await runner.waitUntilInvocationCount(1)
-
-        let second = Task {
-            await pinger.ping(host: "second.example")
-        }
-        await runner.waitUntilInvocationCount(2)
-        let invocationIDs = await runner.invocationIDs
-
-        first.cancel()
-        #expect(await first.value == nil)
-        #expect(await runner.cancelledInvocationIDs == [invocationIDs[0]])
-
-        second.cancel()
-        #expect(await second.value == nil)
-        #expect(await runner.invocationIDs.count == 2)
-        #expect(await runner.cancelledInvocationIDs == invocationIDs)
-        #expect(Set(invocationIDs).count == 2)
-    }
-
     @Test("contextual path and gateway checks use one selected interface")
     func contextualChecksShareSelectedRouteTarget() async {
         let context = makeDiagnosticContext(

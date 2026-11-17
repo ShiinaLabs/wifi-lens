@@ -68,6 +68,16 @@ enum OpenSourceLicenseCatalog {
             editions: [.openSource, .pro]
         ),
         OpenSourceComponent(
+            id: "miniftr",
+            name: "MiniFTR (SwiftFTR)",
+            version: "rev 8eb7cbf",
+            licenses: [.mit],
+            copyright: "Copyright (c) 2025 SwiftFTR contributors; Copyright (c) 2026 ShiinaLabs",
+            repositoryURL: URL(string: "https://github.com/ShiinaLabs/MiniFTR"),
+            additionalNotices: [],
+            editions: [.openSource, .pro]
+        ),
+        OpenSourceComponent(
             id: "grdb.swift",
             name: "GRDB.swift",
             version: "7.11.1",
@@ -154,6 +164,16 @@ enum OpenSourceLicenseCatalog {
             repositoryURL: URL(string: "https://github.com/apple/swift-system"),
             additionalNotices: [],
             editions: [.openSource, .pro]
+        ),
+        OpenSourceComponent(
+            id: "swift-ip2asn",
+            name: "SwiftIP2ASN",
+            version: "0.5.2",
+            licenses: [.mit],
+            copyright: "Copyright (c) 2024 Network Weather",
+            repositoryURL: URL(string: "https://github.com/network-weather/swift-ip2asn"),
+            additionalNotices: [],
+            editions: [.openSource]
         ),
         OpenSourceComponent(
             id: "swift-log",

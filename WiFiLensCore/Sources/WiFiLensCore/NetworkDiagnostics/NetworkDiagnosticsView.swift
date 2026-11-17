@@ -74,20 +74,6 @@ public struct NetworkDiagnosticsView: View {
             } else if let conclusion = viewModel.conclusion {
                 conclusionStrip(conclusion)
                 Divider()
-                if let invitation = guidance.pendingInvitation,
-                    invitation.moment == .diagnosticsCompleted
-                {
-                    ProInvitationCard(
-                        invitation: invitation,
-                        guidance: guidance,
-                        isHostVisible: isInvitationHostActive,
-                        hostWindow: hostWindow,
-                        ownerWindowID: ownerWindowID
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .onAppear { renderedInvitationID = invitation.id }
-                }
             } else if viewModel.phase == .completed {
                 sessionOutcomeStrip
                 Divider()
@@ -95,6 +81,23 @@ public struct NetworkDiagnosticsView: View {
 
             workspace(layoutMode)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            if let invitation = guidance.pendingInvitation,
+                invitation.moment == .diagnosticsCompleted,
+                viewModel.phase != .running,
+                viewModel.conclusion != nil
+            {
+                ProInvitationCard(
+                    invitation: invitation,
+                    guidance: guidance,
+                    isHostVisible: isInvitationHostActive,
+                    hostWindow: hostWindow,
+                    ownerWindowID: ownerWindowID
+                )
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .onAppear { renderedInvitationID = invitation.id }
+            }
         }
     }
 
