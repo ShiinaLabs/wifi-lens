@@ -45,7 +45,7 @@ extension NetworkDiagnosticsTests {
                 == "network_diagnostics.remediation.indeterminate.action")
     }
 
-    @Test("runner applies the path and DNS dependency matrix")
+    @Test("runner completes the fixed check sequence regardless of path and DNS outcomes")
     func runnerDependencyMatrix() async {
         let cases:
             [(
@@ -54,27 +54,27 @@ extension NetworkDiagnosticsTests {
             )] = [
                 (
                     [.path: .abnormal],
-                    [.abnormal, .blocked, .blocked, .blocked, .blocked, .blocked],
-                    [.path]
+                    [.abnormal, .normal, .normal, .normal, .normal, .normal, .normal],
+                    NetworkDiagnosticCheckID.allCases
                 ),
                 (
                     [.path: .indeterminate],
-                    [.indeterminate, .normal, .normal, .normal, .normal, .normal],
+                    [.indeterminate, .normal, .normal, .normal, .normal, .normal, .normal],
                     NetworkDiagnosticCheckID.allCases
                 ),
                 (
                     [.dns: .indeterminate],
-                    [.normal, .normal, .indeterminate, .normal, .normal, .normal],
+                    [.normal, .normal, .normal, .indeterminate, .normal, .normal, .normal],
                     NetworkDiagnosticCheckID.allCases
                 ),
                 (
                     [.dns: .abnormal],
-                    [.normal, .normal, .abnormal, .normal, .normal, .normal],
+                    [.normal, .normal, .normal, .abnormal, .normal, .normal, .normal],
                     NetworkDiagnosticCheckID.allCases
                 ),
                 (
                     [.gatewayReachability: .abnormal],
-                    [.normal, .abnormal, .normal, .normal, .normal, .normal],
+                    [.normal, .abnormal, .normal, .normal, .normal, .normal, .normal],
                     NetworkDiagnosticCheckID.allCases
                 ),
             ]
@@ -97,9 +97,7 @@ extension NetworkDiagnosticsTests {
 
             #expect(results.map(\.status) == testCase.statuses)
             #expect(await recorder.values == testCase.invocations)
-            if testCase.overrides[.path] == .abnormal {
-                #expect(results[1].evidence.contains(.init(code: "blocked.by", value: "path")))
-            }
+            #expect(results.count == NetworkDiagnosticCheckID.allCases.count)
         }
     }
 

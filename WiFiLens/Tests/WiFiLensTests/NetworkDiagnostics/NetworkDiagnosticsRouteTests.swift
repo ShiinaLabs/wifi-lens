@@ -586,6 +586,11 @@ extension NetworkDiagnosticsTests {
             summary: "gateway did not answer ICMP",
             evidence: [.init(code: "gateway.no-response", value: "192.0.2.1")]
         )
+        results[6] = NetworkDiagnosticResult(
+            id: .gatewayTCPReachability,
+            status: .indeterminate,
+            summary: "gateway TCP response could not be determined"
+        )
         results[3] = NetworkDiagnosticResult(
             id: .internet,
             status: .normal,
@@ -618,6 +623,11 @@ extension NetworkDiagnosticsTests {
             status: .skipped,
             summary: "Gateway check not applicable",
             evidence: [.init(code: "gateway.route-selection", value: "tunneled")]
+        )
+        results[6] = NetworkDiagnosticResult(
+            id: .gatewayTCPReachability,
+            status: .skipped,
+            summary: "Gateway TCP check not applicable"
         )
 
         let assessment = NetworkDiagnosticAssessmentResolver().resolve(

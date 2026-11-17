@@ -12,6 +12,7 @@ struct NetworkDiagnosticsTests {
     func makeResults(
         path: NetworkDiagnosticStatus,
         gateway: NetworkDiagnosticStatus = .normal,
+        gatewayTCP: NetworkDiagnosticStatus = .normal,
         dns: NetworkDiagnosticStatus,
         internet: NetworkDiagnosticStatus,
         ipv6: NetworkDiagnosticStatus = .skipped,
@@ -24,6 +25,7 @@ struct NetworkDiagnosticsTests {
             NetworkDiagnosticResult(id: .internet, status: internet, summary: "internet"),
             NetworkDiagnosticResult(id: .ipv6, status: ipv6, summary: "ipv6"),
             NetworkDiagnosticResult(id: .proxy, status: proxy, summary: "proxy"),
+            NetworkDiagnosticResult(id: .gatewayTCPReachability, status: gatewayTCP, summary: "gateway TCP"),
         ]
     }
 

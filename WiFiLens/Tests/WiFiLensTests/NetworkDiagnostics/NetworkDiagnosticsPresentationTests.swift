@@ -15,6 +15,7 @@ extension NetworkDiagnosticsTests {
             .dns: .init(id: .dns, status: .abnormal, summary: ""),
             .proxy: .init(id: .proxy, status: .normal, summary: ""),
             .gatewayReachability: .init(id: .gatewayReachability, status: .normal, summary: ""),
+            .gatewayTCPReachability: .init(id: .gatewayTCPReachability, status: .normal, summary: ""),
         ]
 
         #expect(resolver.status(for: .thisMac, results: abnormalDNS) == .abnormal)
@@ -24,6 +25,7 @@ extension NetworkDiagnosticsTests {
             .dns: .init(id: .dns, status: .normal, summary: ""),
             .proxy: .init(id: .proxy, status: .abnormal, summary: ""),
             .gatewayReachability: .init(id: .gatewayReachability, status: .normal, summary: ""),
+            .gatewayTCPReachability: .init(id: .gatewayTCPReachability, status: .normal, summary: ""),
         ]
         #expect(resolver.status(for: .thisMac, results: proxyOnly) == .abnormal)
         #expect(resolver.status(for: .thisMac, results: [:]) == nil)
@@ -63,6 +65,7 @@ extension NetworkDiagnosticsTests {
         let results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [
             .path: .init(id: .path, status: .normal, summary: ""),
             .gatewayReachability: .init(id: .gatewayReachability, status: .abnormal, summary: ""),
+            .gatewayTCPReachability: .init(id: .gatewayTCPReachability, status: .normal, summary: ""),
             .dns: .init(id: .dns, status: .normal, summary: ""),
             .internet: .init(id: .internet, status: .normal, summary: ""),
             .ipv6: .init(id: .ipv6, status: .skipped, summary: ""),
@@ -95,8 +98,8 @@ extension NetworkDiagnosticsTests {
         #expect(!activePresentation.edges[1].isActive)
     }
 
-    @Test("workbench items interleave stage headers with check rows")
-    func workbenchItemGrouping() {
+    @Test("workbench rows follow stage order and omit waiting checks while running")
+    func workbenchRowOrdering() {
         #expect(NetworkDiagnosticsWorkbenchLayout.mode(for: 519) == .compact)
         #expect(NetworkDiagnosticsWorkbenchLayout.mode(for: 520) == .condensed)
         #expect(NetworkDiagnosticsWorkbenchLayout.mode(for: 719) == .condensed)
@@ -114,21 +117,20 @@ extension NetworkDiagnosticsTests {
         ]
 
         #expect(
-            NetworkDiagnosticsPresentation.workbenchItems(
+            NetworkDiagnosticsPresentation.workbenchRows(
                 pagePhase: .idle,
                 executionPhases: executionPhases,
                 results: [:]
             ).isEmpty)
 
-        let runningItems = NetworkDiagnosticsPresentation.workbenchItems(
+        let runningRows = NetworkDiagnosticsPresentation.workbenchRows(
             pagePhase: .running,
             executionPhases: executionPhases,
             results: [.path: path],
             checkIDs: [.path, .dns, .proxy]
         )
-        #expect(runningItems.map(\.id) == ["header.thisMac", "check.path", "check.dns"])
-        #expect(runningItems[0] == .stageHeader(.thisMac))
-        #expect(runningItems[1] == .check(.init(id: .path, executionPhase: .completed, result: path)))
+        #expect(runningRows.map(\.id) == [.path, .dns])
+        #expect(runningRows[0] == .init(id: .path, executionPhase: .completed, result: path))
 
         let completedResults = Dictionary(
             uniqueKeysWithValues: makeResults(
@@ -137,34 +139,26 @@ extension NetworkDiagnosticsTests {
                 internet: .normal,
                 proxy: .indeterminate
             ).map { ($0.id, $0) })
-        let completedItems = NetworkDiagnosticsPresentation.workbenchItems(
+        let completedRows = NetworkDiagnosticsPresentation.workbenchRows(
             pagePhase: .completed,
             executionPhases: executionPhases,
             results: completedResults,
             checkIDs: [.path, .dns, .ipv6, .proxy]
         )
-        #expect(
-            completedItems.map(\.id) == [
-                "header.thisMac", "check.path", "check.dns", "check.proxy",
-                "header.additional", "check.ipv6",
-            ])
-        #expect(completedItems[4] == .additionalHeader)
+        #expect(completedRows.map(\.id) == [.path, .dns, .proxy, .ipv6])
 
-        let timedOutItems = NetworkDiagnosticsPresentation.workbenchItems(
+        let timedOutRows = NetworkDiagnosticsPresentation.workbenchRows(
             pagePhase: .completed,
             executionPhases: [.path: .completed, .dns: .waiting],
             results: [.path: path],
             checkIDs: [.path, .dns],
             endReason: .timedOut
         )
-        #expect(
-            timedOutItems.last
-                == .check(
-                    .init(
-                        id: .dns,
-                        executionPhase: .waiting,
-                        result: nil,
-                        pendingReason: .timedOut
-                    )))
+        #expect(timedOutRows.last == .init(
+            id: .dns,
+            executionPhase: .waiting,
+            result: nil,
+            pendingReason: .timedOut
+        ))
     }
 }

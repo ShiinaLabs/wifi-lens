@@ -32,6 +32,7 @@ extension NetworkDiagnosticsTests {
         let gatewayFailure = makeResults(
             path: .normal,
             gateway: .abnormal,
+            gatewayTCP: .abnormal,
             dns: .normal,
             internet: .normal,
             proxy: .normal
@@ -85,6 +86,7 @@ extension NetworkDiagnosticsTests {
         let captivePortal = [
             NetworkDiagnosticResult(id: .path, status: .normal, summary: "path"),
             NetworkDiagnosticResult(id: .gatewayReachability, status: .normal, summary: "gateway"),
+            NetworkDiagnosticResult(id: .gatewayTCPReachability, status: .normal, summary: "gateway TCP"),
             NetworkDiagnosticResult(id: .dns, status: .normal, summary: "dns"),
             NetworkDiagnosticResult(
                 id: .internet,

@@ -358,6 +358,7 @@ extension NetworkDiagnosticsTests {
             NetworkDiagnosticResult(id: .dns, status: .normal, summary: "dns"),
         ]
         let trailingResults = [
+            NetworkDiagnosticResult(id: .gatewayTCPReachability, status: .normal, summary: "gateway TCP"),
             NetworkDiagnosticResult(id: .ipv6, status: .skipped, summary: "ipv6"),
             NetworkDiagnosticResult(id: .proxy, status: .abnormal, summary: "proxy"),
         ]

@@ -20,13 +20,18 @@ extension NetworkDiagnosticsTests {
         #expect(descriptions.allSatisfy { $0.value.contains("Network Self-Check") })
     }
 
-    @Test("production checks run path DNS HTTPS and proxy in dependency order")
+    @Test("production checks run the fixed diagnostic sequence")
     @MainActor
     func productionCheckOrder() {
         #expect(
-            NetworkDiagnosticsViewModel().checkIDs == [.path, .gatewayReachability, .dns, .internet, .proxy, .ipv6])
-        #expect(NetworkDiagnosticCheckID.allCases == [.path, .gatewayReachability, .dns, .internet, .ipv6, .proxy])
+            NetworkDiagnosticsViewModel().checkIDs == [
+                .path, .gatewayReachability, .gatewayTCPReachability, .dns, .internet, .proxy, .ipv6,
+            ])
+        #expect(
+            NetworkDiagnosticCheckID.allCases == [
+                .path, .gatewayReachability, .gatewayTCPReachability, .dns, .internet, .ipv6, .proxy,
+            ])
         #expect(NetworkDiagnosticCheckID.path != .internet)
-        #expect(Set(NetworkDiagnosticCheckID.allCases).count == 6)
+        #expect(Set(NetworkDiagnosticCheckID.allCases).count == 7)
     }
 }
