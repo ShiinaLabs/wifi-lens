@@ -1,17 +1,18 @@
-# WiFi Lens
+# WiFi Lens Pro
 
 **Comprenez ce qui se passe sur votre Wi-Fi.**
 
-Repérez à quel niveau votre connexion peut échouer, analysez les réseaux Wi-Fi à proximité et examinez les problèmes récurrents dans une app macOS native.
+Une app macOS native réunissant analyse Wi-Fi en direct, diagnostic réseau, observation continue et historique pour enquêter sur les problèmes récurrents.
 
 <p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro</strong></a> · <a href="https://github.com/ShiinaLabs/wifi-lens/releases/latest"><strong>Télécharger OSS gratuitement</strong></a> · <a href="https://wifi-lens.shiinalabs.com/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">Site officiel</a>
+  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Obtenir WiFi Lens Pro" width="190"></a>
 </p>
-<p align="center"><a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Télécharger sur le Mac App Store" width="190"></a></p>
-<p align="center"><img alt="Network Check affiche le chemin de connexion de ce Mac au routeur puis à Internet" src="assets/screenshot-selfcheck.webp" width="800"></p>
-<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon et Intel &nbsp;·&nbsp; Traitement local</p>
-<p align="center">🩺 <strong>Network Check</strong> — Vérifiez votre Mac, le réseau local et la connexion Internet<br>📡 <strong>Analyse Wi-Fi</strong> — Explorez les réseaux proches, l’utilisation des canaux, le signal et la sécurité<br>🔒 <strong>Traitement local</strong> — Les relevés restent sur votre Mac ; aucune télémétrie d’usage</p>
-<p align="center"><sub>Ce dépôt propose l’édition open source gratuite de WiFi Lens pour l’analyse en direct, le diagnostic réseau, le développement et les contributions de la communauté.</sub></p>
+
+<p align="center"><a href="https://wifi-lens.shiinalabs.com/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">Site officiel</a></p>
+
+<p align="center"><img src="assets/screenshot-network-experience.webp" alt="Network Experience de WiFi Lens Pro affichant la fiabilité observée" width="800"></p>
+
+<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · One-time purchase</sub></p>
 
 ---
 
@@ -20,64 +21,48 @@ Repérez à quel niveau votre connexion peut échouer, analysez les réseaux Wi-
 </p>
 
 <p align="center">
-  <a href="#capacités-principales">Capacités principales</a> · <a href="#pourquoi-wifi-lens-pro">Pourquoi WiFi Lens Pro</a> · <a href="#éditions">Éditions</a> · <a href="#intégration-ia--mcp">IA / MCP</a> · <a href="#édition-open-source">Édition open source</a> · <a href="#confidentialité">Confidentialité</a> · <a href="#obtenir-wifi-lens">Obtenir WiFi Lens</a> · <a href="#développement">Développement</a> · <a href="#contribuer">Contribuer</a> · <a href="#licence">Licence</a>
+  <a href="#pourquoi-wifi-lens-pro">Pourquoi Pro</a> · <a href="#capacités-principales">Outils en direct</a> · <a href="#éditions">Éditions</a>
 </p>
-
----
-
-## Capacités principales
-WiFi Lens réunit des outils en direct pour comprendre les réseaux proches, l’utilisation des canaux et la connexion de votre Mac.
-
-### Repérer les problèmes de connexion
-
-Pour mieux cerner un problème de connexion, lancez **Network Check** afin d’examiner le chemin entre votre Mac, le réseau local et Internet. L’outil vérifie le chemin réseau, l’accessibilité de la passerelle, la résolution DNS, l’accès HTTP/HTTPS, l’accessibilité IPv6 facultative et le routage des proxys configurés. Les résultats sont regroupés sous **This Mac**, **LAN** et **Internet** pour vous aider à localiser le problème éventuel.
-
-| Capacité | Utilité |
-|----------|---------|
-| 📡 Scan Wi-Fi | Scanner les réseaux voisins sur les bandes 2,4, 5 et 6 GHz |
-| 📊 Spectre et qualité des canaux | Voir l’occupation, la congestion et les recommandations régionales |
-| 🔍 Détails réseau | Examiner la génération PHY, la largeur de canal, 802.11k/r/v, WPA3 et la connexion |
-| 🚶 Roaming et carte de chaleur | Valider les transitions entre AP et comparer l’occupation par bande |
-| 🩺 Network Self-Check | Vérifiez la connectivité, le DNS, HTTPS, IPv6 et les proxys configurés |
-| 📻 AP Radar *(Aperçu)* | Suivre un AP avec des indications fondées sur le RSSI et un retour audio optionnel |
-| 🤖 MCP et export | Connecter des outils IA locaux et enregistrer les graphiques en PNG ou CSV |
-| 🔒 Confidentialité locale | Conserver les données de scan sur le Mac sans télémétrie d’utilisation |
-
-<p align="center"><img alt="Vue d’ensemble WiFi Lens avec réseaux Wi-Fi proches, signal, qualité des canaux et recommandation" src="assets/screenshot-hero.webp" width="800"></p>
 
 ---
 
 ## Pourquoi WiFi Lens Pro
 
-WiFi Lens Pro ajoute des fonctions d’historique et de suivi à l’analyse Wi-Fi en direct pour comprendre les problèmes récurrents, comparer les observations dans le temps et poursuivre l’observation lorsque nécessaire.
+Les problèmes Wi-Fi ne se reproduisent pas toujours quand vous cherchez à les comprendre. WiFi Lens Pro associe les outils de diagnostic immédiat aux observations consultables plus tard.
 
-| Workflow | Ce que WiFi Lens Pro ajoute |
-|----------|-----------------------------|
-| Voir l’état en un coup d’œil | Consulter les informations de connexion dans la barre des menus |
-| Évaluer la fiabilité | Examiner l’expérience observée sur une période sélectionnée |
-| Comparer à une référence | Comparer les mesures enregistrées de latence de la passerelle à une référence historique compatible |
-| Enquêter sur les problèmes | Examiner les problèmes enregistrés, leurs preuves et les observations ultérieures |
-| Observer app fermée | Observation en arrière-plan facultative, désactivée par défaut ; elle s’interrompt lorsque le Mac se met en veille |
+### Comprendre la connexion actuelle
 
-Pro associe l’analyse en direct à des vues historiques pour évaluer la fiabilité observée et examiner les problèmes enregistrés. Il inclut également un test Wi-Fi Calling propre à l’opérateur.
+Explorez les réseaux Wi-Fi proches et l’encombrement des canaux. Lorsqu’une connexion se comporte mal, Network Check aide à localiser le problème. L’analyse en direct et le diagnostic font partie de l’expérience Pro.
+
+### Continuer à observer si nécessaire
+
+La barre des menus affiche les informations de connexion actuelles. L’observation facultative en arrière-plan peut continuer après la fermeture de Pro ; elle est désactivée par défaut et suspendue lorsque le Mac se met en veille.
+
+### Enquêter à partir des observations
+
+Network Experience aide à évaluer la fiabilité observée. Historical Baseline compare les mesures de latence de passerelle sauvegardées à une référence compatible, et Problem History réunit les problèmes enregistrés et leurs preuves.
 
 <table>
 <tr>
-<td width="50%" align="center"><img alt="Network Experience avec évaluation de fiabilité et de couverture" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
-<td width="50%" align="center"><img alt="Historical Baseline comparant la latence de la passerelle aux mesures historiques" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
-</tr>
-<tr>
-<td colspan="2" align="center"><img alt="Problem History affiche les problèmes enregistrés et leurs preuves" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
+<td width="50%" align="center"><img src="assets/screenshot-historical-baseline.webp" alt="Historical Baseline comparant la latence de passerelle enregistrée à sa référence" width="100%"><sub>Historical Baseline</sub></td>
+<td width="50%" align="center"><img src="assets/screenshot-problem-history.webp" alt="Problem History affichant les problèmes enregistrés et leurs preuves" width="100%"><sub>Problem History</sub></td>
 </tr>
 </table>
 
-### De l’analyse en direct au contexte historique
+<p align="center"><a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro</strong></a></p>
 
-Lorsqu’un problème est intermittent, Network Experience vous aide à évaluer ce qui a été observé au fil du temps. Problem History rassemble les problèmes enregistrés et leurs preuves pour faciliter leur examen.
+---
 
-<p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro →</strong></a>
-</p>
+## Capacités principales
+
+Pro comprend aussi les outils en direct nécessaires au dépannage quotidien :
+
+- **Analyse Wi-Fi** — Analysez les réseaux 2,4, 5 et 6 GHz et comparez signal, occupation et encombrement des canaux, sécurité et recommandations régionales.
+- **Network Check** — Examinez le chemin du Mac vers Internet via le réseau local : passerelle, DNS, HTTP/HTTPS, IPv6 facultatif et routage proxy.
+- **Autres outils locaux** — Roaming et carte des canaux, AP Radar, intégration MCP locale et export de graphiques. Une édition open source gratuite propose également ces outils en direct.
+
+<p align="center"><img src="assets/screenshot-hero.webp" alt="Vue Wi-Fi de WiFi Lens avec qualité des canaux et recommandations" width="800"></p>
+<p align="center"><img src="assets/screenshot-selfcheck.webp" alt="Network Check avec les résultats This Mac, LAN et Internet" width="800"></p>
 
 ---
 

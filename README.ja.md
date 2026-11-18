@@ -1,17 +1,18 @@
-# WiFi Lens
+# WiFi Lens Pro
 
 **Wi-Fiで何が起きているかを把握する。**
 
-Macからルーター、インターネットまで接続を確認し、周辺のWi-Fi環境を分析。繰り返し発生する問題の調査にも使えるmacOSネイティブアプリです。
+ライブWi-Fi分析、ネットワーク診断、継続的な観測、問題発生後の履歴調査を1つにまとめたmacOSネイティブアプリです。
 
 <p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Proを入手</strong></a> · <a href="https://github.com/ShiinaLabs/wifi-lens/releases/latest"><strong>OSS版を無料ダウンロード</strong></a> · <a href="https://wifi-lens.shiinalabs.com/ja/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">公式サイト</a>
+  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="WiFi Lens Proを入手" width="190"></a>
 </p>
-<p align="center"><a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Mac App Storeからダウンロード" width="190"></a></p>
-<p align="center"><img alt="Network CheckでMac、ルーター、インターネット間の接続経路を表示" src="assets/screenshot-selfcheck.webp" width="800"></p>
-<p align="center">macOS 14.6以降 &nbsp;·&nbsp; Apple Silicon / Intel &nbsp;·&nbsp; ローカル優先</p>
-<p align="center">🩺 <strong>Network Check</strong> — Mac、ローカルネットワーク、インターネットの接続を確認<br>📡 <strong>Wi-Fi分析</strong> — 周辺ネットワーク、チャンネル利用状況、電波強度、セキュリティを確認<br>🔒 <strong>ローカル優先</strong> — スキャン記録はMacに保存。利用状況のテレメトリーはありません</p>
-<p align="center"><sub>このリポジトリでは、ライブ分析、ネットワークトラブルシューティング、開発、コミュニティへの貢献に使える無料のオープンソース版を提供しています。</sub></p>
+
+<p align="center"><a href="https://wifi-lens.shiinalabs.com/ja/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">公式サイト</a></p>
+
+<p align="center"><img src="assets/screenshot-network-experience.webp" alt="WiFi Lens ProのNetwork Experienceで観測された接続の信頼性を表示" width="800"></p>
+
+<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · One-time purchase</sub></p>
 
 ---
 
@@ -20,64 +21,48 @@ Macからルーター、インターネットまで接続を確認し、周辺�
 </p>
 
 <p align="center">
-  <a href="#コア機能">コア機能</a> · <a href="#wifi-lens-proを選ぶ理由">WiFi Lens Proを選ぶ理由</a> · <a href="#エディション">エディション</a> · <a href="#ai--mcp連携">AI / MCP</a> · <a href="#オープンソース版">オープンソース版</a> · <a href="#プライバシー">プライバシー</a> · <a href="#wifi-lensを入手">入手方法</a> · <a href="#開発">開発</a> · <a href="#コントリビュート">コントリビュート</a> · <a href="#ライセンス">ライセンス</a>
+  <a href="#wifi-lens-proを選ぶ理由">Proについて</a> · <a href="#コア機能">ライブツール</a> · <a href="#エディション">エディション</a>
 </p>
-
----
-
-## コア機能
-WiFi Lensは、近くのネットワーク、チャンネル利用状況、Macの接続を把握するためのライブツールを備えています。
-
-### 接続トラブルの原因を調べる
-
-接続トラブルの原因を切り分けたいときは、**Network Check**を実行して、Macからローカルネットワーク、インターネットまでの経路を確認できます。ネットワーク経路、ゲートウェイへの到達性、DNS名前解決、HTTP/HTTPSアクセス、任意のIPv6到達性、設定済みプロキシの経路を確認します。結果は **This Mac**、**LAN**、**Internet** の3段階に整理され、問題が発生している可能性のある場所を把握できます。
-
-| 機能 | できること |
-|------|------------|
-| 📡 Wi-Fiスキャン | 2.4 / 5 / 6 GHz帯の周辺ネットワークをスキャン |
-| 📊 スペクトラムとチャンネル品質 | 使用状況、混雑度、地域に応じたチャンネル推奨を確認 |
-| 🔍 ネットワーク詳細 | PHY世代、チャンネル幅、802.11k/r/v、WPA3、接続情報を確認 |
-| 🚶 ローミングとヒートマップ | APハンドオフを検証し、帯域ごとの使用状況を比較 |
-| 🩺 Network Self-Check | 接続、DNS、HTTPS、IPv6、設定済みプロキシを確認 |
-| 📻 AP Radar（プレビュー） | 選択したAPを追跡し、RSSIに基づくガイダンスと音声フィードバックを利用 |
-| 🤖 MCPとエクスポート | ローカルAIツールに接続し、チャートをPNGまたはCSVで保存 |
-| 🔒 ローカルファーストのプライバシー | スキャンデータをMacに保持し、利用テレメトリーを収集しない |
-
-<p align="center"><img alt="WiFi Lensの概要画面。周辺Wi-Fi情報、電波強度、チャンネル品質、チャンネル推奨を表示" src="assets/screenshot-hero.webp" width="800"></p>
 
 ---
 
 ## WiFi Lens Proを選ぶ理由
 
-WiFi Lens Proでは、ライブWi-Fi分析に履歴とフォローアップ機能が加わります。繰り返す問題の把握、時間経過による観測結果の比較、必要に応じた継続観測ができます。
+Wi-Fiの問題は、調べようとしたときには消えていることがあります。WiFi Lens Proは現在の接続を調べるツールと、あとから確認できる観測履歴を組み合わせています。
 
-| ワークフロー | WiFi Lens Proでできること |
-|--------------|---------------------------|
-| 状態をすぐ確認 | メニューバーから現在の接続情報を確認 |
-| 信頼性を評価 | 選択した期間に観測されたネットワーク体験を確認 |
-| 過去の基準と比較 | 保存されたゲートウェイ遅延を互換性のある過去の基準と比較 |
-| 記録された問題を調査 | 保存された問題、その根拠、後からの観測を確認 |
-| アプリ終了中も観測 | 任意のバックグラウンド観測。初期状態ではオフで、Macのスリープ中は停止 |
+### いまの接続を調べる
 
-Proはライブ分析に履歴ビューを加え、観測された信頼性の評価や記録された問題の調査を支援します。キャリア別のWi-Fi Calling Testも利用できます。
+周辺のWi-Fiネットワークやチャンネルの混雑状況を確認し、接続に問題があるときはNetwork Checkを実行。ライブ分析とネットワーク診断をProの一連のワークフローで利用できます。
+
+### 必要なときに観測を続ける
+
+メニューバーで現在の接続情報を確認できます。任意のバックグラウンド観測はProアプリを閉じたあとも継続可能です。初期状態ではオフで、Macのスリープ中は停止します。
+
+### 問題発生後に記録を調べる
+
+Network Experienceで観測された期間の信頼性を確認。Historical Baselineは保存済みゲートウェイ遅延を過去の基準と比較し、Problem Historyは記録された問題と根拠をまとめて表示します。
 
 <table>
 <tr>
-<td width="50%" align="center"><img alt="信頼性評価と観測範囲を表示するNetwork Experience" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
-<td width="50%" align="center"><img alt="ゲートウェイ遅延と過去の測定値を比較するHistorical Baseline" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
-</tr>
-<tr>
-<td colspan="2" align="center"><img alt="Problem Historyで記録された問題と根拠を表示" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
+<td width="50%" align="center"><img src="assets/screenshot-historical-baseline.webp" alt="Historical Baselineで保存済みゲートウェイ遅延と過去の基準を比較" width="100%"><sub>Historical Baseline</sub></td>
+<td width="50%" align="center"><img src="assets/screenshot-problem-history.webp" alt="Problem Historyに記録された問題と根拠を表示" width="100%"><sub>Problem History</sub></td>
 </tr>
 </table>
 
-### ライブ分析から過去の状況へ
+<p align="center"><a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Proを入手</strong></a></p>
 
-問題が断続的に起きる場合、Network Experienceで一定期間に観測された状況を評価できます。Problem Historyでは、記録された問題とその根拠をまとめて確認できます。
+---
 
-<p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Proを入手 →</strong></a>
-</p>
+## コア機能
+
+日常的なトラブルシューティングに使うライブツールもProに含まれます。
+
+- **Wi-Fi分析** — 2.4、5、6 GHz帯の周辺ネットワークをスキャンし、電波強度、チャンネル利用状況、混雑、セキュリティ、地域別の推奨を比較できます。
+- **Network Check** — Macからローカルネットワーク、インターネットまでの経路を調べ、ゲートウェイ、DNS、HTTP/HTTPS、任意のIPv6、プロキシ経路を確認します。
+- **その他のローカルツール** — ローミングとチャンネルヒートマップ、AP Radar、ローカルMCP連携、チャートのエクスポート。これらのライブツールは無料のオープンソース版でも利用できます。
+
+<p align="center"><img src="assets/screenshot-hero.webp" alt="WiFi LensのWi-Fi分析概要とチャンネル品質の推奨" width="800"></p>
+<p align="center"><img src="assets/screenshot-selfcheck.webp" alt="Network CheckのThis Mac、LAN、Internet各段階の結果" width="800"></p>
 
 ---
 
