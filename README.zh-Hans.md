@@ -12,9 +12,13 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/macOS-14.6%2B-555?style=flat" alt="macOS 14.6+">
+  <img src="https://img.shields.io/badge/Chip-Intel%20%7C%20Apple%20Silicon-555?style=flat" alt="Intel 与 Apple Silicon">
+  <img src="https://img.shields.io/badge/Telemetry-None-555?style=flat" alt="无遥测">
+</p>
+
+<p align="center">
   <a href="https://wifi-lens.shiinalabs.com/zh-Hans/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">官方网站</a>
-  &nbsp;·&nbsp; macOS 14.6+
-  &nbsp;·&nbsp; Intel / Apple Silicon
   &nbsp;·&nbsp; 一次性购买
 </p>
 
@@ -42,7 +46,7 @@ Wi-Fi 偶尔断连、延迟突然升高、连接过一会儿又恢复。等你�
 
 **WiFi Lens Pro 不只帮助你检查现在的网络，还会在需要时持续观测，让过去的问题有迹可循。**
 
-| **01 · 实时排查** | **02 · 持续观测** | **03 · 历史调查** |
+| **🔍 01 · 实时排查** | **📡 02 · 持续观测** | **🗂️ 03 · 历史调查** |
 |:---|:---|:---|
 | 了解当前连接与无线环境 | 在需要时持续收集观测结果 | 回看可靠性、历史基准与问题证据 |
 | [查看网络诊断](#01--实时排查) | [了解持续观测](#02--持续观测) | [调查历史问题](#03--历史调查) |
@@ -173,6 +177,12 @@ WiFi Lens 在本机处理 Wi-Fi 扫描数据，不需要账号，不使用云端
 **WiFi Lens Pro**：通过 [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) 一次性购买。支持 macOS 14.6+、Intel 和 Apple Silicon；6 GHz 扫描需要 Wi-Fi 6E/7 硬件。
 
 **WiFi Lens 开源版**：[GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest) 或 Homebrew：
+
+<p>
+  <a href="https://github.com/ShiinaLabs/wifi-lens/releases/latest"><img src="https://img.shields.io/github/v/release/ShiinaLabs/wifi-lens?label=Latest&amp;color=2563eb" alt="最新版本"></a>
+  <a href="https://github.com/ShiinaLabs/wifi-lens/releases/latest"><img src="https://img.shields.io/github/downloads/ShiinaLabs/wifi-lens/WiFiLens.dmg?label=Downloads&amp;displayAssetName=false&amp;color=2563eb" alt="下载量"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0 许可证"></a>
+</p>
 
 ```sh
 brew tap ShiinaLabs/apps
