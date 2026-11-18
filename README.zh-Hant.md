@@ -1,27 +1,27 @@
 # WiFi Lens
 
-**完整的 Mac Wi-Fi 故障排除工作流程。**
+**了解 Wi-Fi 正在發生什麼。**
 
-WiFi Lens Pro 將即時 Wi-Fi 分析、網路診斷、持續監測、Timeline 歷史資料、Statistics 和 Insights 整合在一套原生 macOS App 中。
+一款原生 macOS Wi-Fi 分析與網路診斷 App。
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>取得 WiFi Lens Pro</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://wifi-lens.shiinalabs.com">官方網站</a>
+  <a href="https://wifi-lens.shiinalabs.com/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">官方網站</a>
 </p>
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="在 Mac App Store 下載" width="190"></a>
 </p>
 
-<p align="center"><img alt="WiFi Lens Pro 在 macOS 上顯示 Event Timeline 歷史資料" src="assets/screenshot-timeline.webp" width="800"></p>
+<p align="center"><img alt="WiFi Lens Pro 顯示 Problem History 中記錄的問題與證據" src="assets/screenshot-problem-history.webp" width="800"></p>
 
-<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon 與 Intel &nbsp;·&nbsp; 不含遙測</p>
+<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon 與 Intel &nbsp;·&nbsp; 以本機為主</p>
 
 <p align="center">
-  🔒 <strong>以本機為主的隱私設計</strong> — 無帳號、無雲端、無遙測<br>
-  🩺 <strong>以證據為本的診斷</strong> — 可解釋的路徑、DNS、HTTPS 和代理伺服器檢查<br>
-  🤖 <strong>支援 AI 工作流程的 MCP</strong> — 讓相容用戶端在 Mac 上存取即時 Wi-Fi 資料
+  🔒 <strong>本機資料</strong> — Wi-Fi 掃描記錄保留在 Mac 上；不收集使用情況遙測<br>
+  🩺 <strong>網路診斷</strong> — 檢查連線、DNS、HTTPS、IPv6 和已設定的代理伺服器<br>
+  🤖 <strong>支援 AI 工作流程的 MCP</strong> — 讓相容用戶端讀取 Mac 上的即時 Wi-Fi 資料
 </p>
 
 <p align="center"><sub>本儲存庫提供 WiFi Lens 開放原始碼版，適用於即時本機分析、開發、檢視原始碼和社群協作。</sub></p>
@@ -31,6 +31,7 @@ WiFi Lens Pro 將即時 Wi-Fi 分析、網路診斷、持續監測、Timeline �
 <p align="center">
   <a href="README.md">🇺🇸 English</a> · <a href="README.de.md">🇩🇪 Deutsch</a> · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · <a href="README.ja.md">🇯🇵 日本語</a> · 🇭🇰 繁體中文
 </p>
+
 <p align="center">
   <a href="#為什麼選擇-wifi-lens-pro">為什麼選擇 WiFi Lens Pro</a> · <a href="#核心功能">核心功能</a> · <a href="#版本">版本</a> · <a href="#ai--mcp-整合">AI / MCP</a> · <a href="#開放原始碼版">開放原始碼版</a> · <a href="#隱私權">隱私權</a> · <a href="#取得-wifi-lens">取得 WiFi Lens</a> · <a href="#開發">開發</a> · <a href="#參與貢獻">參與貢獻</a> · <a href="#授權條款">授權條款</a>
 </p>
@@ -38,30 +39,28 @@ WiFi Lens Pro 將即時 Wi-Fi 分析、網路診斷、持續監測、Timeline �
 ---
 
 ## 為什麼選擇 WiFi Lens Pro
-
-即時診斷能告訴你目前發生的狀況。遇到間歇性問題時，WiFi Lens Pro 會持續記錄相關資訊：觀察網路、記下事件、保存歷史資料，並協助你事後調查。
+即時 Wi-Fi 分析協助你了解目前的連線狀況。WiFi Lens Pro 也提供工具，讓你評估觀測到的網路可靠性、將閘道器延遲與歷史基準比較，並檢視已記錄問題及其證據。
 
 | 工作流程 | WiFi Lens Pro 提供的功能 |
 |--------|--------------------------|
-| 立即診斷 | 即時 Wi-Fi 分析、信道分析和網路診斷 |
-| 持續觀察 | 選單列監測和連續觀測 |
-| 捕捉偶發問題 | Timeline 與頻譜記錄 |
-| 回顧過去狀況 | 歷史事件和連線變化 |
-| 找出模式 | 跨記錄時段的 Statistics |
-| 理解證據 | 根據記錄觀測資料整理的 Insights |
+| 快速查看狀態 | 從選單列檢視目前連線資訊 |
+| 評估網路可靠性 | 檢視所選期間觀測到的網路體驗 |
+| 與歷史基準比較 | 將已儲存的閘道器延遲測量值與相容的歷史基準比較 |
+| 調查已記錄的問題 | 檢視已儲存的問題、相關證據和後續觀測 |
+| App 關閉時繼續觀測 | 可選的背景觀測，預設為關閉；Mac 進入睡眠後會暫停 |
 
-**WiFi Lens Pro 是完整版本。** 它將即時分析工具與監測、歷史資料及調查功能整合為完整工作流程。
+WiFi Lens Pro 將即時分析與可靠性檢視、歷史問題調查結合。Statistics 和 Insights 已退役。Timeline 僅保留用於檢視和匯出既有事件，不再產生新的記錄或分析。
 
 <table>
 <tr>
-<td width="50%" align="center"><img alt="網路自我檢查診斷畫面" src="assets/screenshot-selfcheck.webp" width="100%"><sub>Network Self-Check</sub></td>
-<td width="50%" align="center"><img alt="顯示連線歷史資料的 Event Timeline" src="assets/screenshot-timeline.webp" width="100%"><sub>Event Timeline（Pro）</sub></td>
+<td width="50%" align="center"><img alt="Network Experience 的可靠性評估與觀測涵蓋情況" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
+<td width="50%" align="center"><img alt="Historical Baseline 中閘道器延遲與歷史測量值的比較" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
 </table>
 
-### 立即診斷 → 事後調查
+### 從即時分析到歷史脈絡
 
-Wi-Fi 問題常在你來得及檢查前就消失。WiFi Lens Pro 會保留中斷連線、漫遊或訊號變化前後的證據，讓你稍後檢視事件和當時的網路狀態。
+遇到間歇性問題時，Network Experience 可協助你評估一段時間內觀測到的狀況。Problem History 會彙整已記錄的問題及其證據，方便後續調查。
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>取得 WiFi Lens Pro →</strong></a>
@@ -70,8 +69,7 @@ Wi-Fi 問題常在你來得及檢查前就消失。WiFi Lens Pro 會保留中斷
 ---
 
 ## 核心功能
-
-WiFi Lens 將理解本機 Wi-Fi 環境所需的基本工具整合在原生 Mac App 中。
+WiFi Lens 提供即時工具，協助你了解附近網路、信道使用情況和 Mac 的連線狀態。
 
 | 功能 | 用途 |
 |------|------|
@@ -79,7 +77,7 @@ WiFi Lens 將理解本機 Wi-Fi 環境所需的基本工具整合在原生 Mac A
 | 📊 頻譜與信道品質 | 檢視使用狀況、壅塞評分和依地區提供的信道建議 |
 | 🔍 網路詳細資訊 | 檢視 PHY 世代、信道寬度、802.11k/r/v、WPA3 和連線資訊 |
 | 🚶 漫遊與熱度圖 | 確認 AP 切換情況並比較各頻段的使用狀況 |
-| 🩺 Network Self-Check（預覽） | 檢查路徑、DNS、HTTPS 和已設定代理伺服器的連線能力 |
+| 🩺 Network Self-Check | 檢查連線、DNS、HTTPS、IPv6 和已設定的代理伺服器 |
 | 📻 AP Radar（預覽） | 追蹤選取的 AP，提供根據 RSSI 的指引和選用音訊回饋 |
 | 🤖 MCP 與匯出 | 連線至本機 AI 工具，並將圖表儲存為 PNG 或 CSV |
 | 🔒 以本機為主的隱私設計 | 掃描資料保留在 Mac 上，不收集使用情況遙測 |
@@ -89,32 +87,31 @@ WiFi Lens 將理解本機 Wi-Fi 環境所需的基本工具整合在原生 Mac A
 ## 版本
 
 ### WiFi Lens Pro
-
-**WiFi Lens Pro 是完整版本。** 可透過 [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) 一次購買，適合需要持續觀察、記錄、歷史資料和調查功能的使用者。
+WiFi Lens Pro 可透過 [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) 一次購買。它增加了選單列狀態、Network Experience、Problem History、頻譜記錄和可選的背景觀測。Historical Baseline 是 Network Experience 中的檢視項目。
 
 ### 開放原始碼版
 
-開放原始碼版提供完整的即時分析功能，適合偏好透過 GitHub 取得 App、檢視原始碼並參與社群貢獻的使用者。請至 [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest) 下載。
+WiFi Lens OSS 免費且開放原始碼。你可以透過 [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest)、Homebrew 或原始碼取得即時 Wi-Fi 分析和本機網路診斷。
 
 | 功能 | WiFi Lens Pro | 開放原始碼版 |
 |------|---------------|--------------|
 | 即時 Wi-Fi 分析 | ✅ | ✅ |
 | 網路診斷 | ✅ | ✅ |
 | 信道建議 | ✅ | ✅ |
-| 持續監測 | ✅ | — |
-| 事件歷史資料 | ✅ | — |
-| 歷史統計 | ✅ | — |
-| Insights | ✅ | — |
+| MCP 整合 | ✅ | ✅ |
+| 選單列狀態 | ✅ | — |
+| Network Experience 與 Historical Baseline | ✅ | — |
+| Problem History | ✅ | — |
 | 頻譜記錄 | ✅ | — |
-| 選單列監測 | ✅ | — |
+| 可選的背景觀測 | ✅ | — |
 
-兩個版本都以本機處理為基礎。兩者的差異在於即時分析以外的工作流程：Pro 提供持續觀察、保存背景資訊和調查長期問題所需的功能。
-
+兩個版本都在 Mac 上處理 Wi-Fi 掃描資料。Pro 增加了歷史分析檢視和可選的背景觀測。Timeline 僅保留用於檢視和匯出既有事件。
 ---
 
 ## AI / MCP 整合
 
-WiFi Lens 內建 MCP 伺服器，讓相容的 AI 助理讀取本機 Wi-Fi 資料。在「設定」中啟用後，選取「複製 AI 設定提示」，再將提示貼到 Codex Desktop、Claude Desktop 等相容 MCP 的桌面用戶端。
+
+WiFi Lens 提供可選的本機 MCP 伺服器。啟用後，相容用戶端可以從這部 Mac 要求即時 Wi-Fi 掃描資料。可在 Codex Desktop 或 Claude Desktop 等 MCP 用戶端中設定。
 
 ```json
 {
@@ -145,15 +142,14 @@ url = "http://127.0.0.1:19840/"
 }
 ```
 
-連線後，你可以詢問 AI 助理「附近哪些信道比較壅塞？」或「附近哪些網路支援 WPA3？」。伺服器只會繫結至 `127.0.0.1`；除非你主動將流量路由到其他位置，否則資料不會離開這部電腦。
+連線後，你可以詢問 AI 助理「附近哪些信道比較壅塞？」或「附近哪些網路支援 WPA3？」。MCP 伺服器只會在 `127.0.0.1` 上監聽；連線的用戶端或模型服務可能依照自身政策與設定處理收到的資料。
 
-更多範例請參閱 [AI 工作流程指南](https://wifi-lens.shiinalabs.com/ai-mcp/)。
+更多範例請參閱 [AI 工作流程指南](https://wifi-lens.shiinalabs.com/ai-mcp/?utm_source=github&utm_medium=readme&utm_campaign=github_readme)。
 
 ---
 
 ## 開放原始碼版
-
-開放原始碼版適用於本機分析、開發、檢視原始碼和社群協作。
+WiFi Lens OSS 免費且開放原始碼，可用於本機即時分析、開發、檢視原始碼和社群協作。
 
 - **GitHub Releases** — [下載最新版本](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - **Homebrew** — `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
@@ -177,9 +173,10 @@ url = "http://127.0.0.1:19840/"
 | 📤 匯出 | 將圖表儲存為 PNG 或 CSV | 穩定 |
 | 🔒 隱私優先 | 不含遙測；掃描資料保留在 Mac 上 | 穩定 |
 | ⬆️ 自動更新 | GitHub 版本使用 Sparkle | 穩定 |
-| 🌍 本地化 | 英文、德文、西班牙文、日文、簡體中文及繁體中文 | 穩定 |
-| 🩺 Network Self-Check | 一鍵檢查路徑、DNS、HTTPS 和代理伺服器 | 預覽 |
+| 🌍 本地化 | 英文、法文、德文、日文、俄文、西班牙文、簡體中文和繁體中文 | 穩定 |
+| 🩺 Network Self-Check | 檢查連線、DNS、HTTPS、IPv6 和已設定的代理伺服器 | 穩定 |
 | 📻 AP Radar | 追蹤選取的 AP，並提供音訊脈衝回饋 | 預覽 |
+| 📜 開放原始碼授權 | 在「設定 → 關於」檢視內含元件、授權和聲明 | 穩定 |
 
 </details>
 
@@ -190,16 +187,16 @@ url = "http://127.0.0.1:19840/"
 ---
 
 ## 隱私權
-
-WiFi Lens 不會收集使用分析資料、當機遙測或 Wi-Fi 掃描資料。
+WiFi Lens 不會將 Wi-Fi 掃描記錄上傳至應用程式服務，也不會收集使用分析資料或遙測。
 
 - **定位服務：** macOS 需要此權限才能提供 Wi-Fi SSID 名稱。WiFi Lens 不會讀取 GPS 位置。
 - **地區偵測：** 在裝置上參考系統語言設定、硬體回報的信道清單和附近 AP 的國碼。
-- **Network Self-Check：** 會解析公開端點（`www.apple.com`、`www.msftconnecttest.com`），也可能測試已設定代理伺服器端點的連線能力。
-- **MCP 伺服器：** 僅繫結至 `127.0.0.1`。啟用後，本機工具才能存取資料。
+- **Network Self-Check：** 會向公開目標傳送診斷探測，並在適用時測試已設定的代理伺服器。診斷證據會儲存在本機。
+- **MCP 伺服器：** 為選用功能，僅繫結至 `127.0.0.1`。連線的用戶端和模型服務會依照各自政策與設定處理收到的資料。
+- **背景觀測：** Pro 中的選用功能，預設為關閉。觀測資料會儲存在本機；Mac 進入睡眠後會暫停收集。
 - **檢查更新：** GitHub 版本只會在你手動檢查更新或啟用自動檢查時連線至 GitHub。
 
-📋 [安全性政策](SECURITY.md) · 📝 [更新紀錄](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [常見問題](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [完整隱私權政策](https://wifi-lens.shiinalabs.com/privacy/)
+📋 [安全性政策](SECURITY.md) · 📝 [更新紀錄](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [常見問題](https://wifi-lens.shiinalabs.com/faq/?utm_source=github&utm_medium=readme&utm_campaign=github_readme) · 🌐 [完整隱私權政策](https://wifi-lens.shiinalabs.com/privacy/?utm_source=github&utm_medium=readme&utm_campaign=github_readme)
 
 ---
 
@@ -208,8 +205,7 @@ WiFi Lens 不會收集使用分析資料、當機遙測或 Wi-Fi 掃描資料。
 需要 **macOS 14.6（Sonoma）或更新版本**。支援 Intel 和 Apple Silicon。掃描 6 GHz 需要 Wi-Fi 6E/7 硬體。
 
 ### WiFi Lens Pro
-
-完整版本支援持續監測、記錄、檢視歷史資料和調查問題。請至 [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) 下載。
+WiFi Lens Pro 在即時 Wi-Fi 分析之外，增加選單列狀態、Network Experience、Problem History、頻譜記錄和可選的背景觀測。請至 [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) 下載。
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="在 Mac App Store 下載" width="190"></a>

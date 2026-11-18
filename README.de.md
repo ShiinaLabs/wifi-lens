@@ -1,27 +1,27 @@
 # WiFi Lens
 
-**Der vollständige Mac-Wi-Fi-Workflow zur Fehlersuche.**
+**Verstehe, was mit deinem WLAN passiert.**
 
-WiFi Lens Pro verbindet Live-Wi-Fi-Analyse, Netzwerkdiagnose, kontinuierliche Überwachung, Timeline-Verlauf, Statistics und Insights in einer nativen macOS-App.
+Ein nativer WLAN-Analyzer und eine Netzwerkdiagnose-App für macOS.
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Pro holen</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://wifi-lens.shiinalabs.com">Offizielle Website</a>
+  <a href="https://wifi-lens.shiinalabs.com/de/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">Offizielle Website</a>
 </p>
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Im Mac App Store laden" width="190"></a>
 </p>
 
-<p align="center"><img alt="WiFi Lens Pro mit Event-Timeline-Verlauf unter macOS" src="assets/screenshot-timeline.webp" width="800"></p>
+<p align="center"><img alt="WiFi Lens Pro mit Problem History und aufgezeichneten Belegen" src="assets/screenshot-problem-history.webp" width="800"></p>
 
-<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; Keine Telemetrie</p>
+<p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; Lokal-first</p>
 
 <p align="center">
-  🔒 <strong>Lokaler Datenschutz</strong> — Keine Konten, keine Cloud, keine Telemetrie<br>
-  🩺 <strong>Evidenzbasierte Diagnose</strong> — Nachvollziehbare Prüfungen für Pfad, DNS, HTTPS und Proxy<br>
-  🤖 <strong>MCP für KI-Workflows</strong> — Kompatible Clients mit Live-Wi-Fi-Daten auf deinem Mac verbinden
+  🔒 <strong>Lokale Daten</strong> — Wi-Fi-Scanaufzeichnungen bleiben auf deinem Mac; keine Nutzungs-Telemetrie<br>
+  🩺 <strong>Netzwerkdiagnose</strong> — Prüfe Verbindung, DNS, HTTPS, IPv6 und konfigurierte Proxys<br>
+  🤖 <strong>MCP für KI-Workflows</strong> — Verbinde kompatible Clients mit Live-Wi-Fi-Daten auf deinem Mac
 </p>
 
 <p align="center"><sub>Dieses Repository enthält die Open-Source-Edition von WiFi Lens für lokale Live-Analyse, Entwicklung, Quellcode-Inspektion und Beiträge aus der Community.</sub></p>
@@ -31,6 +31,7 @@ WiFi Lens Pro verbindet Live-Wi-Fi-Analyse, Netzwerkdiagnose, kontinuierliche Ü
 <p align="center">
   <a href="README.md">🇺🇸 English</a> · 🇩🇪 Deutsch · <a href="README.es-ES.md">🇪🇸 Español</a> · <a href="README.fr.md">🇫🇷 Français</a> · <a href="README.zh-Hans.md">🇨🇳 简体中文</a> · <a href="README.ja.md">🇯🇵 日本語</a> · <a href="README.zh-Hant.md">🇭🇰 繁體中文</a>
 </p>
+
 <p align="center">
   <a href="#warum-wifi-lens-pro">Warum WiFi Lens Pro</a> · <a href="#zentrale-funktionen">Zentrale Funktionen</a> · <a href="#editionen">Editionen</a> · <a href="#ki--mcp-integration">KI / MCP</a> · <a href="#open-source-edition">Open-Source-Edition</a> · <a href="#datenschutz">Datenschutz</a> · <a href="#wifi-lens-erhalten">WiFi Lens erhalten</a> · <a href="#entwicklung">Entwicklung</a> · <a href="#mitwirken">Mitwirken</a> · <a href="#lizenz">Lizenz</a>
 </p>
@@ -39,29 +40,28 @@ WiFi Lens Pro verbindet Live-Wi-Fi-Analyse, Netzwerkdiagnose, kontinuierliche Ü
 
 ## Warum WiFi Lens Pro
 
-Live-Diagnosen zeigen, was gerade passiert. WiFi Lens Pro führt die Geschichte weiter, wenn ein Problem nur sporadisch auftritt: Es beobachtet und zeichnet auf, bewahrt den Verlauf und hilft dir, später zu untersuchen, was passiert ist.
+Live-Wi-Fi-Analyse hilft dir, deine Verbindung jetzt zu verstehen. WiFi Lens Pro ergänzt Werkzeuge, um beobachtete Zuverlässigkeit zu prüfen, Gateway-Latenz mit einer historischen Referenz zu vergleichen und gespeicherte Probleme mit ihren Belegen zu untersuchen.
 
-| Workflow | Was WiFi Lens Pro leistet |
+| Workflow | Was WiFi Lens Pro ergänzt |
 |----------|---------------------------|
-| Jetzt diagnostizieren | Live-Wi-Fi-Analyse, Kanalanalyse und Netzwerkdiagnose |
-| Weiter beobachten | Überwachung über die Menüleiste und kontinuierliche Beobachtung |
-| Sporadische Probleme erfassen | Timeline und Spektrumaufzeichnung |
-| Ereignisse nachvollziehen | Historische Ereignisse und Verbindungsänderungen |
-| Muster erkennen | Statistics über aufgezeichnete Zeiträume |
-| Belege verstehen | Insights auf Grundlage aufgezeichneter Beobachtungen |
+| Status im Blick | Aktuelle Verbindungsinformationen in der Menüleiste ansehen |
+| Zuverlässigkeit beurteilen | Beobachtete Netzwerkqualität für einen ausgewählten Zeitraum prüfen |
+| Mit einer Referenz vergleichen | Gespeicherte Gateway-Latenz mit einer passenden historischen Referenz vergleichen |
+| Probleme untersuchen | Gespeicherte Findings, Belege und spätere Beobachtungen prüfen |
+| Bei geschlossener App beobachten | Optionale Hintergrundbeobachtung, standardmäßig deaktiviert; pausiert, wenn dein Mac schläft |
 
-**WiFi Lens Pro ist die vollständige Edition.** Sie verbindet den Live-Analyzer mit Überwachung, Verlauf und Untersuchung, statt diese als getrennte Werkzeuge zu behandeln.
+WiFi Lens Pro verbindet Live-Analyse mit Ansichten für Zuverlässigkeit und historische Probleme. Statistics und Insights wurden eingestellt. Timeline bleibt zum Anzeigen und Exportieren vorhandener Ereignisse verfügbar, erstellt aber keine neuen Einträge oder Analysen mehr.
 
 <table>
 <tr>
-<td width="50%" align="center"><img alt="Ansicht der Netzwerk-Selbstprüfung" src="assets/screenshot-selfcheck.webp" width="100%"><sub>Network Self-Check</sub></td>
-<td width="50%" align="center"><img alt="Event Timeline mit Verbindungsverlauf" src="assets/screenshot-timeline.webp" width="100%"><sub>Event Timeline (Pro)</sub></td>
+<td width="50%" align="center"><img alt="Network Experience mit Zuverlässigkeitsbewertung und Abdeckungsangaben" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
+<td width="50%" align="center"><img alt="Historical Baseline mit dem Vergleich von Gateway-Latenz und historischen Messungen" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
 </table>
 
-### Jetzt diagnostizieren → später untersuchen
+### Von der Live-Analyse zum historischen Kontext
 
-Wi-Fi-Probleme verschwinden oft, bevor du sie prüfen kannst. WiFi Lens Pro bewahrt die Belege rund um einen Abbruch, Roaming-Vorgang oder Signalwechsel, damit du das Ereignis und die damaligen Netzwerkbedingungen später ansehen kannst.
+Bei einem sporadischen Problem zeigt Network Experience, was über einen Zeitraum beobachtet wurde. Problem History fasst gespeicherte Findings und ihre Belege für die weitere Untersuchung zusammen.
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Pro holen →</strong></a>
@@ -71,7 +71,7 @@ Wi-Fi-Probleme verschwinden oft, bevor du sie prüfen kannst. WiFi Lens Pro bewa
 
 ## Zentrale Funktionen
 
-WiFi Lens bündelt die wichtigsten Werkzeuge, um eine lokale Wi-Fi-Umgebung in einer nativen Mac-App zu verstehen.
+WiFi Lens bündelt Live-Werkzeuge, um nahe Netzwerke, Kanalnutzung und die Verbindung deines Macs zu verstehen.
 
 | Funktion | Wofür sie hilft |
 |----------|-----------------|
@@ -79,7 +79,7 @@ WiFi Lens bündelt die wichtigsten Werkzeuge, um eine lokale Wi-Fi-Umgebung in e
 | 📊 Spektrum und Kanalqualität | Belegung, Überlastung und regionale Kanalempfehlungen sehen |
 | 🔍 Netzwerkdetails | PHY-Generation, Kanalbreite, 802.11k/r/v, WPA3 und Verbindungsdetails prüfen |
 | 🚶 Roaming und Heatmap | AP-Übergaben prüfen und die Belegung pro Band vergleichen |
-| 🩺 Network Self-Check *(Preview)* | Pfad, DNS, HTTPS und die Erreichbarkeit konfigurierte Proxys prüfen |
+| 🩺 Network Self-Check | Verbindung, DNS, HTTPS, IPv6 und konfigurierte Proxys prüfen |
 | 📻 AP Radar *(Preview)* | Einen AP mit RSSI-basierter Orientierung und optionalem Audio-Feedback verfolgen |
 | 🤖 MCP und Export | Lokale KI-Tools verbinden und Diagramme als PNG oder CSV speichern |
 | 🔒 Lokaler Datenschutz | Scan-Daten auf dem Mac behalten, ohne Nutzungs-Telemetrie |
@@ -89,32 +89,31 @@ WiFi Lens bündelt die wichtigsten Werkzeuge, um eine lokale Wi-Fi-Umgebung in e
 ## Editionen
 
 ### WiFi Lens Pro
-
-**WiFi Lens Pro ist die vollständige Edition.** Sie ist als Einmalkauf im [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) für alle gedacht, die kontinuierliche Beobachtung, Aufzeichnung, Verlauf und Untersuchung benötigen.
+WiFi Lens Pro ist ein Einmalkauf im [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8). Es ergänzt Statusanzeigen in der Menüleiste, Network Experience, Problem History, Spektrumaufzeichnung und optionale Hintergrundbeobachtung. Historical Baseline ist Teil von Network Experience.
 
 ### Open-Source-Edition
 
-Die Open-Source-Edition bietet eine umfangreiche Auswahl an Live-Analysefunktionen für Nutzer, die GitHub als Vertriebsweg bevorzugen oder den Code prüfen und dazu beitragen möchten. Du erhältst sie über [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest).
+WiFi Lens OSS ist kostenlos und quelloffen. Die Live-Wi-Fi-Analyse und Netzwerkdiagnose erhältst du über [GitHub Releases](https://github.com/ShiinaLabs/wifi-lens/releases/latest), Homebrew oder den Quellcode.
 
 | Funktion | WiFi Lens Pro | Open-Source-Edition |
 |----------|---------------|---------------------|
 | Live-Wi-Fi-Analyse | ✅ | ✅ |
 | Netzwerkdiagnose | ✅ | ✅ |
 | Kanalempfehlungen | ✅ | ✅ |
-| Kontinuierliche Überwachung | ✅ | — |
-| Ereignisverlauf | ✅ | — |
-| Historische Statistiken | ✅ | — |
-| Insights | ✅ | — |
+| MCP-Integration | ✅ | ✅ |
+| Status in der Menüleiste | ✅ | — |
+| Network Experience und Historical Baseline | ✅ | — |
+| Problem History | ✅ | — |
 | Spektrumaufzeichnung | ✅ | — |
-| Überwachung über die Menüleiste | ✅ | — |
+| Optionale Hintergrundbeobachtung | ✅ | — |
 
-Beide Editionen arbeiten lokal. Der Unterschied liegt im Workflow rund um den Live-Analyzer: Pro ergänzt den Kontext, der nötig ist, um Probleme über längere Zeit zu beobachten, zu bewahren und zu untersuchen.
-
+Beide Editionen verarbeiten Wi-Fi-Scans auf deinem Mac. Pro ergänzt Ansichten für historische Analysen und optionale Hintergrundbeobachtung. Timeline bleibt nur zum Anzeigen und Exportieren vorhandener Ereignisse verfügbar.
 ---
 
 ## KI / MCP-Integration
 
-WiFi Lens enthält einen eingebetteten MCP-Server, über den kompatible KI-Assistenten deine lokalen Wi-Fi-Daten lesen können. Aktiviere ihn in den Einstellungen, wähle **KI-Einrichtungsprompt kopieren** und füge den Prompt in einen MCP-kompatiblen Desktop-Client wie Codex Desktop oder Claude Desktop ein.
+
+WiFi Lens bietet einen optionalen lokalen MCP-Server. Nach der Aktivierung können kompatible Clients Live-Wi-Fi-Scandaten von diesem Mac abrufen. Richte den Server in einem MCP-kompatiblen Client wie Codex Desktop oder Claude Desktop ein.
 
 ```json
 {
@@ -145,15 +144,14 @@ url = "http://127.0.0.1:19840/"
 }
 ```
 
-Nach der Verbindung kannst du deinen Assistenten etwa fragen: *„Welche Kanäle in meiner Nähe sind überlastet?“* oder *„Welche Netzwerke in der Nähe unterstützen WPA3?“*. Der Server bindet ausschließlich an `127.0.0.1` — ohne bewusstes Weiterleiten verlässt nichts deinen Mac.
+Stelle deinem Assistenten nach der Verbindung zum Beispiel Fragen wie *„Welche Kanäle in meiner Nähe sind überlastet?“* oder *„Welche Netzwerke in der Nähe unterstützen WPA3?“*. Der MCP-Server lauscht nur auf `127.0.0.1`. Ein verbundener Client oder Modelldienst kann empfangene Daten gemäß den eigenen Richtlinien und Einstellungen verarbeiten.
 
-Weitere Beispiele findest du im [Leitfaden für KI-Workflows](https://wifi-lens.shiinalabs.com/ai-mcp/).
+Weitere Beispiele findest du im [Leitfaden für KI-Workflows](https://wifi-lens.shiinalabs.com/de/ai-mcp/?utm_source=github&utm_medium=readme&utm_campaign=github_readme).
 
 ---
 
 ## Open-Source-Edition
-
-Die Open-Source-Edition eignet sich für lokale Analyse, Entwicklung, Quellcode-Inspektion und Beiträge aus der Community.
+WiFi Lens OSS ist kostenlos und quelloffen. Nutze es für lokale Live-Analyse, Entwicklung, Quellcode-Inspektion und Beiträge aus der Community.
 
 - **GitHub Releases** — [Neueste Version laden](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 - **Homebrew** — `brew tap ShiinaLabs/apps && brew install --cask ShiinaLabs/apps/wifi-lens`
@@ -177,9 +175,10 @@ Die Open-Source-Edition eignet sich für lokale Analyse, Entwicklung, Quellcode-
 | 📤 Export | Diagramme als PNG oder CSV speichern | Stabil |
 | 🔒 Datenschutz zuerst | Keine Telemetrie; Scan-Daten bleiben auf deinem Mac | Stabil |
 | ⬆️ Automatische Updates | Sparkle für die GitHub-Edition | Stabil |
-| 🌍 Lokalisiert | Englisch, Deutsch, Spanisch, Japanisch, Chinesisch | Stabil |
-| 🩺 Network Self-Check | Pfad-, DNS-, HTTPS- und Proxy-Diagnose mit einem Klick | Preview |
+| 🌍 Lokalisiert | Englisch, Französisch, Deutsch, Japanisch, Russisch, Spanisch, vereinfachtes und traditionelles Chinesisch | Stabil |
+| 🩺 Network Self-Check | Prüfungen für Verbindung, DNS, HTTPS, IPv6 und konfigurierte Proxys | Stabil |
 | 📻 AP Radar | Einen ausgewählten AP mit Audioimpulsen verfolgen | Preview |
+| 📜 Open-Source-Lizenzen | Enthaltene Komponenten, Lizenzen und Hinweise unter Einstellungen → Info ansehen | Stabil |
 
 </details>
 
@@ -190,16 +189,16 @@ Die Open-Source-Edition eignet sich für lokale Analyse, Entwicklung, Quellcode-
 ---
 
 ## Datenschutz
-
-WiFi Lens sammelt keine Nutzungsanalysen, Absturz-Telemetrie oder Wi-Fi-Scan-Daten.
+WiFi Lens lädt keine Wi-Fi-Scanaufzeichnungen zu seinen App-Diensten hoch und erhebt keine Nutzungsanalysen oder Telemetrie.
 
 - **Ortungsdienste:** macOS benötigt diese Berechtigung, um Wi-Fi-SSID-Namen bereitzustellen. WiFi Lens liest keine GPS-Position.
 - **Regionserkennung:** Verwendet Systemgebietsschema, die vom Gerät gemeldete Kanalliste und Ländercodes benachbarter APs auf dem Gerät.
-- **Network Self-Check:** Löst öffentliche Endpunkte (`www.apple.com`, `www.msftconnecttest.com`) auf und kann die Erreichbarkeit konfigurierter Proxy-Endpunkte prüfen.
-- **MCP-Server:** Bindet nur an `127.0.0.1`. Lokale Tools greifen erst nach deiner Aktivierung auf Daten zu.
+- **Network Self-Check:** Sendet Diagnoseanfragen an öffentliche Endpunkte und gegebenenfalls an konfigurierte Proxys. Belege werden lokal gespeichert.
+- **MCP-Server:** Optional und nur an `127.0.0.1` gebunden. Verbundene Clients und Modelldienste verarbeiten empfangene Daten gemäß ihren Richtlinien und Einstellungen.
+- **Hintergrundbeobachtung:** In Pro optional und standardmäßig deaktiviert. Beobachtungen werden lokal gespeichert; während dein Mac schläft, pausiert die Erfassung.
 - **Update-Prüfungen:** Die GitHub-Edition kontaktiert GitHub, wenn du eine Prüfung anforderst oder automatische Prüfungen aktivierst.
 
-📋 [Sicherheitsrichtlinie](SECURITY.md) · 📝 [Changelog](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/faq/) · 🌐 [Vollständige Datenschutzrichtlinie](https://wifi-lens.shiinalabs.com/privacy/)
+📋 [Sicherheitsrichtlinie](SECURITY.md) · 📝 [Changelog](https://github.com/ShiinaLabs/wifi-lens/releases) · ❓ [FAQ](https://wifi-lens.shiinalabs.com/de/faq/?utm_source=github&utm_medium=readme&utm_campaign=github_readme) · 🌐 [Vollständige Datenschutzrichtlinie](https://wifi-lens.shiinalabs.com/de/privacy/?utm_source=github&utm_medium=readme&utm_campaign=github_readme)
 
 ---
 
@@ -208,8 +207,7 @@ WiFi Lens sammelt keine Nutzungsanalysen, Absturz-Telemetrie oder Wi-Fi-Scan-Dat
 Erfordert **macOS 14.6 (Sonoma) oder neuer**. Funktioniert mit Intel und Apple Silicon. Für 6-GHz-Scans ist Wi-Fi-6E/7-Hardware erforderlich.
 
 ### WiFi Lens Pro
-
-Die vollständige Edition für kontinuierliche Überwachung, Aufzeichnung, Verlauf und Untersuchung. Im [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) erhältlich.
+WiFi Lens Pro ergänzt die Live-Wi-Fi-Analyse um Statusanzeigen in der Menüleiste, Network Experience, Problem History, Spektrumaufzeichnung und optionale Hintergrundbeobachtung. Erhältlich im [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8).
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Im Mac App Store laden" width="190"></a>
