@@ -180,8 +180,6 @@ D’autres exemples sont disponibles dans le [guide des workflows IA](https://wi
 ```sh
 git clone https://github.com/ShiinaLabs/wifi-lens
 cd wifi-lens
-git submodule update --init ChartLens
-cd WiFiLens
 
 xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
   -configuration Debug -destination 'platform=macOS' build
