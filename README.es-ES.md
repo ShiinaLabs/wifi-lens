@@ -30,7 +30,7 @@ WiFi Lens reúne herramientas en directo para entender las redes cercanas, el us
 
 ### Localiza posibles problemas de conexión
 
-Si tu Mac aparece conectado, pero una web o un servicio no carga, ejecuta **Network Check**. Comprueba la ruta de red, la disponibilidad de la puerta de enlace, la resolución DNS, el acceso HTTP/HTTPS, la conectividad IPv6 opcional y el enrutamiento de los proxies configurados. Los resultados se agrupan en **This Mac**, **LAN** e **Internet** para ayudarte a identificar dónde puede estar el problema.
+Si necesitas acotar un problema de conexión, ejecuta **Network Check** para revisar la ruta desde tu Mac, pasando por la red local, hasta Internet. Comprueba la ruta de red, la disponibilidad de la puerta de enlace, la resolución DNS, el acceso HTTP/HTTPS, la conectividad IPv6 opcional y el enrutamiento de los proxies configurados. Los resultados se agrupan en **This Mac**, **LAN** e **Internet** para ayudarte a identificar dónde puede estar el problema.
 
 
 | Capacidad | Para qué sirve |
@@ -61,12 +61,12 @@ WiFi Lens Pro añade herramientas de historial y seguimiento al análisis Wi-Fi 
 | Observar con la app cerrada | Observación en segundo plano opcional, desactivada por defecto; se pausa cuando el Mac entra en reposo |
 
 Pro combina el análisis en directo con vistas históricas para evaluar la fiabilidad observada e investigar problemas registrados. También incluye una prueba Wi-Fi Calling específica del operador.
+
 <table>
 <tr>
 <td width="50%" align="center"><img alt="Network Experience con evaluación de fiabilidad y cobertura" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
 <td width="50%" align="center"><img alt="Historical Baseline comparando la latencia de la puerta de enlace con mediciones históricas" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
-
 <tr>
 <td colspan="2" align="center"><img alt="Problem History muestra problemas registrados y sus evidencias" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
 </tr>

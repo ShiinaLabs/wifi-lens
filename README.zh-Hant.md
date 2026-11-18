@@ -30,7 +30,7 @@ WiFi Lens 提供即時工具，協助你了解附近網路、信道使用情況�
 
 ### 排查連線問題
 
-當 Mac 顯示已連線，但網站或服務無法開啟時，可以執行 **Network Check**。它會檢查網路路徑、閘道器可達性、DNS 解析、HTTP/HTTPS 存取、可選的 IPv6 連線，以及已設定的代理路由。結果會分成 **This Mac**、**LAN** 和 **Internet**，協助你判斷問題可能出在哪個環節。
+當你需要排查連線問題時，可以執行 **Network Check**，檢查從 Mac、區域網路到網際網路的連線路徑。它會檢查網路路徑、閘道器可達性、DNS 解析、HTTP/HTTPS 存取、可選的 IPv6 連線，以及已設定的代理路由。結果會分成 **This Mac**、**LAN** 和 **Internet**，協助你判斷問題可能出在哪個環節。
 
 
 | 功能 | 用途 |
@@ -61,12 +61,12 @@ WiFi Lens Pro 在即時 Wi-Fi 分析之外，增加歷史與後續調查功能�
 | App 關閉時繼續觀測 | 可選的背景觀測，預設為關閉；Mac 進入睡眠後會暫停 |
 
 Pro 將即時分析與歷史檢視結合，協助你評估觀測到的網路可靠性，並調查已記錄的問題。此外也提供面向電信業者情境的 Wi-Fi Calling Test。
+
 <table>
 <tr>
 <td width="50%" align="center"><img alt="Network Experience 的可靠性評估與觀測涵蓋情況" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
 <td width="50%" align="center"><img alt="Historical Baseline 中閘道器延遲與歷史測量值的比較" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
-
 <tr>
 <td colspan="2" align="center"><img alt="Problem History 顯示已記錄的問題及其支持證據" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
 </tr>

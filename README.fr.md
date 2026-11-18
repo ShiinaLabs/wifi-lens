@@ -30,7 +30,7 @@ WiFi Lens réunit des outils en direct pour comprendre les réseaux proches, l�
 
 ### Repérer les problèmes de connexion
 
-Si votre Mac indique une connexion active mais qu’un site ou un service ne se charge pas, lancez **Network Check**. L’outil vérifie le chemin réseau, l’accessibilité de la passerelle, la résolution DNS, l’accès HTTP/HTTPS, l’accessibilité IPv6 facultative et le routage des proxys configurés. Les résultats sont regroupés sous **This Mac**, **LAN** et **Internet** pour vous aider à localiser le problème éventuel.
+Pour mieux cerner un problème de connexion, lancez **Network Check** afin d’examiner le chemin entre votre Mac, le réseau local et Internet. L’outil vérifie le chemin réseau, l’accessibilité de la passerelle, la résolution DNS, l’accès HTTP/HTTPS, l’accessibilité IPv6 facultative et le routage des proxys configurés. Les résultats sont regroupés sous **This Mac**, **LAN** et **Internet** pour vous aider à localiser le problème éventuel.
 
 
 | Capacité | Utilité |
@@ -61,12 +61,12 @@ WiFi Lens Pro ajoute des fonctions d’historique et de suivi à l’analyse Wi-
 | Observer app fermée | Observation en arrière-plan facultative, désactivée par défaut ; elle s’interrompt lorsque le Mac se met en veille |
 
 Pro associe l’analyse en direct à des vues historiques pour évaluer la fiabilité observée et examiner les problèmes enregistrés. Il inclut également un test Wi-Fi Calling propre à l’opérateur.
+
 <table>
 <tr>
 <td width="50%" align="center"><img alt="Network Experience avec évaluation de fiabilité et de couverture" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
 <td width="50%" align="center"><img alt="Historical Baseline comparant la latence de la passerelle aux mesures historiques" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
-
 <tr>
 <td colspan="2" align="center"><img alt="Problem History affiche les problèmes enregistrés et leurs preuves" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
 </tr>

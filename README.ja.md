@@ -30,7 +30,7 @@ WiFi Lensは、近くのネットワーク、チャンネル利用状況、Mac�
 
 ### 接続トラブルの原因を調べる
 
-MacがWi-Fiに接続されているのにWebサイトやサービスを開けない場合は、**Network Check**を実行してください。ネットワーク経路、ゲートウェイへの到達性、DNS名前解決、HTTP/HTTPSアクセス、任意のIPv6到達性、設定済みプロキシの経路を確認します。結果は **This Mac**、**LAN**、**Internet** の3段階に整理され、問題が発生している可能性のある場所を把握できます。
+接続トラブルの原因を切り分けたいときは、**Network Check**を実行して、Macからローカルネットワーク、インターネットまでの経路を確認できます。ネットワーク経路、ゲートウェイへの到達性、DNS名前解決、HTTP/HTTPSアクセス、任意のIPv6到達性、設定済みプロキシの経路を確認します。結果は **This Mac**、**LAN**、**Internet** の3段階に整理され、問題が発生している可能性のある場所を把握できます。
 
 
 | 機能 | できること |
@@ -61,12 +61,12 @@ WiFi Lens Proでは、ライブWi-Fi分析に履歴とフォローアップ機�
 | アプリ終了中も観測 | 任意のバックグラウンド観測。初期状態ではオフで、Macのスリープ中は停止 |
 
 Proはライブ分析に履歴ビューを加え、観測された信頼性の評価や記録された問題の調査を支援します。キャリア別のWi-Fi Calling Testも利用できます。
+
 <table>
 <tr>
 <td width="50%" align="center"><img alt="信頼性評価と観測範囲を表示するNetwork Experience" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
 <td width="50%" align="center"><img alt="ゲートウェイ遅延と過去の測定値を比較するHistorical Baseline" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
-
 <tr>
 <td colspan="2" align="center"><img alt="Problem Historyで記録された問題と根拠を表示" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
 </tr>

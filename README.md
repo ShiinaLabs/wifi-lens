@@ -31,7 +31,7 @@ WiFi Lens brings live tools for understanding nearby networks, channel use, and 
 
 ### Troubleshoot a connection
 
-When your Mac says it is connected but a website or service will not load, run **Network Check**. It checks the network path, gateway reachability, DNS resolution, HTTP/HTTPS access, optional IPv6 reachability, and configured proxy routing. Results are grouped into **This Mac**, **LAN**, and **Internet**, making it easier to see where the connection may be failing.
+When you need to narrow down a connection issue, run **Network Check** to inspect the path from your Mac through the local network to the internet. It checks the network path, gateway reachability, DNS resolution, HTTP/HTTPS access, optional IPv6 reachability, and configured proxy routing. Results are grouped into **This Mac**, **LAN**, and **Internet**, making it easier to see where the connection may be failing.
 
 
 | Capability | What it helps you do |
@@ -62,12 +62,12 @@ WiFi Lens Pro adds history and follow-up tools to live Wi-Fi analysis, helping y
 | Observe while the app is closed | Optional background observation continues until your Mac sleeps; it is off by default |
 
 Pro brings live analysis together with history-based views for assessing observed reliability and investigating recorded problems. It also includes a dedicated Wi-Fi Calling Test for carrier-specific checks.
+
 <table>
 <tr>
 <td width="50%" align="center"><img alt="Network Experience reliability assessment with coverage information" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
 <td width="50%" align="center"><img alt="Historical Baseline comparing gateway latency with historical observations" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
-
 <tr>
 <td colspan="2" align="center"><img alt="Problem History showing recorded findings and supporting evidence" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
 </tr>

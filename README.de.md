@@ -31,7 +31,7 @@ WiFi Lens bündelt Live-Werkzeuge, um nahe Netzwerke, Kanalnutzung und die Verbi
 
 ### Verbindungsprobleme eingrenzen
 
-Wenn dein Mac als verbunden angezeigt wird, eine Website oder ein Dienst aber nicht lädt, starte **Network Check**. Die Prüfung umfasst den Netzwerkpfad, die Erreichbarkeit des Gateways, DNS-Auflösung, HTTP/HTTPS-Zugriff, eine optionale IPv6-Prüfung und das Routing über konfigurierte Proxys. Die Ergebnisse sind in **This Mac**, **LAN** und **Internet** gruppiert und zeigen, an welcher Stelle das Problem liegen könnte.
+Wenn du ein Verbindungsproblem eingrenzen möchtest, starte **Network Check** und prüfe den Weg von deinem Mac über das lokale Netzwerk bis ins Internet. Die Prüfung umfasst den Netzwerkpfad, die Erreichbarkeit des Gateways, DNS-Auflösung, HTTP/HTTPS-Zugriff, eine optionale IPv6-Prüfung und das Routing über konfigurierte Proxys. Die Ergebnisse sind in **This Mac**, **LAN** und **Internet** gruppiert und zeigen, an welcher Stelle das Problem liegen könnte.
 
 
 | Funktion | Wofür sie hilft |
@@ -62,12 +62,12 @@ WiFi Lens Pro ergänzt die Live-Wi-Fi-Analyse um Verlaufs- und Folgefunktionen, 
 | Bei geschlossener App beobachten | Optionale Hintergrundbeobachtung, standardmäßig deaktiviert; pausiert, wenn dein Mac schläft |
 
 Pro verbindet Live-Analyse mit historischen Ansichten zur Bewertung der beobachteten Zuverlässigkeit und zur Untersuchung aufgezeichneter Probleme. Dazu kommt ein spezieller Wi-Fi Calling Test für Mobilfunkanbieter.
+
 <table>
 <tr>
 <td width="50%" align="center"><img alt="Network Experience mit Zuverlässigkeitsbewertung und Abdeckungsangaben" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
 <td width="50%" align="center"><img alt="Historical Baseline mit dem Vergleich von Gateway-Latenz und historischen Messungen" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
 </tr>
-
 <tr>
 <td colspan="2" align="center"><img alt="Problem History mit aufgezeichneten Problemen und Belegen" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
 </tr>
