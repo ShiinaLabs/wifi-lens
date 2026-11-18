@@ -355,12 +355,20 @@ public struct NetworkDiagnosticsView: View {
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(conclusionTitle(conclusion))
+                let boundaryFailure = viewModel.assessment?.primaryIssue?.evidence.lazy
+                    .compactMap { IPv4BoundaryFailure(rawValue: $0.code) }.first
+                Text(boundaryFailure?.title ?? conclusionTitle(conclusion))
                     .font(.callout.weight(.semibold))
-                Text(conclusionMessage(conclusion))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if conclusion == .needsAttention,
+                if let boundaryFailure {
+                    Text(boundaryFailure.action)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                } else {
+                    Text(conclusionMessage(conclusion))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if boundaryFailure == nil, conclusion == .needsAttention,
                     let issue = viewModel.assessment?.primaryIssue
                 {
                     let remediation = NetworkDiagnosticRemediation.forResult(issue)
@@ -1171,6 +1179,27 @@ struct NetworkDiagnosticsPipelineView: View {
             String(
                 localized: "network_diagnostics.status.indeterminate",
                 comment: "Network self-check uncertainty qualification")
+        }
+    }
+}
+
+private extension IPv4BoundaryFailure {
+    var title: String {
+        switch self {
+        case .localRoute: String(localized: "Local network connection problem")
+        case .outlet: String(localized: "Upstream network connection problem")
+        case .carrier: String(localized: "Internet provider connection problem")
+        }
+    }
+
+    var action: String {
+        switch self {
+        case .localRoute:
+            String(localized: "Check the cable and connection lights between your router and the upstream network device.")
+        case .outlet:
+            String(localized: "Check the Internet or WAN connection light on your modem or upstream router.")
+        case .carrier:
+            String(localized: "Check your Internet provider’s outage status and contact them if the connection stays down.")
         }
     }
 }

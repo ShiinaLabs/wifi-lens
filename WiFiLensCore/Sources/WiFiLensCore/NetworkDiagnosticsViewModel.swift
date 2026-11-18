@@ -343,6 +343,8 @@ public final class NetworkDiagnosticsViewModel {
         }
     }
 
+    private var ipv4BoundaryCache = IPv4BoundaryCache()
+
     private func executeSession(
         fingerprintObservation: NetworkFingerprintObservation?,
         restartController: NetworkDiagnosticRestartController,
@@ -430,6 +432,7 @@ public final class NetworkDiagnosticsViewModel {
                 )
                 return
             }
+            async let boundaryObservation = IPv4BoundaryObservation.capture(context: context)
             let checks = checksForRun(context: context)
             let runner = DiagnosticRunner(
                 checks: checks,
@@ -452,6 +455,7 @@ public final class NetworkDiagnosticsViewModel {
             }
             await restartController.install(runTask)
             let outcome = await runTask.value
+            let observation = await boundaryObservation
             guard isCurrentGeneration(generation) else { return }
 
             let shouldRestart = await restartController.completeRun()
@@ -493,7 +497,12 @@ public final class NetworkDiagnosticsViewModel {
                 continue
             }
 
-            finish(outcome, generation: generation)
+            let internetAvailable = outcome.results.first { $0.id == .internet }?
+                .evidence.contains { $0.code == "https.available" } == true
+            let boundaryFailure = outcome.endReason == .completed
+                ? ipv4BoundaryCache.assess(observation, internetAvailable: internetAvailable)
+                : nil
+            finish(outcome, generation: generation, boundaryFailure: boundaryFailure)
             return
         }
         guard generation == runGeneration else { return }
@@ -650,7 +659,11 @@ public final class NetworkDiagnosticsViewModel {
                     + Double(components.attoseconds) / 1_000_000_000_000_000).rounded()))
     }
 
-    private func finish(_ outcome: DiagnosticRunOutcome, generation: UInt64) {
+    private func finish(
+        _ outcome: DiagnosticRunOutcome,
+        generation: UInt64,
+        boundaryFailure: IPv4BoundaryFailure? = nil
+    ) {
         guard generation == runGeneration else { return }
         currentRunID = nil
         endReason = outcome.endReason
@@ -659,7 +672,8 @@ public final class NetworkDiagnosticsViewModel {
         assessment = NetworkDiagnosticAssessmentResolver().resolve(
             results: results,
             complete: outcome.endReason == .completed,
-            requiredIDs: Set(checkIDs)
+            requiredIDs: Set(checkIDs),
+            boundaryFailure: boundaryFailure
         )
         conclusion = assessment?.conclusion
         phase = .completed

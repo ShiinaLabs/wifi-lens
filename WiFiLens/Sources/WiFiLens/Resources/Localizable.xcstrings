@@ -1,6 +1,66 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Check your Internet provider’s outage status and contact them if the connection stays down." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查询运营商的故障公告。如果连接仍未恢复，请联系运营商。"
+          }
+        }
+      }
+    },
+    "Check the Internet or WAN connection light on your modem or upstream router." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查光猫或上级路由器的互联网或 WAN 连接指示灯。"
+          }
+        }
+      }
+    },
+    "Check the cable and connection lights between your router and the upstream network device." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查路由器与上级网络设备之间的网线和连接指示灯。"
+          }
+        }
+      }
+    },
+    "Internet provider connection problem" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运营商网络连接异常"
+          }
+        }
+      }
+    },
+    "Upstream network connection problem" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上游网络出口异常"
+          }
+        }
+      }
+    },
+    "Local network connection problem" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地网络连接异常"
+          }
+        }
+      }
+    },
     "%@" : {
       "shouldTranslate" : false
     },

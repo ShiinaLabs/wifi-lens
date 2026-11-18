@@ -232,3 +232,68 @@ extension NetworkDiagnosticsTests {
         #expect(recoveredAssessment.primaryIssue == nil)
     }
 }
+
+extension NetworkDiagnosticsTests {
+    @Test("IPv4 boundary keeps consecutive private hops and distinguishes shared addresses")
+    func ipv4BoundaryDiscovery() {
+        let gateway = "192.168.31.1"
+        #expect(IPv4NetworkBoundary(hops: [gateway, "8.8.8.8"], gateway: gateway)?.localHops == [gateway])
+        let local = [gateway, "192.168.1.1", "172.31.0.1", "10.0.0.1"]
+        let boundary = IPv4NetworkBoundary(hops: local.map(Optional.some) + ["100.66.0.1"], gateway: gateway)
+        #expect(boundary?.localHops == local)
+        #expect(boundary?.externalHop == "100.66.0.1")
+        #expect(IPv4NetworkBoundary(hops: [gateway, nil, "8.8.8.8"], gateway: gateway) == nil)
+        #expect(IPv4NetworkBoundary(hops: ["10.0.0.1", "8.8.8.8"], gateway: gateway) == nil)
+        #expect(IPv4NetworkBoundary.AddressScope("100.64.0.0") == .carrier)
+        #expect(IPv4NetworkBoundary.AddressScope("100.127.255.255") == .carrier)
+        #expect(IPv4NetworkBoundary.AddressScope("100.128.0.0") == .external)
+        #expect(IPv4NetworkBoundary.AddressScope("100.63.255.255") == .external)
+        #expect(IPv4NetworkBoundary.AddressScope("198.18.0.1") == .other)
+    }
+
+    @Test("Known dual-router boundary distinguishes local, outlet and carrier failures")
+    func ipv4BoundaryReuse() {
+        let gateway = "192.168.31.1"
+        let upstream = "192.168.1.1"
+        let carrier = "100.66.0.1"
+        func observation(_ hops: [String?], bssid: String = "first") -> IPv4BoundaryObservation {
+            IPv4BoundaryObservation(
+                network: .init(
+                    route: .init(interfaceName: "en0", interfaceIndex: 1, address: gateway),
+                    addresses: ["192.168.31.2"], masks: ["255.255.255.0"], wirelessIdentity: bssid
+                ),
+                hops: hops
+            )
+        }
+        var cache = IPv4BoundaryCache()
+        #expect(cache.assess(observation([gateway, nil]), internetAvailable: false) == nil)
+        let now = ContinuousClock.now
+        #expect(cache.assess(observation([gateway, upstream, carrier, "8.8.8.8"]), internetAvailable: true, now: now) == nil)
+        #expect(cache.assess(observation([gateway, nil]), internetAvailable: false) == .localRoute)
+        #expect(cache.assess(observation([gateway, upstream, nil]), internetAvailable: false) == .outlet)
+        #expect(cache.assess(observation([gateway, upstream, carrier, nil]), internetAvailable: false) == .carrier)
+        #expect(cache.assess(observation([gateway, nil, carrier]), internetAvailable: false) == nil)
+        #expect(cache.assess(observation([nil, nil]), internetAvailable: false) == nil)
+        #expect(cache.assess(observation([gateway, upstream, nil]), internetAvailable: false, now: now + .seconds(3600)) == nil)
+        _ = cache.assess(observation([gateway, upstream, carrier]), internetAvailable: true)
+        #expect(cache.assess(observation([gateway, nil], bssid: "second"), internetAvailable: false) == nil)
+    }
+
+    @Test("Boundary advice refines an internet failure and leaves working internet and failed runs alone")
+    func ipv4BoundaryAssessment() {
+        let results = makeResults(path: .normal, dns: .normal, internet: .abnormal, proxy: .normal)
+        var byID = Dictionary(uniqueKeysWithValues: results.map { ($0.id, $0) })
+        byID[.internet] = .init(
+            id: .internet, status: .abnormal, summary: "internet",
+            evidence: [.init(code: "https.connectivity-error", value: String(URLError.timedOut.rawValue))]
+        )
+        let resolver = NetworkDiagnosticAssessmentResolver()
+        for failure in [IPv4BoundaryFailure.localRoute, .outlet, .carrier] {
+            let issue = resolver.resolve(results: byID, complete: true, boundaryFailure: failure).primaryIssue
+            #expect(issue?.evidence.contains(.init(code: failure.rawValue)) == true)
+        }
+        #expect(resolver.resolve(results: byID, complete: false, boundaryFailure: .outlet).conclusion == nil)
+        byID[.internet] = .init(id: .internet, status: .normal, summary: "internet", evidence: [.init(code: "https.available")])
+        #expect(resolver.resolve(results: byID, complete: true, boundaryFailure: .outlet).conclusion == .networkNormal)
+    }
+}

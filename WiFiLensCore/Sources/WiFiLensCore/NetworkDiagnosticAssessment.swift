@@ -54,7 +54,8 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
     func resolve(
         results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
         complete: Bool,
-        requiredIDs: Set<NetworkDiagnosticCheckID> = Set(NetworkDiagnosticCheckID.allCases)
+        requiredIDs: Set<NetworkDiagnosticCheckID> = Set(NetworkDiagnosticCheckID.allCases),
+        boundaryFailure: IPv4BoundaryFailure? = nil
     ) -> NetworkDiagnosticAssessment {
         let stages = NetworkDiagnosticStage.allCases.map { stage in
             stageAssessment(stage, results: results)
@@ -70,10 +71,33 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         }
 
         let conclusion = conclusion(results: results)
+        var issue = primaryIssue(in: results)
+        if let boundaryFailure,
+            issue?.id == .internet
+                || (issue?.id == .dns && boundaryFailure != .carrier),
+            results[.path]?.status == .normal,
+            results[.gatewayReachability]?.status == .normal
+                || results[.gatewayTCPReachability]?.status == .normal,
+            let internet = results[.internet], internet.status == .abnormal,
+            !hasExternalSuccess(internet: internet, proxy: results[.proxy]),
+            !internet.evidence.contains(where: { $0.code == "captive-portal.clear" }),
+            internet.evidence.contains(where: {
+                $0.code == "https.connectivity-error"
+                    && (boundaryFailure != .carrier || $0.value != String(URLError.dnsLookupFailed.rawValue))
+            })
+        {
+            issue = NetworkDiagnosticResult(
+                id: internet.id,
+                status: internet.status,
+                summary: internet.summary,
+                detail: internet.detail,
+                evidence: internet.evidence + [.init(code: boundaryFailure.rawValue)]
+            )
+        }
         return NetworkDiagnosticAssessment(
             conclusion: conclusion,
             stages: stages,
-            primaryIssue: primaryIssue(in: results)
+            primaryIssue: issue
         )
     }
 
