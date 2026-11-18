@@ -2,7 +2,7 @@
 
 **看清 Wi-Fi 正在发生什么。**
 
-WiFi Lens Pro 是一款原生 macOS Wi-Fi 分析与网络诊断应用。检查当前连接，按需持续观察网络状态，并通过历史记录调查那些已经消失、却可能再次出现的问题。
+WiFi Lens Pro 是一款原生 macOS Wi-Fi 分析与网络诊断应用。检查当前连接，按需持续观测网络状态，并结合历史证据调查间歇性问题。
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="在 Mac App Store 获取 WiFi Lens Pro" width="190"></a>
@@ -10,7 +10,7 @@ WiFi Lens Pro 是一款原生 macOS Wi-Fi 分析与网络诊断应用。检查�
 
 <p align="center"><a href="https://wifi-lens.shiinalabs.com/zh-Hans/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">官方网站</a></p>
 
-> **主视觉占位｜Network Experience**  
+> **主视觉占位｜Network Experience → Reliability**  
 > 展示 Pro 对所选网络的可靠性判断、观测范围和需要关注的问题，而不是通用 Wi-Fi 扫描界面。
 
 <p align="center"><sub>macOS 14.6+ · Intel 与 Apple Silicon · 一次性购买</sub></p>
@@ -28,9 +28,9 @@ WiFi Lens Pro 是一款原生 macOS Wi-Fi 分析与网络诊断应用。检查�
 </p>
 
 <p align="center">
-  <a href="#现在检查">现在检查</a> ·
-  <a href="#持续观察">持续观察</a> ·
-  <a href="#调查历史问题">调查历史问题</a> ·
+  <a href="#实时排查">实时排查</a> ·
+  <a href="#持续观测">持续观测</a> ·
+  <a href="#历史调查">历史调查</a> ·
   <a href="#pro-与开源版">Pro 与开源版</a>
 </p>
 
@@ -42,34 +42,34 @@ WiFi Lens Pro 是一款原生 macOS Wi-Fi 分析与网络诊断应用。检查�
 
 更麻烦的是另一类问题：网络突然中断，过一会儿又恢复；某一天延迟明显升高，却很难确定从什么时候开始；偶尔出现异常，但每次准备检查时都已经正常。
 
-**一次实时检测只能告诉你眼前发生了什么。WiFi Lens Pro 还可以保留观察结果，让你有机会在事后继续调查。**
+**一次实时检测只能告诉你眼前发生了什么。WiFi Lens Pro 还可以保留观测结果，让你有机会在事后继续调查。**
 
 这就是 Pro 的完整工作流：
 
-**现在检查 → 持续观察 → 调查历史问题**
+**实时排查 → 持续观测 → 历史调查**
 
-## 现在检查
+## 实时排查
 
 **先弄清楚当前连接和无线环境。**
 
-### Network Self-Check：从 Mac 到互联网
+### 网络自检（Network Check）
 
 当连接行为不符合预期时，运行网络自检，按 **This Mac、LAN、Internet** 查看网络路径上的检查结果，包括网关、DNS、HTTP/HTTPS、可选的 IPv6 和已配置的代理。
 
 你可以看到哪些检查成功、失败或没有足够证据，而不需要从零开始组合多个命令行工具。
 
-> **截图占位｜Network Self-Check**  
+> **截图占位｜Network Check**  
 > 展示分阶段的真实检测结果，突出用户可以从哪里开始排查。
 
-### Wi-Fi Analyzer：看清附近的无线环境
+### Wi-Fi 分析
 
-WiFi Lens 也提供完整的实时 Wi-Fi 分析能力：扫描附近 2.4 / 5 / 6 GHz 网络，查看信号、信道、拥堵情况、安全配置和区域信道建议。
+WiFi Lens Pro 也提供实时 Wi-Fi 分析能力：扫描附近 2.4 / 5 / 6 GHz 网络，查看信号、信道、拥堵情况、安全配置和区域信道建议。
 
 当你怀疑问题出在无线环境或 AP 切换时，可以进一步使用漫游测试、信道热力图和 AP Radar。
 
-这些实时工具在 **Pro 和免费开源版中都可以使用**。
+这些实时工具在 **WiFi Lens Pro 与开源版中均可使用**。
 
-## 持续观察
+## 持续观测
 
 **问题偶尔发生时，最重要的是不必一直守着屏幕。**
 
@@ -77,42 +77,42 @@ WiFi Lens 也提供完整的实时 Wi-Fi 分析能力：扫描附近 2.4 / 5 / 6
 
 随时查看当前连接、网关状态、近期变化和简短趋势，需要深入调查时再打开主窗口。
 
-### Continuous Observation
+### 持续观测（Continuous Observation）
 
 需要更长时间的观察时，可以在设置中启用持续观测。它可在 Pro 应用关闭后继续采集受支持的网络观察结果；**默认关闭**，Mac 睡眠时暂停。
 
-### Spectrum Recording
+### 频谱录制（Spectrum → Recording）
 
 需要记录无线信号变化时，可以选定 AP 进行频谱录制，保存后再回看信号历史。
 
-> **素材占位｜持续观察**  
+> **素材占位｜持续观测**  
 > 展示菜单栏状态和持续观测的实际使用场景；不把后台代理状态或尚未提供的控制面板画成现有功能。
 
-## 调查历史问题
+## 历史调查
 
-**Pro 真正的不同，在于问题发生之后还能继续做什么。**
+**WiFi Lens Pro 的价值，在于问题发生后仍有证据可以调查。**
 
-### Network Experience：这段时间的网络可靠吗？
+### 网络可靠性（Network Experience → Reliability）
 
-选择一张已知网络和时间范围，查看 **Network Reliability** 的评估结果：哪些问题有观测证据、发生在什么时候，以及所选时段内有多少数据足以支持判断。
+选择一张已知网络和时间范围，查看 **Network Experience → Reliability** 的评估结果：哪些问题有观测证据、发生在什么时候，以及所选时段内有多少数据足以支持判断。
 
 它不是凭空生成一个“网络健康分”，而是把观察到的影响与没有充分观测的数据区分开。
 
-> **截图占位｜Network Reliability**  
+> **截图占位｜Network Experience → Reliability**  
 > 以结论和问题列表为主，技术曲线与原始观测作为次级证据。
 
-### Historical Baseline：现在与过去有什么不同？
+### 历史基准（Network Experience → Baseline）
 
-在 **Network Experience** 中切换到 **Historical Baseline**，比较已保存的网关延迟测量值与其兼容的历史参考。
+在 **Network Experience** 中切换到 **Baseline**，比较已保存的网关延迟测量值与符合比较条件的历史基准。
 
 它帮助你发现有依据的相对变化，但不会把一次延迟偏移直接当成整个 Wi-Fi 网络的故障结论。
 
-> **截图占位｜Historical Baseline**  
-> 展示具体网关延迟测量与对应历史参考的比较。
+> **截图占位｜Network Experience → Baseline**  
+> 展示具体网关延迟测量与对应历史基准的比较。
 
-### Problem History：从记录中继续调查
+### 问题记录（Problem History）
 
-在 **Problem History** 中查看已保存的问题记录（Findings）、支持证据和后续观察。
+在 **Problem History** 中查看已保存的问题记录、支持证据和后续观测结果。
 
 对于有依据的问题，页面可以提供下一步检查建议，帮助你打开相应的网络诊断或接口详情页面；**检查需要由用户手动执行**，并非自动诊断或自动修复。
 
@@ -123,9 +123,9 @@ WiFi Lens 也提供完整的实时 Wi-Fi 分析能力：扫描附近 2.4 / 5 / 6
 
 ---
 
-## 不只有历史分析
+## 其他实用工具
 
-WiFi Lens Pro 同样包含实时 Wi-Fi 分析、Network Self-Check、漫游测试、AP Radar、信道热力图、Bluetooth LE 扫描与本地 MCP 集成等能力。
+WiFi Lens Pro 同样包含实时 Wi-Fi 分析、网络自检、漫游测试、AP Radar、信道热力图、Bluetooth LE 扫描与本地 MCP 集成等能力。
 
 Pro 还提供面向运营商场景的 **Wi-Fi Calling Test**，支持运营商预设或自定义 MCC/MNC。
 
@@ -133,24 +133,24 @@ Pro 还提供面向运营商场景的 **Wi-Fi Calling Test**，支持运营商�
 
 ## Pro 与开源版
 
-WiFi Lens Pro 是完整的产品体验。免费开源版则提供日常所需的实时 Wi-Fi 分析和本地网络诊断，并允许任何人查看源码和参与开发。
+WiFi Lens Pro 提供完整的实时排查、持续观测与历史调查工作流。WiFi Lens 开源版（免费）提供实时 Wi-Fi 分析和本地网络诊断，也允许查看源码和参与开发。
 
-| 能力 | WiFi Lens Pro | 免费开源版 |
+| 能力 | WiFi Lens Pro | 开源版 |
 |---|:---:|:---:|
 | 实时 Wi-Fi 扫描、信道分析与推荐 | ✓ | ✓ |
-| Network Self-Check 与网络诊断 | ✓ | ✓ |
+| 网络自检（Network Check） | ✓ | ✓ |
 | 漫游测试、AP Radar、信道热力图 | ✓ | ✓ |
 | 本地 MCP 与导出 | ✓ | ✓ |
-| 菜单栏状态监控 | ✓ | — |
-| Continuous Observation | ✓ | — |
-| Network Experience（Reliability / Baseline） | ✓ | — |
-| Problem History 与历史问题调查 | ✓ | — |
-| Spectrum Recording | ✓ | — |
+| 菜单栏状态 | ✓ | — |
+| 持续观测（Continuous Observation） | ✓ | — |
+| 网络体验分析（Network Experience：Reliability / Baseline） | ✓ | — |
+| 问题记录与调查（Problem History） | ✓ | — |
+| 频谱录制（Spectrum → Recording） | ✓ | — |
 | Wi-Fi Calling Test | ✓ | — |
 
-**如果你只需要了解当前的 Wi-Fi，开源版就很有用；如果你还需要持续观察和调查反复发生的问题，WiFi Lens Pro 提供了进一步的工作流。**
+**如果你只需要分析当前 Wi-Fi，开源版就很有用；如果你需要持续观测并调查反复出现的问题，WiFi Lens Pro 提供了完整的工作流。**
 
-[获取 WiFi Lens Pro](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) · [下载免费开源版](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
+[获取 WiFi Lens Pro](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) · [下载开源版](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 
 ---
 
@@ -206,11 +206,11 @@ Claude Desktop：
 WiFi Lens 在 Mac 本地处理 Wi-Fi 数据，不要求账号，不使用云端同步，也不收集使用遥测。
 
 - **Wi-Fi 扫描：** 扫描结果保留在 Mac 上。
-- **Network Self-Check：** 会向公共目标发送诊断请求，并在适用时检查已配置的代理；诊断结果保存在本地。
+- **网络自检（Network Check）：** 会向公共目标发送诊断请求，并在适用时检查已配置的代理；诊断结果保存在本地。
 - **MCP：** 仅绑定 `127.0.0.1`，启用后本地客户端才能访问。
 - **定位服务：** macOS 要求读取 Wi-Fi SSID 的应用获得此权限。WiFi Lens 不读取 GPS 位置。
 - **区域检测：** 在设备上使用系统设置、硬件信道列表和附近 AP 的国家代码。
-- **后台观察：** Pro 的持续观察数据保存在本地，Mac 进入睡眠后暂停采集。
+- **后台持续观测：** Pro 的观测数据保存在本地，Mac 进入睡眠后暂停采集。
 - **更新检查：** GitHub 版在你请求检查更新或启用自动检查时联系 GitHub。
 
 更多信息见 [完整隐私政策](https://wifi-lens.shiinalabs.com/zh-Hans/privacy/?utm_source=github&utm_medium=readme&utm_campaign=github_readme)。
@@ -256,7 +256,7 @@ WiFi Lens 在 Mac 本地处理 Wi-Fi 数据，不要求账号，不使用云端�
 | 📤 导出 | 将图表保存为 PNG 或 CSV |
 | 🔒 隐私优先 | 无使用遥测；扫描数据保留在 Mac 上 |
 | ⬆️ 自动更新 | GitHub 版使用 Sparkle |
-| 🩺 Network Self-Check | 一键进行路径、DNS、HTTPS 和代理诊断 |
+| 🩺 网络自检（Network Check） | 一键进行网络路径、DNS、HTTPS 和代理检查 |
 
 ---
 
