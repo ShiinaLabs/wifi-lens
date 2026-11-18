@@ -90,8 +90,6 @@ Wi-Fi 偶尔断连、延迟突然升高、连接过一会儿又恢复。等你�
 | **持续观测（Continuous Observation）** | 可选地在 Pro 应用关闭后继续采集受支持的网络观测结果；默认关闭，Mac 睡眠时暂停。 |
 | **频谱录制（Spectrum → Recording）** | 录制选定 AP 的信号变化，之后重新加载并查看记录。 |
 
-> **素材待补｜持续观测**  
-> 建议展示真实的菜单栏状态与 Continuous Observation 设置。不要使用已退役的 Timeline 当作当前观测页面。
 
 ---
 
