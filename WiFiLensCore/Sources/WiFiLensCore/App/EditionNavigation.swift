@@ -7,6 +7,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
     case channels
     case interfaces
     case networkDiagnostics
+    case targetedDiagnostics
     case wifiCallingTest
     case roaming
     case bleScanner
@@ -21,7 +22,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
     public var requiresLocationAuthorization: Bool {
         switch self {
         case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights,
-            .networkDiagnostics, .wifiCallingTest:
+            .networkDiagnostics, .targetedDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -31,7 +32,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
     public var requiresWiFi: Bool {
         switch self {
         case .overview, .settings, .bleScanner, .timeline, .networkExperience, .problemHistory, .statistics, .insights,
-            .networkDiagnostics, .wifiCallingTest:
+            .networkDiagnostics, .targetedDiagnostics, .wifiCallingTest:
             false
         case .spectrum, .channels, .interfaces, .roaming, .apRadar:
             true
@@ -46,6 +47,8 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .interfaces: String(localized: "nav.interfaces", comment: "Interfaces sidebar navigation item")
         case .networkDiagnostics:
             String(localized: "nav.network_diagnostics", comment: "Network Self-Check sidebar navigation item")
+        case .targetedDiagnostics:
+            String(localized: "nav.targeted_diagnostics", comment: "Targeted diagnostics sidebar navigation item")
         case .wifiCallingTest:
             String(localized: "nav.wifi_calling_test", comment: "Wi-Fi Calling Test sidebar navigation item")
         case .roaming: String(localized: "nav.roaming_test", comment: "Roaming Test sidebar navigation item")
@@ -69,6 +72,7 @@ public enum SidebarPage: String, CaseIterable, Sendable {
         case .channels: "chart.bar.fill"
         case .interfaces: "cable.connector"
         case .networkDiagnostics: "stethoscope"
+        case .targetedDiagnostics: "scope"
         case .wifiCallingTest: "wifi"
         case .roaming: "arrow.triangle.swap"
         case .bleScanner: "personalhotspot"

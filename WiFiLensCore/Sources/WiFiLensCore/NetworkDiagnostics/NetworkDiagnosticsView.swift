@@ -466,27 +466,16 @@ public struct NetworkDiagnosticsView: View {
     }
 
     private var readyWorkspace: some View {
-        HStack(alignment: .top, spacing: 12) {
+        VStack(spacing: 10) {
             Image(systemName: "network")
-                .font(.title3)
-                .foregroundStyle(Color.accentColor)
+                .font(.system(size: 40, weight: .light))
+                .foregroundStyle(.secondary.opacity(0.5))
                 .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(String(localized: "network_diagnostics.state.waiting", comment: "Network self-check ready state"))
-                    .font(.callout.weight(.semibold))
-                Text(
-                    String(
-                        localized: "network_diagnostics.ready.message",
-                        comment: "Instructions shown before running network diagnostics")
-                )
-                .font(.caption)
+            Text(String(localized: "network_diagnostics.state.waiting", comment: "Network self-check ready state"))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
     }
 

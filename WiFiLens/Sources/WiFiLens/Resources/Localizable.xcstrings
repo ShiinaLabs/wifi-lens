@@ -27412,6 +27412,59 @@
         }
       }
     },
+    "nav.targeted_diagnostics" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gezielte Diagnose"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Targeted Diagnostics"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico dirigido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostic ciblé"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ターゲット診断"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Целевая диагностика"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "定向诊断"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "定向診斷"
+          }
+        }
+      }
+    },
     "nav.timeline" : {
       "comment" : "Timeline sidebar navigation item",
       "extractionState" : "manual",
@@ -39063,6 +39116,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "統計資料"
+          }
+        }
+      }
+    },
+    "pro.targeted_diagnostics.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüft eine Domain über den vollständigen Netzwerkpfad und liefert eine gezielte Diagnose."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checks one domain through the complete network path and returns a focused diagnosis."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprueba un dominio a través de toda la ruta de red y ofrece un diagnóstico específico."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifie un domaine sur l’ensemble du chemin réseau et fournit un diagnostic ciblé."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 つのドメインをネットワーク経路全体で確認し、的を絞った診断を表示します。"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверяет один домен по всему сетевому пути и выдаёт целевую диагностику."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沿完整网络路径检查单个域名，并给出针对性诊断。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沿完整網路路徑檢查單一網域，並提供針對性診斷。"
           }
         }
       }
