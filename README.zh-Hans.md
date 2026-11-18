@@ -2,214 +2,155 @@
 
 **看清 Wi-Fi 正在发生什么。**
 
-完整的 Mac Wi-Fi 排障工作流：从实时诊断，到持续观察，再到回看历史证据。WiFi Lens Pro 将 Wi-Fi 分析、网络诊断、持续监控、Timeline 历史、Statistics 和 Insights 汇聚在一款原生 macOS 应用中。
-
-<p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>获取 WiFi Lens Pro</strong></a>
-  &nbsp;·&nbsp;
-  <a href="https://wifi-lens.shiinalabs.com/zh-Hans/?utm_source=github&utm_medium=readme&utm_campaign=github_readme">官方网站</a>
-</p>
+WiFi Lens Pro 是一款原生 macOS Wi-Fi 分析与网络诊断应用。检查当前连接，按需持续观察网络状态，并通过历史记录调查那些已经消失、却可能再次出现的问题。
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="在 Mac App Store 获取 WiFi Lens Pro" width="190"></a>
 </p>
 
-<p align="center">【截图占位：WiFi Lens Pro 主视觉，建议展示 Timeline / 长期排障工作流】</p>
+<p align="center"><a href="https://wifi-lens.shiinalabs.com/zh-Hans/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">官方网站</a></p>
 
-<p align="center"><sub>macOS 14.6+ · Apple Silicon 与 Intel · 一次性购买</sub></p>
+> **主视觉占位｜Network Experience**  
+> 展示 Pro 对所选网络的可靠性判断、观测范围和需要关注的问题，而不是通用 Wi-Fi 扫描界面。
 
-<p align="center">
-  <strong>本地优先</strong> · 无账号 · 无云端 · 无遥测
-</p>
+<p align="center"><sub>macOS 14.6+ · Intel 与 Apple Silicon · 一次性购买</sub></p>
 
 ---
 
 <p align="center">
-  🇺🇸 <a href="README.md">English</a> · 🇩🇪 <a href="README.de.md">Deutsch</a> · 🇪🇸 <a href="README.es-ES.md">Español</a> · 🇫🇷 <a href="README.fr.md">Français</a> · 🇨🇳 简体中文 · 🇯🇵 <a href="README.ja.md">日本語</a> · 🇭🇰 <a href="README.zh-Hant.md">繁體中文</a>
+  <a href="README.md">English</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="README.es-ES.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  简体中文 ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.zh-Hant.md">繁體中文</a>
 </p>
 
 <p align="center">
-  <a href="#为什么需要-wifi-lens-pro">为什么需要 Pro</a> ·
-  <a href="#现在就诊断">现在就诊断</a> ·
+  <a href="#现在检查">现在检查</a> ·
   <a href="#持续观察">持续观察</a> ·
-  <a href="#回看发生了什么">回看与调查</a> ·
-  <a href="#wifi-lens-pro-与开源版">版本</a>
+  <a href="#调查历史问题">调查历史问题</a> ·
+  <a href="#pro-与开源版">Pro 与开源版</a>
 </p>
 
 ---
 
-## 为什么需要 WiFi Lens Pro
+## 网络问题，不会等你准备好
 
-很多 Wi-Fi 问题并不会一直存在。
+有些问题很容易重现：信道拥堵、信号偏弱，打开 Wi-Fi 分析器就能开始排查。
 
-你打开工具的时候，网络可能已经恢复；一次短暂的断连、漫游或信号变化，也不会留下足够的上下文。等问题再次出现时，你只能凭感觉猜测刚才发生了什么。
+更麻烦的是另一类问题：网络突然中断，过一会儿又恢复；某一天延迟明显升高，却很难确定从什么时候开始；偶尔出现异常，但每次准备检查时都已经正常。
 
-**WiFi Lens Pro 的重点不是让你看到更多数据，而是让一次网络问题从“刚才好像出过问题”，变成一份可以回看的排障记录。**
+**一次实时检测只能告诉你眼前发生了什么。WiFi Lens Pro 还可以保留观察结果，让你有机会在事后继续调查。**
 
-整个工作流很简单：
+这就是 Pro 的完整工作流：
 
-| 你想知道什么 | WiFi Lens Pro |
-|---|---|
-| **现在到底出了什么问题？** | 实时 Wi-Fi 分析与 Network Self-Check |
-| **问题是不是偶尔才发生？** | 菜单栏监控与持续观察 |
-| **刚才到底发生了什么？** | Timeline 记录网络事件与连接变化 |
-| **这种问题是不是反复发生？** | Statistics 分析历史记录 |
-| **我应该重点调查什么？** | Insights 从已有记录中整理可解释的发现 |
+**现在检查 → 持续观察 → 调查历史问题**
 
-<p align="center">【截图占位：Pro 工作流总览，建议展示“实时 → 监控 → 历史 → 调查”的关系】</p>
+## 现在检查
 
-**Pro 把这些能力连接成一个完整的排障过程，而不是几个互不相关的工具。**
+**先弄清楚当前连接和无线环境。**
 
----
+### Network Self-Check：从 Mac 到互联网
 
-## 现在就诊断
+当连接行为不符合预期时，运行网络自检，按 **This Mac、LAN、Internet** 查看网络路径上的检查结果，包括网关、DNS、HTTP/HTTPS、可选的 IPv6 和已配置的代理。
 
-首先回答最直接的问题：
+你可以看到哪些检查成功、失败或没有足够证据，而不需要从零开始组合多个命令行工具。
 
-**“我的网络现在到底怎么样？”**
+> **截图占位｜Network Self-Check**  
+> 展示分阶段的真实检测结果，突出用户可以从哪里开始排查。
 
-WiFi Lens Pro 包含实时 Wi-Fi 分析和本地网络诊断。你可以先从当前连接状态开始，再深入查看无线环境和网络路径。
+### Wi-Fi Analyzer：看清附近的无线环境
 
-### Network Self-Check
+WiFi Lens 也提供完整的实时 Wi-Fi 分析能力：扫描附近 2.4 / 5 / 6 GHz 网络，查看信号、信道、拥堵情况、安全配置和区域信道建议。
 
-一键检查当前网络，从 Mac、局域网到 Internet 分阶段查看连接情况，包括：
+当你怀疑问题出在无线环境或 AP 切换时，可以进一步使用漫游测试、信道热力图和 AP Radar。
 
-- 当前网络接口、路由和网关
-- DNS
-- HTTPS
-- IPv6
-- 已配置的代理
-
-检查结果会区分明确失败、无法确定和未执行的项目，避免把一次不完整的检查误解成完整结论。
-
-<p align="center">【截图占位：Network Self-Check，展示 This Mac / LAN / Internet 三阶段结果】</p>
-
-### Wi-Fi 分析
-
-当问题看起来和无线环境有关时，直接查看：
-
-- 附近 2.4 / 5 / 6 GHz 网络
-- 信号强度与信道使用情况
-- 信道拥堵与质量评分
-- 区域相关的信道建议
-- 网络安全和连接详情
-
-<p align="center">【截图占位：Wi-Fi 分析主界面，展示网络、信道质量和建议】</p>
-
----
+这些实时工具在 **Pro 和免费开源版中都可以使用**。
 
 ## 持续观察
 
-有些问题不是“现在有没有”，而是：
+**问题偶尔发生时，最重要的是不必一直守着屏幕。**
 
-**“它到底什么时候发生？”**
+### 菜单栏状态
 
-WiFi Lens Pro 可以把实时分析变成持续的观察。
+随时查看当前连接、网关状态、近期变化和简短趋势，需要深入调查时再打开主窗口。
 
-### 菜单栏监控
+### Continuous Observation
 
-不用一直打开主窗口，也可以从菜单栏查看当前 Wi-Fi 状态，并快速进入相关历史记录。
+需要更长时间的观察时，可以在设置中启用持续观测。它可在 Pro 应用关闭后继续采集受支持的网络观察结果；**默认关闭**，Mac 睡眠时暂停。
 
-<p align="center">【截图占位：菜单栏监控】</p>
+### Spectrum Recording
 
-### 持续观察与记录
+需要记录无线信号变化时，可以选定 AP 进行频谱录制，保存后再回看信号历史。
 
-让 WiFi Lens Pro 在后台继续记录网络变化。问题发生后，你不需要碰巧在现场打开分析器。
+> **素材占位｜持续观察**  
+> 展示菜单栏状态和持续观测的实际使用场景；不把后台代理状态或尚未提供的控制面板画成现有功能。
 
-Timeline 会记录网络事件和连接变化，让一次偶发的断连、漫游或信号变化有机会留下上下文。
+## 调查历史问题
 
-<p align="center">【截图占位：Timeline，展示网络事件随时间变化】</p>
+**Pro 真正的不同，在于问题发生之后还能继续做什么。**
 
-### 频谱录制
+### Network Experience：这段时间的网络可靠吗？
 
-需要调查无线环境随时间发生的变化时，可以保存频谱记录并在之后回看。
+选择一张已知网络和时间范围，查看 **Network Reliability** 的评估结果：哪些问题有观测证据、发生在什么时候，以及所选时段内有多少数据足以支持判断。
 
-<p align="center">【截图占位：频谱录制 / 历史对比】</p>
+它不是凭空生成一个“网络健康分”，而是把观察到的影响与没有充分观测的数据区分开。
 
----
+> **截图占位｜Network Reliability**  
+> 以结论和问题列表为主，技术曲线与原始观测作为次级证据。
 
-## 回看发生了什么
+### Historical Baseline：现在与过去有什么不同？
 
-真正麻烦的网络问题，往往发生在你没有观察的时候。
+在 **Network Experience** 中切换到 **Historical Baseline**，比较已保存的网关延迟测量值与其兼容的历史参考。
 
-这时候，实时状态已经不够了。
+它帮助你发现有依据的相对变化，但不会把一次延迟偏移直接当成整个 Wi-Fi 网络的故障结论。
 
-### Timeline
+> **截图占位｜Historical Baseline**  
+> 展示具体网关延迟测量与对应历史参考的比较。
 
-按照时间回看已经记录的网络事件和连接变化。
+### Problem History：从记录中继续调查
 
-你可以从一次异常开始，继续查看前后的网络状态，而不是重新等待问题出现。
+在 **Problem History** 中查看已保存的问题记录（Findings）、支持证据和后续观察。
 
-<p align="center">【截图占位：Timeline 详细视图】</p>
+对于有依据的问题，页面可以提供下一步检查建议，帮助你打开相应的网络诊断或接口详情页面；**检查需要由用户手动执行**，并非自动诊断或自动修复。
 
-### Statistics
+> **截图占位｜Problem History**  
+> 展示一个有真实证据的问题记录、建议检查方向，以及对应的后续观察。
 
-把历史记录放到更长的时间范围里观察。
-
-Statistics 可以查看事件总量、严重程度分布，以及不同时间范围内的历史统计。
-
-<p align="center">【截图占位：Statistics】</p>
-
-### Insights
-
-Statistics 告诉你“发生了多少”，Insights 则进一步帮助你理解“值得注意的是什么”。
-
-Insights 基于已经记录的观察结果生成可解释的发现，并可以回到对应的历史证据。
-
-<p align="center">【截图占位：Insights，展示发现与对应证据】</p>
-
-<p align="center"><strong>问题消失了，不代表证据也消失了。</strong></p>
+当问题已经消失，保存的记录仍然可以成为下一次调查的起点。
 
 ---
 
-## Wi-Fi 分析只是完整工作流的一部分
+## 不只有历史分析
 
-WiFi Lens Pro 当然也是一个完整的 Wi-Fi Analyzer。
+WiFi Lens Pro 同样包含实时 Wi-Fi 分析、Network Self-Check、漫游测试、AP Radar、信道热力图、Bluetooth LE 扫描与本地 MCP 集成等能力。
 
-它可以帮助你理解身边的无线环境，而不只是显示一个信号格。
+Pro 还提供面向运营商场景的 **Wi-Fi Calling Test**，支持运营商预设或自定义 MCC/MNC。
 
-| 能力 | 用来做什么 |
-|---|---|
-| 📡 Wi-Fi 扫描 | 扫描 2.4 / 5 / 6 GHz 附近网络 |
-| 📊 频谱与信道质量 | 查看占用、拥堵评分和区域信道建议 |
-| 🔍 网络详情 | 查看 PHY 代际、信道宽度、802.11k/r/v、WPA3 等信息 |
-| 🚶 漫游测试 | 验证 AP 切换并回看漫游过程 |
-| 🗺️ 信道热力图 | 查看不同频段的占用情况 |
-| 📻 AP Radar | 追踪选定 AP 的 RSSI 变化 |
-| 📤 导出 | 将图表保存为 PNG 或 CSV |
-| 🤖 MCP | 让兼容的 AI 工具读取本地 Wi-Fi 数据 |
+这些工具服务于同一个目标：**让你更容易理解连接状态，并沿着已有证据继续排查。**
 
-<p align="center">【截图占位：Wi-Fi 分析 / 频谱 / 漫游等产品组合展示】</p>
+## Pro 与开源版
 
----
+WiFi Lens Pro 是完整的产品体验。免费开源版则提供日常所需的实时 Wi-Fi 分析和本地网络诊断，并允许任何人查看源码和参与开发。
 
-## WiFi Lens Pro 与开源版
-
-WiFi Lens 有两个版本。
-
-**WiFi Lens Pro 是完整版本。**
-
-它适合需要持续观察、记录历史和调查偶发问题的人。
-
-开源版则提供完整的一组实时分析能力，适合只需要当前网络分析、希望通过 GitHub 获取软件、查看源码或参与开发的用户。
-
-| 能力 | WiFi Lens Pro | 开源版 |
+| 能力 | WiFi Lens Pro | 免费开源版 |
 |---|:---:|:---:|
-| 实时 Wi-Fi 分析 | ✅ | ✅ |
-| 网络诊断 | ✅ | ✅ |
-| 信道推荐 | ✅ | ✅ |
-| Network Self-Check | ✅ | ✅ |
-| MCP 集成 | ✅ | ✅ |
-| 持续监控 | ✅ | — |
-| 菜单栏监控 | ✅ | — |
-| Timeline 历史 | ✅ | — |
-| 历史统计 | ✅ | — |
-| Insights | ✅ | — |
-| 频谱录制 | ✅ | — |
+| 实时 Wi-Fi 扫描、信道分析与推荐 | ✓ | ✓ |
+| Network Self-Check 与网络诊断 | ✓ | ✓ |
+| 漫游测试、AP Radar、信道热力图 | ✓ | ✓ |
+| 本地 MCP 与导出 | ✓ | ✓ |
+| 菜单栏状态监控 | ✓ | — |
+| Continuous Observation | ✓ | — |
+| Network Experience（Reliability / Baseline） | ✓ | — |
+| Problem History 与历史问题调查 | ✓ | — |
+| Spectrum Recording | ✓ | — |
+| Wi-Fi Calling Test | ✓ | — |
 
-两个版本都以本地处理为基础。
+**如果你只需要了解当前的 Wi-Fi，开源版就很有用；如果你还需要持续观察和调查反复发生的问题，WiFi Lens Pro 提供了进一步的工作流。**
 
-**区别不在于 Pro 能不能分析当前网络，而在于 Pro 能不能继续陪你观察这个网络。**
+[获取 WiFi Lens Pro](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8) · [下载免费开源版](https://github.com/ShiinaLabs/wifi-lens/releases/latest)
 
 ---
 
