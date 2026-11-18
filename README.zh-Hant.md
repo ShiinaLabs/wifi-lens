@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Chip-Intel%20%7C%20Apple%20Silicon-555?style=flat" alt="Intel 與 Apple Silicon">
   <img src="https://img.shields.io/badge/Telemetry-None-555?style=flat" alt="無遙測">
 </p>
-<p align="center"><a href="https://wifi-lens.shiinalabs.com/zh-Hant/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">官方網站</a> &nbsp;·&nbsp; 一次性購買</p>
+<p align="center"><a href="https://wifi-lens.shiinalabs.com/zh-Hans/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">官方網站</a> &nbsp;·&nbsp; 一次性購買</p>
 <p align="center"><img src="assets/screenshot-network-experience.webp" alt="WiFi Lens Pro — Network Experience 網路可靠性分析" width="880"></p>
 <p align="center"><sub>Network Experience · 根據實際觀測評估網路可靠性</sub></p>
 
@@ -127,7 +127,7 @@ WiFi Lens 在 Mac 本機處理 Wi-Fi 掃描資料，不需要帳號、不使用�
 - **本機 MCP：** 伺服器僅繫結至 `127.0.0.1`。如果 AI 用戶端連線至外部服務，請另外確認該用戶端的資料處理方式。
 - **系統權限：** macOS 要求 App 取得定位服務權限才能讀取 Wi-Fi SSID；WiFi Lens 不會讀取 GPS 位置。
 
-詳見 [完整隱私權政策](https://wifi-lens.shiinalabs.com/zh-Hant/privacy/?utm_source=github&utm_medium=readme&utm_campaign=github_readme).
+詳見 [完整隱私權政策](https://wifi-lens.shiinalabs.com/zh-Hans/privacy/?utm_source=github&utm_medium=readme&utm_campaign=github_readme).
 
 ## 取得 WiFi Lens
 
@@ -170,7 +170,7 @@ Codex 設定：
 url = "http://127.0.0.1:19840/"
 ```
 
-更多範例請參閱 [AI 工作流程指南](https://wifi-lens.shiinalabs.com/zh-Hant/ai-mcp/?utm_source=github&utm_medium=readme&utm_campaign=github_readme).
+更多範例請參閱 [AI 工作流程指南](https://wifi-lens.shiinalabs.com/zh-Hans/ai-mcp/?utm_source=github&utm_medium=readme&utm_campaign=github_readme).
 
 </details>
 
