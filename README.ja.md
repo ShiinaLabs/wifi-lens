@@ -12,6 +12,7 @@ Macからルーター、インターネットまで接続を確認し、周辺�
 <p align="center">macOS 14.6以降 &nbsp;·&nbsp; Apple Silicon / Intel &nbsp;·&nbsp; ローカル優先</p>
 <p align="center">🩺 <strong>Network Check</strong> — Mac、ローカルネットワーク、インターネットの接続を確認<br>📡 <strong>Wi-Fi分析</strong> — 周辺ネットワーク、チャンネル利用状況、電波強度、セキュリティを確認<br>🔒 <strong>ローカル優先</strong> — スキャン記録はMacに保存。利用状況のテレメトリーはありません</p>
 <p align="center"><sub>このリポジトリでは、ライブ分析、ネットワークトラブルシューティング、開発、コミュニティへの貢献に使える無料のオープンソース版を提供しています。</sub></p>
+
 ---
 
 <p align="center">
@@ -27,11 +28,9 @@ Macからルーター、インターネットまで接続を確認し、周辺�
 ## コア機能
 WiFi Lensは、近くのネットワーク、チャンネル利用状況、Macの接続を把握するためのライブツールを備えています。
 
-
 ### 接続トラブルの原因を調べる
 
 接続トラブルの原因を切り分けたいときは、**Network Check**を実行して、Macからローカルネットワーク、インターネットまでの経路を確認できます。ネットワーク経路、ゲートウェイへの到達性、DNS名前解決、HTTP/HTTPSアクセス、任意のIPv6到達性、設定済みプロキシの経路を確認します。結果は **This Mac**、**LAN**、**Internet** の3段階に整理され、問題が発生している可能性のある場所を把握できます。
-
 
 | 機能 | できること |
 |------|------------|
@@ -44,12 +43,12 @@ WiFi Lensは、近くのネットワーク、チャンネル利用状況、Mac�
 | 🤖 MCPとエクスポート | ローカルAIツールに接続し、チャートをPNGまたはCSVで保存 |
 | 🔒 ローカルファーストのプライバシー | スキャンデータをMacに保持し、利用テレメトリーを収集しない |
 
-
 <p align="center"><img alt="WiFi Lensの概要画面。周辺Wi-Fi情報、電波強度、チャンネル品質、チャンネル推奨を表示" src="assets/screenshot-hero.webp" width="800"></p>
 
 ---
 
 ## WiFi Lens Proを選ぶ理由
+
 WiFi Lens Proでは、ライブWi-Fi分析に履歴とフォローアップ機能が加わります。繰り返す問題の把握、時間経過による観測結果の比較、必要に応じた継続観測ができます。
 
 | ワークフロー | WiFi Lens Proでできること |
@@ -79,7 +78,6 @@ Proはライブ分析に履歴ビューを加え、観測された信頼性の�
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Proを入手 →</strong></a>
 </p>
-
 
 ---
 

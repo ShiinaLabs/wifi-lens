@@ -12,6 +12,7 @@ Finde heraus, an welcher Stelle deine Verbindung Probleme macht, analysiere WLAN
 <p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; Lokal-first</p>
 <p align="center">🩺 <strong>Network Check</strong> — Prüfe deinen Mac, das lokale Netzwerk und die Internetverbindung<br>📡 <strong>Wi-Fi-Analyse</strong> — Entdecke WLANs in der Nähe, Kanalnutzung, Signal und Sicherheit<br>🔒 <strong>Lokal-first</strong> — Scanaufzeichnungen bleiben auf deinem Mac; keine Nutzungs-Telemetrie</p>
 <p align="center"><sub>Dieses Repository bietet die kostenlose Open-Source-Edition von WiFi Lens für Live-Analyse, Netzwerkdiagnose, Entwicklung und Beiträge aus der Community.</sub></p>
+
 ---
 
 <p align="center">
@@ -28,11 +29,9 @@ Finde heraus, an welcher Stelle deine Verbindung Probleme macht, analysiere WLAN
 
 WiFi Lens bündelt Live-Werkzeuge, um nahe Netzwerke, Kanalnutzung und die Verbindung deines Macs zu verstehen.
 
-
 ### Verbindungsprobleme eingrenzen
 
 Wenn du ein Verbindungsproblem eingrenzen möchtest, starte **Network Check** und prüfe den Weg von deinem Mac über das lokale Netzwerk bis ins Internet. Die Prüfung umfasst den Netzwerkpfad, die Erreichbarkeit des Gateways, DNS-Auflösung, HTTP/HTTPS-Zugriff, eine optionale IPv6-Prüfung und das Routing über konfigurierte Proxys. Die Ergebnisse sind in **This Mac**, **LAN** und **Internet** gruppiert und zeigen, an welcher Stelle das Problem liegen könnte.
-
 
 | Funktion | Wofür sie hilft |
 |----------|-----------------|
@@ -45,12 +44,12 @@ Wenn du ein Verbindungsproblem eingrenzen möchtest, starte **Network Check** un
 | 🤖 MCP und Export | Lokale KI-Tools verbinden und Diagramme als PNG oder CSV speichern |
 | 🔒 Lokaler Datenschutz | Scan-Daten auf dem Mac behalten, ohne Nutzungs-Telemetrie |
 
-
 <p align="center"><img alt="WiFi Lens Übersicht mit WLANs in der Nähe, Signal, Kanalqualität und Kanalempfehlung" src="assets/screenshot-hero.webp" width="800"></p>
 
 ---
 
 ## Warum WiFi Lens Pro
+
 WiFi Lens Pro ergänzt die Live-Wi-Fi-Analyse um Verlaufs- und Folgefunktionen, mit denen du wiederkehrende Probleme untersuchen, Beobachtungen vergleichen und bei Bedarf weiter beobachten kannst.
 
 | Workflow | Was WiFi Lens Pro ergänzt |
@@ -80,7 +79,6 @@ Bei einem sporadischen Problem zeigt Network Experience, was über einen Zeitrau
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>WiFi Lens Pro holen →</strong></a>
 </p>
-
 
 ---
 

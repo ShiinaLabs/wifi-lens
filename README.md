@@ -12,6 +12,7 @@ Find out where your connection may be failing, explore nearby Wi-Fi networks, an
 <p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon &amp; Intel &nbsp;·&nbsp; Local-first</p>
 <p align="center">🩺 <strong>Network Check</strong> — Check your Mac, local network, and internet connection<br>📡 <strong>Wi-Fi analysis</strong> — Explore nearby networks, channel use, signal, and security<br>🔒 <strong>Local-first</strong> — Scan records stay on your Mac; no usage telemetry</p>
 <p align="center"><sub>This repository hosts the free, open-source edition of WiFi Lens for live local analysis, network troubleshooting, development, and community contributions.</sub></p>
+
 ---
 
 <p align="center">
@@ -28,11 +29,9 @@ Find out where your connection may be failing, explore nearby Wi-Fi networks, an
 
 WiFi Lens brings live tools for understanding nearby networks, channel use, and your Mac's connection into one native macOS app.
 
-
 ### Troubleshoot a connection
 
 When you need to narrow down a connection issue, run **Network Check** to inspect the path from your Mac through the local network to the internet. It checks the network path, gateway reachability, DNS resolution, HTTP/HTTPS access, optional IPv6 reachability, and configured proxy routing. Results are grouped into **This Mac**, **LAN**, and **Internet**, making it easier to see where the connection may be failing.
-
 
 | Capability | What it helps you do |
 |------------|----------------------|
@@ -45,12 +44,12 @@ When you need to narrow down a connection issue, run **Network Check** to inspec
 | 🤖 MCP and export | Connect local AI tools and save charts as PNG or CSV |
 | 🔒 Local-first privacy | Keep scan data on your Mac with no usage telemetry |
 
-
 <p align="center"><img alt="WiFi Lens overview showing nearby Wi-Fi information, signal, channel quality, and a channel recommendation" src="assets/screenshot-hero.webp" width="800"></p>
 
 ---
 
 ## Why WiFi Lens Pro
+
 WiFi Lens Pro adds history and follow-up tools to live Wi-Fi analysis, helping you understand recurring problems, compare observations over time, and keep watching when you need to.
 
 | Workflow | What WiFi Lens Pro adds |
@@ -80,7 +79,6 @@ When a problem is intermittent, Network Experience helps you assess what was obs
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Get WiFi Lens Pro →</strong></a>
 </p>
-
 
 ---
 

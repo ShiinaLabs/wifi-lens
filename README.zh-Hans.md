@@ -12,6 +12,7 @@
 <p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon 与 Intel &nbsp;·&nbsp; 本地优先</p>
 <p align="center">🩺 <strong>Network Check 网络检查</strong> — 检查 Mac、局域网与互联网连接<br>📡 <strong>Wi-Fi 分析</strong> — 查看附近网络、信道使用、信号与安全性<br>🔒 <strong>本地优先</strong> — Wi-Fi 扫描记录保留在 Mac 上；不收集使用遥测</p>
 <p align="center"><sub>本仓库提供免费的 WiFi Lens 开源版，用于实时本地分析、网络排障、开发和社区贡献。</sub></p>
+
 ---
 
 <p align="center">
@@ -27,11 +28,9 @@
 ## 核心能力
 WiFi Lens 提供实时工具，帮助你了解附近网络、信道使用情况和 Mac 的连接状态。
 
-
 ### 排查连接问题
 
 当你需要排查连接问题时，可以运行 **Network Check**，检查从 Mac、局域网到互联网的连接路径。它会检查网络路径、网关可达性、DNS 解析、HTTP/HTTPS 访问、可选的 IPv6 连通性以及已配置的代理路由。结果按 **This Mac**、**LAN** 和 **Internet** 分组，帮助你判断问题可能出在哪一段。
-
 
 | 能力 | 用途 |
 |------|------|
@@ -44,12 +43,12 @@ WiFi Lens 提供实时工具，帮助你了解附近网络、信道使用情况�
 | 🤖 MCP 与导出 | 连接本地 AI 工具，并将图表保存为 PNG 或 CSV |
 | 🔒 本地优先隐私 | 扫描数据保留在 Mac 上，不收集使用遥测 |
 
-
 <p align="center"><img alt="WiFi Lens 概览界面，展示附近 Wi-Fi 信息、信号、信道质量和信道建议" src="assets/screenshot-hero.webp" width="800"></p>
 
 ---
 
 ## 为什么选择 WiFi Lens Pro
+
 WiFi Lens Pro 在实时 Wi-Fi 分析基础上增加历史与后续调查能力，帮助你理解反复出现的问题、比较一段时间内的观测结果，并在需要时持续观测。
 
 | 工作流 | WiFi Lens Pro 提供的能力 |
@@ -79,7 +78,6 @@ Pro 将实时分析与历史视图结合，帮助你评估观测到的网络可�
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>获取 WiFi Lens Pro →</strong></a>
 </p>
-
 
 ---
 

@@ -12,6 +12,7 @@ Repérez à quel niveau votre connexion peut échouer, analysez les réseaux Wi-
 <p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon et Intel &nbsp;·&nbsp; Traitement local</p>
 <p align="center">🩺 <strong>Network Check</strong> — Vérifiez votre Mac, le réseau local et la connexion Internet<br>📡 <strong>Analyse Wi-Fi</strong> — Explorez les réseaux proches, l’utilisation des canaux, le signal et la sécurité<br>🔒 <strong>Traitement local</strong> — Les relevés restent sur votre Mac ; aucune télémétrie d’usage</p>
 <p align="center"><sub>Ce dépôt propose l’édition open source gratuite de WiFi Lens pour l’analyse en direct, le diagnostic réseau, le développement et les contributions de la communauté.</sub></p>
+
 ---
 
 <p align="center">
@@ -27,11 +28,9 @@ Repérez à quel niveau votre connexion peut échouer, analysez les réseaux Wi-
 ## Capacités principales
 WiFi Lens réunit des outils en direct pour comprendre les réseaux proches, l’utilisation des canaux et la connexion de votre Mac.
 
-
 ### Repérer les problèmes de connexion
 
 Pour mieux cerner un problème de connexion, lancez **Network Check** afin d’examiner le chemin entre votre Mac, le réseau local et Internet. L’outil vérifie le chemin réseau, l’accessibilité de la passerelle, la résolution DNS, l’accès HTTP/HTTPS, l’accessibilité IPv6 facultative et le routage des proxys configurés. Les résultats sont regroupés sous **This Mac**, **LAN** et **Internet** pour vous aider à localiser le problème éventuel.
-
 
 | Capacité | Utilité |
 |----------|---------|
@@ -44,12 +43,12 @@ Pour mieux cerner un problème de connexion, lancez **Network Check** afin d’e
 | 🤖 MCP et export | Connecter des outils IA locaux et enregistrer les graphiques en PNG ou CSV |
 | 🔒 Confidentialité locale | Conserver les données de scan sur le Mac sans télémétrie d’utilisation |
 
-
 <p align="center"><img alt="Vue d’ensemble WiFi Lens avec réseaux Wi-Fi proches, signal, qualité des canaux et recommandation" src="assets/screenshot-hero.webp" width="800"></p>
 
 ---
 
 ## Pourquoi WiFi Lens Pro
+
 WiFi Lens Pro ajoute des fonctions d’historique et de suivi à l’analyse Wi-Fi en direct pour comprendre les problèmes récurrents, comparer les observations dans le temps et poursuivre l’observation lorsque nécessaire.
 
 | Workflow | Ce que WiFi Lens Pro ajoute |
@@ -79,7 +78,6 @@ Lorsqu’un problème est intermittent, Network Experience vous aide à évaluer
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro →</strong></a>
 </p>
-
 
 ---
 
