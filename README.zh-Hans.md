@@ -12,7 +12,7 @@
 
 <p align="center"><img src="assets/screenshot-network-experience.webp" alt="WiFi Lens Pro 的 Network Experience 展示网络可靠性观测" width="800"></p>
 
-<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · One-time purchase</sub></p>
+<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · 一次性购买</sub></p>
 
 ---
 

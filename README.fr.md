@@ -12,7 +12,7 @@ Une app macOS native réunissant analyse Wi-Fi en direct, diagnostic réseau, ob
 
 <p align="center"><img src="assets/screenshot-network-experience.webp" alt="Network Experience de WiFi Lens Pro affichant la fiabilité observée" width="800"></p>
 
-<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · One-time purchase</sub></p>
+<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · Achat unique</sub></p>
 
 ---
 

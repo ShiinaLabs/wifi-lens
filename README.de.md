@@ -12,7 +12,7 @@ Native macOS-App für Live-WLAN-Analyse, Netzwerkdiagnose, laufende Beobachtung 
 
 <p align="center"><img src="assets/screenshot-network-experience.webp" alt="Network Experience in WiFi Lens Pro mit beobachteter Verbindungszuverlässigkeit" width="800"></p>
 
-<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · One-time purchase</sub></p>
+<p align="center"><sub>macOS 14.6+ · Intel &amp; Apple Silicon · Einmalkauf</sub></p>
 
 ---
 
