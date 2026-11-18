@@ -82,7 +82,7 @@ Wi-Fi 偶尔断连、延迟突然升高、连接过一会儿又恢复。等你�
 
 ### 不必守在屏幕前等待问题再次出现
 
-有些异常只持续几秒。与其不断打开扫描器，不如在需要时持续观测并保存相应记录。
+有些异常只持续几秒。与其不断打开扫描器，不如在需要时保留一段可回顾的观测记录。
 
 | 能力 | 可以做什么 |
 |---|---|
@@ -90,8 +90,8 @@ Wi-Fi 偶尔断连、延迟突然升高、连接过一会儿又恢复。等你�
 | **持续观测（Continuous Observation）** | 可选地在 Pro 应用关闭后继续采集受支持的网络观测结果；默认关闭，Mac 睡眠时暂停。 |
 | **频谱录制（Spectrum → Recording）** | 录制选定 AP 的信号变化，之后重新加载并查看记录。 |
 
-> **素材占位｜菜单栏状态与持续观测设置**  
-> （待补充实际界面截图）
+> **素材待补｜持续观测**  
+> 建议展示真实的菜单栏状态与 Continuous Observation 设置。不要使用已退役的 Timeline 当作当前观测页面。
 
 ---
 
@@ -117,7 +117,7 @@ Pro 的历史能力集中在 **Network Experience** 和 **Problem History**，�
 <tr>
 <td width="50%" align="center">
   <img src="assets/screenshot-historical-baseline.webp" alt="Historical Baseline 网关延迟历史基准对比" width="100%">
-  <sub>Historical Baseline · 与符合条件的历史基准比较</sub>
+  <sub>Historical Baseline · 对比有依据的历史参考</sub>
 </td>
 <td width="50%" align="center">
   <img src="assets/screenshot-problem-history.webp" alt="Problem History 问题记录与证据" width="100%">
