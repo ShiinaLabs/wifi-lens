@@ -2,30 +2,16 @@
 
 **Comprenez ce qui se passe sur votre Wi-Fi.**
 
-Une app macOS native d’analyse Wi-Fi et de diagnostic réseau.
+Repérez à quel niveau votre connexion peut échouer, analysez les réseaux Wi-Fi à proximité et examinez les problèmes récurrents dans une app macOS native.
 
 <p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro</strong></a>
-  &nbsp;·&nbsp;
-  <a href="https://wifi-lens.shiinalabs.com/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">Site officiel</a>
+  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro</strong></a> · <a href="https://github.com/ShiinaLabs/wifi-lens/releases/latest"><strong>Télécharger OSS gratuitement</strong></a> · <a href="https://wifi-lens.shiinalabs.com/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=github_readme">Site officiel</a>
 </p>
-
-<p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Télécharger sur le Mac App Store" width="190"></a>
-</p>
-
-<p align="center"><img alt="WiFi Lens Pro avec Problem History et preuves enregistrées" src="assets/screenshot-problem-history.webp" width="800"></p>
-
+<p align="center"><a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Télécharger sur le Mac App Store" width="190"></a></p>
+<p align="center"><img alt="Network Check affiche le chemin de connexion de ce Mac au routeur puis à Internet" src="assets/screenshot-selfcheck.webp" width="800"></p>
 <p align="center">macOS 14.6+ &nbsp;·&nbsp; Apple Silicon et Intel &nbsp;·&nbsp; Traitement local</p>
-
-<p align="center">
-  🔒 <strong>Données locales</strong> — Les relevés Wi-Fi restent sur votre Mac ; aucune télémétrie d’usage<br>
-  🩺 <strong>Diagnostic réseau</strong> — Vérifiez la connectivité, le DNS, HTTPS, IPv6 et les proxys configurés<br>
-  🤖 <strong>MCP pour les workflows IA</strong> — Connectez des clients compatibles aux données Wi-Fi en direct de votre Mac
-</p>
-
-<p align="center"><sub>Ce dépôt héberge l’édition open source de WiFi Lens pour l’analyse locale en direct, le développement, l’inspection du code source et les contributions de la communauté.</sub></p>
-
+<p align="center">🩺 <strong>Network Check</strong> — Vérifiez votre Mac, le réseau local et la connexion Internet<br>📡 <strong>Analyse Wi-Fi</strong> — Explorez les réseaux proches, l’utilisation des canaux, le signal et la sécurité<br>🔒 <strong>Traitement local</strong> — Les relevés restent sur votre Mac ; aucune télémétrie d’usage</p>
+<p align="center"><sub>Ce dépôt propose l’édition open source gratuite de WiFi Lens pour l’analyse en direct, le diagnostic réseau, le développement et les contributions de la communauté.</sub></p>
 ---
 
 <p align="center">
@@ -33,43 +19,19 @@ Une app macOS native d’analyse Wi-Fi et de diagnostic réseau.
 </p>
 
 <p align="center">
-  <a href="#pourquoi-wifi-lens-pro">Pourquoi WiFi Lens Pro</a> · <a href="#capacités-principales">Capacités principales</a> · <a href="#éditions">Éditions</a> · <a href="#intégration-ia--mcp">IA / MCP</a> · <a href="#édition-open-source">Édition open source</a> · <a href="#confidentialité">Confidentialité</a> · <a href="#obtenir-wifi-lens">Obtenir WiFi Lens</a> · <a href="#développement">Développement</a> · <a href="#contribuer">Contribuer</a> · <a href="#licence">Licence</a>
-</p>
-
----
-
-## Pourquoi WiFi Lens Pro
-L’analyse Wi-Fi en direct vous aide à comprendre votre connexion maintenant. WiFi Lens Pro ajoute des outils pour examiner la fiabilité observée, comparer la latence de la passerelle à une référence historique et enquêter sur les problèmes enregistrés avec leurs éléments de preuve.
-
-| Workflow | Ce que WiFi Lens Pro ajoute |
-|----------|-----------------------------|
-| Voir l’état en un coup d’œil | Consulter les informations de connexion dans la barre des menus |
-| Évaluer la fiabilité | Examiner l’expérience observée sur une période sélectionnée |
-| Comparer à une référence | Comparer les mesures enregistrées de latence de la passerelle à une référence historique compatible |
-| Enquêter sur les problèmes | Examiner les problèmes enregistrés, leurs preuves et les observations ultérieures |
-| Observer app fermée | Observation en arrière-plan facultative, désactivée par défaut ; elle s’interrompt lorsque le Mac se met en veille |
-
-WiFi Lens Pro associe l’analyse en direct à des vues pour examiner la fiabilité et les problèmes historiques. Statistics et Insights ont été retirés. Timeline reste disponible uniquement pour consulter et exporter les événements existants ; il ne crée plus de nouveaux enregistrements ni d’analyses.
-
-<table>
-<tr>
-<td width="50%" align="center"><img alt="Network Experience avec évaluation de fiabilité et de couverture" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
-<td width="50%" align="center"><img alt="Historical Baseline comparant la latence de la passerelle aux mesures historiques" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
-</tr>
-</table>
-
-### De l’analyse en direct au contexte historique
-
-Lorsqu’un problème est intermittent, Network Experience vous aide à évaluer ce qui a été observé au fil du temps. Problem History rassemble les problèmes enregistrés et leurs preuves pour faciliter leur examen.
-
-<p align="center">
-  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro →</strong></a>
+  <a href="#capacités-principales">Capacités principales</a> · <a href="#pourquoi-wifi-lens-pro">Pourquoi WiFi Lens Pro</a> · <a href="#éditions">Éditions</a> · <a href="#intégration-ia--mcp">IA / MCP</a> · <a href="#édition-open-source">Édition open source</a> · <a href="#confidentialité">Confidentialité</a> · <a href="#obtenir-wifi-lens">Obtenir WiFi Lens</a> · <a href="#développement">Développement</a> · <a href="#contribuer">Contribuer</a> · <a href="#licence">Licence</a>
 </p>
 
 ---
 
 ## Capacités principales
 WiFi Lens réunit des outils en direct pour comprendre les réseaux proches, l’utilisation des canaux et la connexion de votre Mac.
+
+
+### Repérer les problèmes de connexion
+
+Si votre Mac indique une connexion active mais qu’un site ou un service ne se charge pas, lancez **Network Check**. L’outil vérifie le chemin réseau, l’accessibilité de la passerelle, la résolution DNS, l’accès HTTP/HTTPS, l’accessibilité IPv6 facultative et le routage des proxys configurés. Les résultats sont regroupés sous **This Mac**, **LAN** et **Internet** pour vous aider à localiser le problème éventuel.
+
 
 | Capacité | Utilité |
 |----------|---------|
@@ -82,12 +44,49 @@ WiFi Lens réunit des outils en direct pour comprendre les réseaux proches, l�
 | 🤖 MCP et export | Connecter des outils IA locaux et enregistrer les graphiques en PNG ou CSV |
 | 🔒 Confidentialité locale | Conserver les données de scan sur le Mac sans télémétrie d’utilisation |
 
+
+<p align="center"><img alt="Vue d’ensemble WiFi Lens avec réseaux Wi-Fi proches, signal, qualité des canaux et recommandation" src="assets/screenshot-hero.webp" width="800"></p>
+
+---
+
+## Pourquoi WiFi Lens Pro
+WiFi Lens Pro ajoute des fonctions d’historique et de suivi à l’analyse Wi-Fi en direct pour comprendre les problèmes récurrents, comparer les observations dans le temps et poursuivre l’observation lorsque nécessaire.
+
+| Workflow | Ce que WiFi Lens Pro ajoute |
+|----------|-----------------------------|
+| Voir l’état en un coup d’œil | Consulter les informations de connexion dans la barre des menus |
+| Évaluer la fiabilité | Examiner l’expérience observée sur une période sélectionnée |
+| Comparer à une référence | Comparer les mesures enregistrées de latence de la passerelle à une référence historique compatible |
+| Enquêter sur les problèmes | Examiner les problèmes enregistrés, leurs preuves et les observations ultérieures |
+| Observer app fermée | Observation en arrière-plan facultative, désactivée par défaut ; elle s’interrompt lorsque le Mac se met en veille |
+
+Pro associe l’analyse en direct à des vues historiques pour évaluer la fiabilité observée et examiner les problèmes enregistrés. Il inclut également un test Wi-Fi Calling propre à l’opérateur.
+<table>
+<tr>
+<td width="50%" align="center"><img alt="Network Experience avec évaluation de fiabilité et de couverture" src="assets/screenshot-network-experience.webp" width="100%"><sub>Network Experience</sub></td>
+<td width="50%" align="center"><img alt="Historical Baseline comparant la latence de la passerelle aux mesures historiques" src="assets/screenshot-historical-baseline.webp" width="100%"><sub>Historical Baseline</sub></td>
+</tr>
+
+<tr>
+<td colspan="2" align="center"><img alt="Problem History affiche les problèmes enregistrés et leurs preuves" src="assets/screenshot-problem-history.webp" width="80%"><sub>Problem History</sub></td>
+</tr>
+</table>
+
+### De l’analyse en direct au contexte historique
+
+Lorsqu’un problème est intermittent, Network Experience vous aide à évaluer ce qui a été observé au fil du temps. Problem History rassemble les problèmes enregistrés et leurs preuves pour faciliter leur examen.
+
+<p align="center">
+  <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><strong>Obtenir WiFi Lens Pro →</strong></a>
+</p>
+
+
 ---
 
 ## Éditions
 
 ### WiFi Lens Pro
-WiFi Lens Pro est disponible à l’achat unique sur le [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8). Il ajoute le suivi dans la barre des menus, Network Experience, Problem History, l’enregistrement du spectre et l’observation facultative en arrière-plan. Historical Baseline fait partie de Network Experience.
+WiFi Lens Pro est disponible à l’achat unique sur le [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8). Il ajoute le suivi dans la barre des menus, Network Experience, Problem History, l’enregistrement du spectre, l’observation facultative en arrière-plan et un test Wi-Fi Calling propre à l’opérateur. Historical Baseline fait partie de Network Experience.
 
 ### Édition open source
 
@@ -104,8 +103,10 @@ WiFi Lens OSS est gratuite et open source. Téléchargez l’analyse Wi-Fi en di
 | Problem History | ✅ | — |
 | Enregistrement du spectre | ✅ | — |
 | Observation facultative en arrière-plan | ✅ | — |
+| Wi-Fi Calling Test | ✅ | — |
 
-Les deux éditions traitent les relevés Wi-Fi sur votre Mac. Pro ajoute des vues d’analyse historique et une observation facultative en arrière-plan. Timeline est conservé uniquement pour consulter et exporter les événements existants.
+Les deux éditions traitent les relevés Wi-Fi sur votre Mac. Pro ajoute l’analyse historique, l’enregistrement, l’observation facultative en arrière-plan et le Wi-Fi Calling Test.
+
 ---
 
 ## Intégration IA / MCP
@@ -205,7 +206,7 @@ WiFi Lens ne téléverse pas les relevés Wi-Fi vers ses services applicatifs et
 Nécessite **macOS 14.6 (Sonoma) ou ultérieur**. Fonctionne sur Mac Intel et Apple Silicon. Le scan 6 GHz nécessite un matériel Wi-Fi 6E/7.
 
 ### WiFi Lens Pro
-WiFi Lens Pro ajoute au Wi-Fi en direct le suivi dans la barre des menus, Network Experience, Problem History, l’enregistrement du spectre et l’observation facultative en arrière-plan. Disponible sur le [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8).
+WiFi Lens Pro ajoute au Wi-Fi en direct le suivi dans la barre des menus, Network Experience, Problem History, l’enregistrement du spectre, l’observation facultative en arrière-plan et un test Wi-Fi Calling propre à l’opérateur. Disponible sur le [Mac App Store](https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8).
 
 <p align="center">
   <a href="https://apps.apple.com/app/apple-store/id6776590746?pt=128979395&ct=github_readme&mt=8"><img src="assets/appstore-badge-en.svg" alt="Télécharger sur le Mac App Store" width="190"></a>
