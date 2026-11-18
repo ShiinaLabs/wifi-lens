@@ -126,6 +126,7 @@ struct IPv4BoundaryObservation: Sendable {
         let addresses: [String]
         let masks: [String]
         let wirelessIdentity: String?
+        let isWiFi: Bool
     }
 
     let network: Network
@@ -138,34 +139,81 @@ struct IPv4BoundaryObservation: Sendable {
     static func capture(context: DiagnosticNetworkContext?) async -> Self? {
         guard let context, case .selected(let route) = context.route,
             let interface = context.interfaces.interfaces.first(where: { $0.interfaceName == route.interfaceName }),
-            !interface.ipv4Addresses.isEmpty,
-            !interface.isWiFiInterface || interface.bssid != nil
+            !interface.ipv4Addresses.isEmpty
         else { return nil }
 
-        let tracer = SwiftFTR(
-            config: SwiftFTRConfig(maxHops: 8, maxWaitMs: 1200, noReverseDNS: true, interface: route.interfaceName)
-        )
-        guard let trace = try? await tracer.trace(to: "1.1.1.1"), !Task.isCancelled else { return nil }
-        var hops = [String?](repeating: nil, count: 8)
-        for hop in trace.hops where (1...hops.count).contains(hop.ttl) {
-            if case .notSent = hop.outcome { return nil }
-            hops[hop.ttl - 1] = hop.ipAddress
-        }
         let network = Network(
             route: route,
             addresses: interface.ipv4Addresses.sorted(),
             masks: interface.subnetMasks.sorted(),
-            wirelessIdentity: interface.bssid
+            wirelessIdentity: interface.bssid,
+            isWiFi: interface.isWiFiInterface
         )
+        let tracer = SwiftFTR(
+            config: SwiftFTRConfig(maxHops: 8, maxWaitMs: 1200, noReverseDNS: true, interface: route.interfaceName)
+        )
+        guard let trace = try? await tracer.trace(to: "1.1.1.1"), !Task.isCancelled else {
+            return Task.isCancelled ? nil : Self(network: network, hops: [])
+        }
+        var hops = [String?](repeating: nil, count: 8)
+        for hop in trace.hops where (1...hops.count).contains(hop.ttl) {
+            switch hop.outcome {
+            case .notSent:
+                return Self(network: network, hops: [])
+            case .replied:
+                hops[hop.ttl - 1] = hop.ipAddress
+            case .timedOut, .unreachable:
+                break
+            }
+        }
         return Self(network: network, hops: hops)
+    }
+
+    func probeUpstreamGateways(using cache: IPv4BoundaryCache) async -> [IPv4GatewayProbe] {
+        guard let boundary = boundary ?? cache.boundary(for: network),
+            zip(hops, boundary.localHops).allSatisfy({ $0 == nil || $0 == $1 })
+        else { return [] }
+
+        let pinger = GatewayPinger()
+        return await withTaskGroup(of: IPv4GatewayProbe.self) { group in
+            for (index, address) in boundary.localHops.enumerated().dropFirst() {
+                group.addTask {
+                    let target = DiagnosticGatewayTarget(
+                        interfaceName: network.route.interfaceName,
+                        interfaceIndex: network.route.interfaceIndex,
+                        address: address
+                    )
+                    let outcome = await pinger.probe(target: target, attemptID: UUID())
+                    return IPv4GatewayProbe(level: index + 1, address: address, outcome: outcome)
+                }
+            }
+            var probes: [IPv4GatewayProbe] = []
+            for await probe in group {
+                probes.append(probe)
+            }
+            return probes.sorted { $0.level < $1.level }
+        }
+    }
+
+    func firstUnresponsiveGateway(in probes: [IPv4GatewayProbe]) -> IPv4GatewayProbe? {
+        let unconfirmed = probes.drop(while: {
+            if case .replied = $0.outcome { return true }
+            return false
+        })
+        guard let first = unconfirmed.first, first.outcome == .noReply,
+            !unconfirmed.dropFirst().contains(where: {
+                if case .replied = $0.outcome { return true }
+                return false
+            }),
+            hops.dropFirst(first.level - 1).allSatisfy({ $0 == nil })
+        else { return nil }
+        return first
     }
 
     func failure(using knownBoundary: IPv4NetworkBoundary) -> IPv4BoundaryFailure? {
         guard hops.first == .some(network.route.address) else { return nil }
         let matchingCount = zip(hops, knownBoundary.localHops).prefix { $0 == $1 }.count
-        if matchingCount < knownBoundary.localHops.count {
-            return hops.dropFirst(matchingCount).allSatisfy { $0 == nil } ? .localRoute : nil
-        }
+        guard matchingCount == knownBoundary.localHops.count else { return nil }
         let outside = hops.dropFirst(matchingCount).compactMap { $0 }
         if outside.isEmpty { return .outlet }
         if outside.first == knownBoundary.externalHop,
@@ -177,16 +225,27 @@ struct IPv4BoundaryObservation: Sendable {
     }
 }
 
-struct IPv4BoundaryCache {
+struct IPv4GatewayProbe: Equatable, Sendable {
+    let level: Int
+    let address: String
+    let outcome: GatewayProbeOutcome
+}
+
+struct IPv4BoundaryCache: Sendable {
     private var entry: (network: IPv4BoundaryObservation.Network, boundary: IPv4NetworkBoundary)?
     private var expiresAt: ContinuousClock.Instant?
+
+    func boundary(for network: IPv4BoundaryObservation.Network) -> IPv4NetworkBoundary? {
+        guard entry?.network == network, let expiresAt, ContinuousClock.now < expiresAt else { return nil }
+        return entry?.boundary
+    }
 
     mutating func assess(
         _ observation: IPv4BoundaryObservation?,
         internetAvailable: Bool,
         now: ContinuousClock.Instant = .now
     ) -> IPv4BoundaryFailure? {
-        guard let observation else {
+        guard let observation, !observation.network.isWiFi || observation.network.wirelessIdentity != nil else {
             entry = nil
             expiresAt = nil
             return nil

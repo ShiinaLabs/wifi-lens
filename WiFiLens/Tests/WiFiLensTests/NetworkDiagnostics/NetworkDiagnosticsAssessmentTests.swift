@@ -256,11 +256,11 @@ extension NetworkDiagnosticsTests {
         let gateway = "192.168.31.1"
         let upstream = "192.168.1.1"
         let carrier = "100.66.0.1"
-        func observation(_ hops: [String?], bssid: String = "first") -> IPv4BoundaryObservation {
+        func observation(_ hops: [String?], bssid: String? = "first") -> IPv4BoundaryObservation {
             IPv4BoundaryObservation(
                 network: .init(
                     route: .init(interfaceName: "en0", interfaceIndex: 1, address: gateway),
-                    addresses: ["192.168.31.2"], masks: ["255.255.255.0"], wirelessIdentity: bssid
+                    addresses: ["192.168.31.2"], masks: ["255.255.255.0"], wirelessIdentity: bssid, isWiFi: true
                 ),
                 hops: hops
             )
@@ -269,7 +269,16 @@ extension NetworkDiagnosticsTests {
         #expect(cache.assess(observation([gateway, nil]), internetAvailable: false) == nil)
         let now = ContinuousClock.now
         #expect(cache.assess(observation([gateway, upstream, carrier, "8.8.8.8"]), internetAvailable: true, now: now) == nil)
-        #expect(cache.assess(observation([gateway, nil]), internetAvailable: false) == .localRoute)
+        let localFailure = observation([gateway, nil])
+        let upstreamMiss = IPv4GatewayProbe(level: 2, address: upstream, outcome: .noReply)
+        let carrierReply = IPv4GatewayProbe(level: 3, address: carrier, outcome: .replied(milliseconds: 3))
+        let executionFailure = IPv4GatewayProbe(level: 2, address: upstream, outcome: .executionFailed)
+        #expect(cache.boundary(for: localFailure.network)?.localHops == [gateway, upstream])
+        #expect(cache.assess(localFailure, internetAvailable: false) == nil)
+        #expect(localFailure.firstUnresponsiveGateway(in: [upstreamMiss]) == upstreamMiss)
+        #expect(localFailure.firstUnresponsiveGateway(in: [upstreamMiss, carrierReply]) == nil)
+        #expect(localFailure.firstUnresponsiveGateway(in: [executionFailure]) == nil)
+        #expect(observation([gateway, nil, carrier]).firstUnresponsiveGateway(in: [upstreamMiss]) == nil)
         #expect(cache.assess(observation([gateway, upstream, nil]), internetAvailable: false) == .outlet)
         #expect(cache.assess(observation([gateway, upstream, carrier, nil]), internetAvailable: false) == .carrier)
         #expect(cache.assess(observation([gateway, nil, carrier]), internetAvailable: false) == nil)
@@ -277,6 +286,10 @@ extension NetworkDiagnosticsTests {
         #expect(cache.assess(observation([gateway, upstream, nil]), internetAvailable: false, now: now + .seconds(3600)) == nil)
         _ = cache.assess(observation([gateway, upstream, carrier]), internetAvailable: true)
         #expect(cache.assess(observation([gateway, nil], bssid: "second"), internetAvailable: false) == nil)
+        let unidentified = observation([gateway, upstream, carrier], bssid: nil)
+        #expect(unidentified.boundary?.localHops.last == upstream)
+        _ = cache.assess(unidentified, internetAvailable: true)
+        #expect(cache.assess(observation([gateway, nil], bssid: nil), internetAvailable: false) == nil)
     }
 
     @Test("Boundary advice refines an internet failure and leaves working internet and failed runs alone")

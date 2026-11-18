@@ -55,7 +55,8 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
         complete: Bool,
         requiredIDs: Set<NetworkDiagnosticCheckID> = Set(NetworkDiagnosticCheckID.allCases),
-        boundaryFailure: IPv4BoundaryFailure? = nil
+        boundaryFailure: IPv4BoundaryFailure? = nil,
+        unresponsiveGateway: IPv4GatewayProbe? = nil
     ) -> NetworkDiagnosticAssessment {
         let stages = NetworkDiagnosticStage.allCases.map { stage in
             stageAssessment(stage, results: results)
@@ -91,7 +92,7 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 status: internet.status,
                 summary: internet.summary,
                 detail: internet.detail,
-                evidence: internet.evidence + [.init(code: boundaryFailure.rawValue)]
+                evidence: internet.evidence + [.init(code: boundaryFailure.rawValue, value: unresponsiveGateway?.address)]
             )
         }
         return NetworkDiagnosticAssessment(

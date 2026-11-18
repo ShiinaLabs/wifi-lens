@@ -1,6 +1,76 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Probe did not complete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "探测未完成"
+          }
+        }
+      }
+    },
+    "Probe could not run" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "探测未能执行"
+          }
+        }
+      }
+    },
+    "Probe execution timed out" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "探测执行超时"
+          }
+        }
+      }
+    },
+    "No response" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未收到响应"
+          }
+        }
+      }
+    },
+    "First gateway without a response" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从这一级开始未收到响应"
+          }
+        }
+      }
+    },
+    "Replied in %@ ms" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已响应 · %@ 毫秒"
+          }
+        }
+      }
+    },
+    "Gateway level %lld · %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %lld 级网关 · %@"
+          }
+        }
+      }
+    },
     "Check your Internet provider’s outage status and contact them if the connection stays down." : {
       "localizations" : {
         "zh-Hans" : {

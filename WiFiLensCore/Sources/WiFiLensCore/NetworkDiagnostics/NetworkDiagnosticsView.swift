@@ -606,6 +606,21 @@ public struct NetworkDiagnosticsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                if result.id == .gatewayReachability {
+                    ForEach(viewModel.upstreamGatewayProbes, id: \.level) { probe in
+                        let firstUnresponsive = viewModel.assessment?.primaryIssue?.evidence.contains {
+                            $0.code == IPv4BoundaryFailure.localRoute.rawValue && $0.value == probe.address
+                        } == true
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String(localized: "Gateway level \(probe.level) · \(probe.address)"))
+                                .fontWeight(.medium)
+                            Text(gatewayProbeStatus(probe.outcome, firstUnresponsive: firstUnresponsive))
+                                .foregroundStyle(firstUnresponsive ? Color.orange : Color.secondary)
+                        }
+                        .font(.caption)
+                        .padding(.top, 3)
+                    }
+                }
                 if result.status == .abnormal || result.status == .indeterminate,
                     viewModel.assessment?.primaryIssue?.id == result.id
                 {
@@ -620,6 +635,24 @@ public struct NetworkDiagnosticsView: View {
     }
 
 
+
+    private func gatewayProbeStatus(_ outcome: GatewayProbeOutcome, firstUnresponsive: Bool) -> String {
+        switch outcome {
+        case .replied(let milliseconds):
+            let latency = milliseconds.formatted(.number.precision(.fractionLength(1)))
+            return String(localized: "Replied in \(latency) ms")
+        case .noReply:
+            return firstUnresponsive
+                ? String(localized: "First gateway without a response")
+                : String(localized: "No response")
+        case .localTimeout:
+            return String(localized: "Probe execution timed out")
+        case .executionFailed:
+            return String(localized: "Probe could not run")
+        case .notTested, .cancelled:
+            return String(localized: "Probe did not complete")
+        }
+    }
 
     private func remediationView(for result: NetworkDiagnosticResult) -> some View {
         let remediation = NetworkDiagnosticRemediation.forResult(result)

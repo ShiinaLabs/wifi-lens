@@ -99,6 +99,7 @@ public final class NetworkDiagnosticsViewModel {
     private(set) var executionPhases: [NetworkDiagnosticCheckID: NetworkDiagnosticExecutionPhase]
     private(set) var results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [:]
     private(set) var logStore = NetworkDiagnosticsLogStore()
+    private(set) var upstreamGatewayProbes: [IPv4GatewayProbe] = []
     private(set) var conclusion: NetworkDiagnosticConclusion?
     private(set) var assessment: NetworkDiagnosticAssessment?
     private(set) var endReason: DiagnosticRunEndReason?
@@ -232,6 +233,7 @@ public final class NetworkDiagnosticsViewModel {
         checkStartedAt.removeAll()
         logSessionStartedAt = ContinuousClock().now
         appendEvent(.sessionStarted)
+        upstreamGatewayProbes = []
         conclusion = nil
         assessment = nil
         endReason = nil
@@ -273,6 +275,7 @@ public final class NetworkDiagnosticsViewModel {
             complete: false,
             requiredIDs: Set(checkIDs)
         )
+        upstreamGatewayProbes = []
         conclusion = nil
         phase = .completed
         appendEvent(.cancelled, runID: cancelledRunID, pendingIDs: pendingCheckIDs)
@@ -432,7 +435,13 @@ public final class NetworkDiagnosticsViewModel {
                 )
                 return
             }
-            async let boundaryObservation = IPv4BoundaryObservation.capture(context: context)
+            let boundaryCache = ipv4BoundaryCache
+            let gatewayTask = Task {
+                let observation = await IPv4BoundaryObservation.capture(context: context)
+                let probes = await observation?.probeUpstreamGateways(using: boundaryCache) ?? []
+                return (observation, probes)
+            }
+            defer { gatewayTask.cancel() }
             let checks = checksForRun(context: context)
             let runner = DiagnosticRunner(
                 checks: checks,
@@ -455,7 +464,8 @@ public final class NetworkDiagnosticsViewModel {
             }
             await restartController.install(runTask)
             let outcome = await runTask.value
-            let observation = await boundaryObservation
+            if outcome.endReason != .completed { gatewayTask.cancel() }
+            let (observation, gatewayProbes) = await gatewayTask.value
             guard isCurrentGeneration(generation) else { return }
 
             let shouldRestart = await restartController.completeRun()
@@ -487,6 +497,7 @@ public final class NetworkDiagnosticsViewModel {
                 retainedResults = configurationOnlyResults(from: outcome.results)
                 currentRunID = nil
                 results = Dictionary(uniqueKeysWithValues: retainedResults.map { ($0.id, $0) })
+                upstreamGatewayProbes = []
                 conclusion = nil
                 assessment = NetworkDiagnosticAssessmentResolver().resolve(
                     results: results,
@@ -499,10 +510,18 @@ public final class NetworkDiagnosticsViewModel {
 
             let internetAvailable = outcome.results.first { $0.id == .internet }?
                 .evidence.contains { $0.code == "https.available" } == true
-            let boundaryFailure = outcome.endReason == .completed
+            let unresponsiveGateway = observation?.firstUnresponsiveGateway(in: gatewayProbes)
+            let cachedBoundaryFailure = outcome.endReason == .completed
                 ? ipv4BoundaryCache.assess(observation, internetAvailable: internetAvailable)
                 : nil
-            finish(outcome, generation: generation, boundaryFailure: boundaryFailure)
+            let boundaryFailure = unresponsiveGateway == nil ? cachedBoundaryFailure : .localRoute
+            finish(
+                outcome,
+                generation: generation,
+                boundaryFailure: boundaryFailure,
+                upstreamGatewayProbes: gatewayProbes,
+                unresponsiveGateway: unresponsiveGateway
+            )
             return
         }
         guard generation == runGeneration else { return }
@@ -602,6 +621,7 @@ public final class NetworkDiagnosticsViewModel {
     private func invalidateNetworkResultsForChange() {
         let retainedResults = configurationOnlyResults(from: Array(results.values))
         results = Dictionary(uniqueKeysWithValues: retainedResults.map { ($0.id, $0) })
+        upstreamGatewayProbes = []
         conclusion = nil
         assessment = NetworkDiagnosticAssessmentResolver().resolve(
             results: results,
@@ -662,7 +682,9 @@ public final class NetworkDiagnosticsViewModel {
     private func finish(
         _ outcome: DiagnosticRunOutcome,
         generation: UInt64,
-        boundaryFailure: IPv4BoundaryFailure? = nil
+        boundaryFailure: IPv4BoundaryFailure? = nil,
+        upstreamGatewayProbes: [IPv4GatewayProbe] = [],
+        unresponsiveGateway: IPv4GatewayProbe? = nil
     ) {
         guard generation == runGeneration else { return }
         currentRunID = nil
@@ -673,9 +695,11 @@ public final class NetworkDiagnosticsViewModel {
             results: results,
             complete: outcome.endReason == .completed,
             requiredIDs: Set(checkIDs),
-            boundaryFailure: boundaryFailure
+            boundaryFailure: boundaryFailure,
+            unresponsiveGateway: unresponsiveGateway
         )
         conclusion = assessment?.conclusion
+        self.upstreamGatewayProbes = conclusion == nil ? [] : upstreamGatewayProbes
         phase = .completed
         let endEvent: DiagnosticEventKind =
             switch outcome.endReason {
