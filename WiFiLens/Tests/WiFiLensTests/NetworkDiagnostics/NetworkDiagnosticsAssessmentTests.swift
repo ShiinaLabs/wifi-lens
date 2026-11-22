@@ -244,11 +244,47 @@ extension NetworkDiagnosticsTests {
         #expect(boundary?.externalHop == "100.66.0.1")
         #expect(IPv4NetworkBoundary(hops: [gateway, nil, "8.8.8.8"], gateway: gateway) == nil)
         #expect(IPv4NetworkBoundary(hops: ["10.0.0.1", "8.8.8.8"], gateway: gateway) == nil)
+        #expect(IPv4NetworkBoundary.AddressScope("10.0.0.1") == .local)
         #expect(IPv4NetworkBoundary.AddressScope("100.64.0.0") == .carrier)
         #expect(IPv4NetworkBoundary.AddressScope("100.127.255.255") == .carrier)
         #expect(IPv4NetworkBoundary.AddressScope("100.128.0.0") == .external)
         #expect(IPv4NetworkBoundary.AddressScope("100.63.255.255") == .external)
         #expect(IPv4NetworkBoundary.AddressScope("198.18.0.1") == .other)
+    }
+
+    @Test("IPv4 cold start probes the observed local prefix without an external response")
+    func ipv4BoundaryColdStartPrefix() {
+        let gateway = "192.168.31.1"
+        let upstream = "10.20.0.1"
+        let carrier = "100.66.0.1"
+        func observation(_ hops: [String?]) -> IPv4BoundaryObservation {
+            IPv4BoundaryObservation(
+                network: .init(
+                    route: .init(interfaceName: "en0", interfaceIndex: 1, address: gateway),
+                    addresses: ["192.168.31.2"], masks: ["255.255.255.0"], wirelessIdentity: "first", isWiFi: true
+                ),
+                hops: hops
+            )
+        }
+
+        let partial = observation([gateway, upstream, nil])
+        #expect(partial.observedLocalHopPrefix == [gateway, upstream])
+        #expect(partial.upstreamGatewayCandidates(using: IPv4BoundaryCache()) == [upstream])
+        #expect(partial.boundary == nil)
+
+        var cache = IPv4BoundaryCache()
+        #expect(cache.assess(partial, internetAvailable: true) == nil)
+        #expect(cache.boundary(for: partial.network) == nil)
+        #expect(cache.assess(partial, internetAvailable: false) == nil)
+        _ = cache.assess(observation([gateway, upstream, carrier, "8.8.8.8"]), internetAvailable: true)
+        #expect(cache.assess(partial, internetAvailable: false) == .outlet)
+
+        let cachedButUnresponsive = observation([gateway, nil])
+        #expect(cachedButUnresponsive.upstreamGatewayCandidates(using: cache) == [upstream])
+        let afterTimeout = observation([gateway, nil, upstream])
+        #expect(afterTimeout.observedLocalHopPrefix == [gateway])
+        #expect(afterTimeout.upstreamGatewayCandidates(using: IPv4BoundaryCache()).isEmpty)
+        #expect(afterTimeout.upstreamGatewayCandidates(using: cache) == [upstream])
     }
 
     @Test("Known dual-router boundary distinguishes local, outlet and carrier failures")

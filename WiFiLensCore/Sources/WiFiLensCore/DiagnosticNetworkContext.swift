@@ -136,6 +136,34 @@ struct IPv4BoundaryObservation: Sendable {
         IPv4NetworkBoundary(hops: hops, gateway: network.route.address)
     }
 
+    var observedLocalHopPrefix: [String]? {
+        guard hops.first == .some(network.route.address) else { return nil }
+        var localHops = [network.route.address]
+        for hop in hops.dropFirst() {
+            guard let hop else { break }
+            guard case .local = IPv4NetworkBoundary.AddressScope(hop) else { break }
+            localHops.append(hop)
+        }
+        return localHops
+    }
+
+    func upstreamGatewayCandidates(using cache: IPv4BoundaryCache) -> [String] {
+        if let boundary {
+            return Array(boundary.localHops.dropFirst())
+        }
+        let observedPrefix = observedLocalHopPrefix ?? []
+        guard let cachedBoundary = cache.boundary(for: network),
+            zip(hops, cachedBoundary.localHops).allSatisfy({ $0 == nil || $0 == $1 })
+        else { return Array(observedPrefix.dropFirst()) }
+        let candidates =
+            if observedPrefix.count > cachedBoundary.localHops.count {
+                observedPrefix
+            } else {
+                cachedBoundary.localHops
+            }
+        return Array(candidates.dropFirst())
+    }
+
     static func capture(context: DiagnosticNetworkContext?) async -> Self? {
         guard let context, case .selected(let route) = context.route,
             let interface = context.interfaces.interfaces.first(where: { $0.interfaceName == route.interfaceName }),
@@ -170,13 +198,10 @@ struct IPv4BoundaryObservation: Sendable {
     }
 
     func probeUpstreamGateways(using cache: IPv4BoundaryCache) async -> [IPv4GatewayProbe] {
-        guard let boundary = boundary ?? cache.boundary(for: network),
-            zip(hops, boundary.localHops).allSatisfy({ $0 == nil || $0 == $1 })
-        else { return [] }
-
+        let candidates = upstreamGatewayCandidates(using: cache)
         let pinger = GatewayPinger()
         return await withTaskGroup(of: IPv4GatewayProbe.self) { group in
-            for (index, address) in boundary.localHops.enumerated().dropFirst() {
+            for (index, address) in candidates.enumerated() {
                 group.addTask {
                     let target = DiagnosticGatewayTarget(
                         interfaceName: network.route.interfaceName,
@@ -184,7 +209,7 @@ struct IPv4BoundaryObservation: Sendable {
                         address: address
                     )
                     let outcome = await pinger.probe(target: target, attemptID: UUID())
-                    return IPv4GatewayProbe(level: index + 1, address: address, outcome: outcome)
+                    return IPv4GatewayProbe(level: index + 2, address: address, outcome: outcome)
                 }
             }
             var probes: [IPv4GatewayProbe] = []
