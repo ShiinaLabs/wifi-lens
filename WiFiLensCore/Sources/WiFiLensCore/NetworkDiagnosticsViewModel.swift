@@ -117,6 +117,7 @@ public final class NetworkDiagnosticsViewModel {
     @ObservationIgnored private let diagnosticGatewayMeasuring: any DiagnosticGatewayMeasuring
     @ObservationIgnored private let clock: any DiagnosticClock
     @ObservationIgnored private let usesProductionChecks: Bool
+    @ObservationIgnored private var usesCaptureDemoResults = false
     @ObservationIgnored private let onDiagnosticsCompleted: @MainActor () -> Void
     @ObservationIgnored private let onDiagnosticsCompletedWithOwner: (@MainActor (UUID?) -> Void)?
     @ObservationIgnored private var guidanceOwnerWindowID: UUID?
@@ -203,19 +204,36 @@ public final class NetworkDiagnosticsViewModel {
     }
 
     @_spi(ProCapture)
-    public func stageCompletedCaptureResult() {
+    public func stagePrepareCaptureRun() {
+        usesCaptureDemoResults = true
         activeTask?.cancel()
         activeTask = nil
-        let staged = checkIDs.map { id in
-            NetworkDiagnosticResult(id: id, status: .normal, summary: "Normal")
-        }
-        results = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, $0) })
-        executionPhases = Dictionary(uniqueKeysWithValues: staged.map { ($0.id, .completed) })
-        conclusion = NetworkDiagnosticConclusion.evaluate(
-            staged,
-            requiredIDs: Set(checkIDs)
-        )
-        phase = .completed
+        logStore.reset()
+        results = [:]
+        executionPhases = Dictionary(uniqueKeysWithValues: checkIDs.map { ($0, .waiting) })
+        conclusion = nil
+        assessment = nil
+        endReason = nil
+        pendingCheckIDs = []
+        currentRunID = nil
+        fingerprintMonitoringAvailable = true
+        automaticRestartCount = 0
+        logSessionID = nil
+        logSessionStartedAt = nil
+        logRunNumber = 0
+        checkStartedAt.removeAll()
+        phase = .idle
+    }
+
+    /// Runs fixed sample checks during a controlled App Stage capture.
+    @_spi(ProCapture)
+    public func stageStartCaptureRun() -> Bool {
+        start()
+    }
+
+    @_spi(ProCapture)
+    public var stageCaptureRunIsRunning: Bool {
+        phase == .running
     }
 
     deinit {
@@ -310,14 +328,19 @@ public final class NetworkDiagnosticsViewModel {
         let sessionDeadline = (await clock.now()).advanced(by: Self.defaultSessionBudget)
 
         await withTaskCancellationHandler {
-            let fingerprintObservation = await boundedFingerprintObservation(
-                until: min(
-                    sessionDeadline,
-                    (await clock.now()).advanced(by: .seconds(1))
+            let fingerprintObservation: NetworkFingerprintObservation?
+            if usesCaptureDemoResults {
+                fingerprintObservation = nil
+            } else {
+                fingerprintObservation = await boundedFingerprintObservation(
+                    until: min(
+                        sessionDeadline,
+                        (await clock.now()).advanced(by: .seconds(1))
+                    )
                 )
-            )
+            }
             guard isCurrentGeneration(generation) else { return }
-            if fingerprintObservation == nil {
+            if fingerprintObservation == nil && !usesCaptureDemoResults {
                 fingerprintMonitoringAvailable = false
             }
             guard !Task.isCancelled else {
@@ -408,7 +431,7 @@ public final class NetworkDiagnosticsViewModel {
             checkStartedAt.removeAll()
             appendEvent(.runStarted, runID: runID, retainedIDs: retainedResults.map(\.id))
             let context: DiagnosticNetworkContext?
-            if usesProductionChecks {
+            if usesProductionChecks && !usesCaptureDemoResults {
                 let remaining = await clock.now().duration(to: sessionDeadline)
                 if remaining > .zero {
                     context = await contextSource.capture(
@@ -576,6 +599,69 @@ public final class NetworkDiagnosticsViewModel {
     }
 
     private func checksForRun(context: DiagnosticNetworkContext?) -> [any DiagnosticCheck] {
+        if usesCaptureDemoResults {
+            return [
+                CaptureDemoDiagnosticCheck(
+                    result: NetworkDiagnosticResult(
+                        id: .path,
+                        status: .normal,
+                        summary: "System network path is available"
+                    )
+                ),
+                CaptureDemoDiagnosticCheck(
+                    result: NetworkDiagnosticResult(
+                        id: .gatewayReachability,
+                        status: .normal,
+                        summary: "Gateway reachable",
+                        detail: "Interface: en0 · Gateway: 192.0.2.1"
+                    )
+                ),
+                CaptureDemoDiagnosticCheck(
+                    result: NetworkDiagnosticResult(
+                        id: .gatewayTCPReachability,
+                        status: .normal,
+                        summary: "Gateway responded to a TCP probe.",
+                        detail: "At least one checked port, 80 or 443, accepted a connection.\nInterface: en0 · Gateway: 192.0.2.1"
+                    )
+                ),
+                CaptureDemoDiagnosticCheck(
+                    result: NetworkDiagnosticResult(
+                        id: .dns,
+                        status: .normal,
+                        summary: "DNS resolution is available"
+                    )
+                ),
+                CaptureDemoDiagnosticCheck(
+                    result: NetworkDiagnosticResult(
+                        id: .internet,
+                        status: .normal,
+                        summary: "HTTPS access verified"
+                    )
+                ),
+                CaptureDemoDiagnosticCheck(
+                    result: NetworkDiagnosticResult(
+                        id: .proxy,
+                        status: .normal,
+                        summary: "The tested proxy routes are available"
+                    )
+                ),
+                CaptureDemoDiagnosticCheck(
+                    result: NetworkDiagnosticResult(
+                        id: .ipv6,
+                        status: .indeterminate,
+                        summary: String(
+                            localized: "network_diagnostics.ipv6.indeterminate.summary",
+                            comment: "IPv6 access status in the capture sample"
+                        ),
+                        detail: String(
+                            localized: "network_diagnostics.ipv6.no_default_route.detail",
+                            comment: "IPv6 access detail in the capture sample"
+                        ),
+                        evidence: [.init(code: "ipv6.no-default-route")]
+                    )
+                ),
+            ]
+        }
         guard usesProductionChecks, let context else { return checks }
         #if DEBUG
             let traceMode: GatewayTraceMode = switch GatewayTraceDebugOverride.mode {
@@ -721,6 +807,16 @@ public final class NetworkDiagnosticsViewModel {
                 onDiagnosticsCompleted()
             }
         }
+    }
+}
+
+private struct CaptureDemoDiagnosticCheck: DiagnosticCheck {
+    let result: NetworkDiagnosticResult
+    var id: NetworkDiagnosticCheckID { result.id }
+
+    func run() async throws -> NetworkDiagnosticResult {
+        try await Task.sleep(for: .milliseconds(700))
+        return result
     }
 }
 

@@ -8,6 +8,7 @@ public struct NetworkDiagnosticsView: View {
     let isInvitationHostActive: Bool
     let hostWindow: NSWindow?
     let ownerWindowID: UUID?
+    let captureRunButtonTarget: AnyView?
     @State private var renderedInvitationID: UUID?
     @State private var consolePanelController = ConsolePanelController(
         statusBarHeight: 30,
@@ -23,11 +24,31 @@ public struct NetworkDiagnosticsView: View {
         hostWindow: NSWindow? = nil,
         ownerWindowID: UUID? = nil
     ) {
+        self.init(
+            viewModel: viewModel,
+            guidance: guidance,
+            isInvitationHostActive: isInvitationHostActive,
+            hostWindow: hostWindow,
+            ownerWindowID: ownerWindowID,
+            captureRunButtonTarget: nil
+        )
+    }
+
+    @_spi(ProCapture)
+    public init(
+        viewModel: NetworkDiagnosticsViewModel,
+        guidance: GuidanceCoordinator,
+        isInvitationHostActive: Bool = true,
+        hostWindow: NSWindow? = nil,
+        ownerWindowID: UUID? = nil,
+        captureRunButtonTarget: AnyView?
+    ) {
         self.viewModel = viewModel
         self.guidance = guidance
         self.isInvitationHostActive = isInvitationHostActive
         self.hostWindow = hostWindow
         self.ownerWindowID = ownerWindowID
+        self.captureRunButtonTarget = captureRunButtonTarget
         viewModel.setGuidanceOwnerWindowID(isInvitationHostActive ? ownerWindowID : nil)
     }
 
@@ -297,6 +318,11 @@ public struct NetworkDiagnosticsView: View {
         .disabled(viewModel.phase == .running)
         .fixedSize()
         .accessibilityIdentifier("network-diagnostics-run")
+        .overlay {
+            if let captureRunButtonTarget {
+                captureRunButtonTarget
+            }
+        }
     }
 
     private var progressStrip: some View {

@@ -99,6 +99,14 @@ private struct AppRootView: View {
 
     private var selectedPage: SidebarPage { sceneState.selectedPage }
 
+    #if PRO_STATIC_CAPTURE
+        private var networkDiagnosticsRunButtonTarget: AnyView? {
+            AnyView(Color.clear.captureDemoCursorTarget("network-self-check-run"))
+        }
+    #else
+        private var networkDiagnosticsRunButtonTarget: AnyView? { nil }
+    #endif
+
     private var hasLocationAuthorization: Bool {
         viewModel.hasWiFiDataAuthorization
     }
@@ -312,20 +320,35 @@ private struct AppRootView: View {
                         .accessibilityIdentifier("page-interfaces")
                     }
 
-                    NetworkDiagnosticsView(
-                        viewModel: networkDiagnosticsViewModel,
-                        guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
-                        isInvitationHostActive: selectedPage == .networkDiagnostics,
-                        hostWindow: hostWindow,
-                        ownerWindowID: sceneState.id
-                    )
+                    Group {
+                        #if PRO_STATIC_CAPTURE
+                            NetworkDiagnosticsView(
+                                viewModel: networkDiagnosticsViewModel,
+                                guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
+                                isInvitationHostActive: selectedPage == .networkDiagnostics,
+                                hostWindow: hostWindow,
+                                ownerWindowID: sceneState.id,
+                                captureRunButtonTarget: networkDiagnosticsRunButtonTarget
+                            )
+                            .modifier(CaptureDemoNetworkSelfCheckCursorLayer())
+                        #else
+                            NetworkDiagnosticsView(
+                                viewModel: networkDiagnosticsViewModel,
+                                guidance: EditionAssemblyProvider.configuration.guidanceCoordinator,
+                                isInvitationHostActive: selectedPage == .networkDiagnostics,
+                                hostWindow: hostWindow,
+                                ownerWindowID: sceneState.id
+                            )
+                        #endif
+                    }
                     .opacity(selectedPage == .networkDiagnostics ? 1 : 0)
                     .allowsHitTesting(selectedPage == .networkDiagnostics)
                     .accessibilityIdentifier("page-networkDiagnostics")
                     #if PRO_STATIC_CAPTURE
                         .onAppear {
                             guard ProDemoLaunch.isNetworkSelfCheckDemo else { return }
-                            networkDiagnosticsViewModel.stageCompletedCaptureResult()
+                            ProEditionTargetHooks.registerNetworkDiagnosticsViewModel(networkDiagnosticsViewModel)
+                            networkDiagnosticsViewModel.stagePrepareCaptureRun()
                             ProDemoLaunch.reportStaticCapturePageReady(for: ProDemoLaunch.networkSelfCheckScenario)
                         }
                     #endif
