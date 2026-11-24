@@ -1,136 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Probe did not complete" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "探测未完成"
-          }
-        }
-      }
-    },
-    "Probe could not run" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "探测未能执行"
-          }
-        }
-      }
-    },
-    "Probe execution timed out" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "探测执行超时"
-          }
-        }
-      }
-    },
-    "No response" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未收到响应"
-          }
-        }
-      }
-    },
-    "First gateway without a response" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "从这一级开始未收到响应"
-          }
-        }
-      }
-    },
-    "Replied in %@ ms" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已响应 · %@ 毫秒"
-          }
-        }
-      }
-    },
-    "Gateway level %lld · %@" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "第 %lld 级网关 · %@"
-          }
-        }
-      }
-    },
-    "Check your Internet provider’s outage status and contact them if the connection stays down." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查询运营商的故障公告。如果连接仍未恢复，请联系运营商。"
-          }
-        }
-      }
-    },
-    "Check the Internet or WAN connection light on your modem or upstream router." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检查光猫或上级路由器的互联网或 WAN 连接指示灯。"
-          }
-        }
-      }
-    },
-    "Check the cable and connection lights between your router and the upstream network device." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检查路由器与上级网络设备之间的网线和连接指示灯。"
-          }
-        }
-      }
-    },
-    "Internet provider connection problem" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "运营商网络连接异常"
-          }
-        }
-      }
-    },
-    "Upstream network connection problem" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上游网络出口异常"
-          }
-        }
-      }
-    },
-    "Local network connection problem" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本地网络连接异常"
-          }
-        }
-      }
-    },
     "%@" : {
       "shouldTranslate" : false
     },
@@ -16546,6 +16416,36 @@
         }
       }
     },
+    "Check the cable and connection lights between your router and the upstream network device." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查路由器与上级网络设备之间的网线和连接指示灯。"
+          }
+        }
+      }
+    },
+    "Check the Internet or WAN connection light on your modem or upstream router." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查光猫或上级路由器的互联网或 WAN 连接指示灯。"
+          }
+        }
+      }
+    },
+    "Check your Internet provider’s outage status and contact them if the connection stays down." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查询运营商的故障公告。如果连接仍未恢复，请联系运营商。"
+          }
+        }
+      }
+    },
     "common.accessibility.metric_fmt" : {
       "comment" : "Label: value format for VoiceOver metric",
       "extractionState" : "manual",
@@ -21156,6 +21056,16 @@
         }
       }
     },
+    "First gateway without a response" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从这一级开始未收到响应"
+          }
+        }
+      }
+    },
     "format.band_channel_separator" : {
       "comment" : "Band name and channel number in status bar",
       "extractionState" : "manual",
@@ -22050,6 +21960,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 秒前"
+          }
+        }
+      }
+    },
+    "Gateway level %lld · %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %lld 级网关 · %@"
           }
         }
       }
@@ -24461,6 +24381,16 @@
         }
       }
     },
+    "Internet provider connection problem" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运营商网络连接异常"
+          }
+        }
+      }
+    },
     "licenses.empty" : {
       "comment" : "Empty state when no open source component matches the search",
       "extractionState" : "manual",
@@ -24835,6 +24765,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "WiFi Lens 使用的第三方軟體與資料。"
+          }
+        }
+      }
+    },
+    "Local network connection problem" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地网络连接异常"
           }
         }
       }
@@ -34691,6 +34631,16 @@
         }
       }
     },
+    "No response" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未收到响应"
+          }
+        }
+      }
+    },
     "observation.diagnosis.congested.message_fmt" : {
       "comment" : "Congested channel with details",
       "extractionState" : "manual",
@@ -39455,6 +39405,36 @@
         }
       }
     },
+    "Probe could not run" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "探测未能执行"
+          }
+        }
+      }
+    },
+    "Probe did not complete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "探测未完成"
+          }
+        }
+      }
+    },
+    "Probe execution timed out" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "探测执行超时"
+          }
+        }
+      }
+    },
     "recording.chart.empty" : {
       "comment" : "Empty state when no data has been recorded yet for the timeline chart",
       "extractionState" : "manual",
@@ -40900,6 +40880,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "美國"
+          }
+        }
+      }
+    },
+    "Replied in %@ ms" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已响应 · %@ 毫秒"
           }
         }
       }
@@ -59618,6 +59608,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "時間軸"
+          }
+        }
+      }
+    },
+    "Upstream network connection problem" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上游网络出口异常"
           }
         }
       }

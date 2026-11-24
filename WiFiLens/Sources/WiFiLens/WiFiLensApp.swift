@@ -1677,7 +1677,7 @@ struct WiFiLensApp: App {
     @NSApplicationDelegateAdaptor(ApplicationTerminationCoordinator.self)
     private var terminationCoordinator
     @State private var startup: AppStartupCoordinator
-    @State private var mainWindowLifecycle = MainWindowLifecycleCoordinator()
+    @State private var mainWindowLifecycle: MainWindowLifecycleCoordinator
     @State private var routeResources = MainWindowRouteResourceCoordinator()
     @State private var pendingResolvedMainWindowFocus = false
     @AppStorage("mcpEnabled") private var mcpEnabled: Bool = false
@@ -1698,11 +1698,12 @@ struct WiFiLensApp: App {
 
         let startup = AppStartupCoordinator()
         _startup = State(initialValue: startup)
+        let lifecycle = MainWindowLifecycleCoordinator()
+        _mainWindowLifecycle = State(initialValue: lifecycle)
         terminationCoordinator.configure(
             stopRuntime: { await startup.stopForTermination() },
             terminateEdition: { await EditionAssemblyProvider.configuration.shellHooks.prepareForTermination() }
         )
-        let lifecycle = mainWindowLifecycle
         terminationCoordinator.configureExternalActivation {
             lifecycle.activateMainWindow()
         }
