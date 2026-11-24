@@ -2,17 +2,10 @@ import AppKit
 import SceneKit
 import SwiftUI
 
-private struct GuidanceInvitationFrames: Equatable {
-    var viewport: CGRect?
-    var card: CGRect?
-}
-
-private struct GuidanceInvitationFramesPreference: PreferenceKey {
-    nonisolated(unsafe) static var defaultValue = GuidanceInvitationFrames()
-    static func reduce(value: inout GuidanceInvitationFrames, nextValue: () -> GuidanceInvitationFrames) {
-        let next = nextValue()
-        value.viewport = next.viewport ?? value.viewport
-        value.card = next.card ?? value.card
+private struct GuidanceInvitationCardBoundsPreference: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue: Anchor<CGRect>?
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = nextValue() ?? value
     }
 }
 
@@ -162,14 +155,11 @@ public struct OverviewView: View {
                                         )
                                     }
                                 }
-                                .background {
-                                    GeometryReader { card in
-                                        Color.clear.preference(
-                                            key: GuidanceInvitationFramesPreference.self,
-                                            value: GuidanceInvitationFrames(card: card.frame(in: .global))
-                                        )
-                                    }
-                                }
+                                .anchorPreference(
+                                    key: GuidanceInvitationCardBoundsPreference.self,
+                                    value: .bounds,
+                                    transform: { $0 }
+                                )
                             }
 
                             if !viewModel.hasWiFiDataAuthorization {
@@ -208,22 +198,22 @@ public struct OverviewView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-            .background {
+            .overlayPreferenceValue(GuidanceInvitationCardBoundsPreference.self) { cardBounds in
                 GeometryReader { viewport in
-                    Color.clear.preference(
-                        key: GuidanceInvitationFramesPreference.self,
-                        value: GuidanceInvitationFrames(viewport: viewport.frame(in: .global))
-                    )
+                    let isVisible = cardBounds.map {
+                        GuidanceInvitationVisibility.isGenuinelyVisible(
+                            card: viewport[$0],
+                            viewport: CGRect(origin: .zero, size: viewport.size)
+                        )
+                    } ?? false
+                    Color.clear
+                        .allowsHitTesting(false)
+                        .onChange(of: isVisible, initial: true) { _, isVisible in
+                            if invitationInVisibleArea != isVisible {
+                                invitationInVisibleArea = isVisible
+                            }
+                        }
                 }
-            }
-            .coordinateSpace(name: "overviewScroll")
-            .onPreferenceChange(GuidanceInvitationFramesPreference.self) { frames in
-                guard let card = frames.card, let viewport = frames.viewport else {
-                    invitationInVisibleArea = false
-                    return
-                }
-                invitationInVisibleArea = GuidanceInvitationVisibility.isGenuinelyVisible(
-                    card: card, viewport: viewport)
             }
             .onChange(of: currentChannelQuality?.rfScore) { _, newRaw in
                 let raw = newRaw ?? 100
