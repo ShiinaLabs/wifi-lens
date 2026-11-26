@@ -30,6 +30,12 @@ organized for on-demand loading by task type and are not duplicated here.
 | [architecture/public-project-boundary.md](architecture/public-project-boundary.md) | Public Xcode target, scheme, source, and package ownership policy |
 | [architecture/WIFI_LINK_STATE.md](architecture/WIFI_LINK_STATE.md) | Shared Wi-Fi link evidence, state, event, listener, and app-validation contracts |
 
+## Engineering
+
+| File | Purpose |
+|------|---------|
+| [engineering/rust-core.md](engineering/rust-core.md) | Rust Core ownership, Xcode build integration, stable toolchain, and test commands |
+
 ## Research
 
 | File | Purpose |
