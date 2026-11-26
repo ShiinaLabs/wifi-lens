@@ -83,5 +83,5 @@ case "$#" in
 esac
 
 for arch in $ARCHS; do
-    /usr/bin/xcrun lipo -verify_arch "$arch" "$output_library"
+    /usr/bin/xcrun lipo "$output_library" -verify_arch "$arch"
 done
