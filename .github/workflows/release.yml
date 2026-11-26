@@ -62,6 +62,9 @@ jobs:
 
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
 
+      - name: Install pinned Rust toolchain
+        run: scripts/install-rust-toolchain.sh rust-core
+
       - name: Verify Release Version
         run: |
           VERSION="${RELEASE_TAG#v}"

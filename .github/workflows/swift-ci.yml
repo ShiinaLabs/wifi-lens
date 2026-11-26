@@ -7,6 +7,8 @@ on:
     paths:
       - ".github/workflows/swift-ci.yml"
       - ".github/workflows/release.yml"
+      - "ci_scripts/**"
+      - "rust-core/**"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
       - "WiFiLens.xcodeproj/**"
@@ -14,6 +16,7 @@ on:
       - ".agents/**"
       - "docs/architecture/**"
       - "scripts/check-public-project-boundary.py"
+      - "scripts/install-rust-toolchain.sh"
       - "scripts/tests/**"
       - "scripts/create-dmg.sh"
       - "assets/**"
@@ -21,6 +24,8 @@ on:
     paths:
       - ".github/workflows/swift-ci.yml"
       - ".github/workflows/release.yml"
+      - "ci_scripts/**"
+      - "rust-core/**"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
       - "WiFiLens.xcodeproj/**"
@@ -28,6 +33,7 @@ on:
       - ".agents/**"
       - "docs/architecture/**"
       - "scripts/check-public-project-boundary.py"
+      - "scripts/install-rust-toolchain.sh"
       - "scripts/tests/**"
       - "scripts/create-dmg.sh"
       - "assets/**"
@@ -47,6 +53,21 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v7
+
+      - name: Install pinned Rust toolchain
+        run: scripts/install-rust-toolchain.sh rust-core
+
+      - name: Test Rust core on runner architecture
+        shell: bash
+        run: |
+          case "$(uname -m)" in
+            arm64) target=aarch64-apple-darwin ;;
+            x86_64) target=x86_64-apple-darwin ;;
+            *) echo "Unsupported macOS runner architecture: $(uname -m)" >&2; exit 1 ;;
+          esac
+          cd rust-core
+          cargo fmt --check
+          cargo test --locked --target "$target"
 
       - name: Check public project ownership
         run: python3 scripts/check-public-project-boundary.py

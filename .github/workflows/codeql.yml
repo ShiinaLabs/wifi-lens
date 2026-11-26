@@ -6,6 +6,9 @@ on:
       - master
     paths:
       - ".github/workflows/codeql.yml"
+      - "ci_scripts/**"
+      - "rust-core/**"
+      - "scripts/install-rust-toolchain.sh"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
       - "WiFiLens.xcodeproj/**"
@@ -15,6 +18,9 @@ on:
       - master
     paths:
       - ".github/workflows/codeql.yml"
+      - "ci_scripts/**"
+      - "rust-core/**"
+      - "scripts/install-rust-toolchain.sh"
       - "WiFiLens/**"
       - "WiFiLensCore/**"
       - "WiFiLens.xcodeproj/**"
@@ -50,6 +56,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Install pinned Rust toolchain
+        run: scripts/install-rust-toolchain.sh rust-core
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4.39.3

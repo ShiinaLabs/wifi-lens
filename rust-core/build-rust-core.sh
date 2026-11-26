@@ -28,9 +28,10 @@ case "$CONFIGURATION" in
 esac
 
 cargo_home=${CARGO_HOME:-"$HOME/.cargo"}
-cargo_bin=$(command -v cargo || true)
-if [ -z "$cargo_bin" ] && [ -x "$cargo_home/bin/cargo" ]; then
+if [ -x "$cargo_home/bin/cargo" ]; then
     cargo_bin="$cargo_home/bin/cargo"
+else
+    cargo_bin=$(command -v cargo || true)
 fi
 if [ -z "$cargo_bin" ] || [ ! -x "$cargo_bin" ]; then
     echo "Rust is not installed. Install rustup; rust-core/rust-toolchain.toml pins the toolchain and targets." >&2
