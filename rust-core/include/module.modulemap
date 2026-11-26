@@ -1,0 +1,4 @@
+module WiFiLensCoreRust {
+    header "wifi_lens_core.h"
+    export *
+}

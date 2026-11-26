@@ -118,8 +118,8 @@
 		705A69FF4A444471A62F39FF /* MACVendorDatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6B32FF2A0F53B0FC4984B8 /* MACVendorDatabaseManager.swift */; };
 		70994623CD4135FAAD441569 /* HysteresisEMA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F58041A91102E937BBECCE /* HysteresisEMA.swift */; };
 		710000000000000000000004 /* StorageLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000001 /* StorageLocations.swift */; };
-		710000000000000000000007 /* ApplicationInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000006 /* ApplicationInstanceLock.swift */; };
 		710000000000000000000005 /* StorageLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000002 /* StorageLocationsTests.swift */; };
+		710000000000000000000007 /* ApplicationInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710000000000000000000006 /* ApplicationInstanceLock.swift */; };
 		712BAAA7E857992BBD82FED9 /* ChartSeriesData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCAEB452D1D143784DBABF6 /* ChartSeriesData.swift */; };
 		7136F0EDFCA248F06FB74954 /* WhatsNewCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48BFBB66E40F9C535B69FCA0 /* WhatsNewCoordinator.swift */; };
 		73A4252B79B42ABAC02D4683 /* MACVendorResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFD8364A0686E1E59690A7F6 /* MACVendorResolver.swift */; };
@@ -287,6 +287,7 @@
 		FB0573C422FBBEAE4005F8214 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = FB0573C412FBBEAE4005F8214 /* Logging */; };
 		FB23154C304D9B6400619D14 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */; };
 		FB2E3B2E2FC5ACDA00D2610E /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB2E3B2D2FC5ACDA00D2610E /* CoreBluetooth.framework */; };
+		FB31C21830B85DCE003ABDB7 /* SwiftFTR in Frameworks */ = {isa = PBXBuildFile; productRef = F9A00000000000000000000E /* SwiftFTR */; };
 		FB7F34783071E43900FC37BC /* zh-Hant.md in Resources */ = {isa = PBXBuildFile; fileRef = FB7F34773071E42D00FC37BC /* zh-Hant.md */; };
 		FB85B8A92FE6526D00D2D391 /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FB85B8A82FE6526D00D2D391 /* ChartLens */; };
 		FB8FCB212FF6C5DF00BB2929 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FB8FCB202FF6C5DF00BB2929 /* Sparkle */; };
@@ -506,8 +507,8 @@
 		6DA5763F2B6D48DEABAA0B76 /* es.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = es.md; sourceTree = "<group>"; };
 		6FF09DD63C317B52E73F20F0 /* ChannelOccupancyAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelOccupancyAnalyzer.swift; sourceTree = "<group>"; };
 		710000000000000000000001 /* StorageLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocations.swift; sourceTree = "<group>"; };
-		710000000000000000000006 /* ApplicationInstanceLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationInstanceLock.swift; sourceTree = "<group>"; };
 		710000000000000000000002 /* StorageLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocationsTests.swift; sourceTree = "<group>"; };
+		710000000000000000000006 /* ApplicationInstanceLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationInstanceLock.swift; sourceTree = "<group>"; };
 		727B5B7628CA7133937ECA2E /* BandPanelSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandPanelSelection.swift; sourceTree = "<group>"; };
 		7343A5D84BBD9A02C08690A6 /* OnboardingStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStateStore.swift; sourceTree = "<group>"; };
 		73952B4D6C1E88514FD78907 /* ChannelRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelRecommendationEngine.swift; sourceTree = "<group>"; };
@@ -743,6 +744,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FB31C21830B85DCE003ABDB7 /* SwiftFTR in Frameworks */,
 				699294D00E5100D4D786BA77 /* ChartLens in Frameworks */,
 				ACB82A2C80A21A3E58C8C529 /* MCP in Frameworks */,
 				23B23A9DDEF1001DBE2F43B0 /* Logging in Frameworks */,
@@ -1606,6 +1608,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 48CC669075019465A0637978 /* Build configuration list for PBXNativeTarget "WiFiLensCore" */;
 			buildPhases = (
+				FBED968430B862D300124D24 /* Build Rust Core */,
 				8786E929C6451F1171707511 /* Sources */,
 				6C250FB977475676B858D369 /* Frameworks */,
 				14530F3B1BEE4157098475BA /* Resources */,
@@ -1621,7 +1624,7 @@
 				984558EACE79DA154CBABA43 /* Logging */,
 				C9E8118E23D34060B848E9AB /* SplitView */,
 				4C633EAD2670D0C4A957180F /* MarkdownKit */,
-					F9A00000000000000000000E /* SwiftFTR */,
+				F9A00000000000000000000E /* SwiftFTR */,
 			);
 			productName = WiFiLensCore;
 			productReference = 88181B172C615AC4EF6C93E6 /* WiFiLensCore.framework */;
@@ -1710,7 +1713,7 @@
 				C0A7A1B2C3D4E5F678900002 /* XCRemoteSwiftPackageReference "SplitView" */,
 				FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				C0A7A1B2C3D4E5F678900005 /* XCRemoteSwiftPackageReference "MarkdownKit" */,
-					F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */,
+				F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BD4D8FFAAD7E961D9EE4F5FE /* Products */;
@@ -1762,6 +1765,37 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		FBED968430B862D300124D24 /* Build Rust Core */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/rust-core/Cargo.toml",
+				"$(SRCROOT)/rust-core/Cargo.lock",
+				"$(SRCROOT)/rust-core/rust-toolchain.toml",
+				"$(SRCROOT)/rust-core/src/lib.rs",
+				"$(SRCROOT)/rust-core/include/wifi_lens_core.h",
+				"$(SRCROOT)/rust-core/include/module.modulemap",
+				"$(SRCROOT)/rust-core/build-rust-core.sh",
+			);
+			name = "Build Rust Core";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/rust-core-target",
+				"$(DERIVED_FILE_DIR)/libwifi_lens_core.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/bin/sh\nset -eu\n\n: \"${SRCROOT:?Xcode did not provide SRCROOT}\"\n: \"${DERIVED_FILE_DIR:?Xcode did not provide DERIVED_FILE_DIR}\"\n: \"${ARCHS:?Xcode did not provide ARCHS}\"\n: \"${CONFIGURATION:?Xcode did not provide CONFIGURATION}\"\n: \"${SDKROOT:?Xcode did not provide SDKROOT}\"\n: \"${MACOSX_DEPLOYMENT_TARGET:?Xcode did not provide MACOSX_DEPLOYMENT_TARGET}\"\n\necho \"Building WiFiLens Rust Core ($CONFIGURATION; architectures: $ARCHS)\"\n\ncase \"$SDKROOT\" in\n    */MacOSX*.sdk) ;;\n    *)\n        echo \"WiFiLens Rust Core supports macOS SDK builds only; got SDKROOT=$SDKROOT\" >&2\n        exit 1\n        ;;\nesac\n\ncase \"$CONFIGURATION\" in\n    Debug) profile=debug ;;\n    Release) profile=release ;;\n    *)\n        echo \"Unsupported Xcode configuration: $CONFIGURATION\" >&2\n        exit 1\n        ;;\nesac\n\ncargo_home=${CARGO_HOME:-\"$HOME/.cargo\"}\ncargo_bin=$(command -v cargo || true)\nif [ -z \"$cargo_bin\" ] && [ -x \"$cargo_home/bin/cargo\" ]; then\n    cargo_bin=\"$cargo_home/bin/cargo\"\nfi\nif [ -z \"$cargo_bin\" ] || [ ! -x \"$cargo_bin\" ]; then\n    echo \"Rust is not installed. Install rustup; rust-core/rust-toolchain.toml pins the toolchain and targets.\" >&2\n    exit 1\nfi\n\nrust_core_dir=\"$SRCROOT/rust-core\"\noutput_library=\"$DERIVED_FILE_DIR/libwifi_lens_core.a\"\nexport CARGO_TARGET_DIR=\"$DERIVED_FILE_DIR/rust-core-target\"\nexport CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER=\"$(/usr/bin/xcrun --sdk macosx --find clang)\"\nexport CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=\"$CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER\"\nexport RUSTFLAGS=\"${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET\"\n\nmkdir -p \"$DERIVED_FILE_DIR\"\ncd \"$rust_core_dir\"\nset --\n\nfor arch in $ARCHS; do\n    case \"$arch\" in\n        arm64) target=aarch64-apple-darwin ;;\n        x86_64) target=x86_64-apple-darwin ;;\n        *)\n            echo \"Unsupported Rust Core architecture from Xcode: $arch\" >&2\n            exit 1\n            ;;\n    esac\n\n    if [ \"$profile\" = release ]; then\n        \"$cargo_bin\" build --locked --target \"$target\" --release\n    else\n        \"$cargo_bin\" build --locked --target \"$target\"\n    fi\n\n    archive=\"$CARGO_TARGET_DIR/$target/$profile/libwifi_lens_core.a\"\n    if [ ! -f \"$archive\" ]; then\n        echo \"Cargo did not produce the expected static library: $archive\" >&2\n        exit 1\n    fi\n    set -- \"$@\" \"$archive\"\ndone\n\ncase \"$#\" in\n    0)\n        echo \"Xcode selected no supported Rust Core architectures\" >&2\n        exit 1\n        ;;\n    1) /bin/cp -f \"$1\" \"$output_library\" ;;\n    *) /usr/bin/xcrun lipo -create \"$@\" -output \"$output_library\" ;;\nesac\n\n/usr/bin/xcrun lipo -verify_arch $ARCHS \"$output_library\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5032AD37BED25ED8AB061AD7 /* Sources */ = {
@@ -2001,7 +2035,7 @@
 				5628F0AF1297268BD0CD23AC /* SystemProxyCheck.swift in Sources */,
 				3D12359674E4A30774BB57FA /* NativeTableView.swift in Sources */,
 				F278475192B81A60F8A4225C /* ThroughputMonitor.swift in Sources */,
-								B5F054FF766F419F3C260AA7 /* ExternalLinks.swift in Sources */,
+				B5F054FF766F419F3C260AA7 /* ExternalLinks.swift in Sources */,
 				9E503E52C97C64FFE1DD5A90 /* OpenSourceLicenseCatalog.swift in Sources */,
 				30CA1D61AE3635CAEFCB1F48 /* OpenSourceLicenseTexts.swift in Sources */,
 				D0A4A6769A3FA312CBB06078 /* OpenSourceLicensesView.swift in Sources */,
@@ -2229,6 +2263,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -2236,10 +2271,18 @@
 					"@loader_path/../Frameworks",
 					"@loader_path/../../..",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(DERIVED_FILE_DIR)",
+				);
 				MACH_O_TYPE = mh_dylib;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lwifi_lens_core",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.kaoru.WiFiLensCore;
 				PRODUCT_MODULE_NAME = WiFiLensCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2358,6 +2401,7 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_INCLUDE_PATHS = "$(inherited) \"$(SRCROOT)/rust-core/include\"";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
@@ -2432,6 +2476,7 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_INCLUDE_PATHS = "$(inherited) \"$(SRCROOT)/rust-core/include\"";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
@@ -2500,6 +2545,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -2507,10 +2553,18 @@
 					"@loader_path/../Frameworks",
 					"@loader_path/../../..",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(DERIVED_FILE_DIR)",
+				);
 				MACH_O_TYPE = mh_dylib;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lwifi_lens_core",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.kaoru.WiFiLensCore;
 				PRODUCT_MODULE_NAME = WiFiLensCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2640,6 +2694,14 @@
 				revision = f399a6674d6efb5a7d9b2f1dfb8e1e6504f3bba2;
 			};
 		};
+		F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ShiinaLabs/MiniFTR.git";
+			requirement = {
+				kind = revision;
+				revision = 8eb7cbfe01cbac74cf82ce5f33c65a819266768f;
+			};
+		};
 		FB0573B22FBBEAE4005F8214 /* XCRemoteSwiftPackageReference "swift-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/modelcontextprotocol/swift-sdk";
@@ -2664,15 +2726,7 @@
 				minimumVersion = 2.10.0;
 			};
 		};
-		F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ShiinaLabs/MiniFTR.git";
-			requirement = {
-				kind = revision;
-				revision = 8eb7cbfe01cbac74cf82ce5f33c65a819266768f;
-			};
-		};
-	/* End XCRemoteSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		2898ABF002051CFA80848C96 /* MCP */ = {
@@ -2735,6 +2789,11 @@
 			package = FB0573C402FBBEAE4005F8214 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
 		};
+		F9A00000000000000000000E /* SwiftFTR */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */;
+			productName = SwiftFTR;
+		};
 		FB0573B32FBBEAE4005F8214 /* MCP */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FB0573B22FBBEAE4005F8214 /* XCRemoteSwiftPackageReference "swift-sdk" */;
@@ -2755,12 +2814,7 @@
 			package = FB8FCB1F2FF6C5DF00BB2929 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
-		F9A00000000000000000000E /* SwiftFTR */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F9A00000000000000000000D /* XCRemoteSwiftPackageReference "MiniFTR" */;
-			productName = SwiftFTR;
-		};
-	/* End XCSwiftPackageProductDependency section */
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 70C77BA3C6064FF4D1D77E59 /* Project object */;
 }
