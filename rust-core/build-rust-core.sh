@@ -81,4 +81,6 @@ case "$#" in
     *) /usr/bin/xcrun lipo -create "$@" -output "$output_library" ;;
 esac
 
-/usr/bin/xcrun lipo -verify_arch $ARCHS "$output_library"
+for arch in $ARCHS; do
+    /usr/bin/xcrun lipo -verify_arch "$arch" "$output_library"
+done

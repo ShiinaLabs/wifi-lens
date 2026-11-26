@@ -1608,7 +1608,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 48CC669075019465A0637978 /* Build configuration list for PBXNativeTarget "WiFiLensCore" */;
 			buildPhases = (
-				FBED968430B862D300124D24 /* Build Rust Core */,
+				FBC5878B30B867B800C39161 /* Build Rust Core */,
 				8786E929C6451F1171707511 /* Sources */,
 				6C250FB977475676B858D369 /* Frameworks */,
 				14530F3B1BEE4157098475BA /* Resources */,
@@ -1767,7 +1767,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		FBED968430B862D300124D24 /* Build Rust Core */ = {
+		FBC5878B30B867B800C39161 /* Build Rust Core */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1792,7 +1792,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/sh\nset -eu\n\n: \"${SRCROOT:?Xcode did not provide SRCROOT}\"\n: \"${DERIVED_FILE_DIR:?Xcode did not provide DERIVED_FILE_DIR}\"\n: \"${ARCHS:?Xcode did not provide ARCHS}\"\n: \"${CONFIGURATION:?Xcode did not provide CONFIGURATION}\"\n: \"${SDKROOT:?Xcode did not provide SDKROOT}\"\n: \"${MACOSX_DEPLOYMENT_TARGET:?Xcode did not provide MACOSX_DEPLOYMENT_TARGET}\"\n\necho \"Building WiFiLens Rust Core ($CONFIGURATION; architectures: $ARCHS)\"\n\ncase \"$SDKROOT\" in\n    */MacOSX*.sdk) ;;\n    *)\n        echo \"WiFiLens Rust Core supports macOS SDK builds only; got SDKROOT=$SDKROOT\" >&2\n        exit 1\n        ;;\nesac\n\ncase \"$CONFIGURATION\" in\n    Debug) profile=debug ;;\n    Release) profile=release ;;\n    *)\n        echo \"Unsupported Xcode configuration: $CONFIGURATION\" >&2\n        exit 1\n        ;;\nesac\n\ncargo_home=${CARGO_HOME:-\"$HOME/.cargo\"}\ncargo_bin=$(command -v cargo || true)\nif [ -z \"$cargo_bin\" ] && [ -x \"$cargo_home/bin/cargo\" ]; then\n    cargo_bin=\"$cargo_home/bin/cargo\"\nfi\nif [ -z \"$cargo_bin\" ] || [ ! -x \"$cargo_bin\" ]; then\n    echo \"Rust is not installed. Install rustup; rust-core/rust-toolchain.toml pins the toolchain and targets.\" >&2\n    exit 1\nfi\n\nrust_core_dir=\"$SRCROOT/rust-core\"\noutput_library=\"$DERIVED_FILE_DIR/libwifi_lens_core.a\"\nexport CARGO_TARGET_DIR=\"$DERIVED_FILE_DIR/rust-core-target\"\nexport CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER=\"$(/usr/bin/xcrun --sdk macosx --find clang)\"\nexport CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=\"$CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER\"\nexport RUSTFLAGS=\"${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET\"\n\nmkdir -p \"$DERIVED_FILE_DIR\"\ncd \"$rust_core_dir\"\nset --\n\nfor arch in $ARCHS; do\n    case \"$arch\" in\n        arm64) target=aarch64-apple-darwin ;;\n        x86_64) target=x86_64-apple-darwin ;;\n        *)\n            echo \"Unsupported Rust Core architecture from Xcode: $arch\" >&2\n            exit 1\n            ;;\n    esac\n\n    if [ \"$profile\" = release ]; then\n        \"$cargo_bin\" build --locked --target \"$target\" --release\n    else\n        \"$cargo_bin\" build --locked --target \"$target\"\n    fi\n\n    archive=\"$CARGO_TARGET_DIR/$target/$profile/libwifi_lens_core.a\"\n    if [ ! -f \"$archive\" ]; then\n        echo \"Cargo did not produce the expected static library: $archive\" >&2\n        exit 1\n    fi\n    set -- \"$@\" \"$archive\"\ndone\n\ncase \"$#\" in\n    0)\n        echo \"Xcode selected no supported Rust Core architectures\" >&2\n        exit 1\n        ;;\n    1) /bin/cp -f \"$1\" \"$output_library\" ;;\n    *) /usr/bin/xcrun lipo -create \"$@\" -output \"$output_library\" ;;\nesac\n\n/usr/bin/xcrun lipo -verify_arch $ARCHS \"$output_library\"\n";
+			shellScript = "exec /bin/sh \"$SRCROOT/rust-core/build-rust-core.sh\"";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
