@@ -3,7 +3,7 @@ name = "wifi-lens-core"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-description = "Portable Wi-Fi channel span calculations for WiFi Lens"
+description = "Portable Wi-Fi analysis primitives for WiFi Lens"
 
 [lib]
 path = "src/lib.rs"

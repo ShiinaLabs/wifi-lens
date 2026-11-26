@@ -38,7 +38,7 @@ Hardware Supported Channels (CoreWLAN)  ─┐
 
 | File | Type | Purpose |
 |------|------|---------|
-| `ChannelQualityCalculator.swift` | `enum` | Observed RF scoring plus counterfactual recommendation scoring |
+| `ChannelQualityCalculator.swift` | `enum` | Swift-facing adapter for Rust observed RF and counterfactual recommendation scoring |
 | `RegulatoryPipeline.swift` | `final class` | `@Observable` orchestrator — collects inputs, calls inference + filter, exposes `inferredRegion` |
 | `RegionInferenceEngine.swift` | `enum` | Multi-source region inference with confidence scoring |
 | `RegulatoryFilter.swift` | `enum` | 5-stage classification pipeline |

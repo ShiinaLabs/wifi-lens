@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCoreRust
 
 /// Per-channel congestion analysis result.
 /// This model preserves the observed RF environment and carries a separate
@@ -197,11 +198,6 @@ public struct StableScore {
 
 /// Computes channel congestion scores per band.
 public enum ChannelQualityCalculator {
-    private static let currentGoodEnoughScore = 80
-    private static let minimumRecommendedScore = 70
-    private static let minimumImprovement = 10
-    private static let maxRecommendationsPerBand = 2
-
     public struct TargetAP {
         public let bssid: String?
         public let ssid: String?
@@ -217,8 +213,8 @@ public enum ChannelQualityCalculator {
     public struct APInfo {
         public let channel: Int
         public let rssi: Int
-        public let channelWidth: String  // "20"/"40"/"80"/"160"/"80+80"
-        public let band: String  // "24"/"5"/"6"
+        public let channelWidth: String
+        public let band: String
         public let bssid: String?
         public let ssid: String?
 
@@ -242,269 +238,146 @@ public enum ChannelQualityCalculator {
         supportedBands: Set<String> = ["24", "5", "6"],
         targetAP: TargetAP? = nil
     ) -> [ChannelQuality] {
-        var results: [ChannelQuality] = []
-
-        for band in supportedBands.sorted() {
-            let bandAPs = aps.filter { $0.band == band }
-            let bandCurrentChannel =
-                currentBand == nil || currentBand == band
-                ? currentChannel
-                : nil
-            let targetResolution = resolveTargetAP(targetAP, in: bandAPs)
-            let recommendationAPs =
-                targetResolution.confidence == .unknown
-                ? bandAPs
-                : bandAPs.filter { !targetResolution.matches($0) }
-
-            let channels: [Int] = {
-                switch band {
-                case "24": return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-                case "5":
-                    return stride(from: 36, through: 144, by: 4).map { $0 }
-                        + stride(from: 149, through: 165, by: 4).map { $0 }
-                default: return stride(from: 1, through: 233, by: 4).map { $0 }
-                }
-            }()
-
-            let bandDisplay =
-                band == "24"
-                ? String(localized: "wifi.band.24ghz", comment: "2.4 GHz Wi-Fi band name")
-                : band == "5"
-                    ? String(localized: "wifi.band.5ghz", comment: "5 GHz Wi-Fi band name")
-                    : String(localized: "wifi.band.6ghz", comment: "6 GHz Wi-Fi band name")
-
-            var scored = channels.map { ch -> ChannelQuality in
-                let observed = score(channel: ch, band: band, aps: bandAPs)
-                let recommendation = score(channel: ch, band: band, aps: recommendationAPs)
-                let level = ChannelQuality.QualityLevel.from(score: observed.score)
-                let recommendationLevel = ChannelQuality.QualityLevel.from(score: recommendation.score)
-                let strongest =
-                    bandAPs
-                    .filter { overlaps(channel: ch, other: $0, band: band) }
-                    .map(\.rssi).max() ?? -100
-                let allOverlapping = bandAPs.filter { overlaps(channel: ch, other: $0, band: band) }
-                let overlapCount = allOverlapping.count
-                let coChanCount = bandAPs.filter { $0.channel == ch }.count
-                let adjCount = allOverlapping.filter { $0.channel != ch }.count
-                let overlap: ChannelQuality.OverlapLevel =
-                    switch overlapCount {
-                    case 0...1: .low
-                    case 2...3: .moderate
-                    default: .high
-                    }
-
-                return ChannelQuality(
-                    channel: ch,
-                    band: band,
-                    bandDisplay: bandDisplay,
-                    qualityScore: observed.score,
-                    qualityLevel: level,
-                    apCount: overlapCount,
-                    coChannelCount: coChanCount,
-                    adjacentCount: adjCount,
-                    interferenceScore: observed.interference,
-                    overlapLevel: overlap,
-                    strongestNeighborRSSI: strongest,
-                    isRecommended: false,
-                    isCurrentChannel: ch == bandCurrentChannel,
-                    showInSimpleView: ch == bandCurrentChannel || overlapCount > 0,
-                    recommendationScore: recommendation.score,
-                    recommendationLevel: recommendationLevel,
-                    recommendationConfidence: targetResolution.confidence,
-                    recommendationState: targetResolution.confidence == .unknown ? .targetUnknown : .notCandidate
-                )
-            }
-            applyCounterfactualSelection(
-                to: &scored,
-                currentChannel: bandCurrentChannel,
-                confidence: targetResolution.confidence
-            )
-            results += scored
-        }
-
-        // Sort the final channel view without relying on external mutation.
-        return results.sorted { a, b in
-            if a.isCurrentChannel != b.isCurrentChannel { return a.isCurrentChannel }
-            if a.isRecommended != b.isRecommended { return a.isRecommended }
-            if a.recommendationScore != b.recommendationScore { return a.recommendationScore > b.recommendationScore }
-            if a.qualityScore != b.qualityScore { return a.qualityScore > b.qualityScore }
-            if a.band != b.band { return a.band < b.band }
-            return a.channel < b.channel
-        }
-    }
-
-    // MARK: - Interference model
-
-    private struct ScoreResult {
-        let score: Int
-        let interference: Int
-    }
-
-    private static func score(channel: Int, band: String, aps: [APInfo]) -> ScoreResult {
-        let interference = computeInterference(channel: channel, band: band, aps: aps)
-        return ScoreResult(score: max(0, min(100, 100 - interference)), interference: interference)
-    }
-
-    private struct TargetResolution {
-        let confidence: ChannelQuality.RecommendationConfidence
-        let matcher: (APInfo) -> Bool
-
-        func matches(_ ap: APInfo) -> Bool {
-            matcher(ap)
-        }
-    }
-
-    private static func resolveTargetAP(_ target: TargetAP?, in aps: [APInfo]) -> TargetResolution {
-        guard let target else {
-            return TargetResolution(confidence: .unknown) { _ in false }
-        }
-
-        if let bssid = target.bssid {
-            return TargetResolution(confidence: .exact) { ap in
-                ap.bssid?.caseInsensitiveCompare(bssid) == .orderedSame
-            }
-        }
-
-        if let ssid = target.ssid {
-            let candidates = aps.filter { ap in
-                ap.ssid == ssid && target.channel.map { ap.channel == $0 } ?? true
-            }
-            guard candidates.count == 1 else {
-                return TargetResolution(confidence: .unknown) { _ in false }
-            }
-            return TargetResolution(confidence: .ssidFallback) { ap in
-                ap.ssid == ssid && target.channel.map { ap.channel == $0 } ?? true
-            }
-        }
-
-        return TargetResolution(confidence: .unknown) { _ in false }
-    }
-
-    private static func applyCounterfactualSelection(
-        to scored: inout [ChannelQuality],
-        currentChannel: Int?,
-        confidence: ChannelQuality.RecommendationConfidence
-    ) {
-        guard confidence != .unknown, let currentChannel else {
-            for index in scored.indices {
-                scored[index].showInSimpleView = scored[index].initiallyVisibleInSimpleView
-            }
-            return
-        }
-
-        guard let current = scored.first(where: { $0.channel == currentChannel }) else {
-            for index in scored.indices {
-                scored[index].showInSimpleView = scored[index].initiallyVisibleInSimpleView
-            }
-            return
-        }
-
-        if current.recommendationScore >= currentGoodEnoughScore {
-            for index in scored.indices {
-                if scored[index].channel == currentChannel {
-                    scored[index].recommendationState = .currentGoodEnough
-                }
-                scored[index].showInSimpleView = scored[index].initiallyVisibleInSimpleView
-            }
-            return
-        }
-
-        let selectedIDs = Set(
-            scored
-                .filter { candidate in
-                    candidate.channel != currentChannel
-                        && candidate.recommendationScore >= minimumRecommendedScore
-                        && candidate.recommendationScore - current.recommendationScore >= minimumImprovement
-                }
-                .sorted { a, b in
-                    if a.recommendationScore != b.recommendationScore {
-                        return a.recommendationScore > b.recommendationScore
-                    }
-                    if a.qualityScore != b.qualityScore { return a.qualityScore > b.qualityScore }
-                    return a.channel < b.channel
-                }
-                .prefix(maxRecommendationsPerBand)
-                .map(\.id))
-
-        for index in scored.indices {
-            if selectedIDs.contains(scored[index].id) {
-                scored[index].isRecommended = true
-                scored[index].recommendationState = .recommended
-            } else if scored[index].channel != currentChannel {
-                scored[index].recommendationState = .insufficientImprovement
-            }
-            scored[index].showInSimpleView = scored[index].initiallyVisibleInSimpleView
-        }
-    }
-
-    private static func computeInterference(channel: Int, band: String, aps: [APInfo]) -> Int {
-        var penalty: Double = 0
+        var stringBytes: [UInt8] = []
+        var accessPointInputs: [WiFiLensAccessPointInput] = []
         for ap in aps {
-            let factor = overlapFactor(channel: channel, other: ap, band: band)
-            guard factor > 0 else { continue }
-            let rssiWeight = max(0, min(1, Double(ap.rssi + 100) / 70.0))
-            let widthMul: Double =
-                switch ap.channelWidth {
-                case "160": 2.0
-                case "80", "80+80": 1.5
-                case "40": 1.2
-                default: 1.0
-                }
-            let bandMul: Double = band == "24" ? 1.8 : 1.0
-            penalty += factor * rssiWeight * widthMul * bandMul * 18.0
-        }
-        return Int(penalty.rounded())
-    }
+            guard let band = ChannelBand(id: ap.band) else { continue }
 
-    /// 0.0 = no overlap, 1.0 = co-channel, 0.1–0.8 = partial overlap
-    private static func overlapFactor(channel: Int, other: APInfo, band: String) -> Double {
-        if other.channel == channel { return 1.0 }
-
-        if band == "24" {
-            // 2.4 GHz channels are 5 MHz apart, so adjacent channels overlap in
-            // practice; keep the empirical distance heuristic.
-            let dist = abs(channel - other.channel)
-            return switch dist {
-            case 1: 0.8
-            case 2: 0.55
-            case 3: 0.3
-            case 4: 0.15
-            default: 0
-            }
-        }
-
-        // 5 / 6 GHz: 20 MHz channels sit on standard blocks, so non-overlapping
-        // primary channels do not interfere. Compute the real frequency-band
-        // overlap between the 20 MHz candidate channel and the AP's block, and
-        // normalize by the AP span length: a wide AP contributes at most
-        // 1.0/0.5/0.25/0.125 (20/40/80/160 MHz) to one non-co-channel 20 MHz
-        // candidate (the primary channel carries beacons/control; secondary
-        // channels carry data only). widthMul in computeInterference partially
-        // compensates wider APs.
-        guard let channelBand = ChannelBand(id: band) else { return 0 }
-        // 80+80 is non-contiguous and cannot be represented by the scalar
-        // channelBlock model. Use one 80 MHz segment for defensive geometry.
-        let apWidth: Int =
-            switch other.channelWidth {
-            case "160": 160
-            case "80", "80+80": 80
+            let bssidBytes = ap.bssid.map { Array($0.lowercased().utf8) } ?? []
+            let bssidOffset = stringBytes.count
+            stringBytes.append(contentsOf: bssidBytes)
+            let ssidBytes = ap.ssid.map { Array($0.precomposedStringWithCanonicalMapping.utf8) } ?? []
+            let ssidOffset = stringBytes.count
+            stringBytes.append(contentsOf: ssidBytes)
+            let widthMHz = switch ap.channelWidth {
             case "40": 40
-            case "20": 20
+            case "80": 80
+            case "80+80": 8080
+            case "160": 160
             default: 20
             }
-        let candidateSpan = ChannelSpanCalculator.channelBlock(
-            primaryChannel: channel, widthMHz: 20, band: channelBand, spanDirection: nil
-        )
-        let apSpan = ChannelSpanCalculator.channelBlock(
-            primaryChannel: other.channel, widthMHz: apWidth, band: channelBand, spanDirection: nil
-        )
-        let overlap = max(0, min(apSpan.right, candidateSpan.right) - max(apSpan.left, candidateSpan.left))
-        let apSpanLength = max(1, apSpan.right - apSpan.left)
-        return min(1.0, Double(overlap) / Double(apSpanLength))
-    }
 
-    private static func overlaps(channel: Int, other: APInfo, band: String) -> Bool {
-        overlapFactor(channel: channel, other: other, band: band) > 0
+            accessPointInputs.append(
+                WiFiLensAccessPointInput(
+                    channel: Int64(ap.channel),
+                    rssi: Int64(ap.rssi),
+                    band: Int32(band.rawValue),
+                    channel_width_mhz: Int32(widthMHz),
+                    bssid_offset: bssidOffset,
+                    bssid_length: bssidBytes.count,
+                    ssid_offset: ssidOffset,
+                    ssid_length: ssidBytes.count
+                )
+            )
+        }
+
+        let targetBSSID = targetAP?.bssid.map { Array($0.lowercased().utf8) } ?? []
+        let targetBSSIDOffset = stringBytes.count
+        stringBytes.append(contentsOf: targetBSSID)
+        let targetSSID = targetAP?.ssid.map { Array($0.precomposedStringWithCanonicalMapping.utf8) } ?? []
+        let targetSSIDOffset = stringBytes.count
+        stringBytes.append(contentsOf: targetSSID)
+
+        let resolvedCurrentBand = currentBand.flatMap(ChannelBand.init(id:))
+        let resolvedCurrentChannel = currentBand == nil || resolvedCurrentBand != nil ? currentChannel : nil
+        var flags: UInt32 = 0
+        if resolvedCurrentChannel != nil { flags |= WIFI_LENS_QUALITY_HAS_CURRENT_CHANNEL }
+        if !targetBSSID.isEmpty { flags |= WIFI_LENS_QUALITY_HAS_TARGET_BSSID }
+        if !targetSSID.isEmpty { flags |= WIFI_LENS_QUALITY_HAS_TARGET_SSID }
+        if targetAP?.channel != nil { flags |= WIFI_LENS_QUALITY_HAS_TARGET_CHANNEL }
+
+        var supportedBandMask: UInt32 = 0
+        if supportedBands.contains("24") { supportedBandMask |= WIFI_LENS_BAND_24_GHZ }
+        if supportedBands.contains("5") { supportedBandMask |= WIFI_LENS_BAND_5_GHZ }
+        if supportedBands.contains("6") { supportedBandMask |= WIFI_LENS_BAND_6_GHZ }
+
+        let config = WiFiLensChannelQualityConfig(
+            flags: flags,
+            current_channel: Int64(resolvedCurrentChannel ?? 0),
+            target_channel: Int64(targetAP?.channel ?? 0),
+            current_band: Int32(resolvedCurrentBand?.rawValue ?? 0),
+            supported_band_mask: supportedBandMask,
+            target_bssid_offset: targetBSSIDOffset,
+            target_bssid_length: targetBSSID.count,
+            target_ssid_offset: targetSSIDOffset,
+            target_ssid_length: targetSSID.count
+        )
+
+        var output = [WiFiLensChannelQualityResult](
+            repeating: WiFiLensChannelQualityResult(),
+            count: Int(WIFI_LENS_MAX_CHANNEL_QUALITIES)
+        )
+        var outputCount = 0
+        let status = accessPointInputs.withUnsafeBufferPointer { accessPointBuffer in
+            stringBytes.withUnsafeBufferPointer { stringBuffer in
+                output.withUnsafeMutableBufferPointer { resultBuffer in
+                    withUnsafePointer(to: config) { configPointer in
+                        wifi_lens_channel_quality_analyze(
+                            accessPointBuffer.baseAddress,
+                            accessPointBuffer.count,
+                            stringBuffer.baseAddress,
+                            stringBuffer.count,
+                            configPointer,
+                            resultBuffer.baseAddress,
+                            resultBuffer.count,
+                            &outputCount
+                        )
+                    }
+                }
+            }
+        }
+
+        guard status == WIFI_LENS_STATUS_OK, outputCount <= output.count else {
+            assertionFailure("Rust channel quality returned status \(status) and count \(outputCount)")
+            return []
+        }
+
+        return output.prefix(outputCount).map { result in
+            let bandCode = Int(result.band)
+            guard let band = ChannelBand(rawValue: bandCode) else {
+                preconditionFailure("Rust channel quality returned unsupported band code \(bandCode)")
+            }
+            let qualityScore = Int(result.quality_score)
+            let recommendationScore = Int(result.recommendation_score)
+            let overlapLevel: ChannelQuality.OverlapLevel = switch result.ap_count {
+            case 0...1: .low
+            case 2...3: .moderate
+            default: .high
+            }
+            let recommendationConfidence: ChannelQuality.RecommendationConfidence = switch result.recommendation_confidence {
+            case 1: .exact
+            case 2: .ssidFallback
+            default: .unknown
+            }
+            let recommendationState: ChannelQuality.RecommendationState = switch result.recommendation_state {
+            case 0: .recommended
+            case 1: .currentGoodEnough
+            case 2: .insufficientImprovement
+            case 3: .notCandidate
+            default: .targetUnknown
+            }
+
+            return ChannelQuality(
+                channel: Int(result.channel),
+                band: band.id,
+                bandDisplay: band.displayName,
+                qualityScore: qualityScore,
+                qualityLevel: .from(score: qualityScore),
+                apCount: Int(result.ap_count),
+                coChannelCount: Int(result.co_channel_count),
+                adjacentCount: Int(result.adjacent_count),
+                interferenceScore: Int(result.interference_score),
+                overlapLevel: overlapLevel,
+                strongestNeighborRSSI: Int(result.strongest_neighbor_rssi),
+                isRecommended: result.is_recommended != 0,
+                isCurrentChannel: result.is_current_channel != 0,
+                showInSimpleView: result.show_in_simple_view != 0,
+                recommendationScore: recommendationScore,
+                recommendationLevel: .from(score: recommendationScore),
+                recommendationConfidence: recommendationConfidence,
+                recommendationState: recommendationState
+            )
+        }
     }
 }
 
