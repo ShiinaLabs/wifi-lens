@@ -216,6 +216,31 @@ typedef struct {
     uint8_t show_in_simple_view;
 } WiFiLensChannelQualityResult;
 
+/*
+ * Normalize scan rows before channel scoring. Band codes are 1 = 2.4 GHz,
+ * 2 = 5 GHz, 3 = 6 GHz. BSSID slices are raw UTF-8 in the caller-owned string
+ * buffer and are matched byte-exactly with band. Operating widths 40, 80,
+ * and 160 are retained; every other value maps to 20 MHz, matching the Swift
+ * adapter's existing fallback. Results retain first-group order and source
+ * indices; a strictly stronger RSSI replaces the selected row, while ties
+ * keep the first row. All buffers are caller-owned; no pointer escapes. The
+ * count pointer is required; null pointers are valid only for zero-length
+ * inputs or zero output capacity. Buffers must not overlap. The count reports
+ * required capacity and undersized outputs receive no writes.
+ */
+typedef struct {
+    int32_t band;
+    int64_t rssi;
+    int32_t operating_width_mhz;
+    size_t bssid_offset;
+    size_t bssid_length;
+} WiFiLensChannelOccupancyInput;
+
+typedef struct {
+    size_t source_index;
+    int32_t channel_width_mhz;
+} WiFiLensChannelOccupancyResult;
+
 #define WIFI_LENS_IE_MAX_SUITES 256
 #define WIFI_LENS_IE_MAX_SUITE_LABEL_BYTES 32
 #define WIFI_LENS_IE_MAX_TEXT_BYTES 16416
@@ -498,6 +523,18 @@ int32_t wifi_lens_channel_quality_analyze(
     size_t strings_length,
     const WiFiLensChannelQualityConfig *config,
     WiFiLensChannelQualityResult *results,
+    size_t result_capacity,
+    size_t *result_count
+);
+
+/* Statuses: 0 success, 1 invalid band, 4 caught Rust panic, 5 invalid pointer,
+ * 6 invalid input slice, 7 output capacity too small, 8 invalid UTF-8. */
+int32_t wifi_lens_channel_occupancy_normalize(
+    const WiFiLensChannelOccupancyInput *access_points,
+    size_t access_point_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    WiFiLensChannelOccupancyResult *results,
     size_t result_capacity,
     size_t *result_count
 );

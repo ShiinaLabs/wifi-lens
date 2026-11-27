@@ -1783,6 +1783,7 @@
 				"$(SRCROOT)/rust-core/rust-toolchain.toml",
 				"$(SRCROOT)/rust-core/src/lib.rs",
 				"$(SRCROOT)/rust-core/src/channel_quality.rs",
+				"$(SRCROOT)/rust-core/src/channel_occupancy.rs",
 				"$(SRCROOT)/rust-core/src/information_elements.rs",
 				"$(SRCROOT)/rust-core/src/link_evidence.rs",
 				"$(SRCROOT)/rust-core/src/network_diagnostic_stages.rs",

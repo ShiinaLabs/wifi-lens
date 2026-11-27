@@ -1,5 +1,6 @@
 //! Portable Wi-Fi analysis primitives shared by the macOS applications.
 
+pub mod channel_occupancy;
 mod channel_quality;
 mod information_elements;
 pub mod link_evidence;
@@ -7,6 +8,10 @@ pub mod network_diagnostic_stages;
 pub mod observation_analysis;
 pub mod regulatory;
 
+pub use channel_occupancy::{
+    normalize as normalize_channel_occupancy, ChannelOccupancyAccessPoint,
+    NormalizedChannelOccupancy, WiFiLensChannelOccupancyInput, WiFiLensChannelOccupancyResult,
+};
 pub use channel_quality::{
     analyze as analyze_channel_quality, AccessPoint, AnalysisConfiguration, ChannelQuality,
     ChannelWidth, TargetAccessPoint, WiFiLensAccessPointInput, WiFiLensChannelQualityConfig,

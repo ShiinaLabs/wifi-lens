@@ -382,6 +382,24 @@ struct ChannelOccupancyAnalyzerTests {
         #expect(ch40.strongestNeighborRSSI == -50)
     }
 
+    @Test("ChannelOccupancyAnalyzer: equal RSSI keeps the first scan row")
+    func equalRSSITieKeepsFirstSourceRow() throws {
+        let aps = [
+            observation(bssid: "{{MAC_d4qg3z6k}}", rssi: -50, channel: 36, widthMHz: 40),
+            observation(bssid: "{{MAC_d4qg3z6k}}", rssi: -50, channel: 44, widthMHz: 160),
+        ]
+        let result = ChannelOccupancyAnalyzer.analyze(
+            snapshot: snapshot(aps),
+            currentChannel: nil,
+            supportedBands: ["5"],
+            targetAP: nil
+        )
+        let firstChannel = try #require(result.first { $0.channel == 36 && $0.band == "5" })
+        let tiedChannel = try #require(result.first { $0.channel == 44 && $0.band == "5" })
+        #expect(firstChannel.apCount == 1)
+        #expect(tiedChannel.apCount == 0)
+    }
+
     @Test("ChannelOccupancyAnalyzer: same BSSID on different bands is not deduplicated")
     func sameBSSIDDifferentBandKeepsBoth() throws {
         let aps = [
@@ -397,6 +415,30 @@ struct ChannelOccupancyAnalyzerTests {
         // Each band keeps its own copy of the AP.
         #expect(result.first { $0.channel == 6 && $0.band == "24" }?.apCount == 1)
         #expect(result.first { $0.channel == 36 && $0.band == "5" }?.apCount == 1)
+    }
+
+    @Test("ChannelOccupancyAnalyzer: raw BSSID text is the deduplication key")
+    func rawBSSIDTextIsTheDeduplicationKey() throws {
+        let composed = "AA\u{030A}"
+        let precomposed = "\u{00C5}"
+        #expect(composed != precomposed)
+
+        let aps = [
+            observation(bssid: composed, rssi: -70, channel: 36),
+            observation(bssid: precomposed, rssi: -50, channel: 40),
+        ]
+        let result = ChannelOccupancyAnalyzer.analyze(
+            snapshot: snapshot(aps),
+            currentChannel: nil,
+            supportedBands: ["5"],
+            targetAP: nil
+        )
+        let first = try #require(result.first { $0.channel == 36 && $0.band == "5" })
+        let second = try #require(result.first { $0.channel == 40 && $0.band == "5" })
+        #expect(first.apCount == 1)
+        #expect(second.apCount == 1)
+        #expect(first.strongestNeighborRSSI == -70)
+        #expect(second.strongestNeighborRSSI == -50)
     }
 
     // MARK: - Wide channel span / apex (40 / 80 MHz)
@@ -445,6 +487,30 @@ struct ChannelOccupancyAnalyzerTests {
         )
         let ch48 = try #require(result.first { $0.channel == 48 && $0.band == "5" })
         #expect(ch48.qualityScore == 92)
+    }
+
+    @Test("ChannelOccupancyAnalyzer: unsupported operating width preserves the 20 MHz fallback")
+    func unsupportedOperatingWidthFallsBackTo20MHz() throws {
+        let bssid = "{{MAC_7qk9x3wm}}"
+        let expected = ChannelOccupancyAnalyzer.analyze(
+            snapshot: snapshot([observation(bssid: bssid, rssi: -30, channel: 44, widthMHz: 20)]),
+            currentChannel: nil,
+            supportedBands: ["5"],
+            targetAP: nil
+        )
+        let expectedChannel = try #require(expected.first { $0.channel == 44 && $0.band == "5" })
+        for width in [320, Int.max, Int.min] {
+            let actual = ChannelOccupancyAnalyzer.analyze(
+                snapshot: snapshot([observation(bssid: bssid, rssi: -30, channel: 44, widthMHz: width)]),
+                currentChannel: nil,
+                supportedBands: ["5"],
+                targetAP: nil
+            )
+            let actualChannel = try #require(actual.first { $0.channel == 44 && $0.band == "5" })
+            #expect(actualChannel.qualityScore == expectedChannel.qualityScore)
+            #expect(actualChannel.interferenceScore == expectedChannel.interferenceScore)
+            #expect(actualChannel.apCount == expectedChannel.apCount)
+        }
     }
 
     @Test("ChannelSpanCalculator: 40/80 MHz span blocks (used by real overlap model)")

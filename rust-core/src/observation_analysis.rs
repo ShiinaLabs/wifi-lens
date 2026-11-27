@@ -137,7 +137,11 @@ pub struct DiagnosticInput {
 
 /// Evaluate the connection quality level and display bands without localization.
 pub fn assess_quality(input: QualityInput) -> QualityAssessment {
-    if !input.eligible {
+    if !input.eligible
+        || input
+            .latency_ms
+            .is_some_and(|ms| !ms.is_finite() || ms < 0.0)
+    {
         return QualityAssessment {
             level: QualityLevel::Unknown,
             signal_band: SignalBand::Unknown,
@@ -191,6 +195,18 @@ pub fn assess_quality(input: QualityInput) -> QualityAssessment {
 
 /// Select the diagnostic category from normalized observation facts.
 pub fn assess_diagnosis(input: DiagnosticInput) -> DiagnosticKind {
+    if input.channel_quality_score.is_some_and(|score| {
+        !(CHANNEL_QUALITY_SCORE_MIN..=CHANNEL_QUALITY_SCORE_MAX).contains(&score)
+    }) || (!input.metrics_verified
+        && (input.rssi.is_some()
+            || input.channel_quality_score.is_some()
+            || input.security_has_wpa3
+            || input.security_known_nonempty
+            || input.phy != PhyGeneration::Other))
+        || (input.security_has_wpa3 && !input.security_known_nonempty)
+    {
+        return DiagnosticKind::Unknown;
+    }
     if !input.associated {
         return DiagnosticKind::Unknown;
     }
@@ -736,6 +752,65 @@ mod tests {
                 ..base
             }),
             DiagnosticKind::OldPhy11AC
+        );
+    }
+
+    #[test]
+    fn typed_quality_boundary_fails_closed_for_negative_or_non_finite_latency() {
+        let expected = QualityAssessment {
+            level: QualityLevel::Unknown,
+            signal_band: SignalBand::Unknown,
+            latency_band: LatencyBand::Unavailable,
+        };
+        for latency_ms in [-0.001, f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            assert_eq!(
+                assess_quality(QualityInput {
+                    eligible: true,
+                    rssi: Some(-50),
+                    latency_ms: Some(latency_ms),
+                }),
+                expected,
+                "latency {latency_ms:?} must not produce a partial assessment"
+            );
+        }
+    }
+
+    #[test]
+    fn typed_diagnosis_boundary_fails_closed_for_out_of_range_scores_and_inconsistent_facts() {
+        let base = DiagnosticInput {
+            associated: true,
+            metrics_verified: true,
+            rssi: Some(-50),
+            channel_quality_score: Some(80),
+            security_has_wpa3: true,
+            security_known_nonempty: true,
+            phy: PhyGeneration::Other,
+        };
+        for score in [-1, 101] {
+            assert_eq!(
+                assess_diagnosis(DiagnosticInput {
+                    channel_quality_score: Some(score),
+                    ..base
+                }),
+                DiagnosticKind::Unknown,
+                "score {score} must not produce a partial classification"
+            );
+        }
+        assert_eq!(
+            assess_diagnosis(DiagnosticInput {
+                metrics_verified: false,
+                ..base
+            }),
+            DiagnosticKind::Unknown,
+            "unverified diagnostic measurements are not valid typed input"
+        );
+        assert_eq!(
+            assess_diagnosis(DiagnosticInput {
+                security_known_nonempty: false,
+                ..base
+            }),
+            DiagnosticKind::Unknown,
+            "WPA3 cannot be asserted without known security"
         );
     }
 
