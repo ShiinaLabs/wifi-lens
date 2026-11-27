@@ -337,6 +337,10 @@ pub unsafe extern "C" fn wifi_lens_diagnostic_stage_assess(
 
     let raw_input = unsafe { *input };
     match guarded_assessment(|| {
+        #[cfg(test)]
+        if raw_input.flags == u32::MAX {
+            panic!("test-only panic path");
+        }
         decode_input(raw_input)
             .map(assess_network_diagnostic_stages)
             .map(Into::into)
@@ -537,11 +541,21 @@ mod tests {
     }
 
     #[test]
-    fn panic_is_converted_to_a_status_before_crossing_the_abi() {
-        let result = guarded_assessment(|| -> Result<WiFiLensDiagnosticStageResult, i32> {
-            panic!("test panic")
-        });
-        assert_eq!(result, Err(WIFI_LENS_STATUS_PANIC));
+    fn panic_at_the_public_ffi_entry_is_converted_to_a_status() {
+        let input = WiFiLensDiagnosticStageInput {
+            flags: u32::MAX,
+            ..WiFiLensDiagnosticStageInput::default()
+        };
+        let sentinel = WiFiLensDiagnosticStageResult {
+            this_mac_status: -1,
+            ..WiFiLensDiagnosticStageResult::default()
+        };
+        let mut output = sentinel;
+        assert_eq!(
+            unsafe { wifi_lens_diagnostic_stage_assess(&input, &mut output) },
+            WIFI_LENS_STATUS_PANIC
+        );
+        assert_eq!(output, sentinel);
     }
 
     #[test]

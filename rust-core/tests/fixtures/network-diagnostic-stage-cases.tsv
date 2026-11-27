@@ -5,6 +5,8 @@
 # flags: bit 0 internet https available, bit 1 gateway no response, bit 2 proxy explicit direct route, bit 3 proxy resolution evidence
 all-normal-no-external normal normal normal normal normal normal missing missing 0 normal normal normal none none 0 0 0
 all-normal-https normal normal normal normal normal normal missing missing 1 normal normal normal none none 1 0 0
+missing-path-precedes-abnormal missing normal normal normal normal abnormal missing missing 0 missing normal normal none none 0 0 0
+direct-proxy-with-abnormal-path abnormal normal normal normal normal indeterminate unverified unverified 4 abnormal normal normal none none 0 1 0
 abnormal-precedes-blocked-and-indeterminate abnormal normal normal blocked normal indeterminate missing missing 0 abnormal normal normal none none 0 0 0
 blocked-precedes-indeterminate indeterminate normal normal blocked normal normal missing missing 0 blocked normal normal none none 0 0 0
 all-skipped-this-mac skipped normal normal skipped normal skipped missing missing 0 skipped normal normal none none 0 0 0
@@ -28,3 +30,6 @@ gateway-normal-with-no-response-evidence normal normal normal normal normal norm
 external-success-via-proxy-with-abnormal-internet normal normal normal normal abnormal normal unavailable available 0 normal normal abnormal none none 1 0 0
 internet-skipped-with-normal-lan normal normal normal normal skipped normal missing missing 0 normal normal skipped none none 0 0 0
 internet-indeterminate normal normal normal normal indeterminate normal missing missing 0 normal normal indeterminate none none 0 0 0
+direct-proxy-http-available normal normal normal normal normal indeterminate available unverified 4 indeterminate normal normal none none 0 0 0
+gateway-indeterminate-without-no-response normal indeterminate indeterminate normal normal normal missing missing 1 normal indeterminate normal none none 1 0 0
+proxy-authentication-not-unverified normal normal normal normal normal indeterminate auth unverified 4 indeterminate normal normal none none 0 0 0

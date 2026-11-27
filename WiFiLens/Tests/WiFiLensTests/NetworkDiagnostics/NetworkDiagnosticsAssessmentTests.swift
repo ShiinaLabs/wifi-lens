@@ -114,14 +114,14 @@ extension NetworkDiagnosticsTests {
                 )
             }
 
-            let assessment = resolver.resolve(results: results, complete: false)
+            let resolution = resolver.resolveStages(results: results)
             let expectedStatuses = [
                 (NetworkDiagnosticStage.thisMac, fields[10]),
                 (.lan, fields[11]),
                 (.internet, fields[12]),
             ]
             for (stage, token) in expectedStatuses {
-                let actual = assessment.stages.first { $0.stage == stage }
+                let actual = resolution.stages.first { $0.stage == stage }
                 #expect(
                     actual?.status == status(token),
                     "fixture \(name) stage \(stage)"
@@ -132,16 +132,32 @@ extension NetworkDiagnosticsTests {
                 (.lan, fields[14]),
             ]
             for (stage, token) in expectedQualifications {
-                let actual = assessment.stages.first { $0.stage == stage }
+                let actual = resolution.stages.first { $0.stage == stage }
                 #expect(
                     actual?.qualificationCode == qualification(token),
                     "fixture \(name) qualification \(stage)"
                 )
             }
+            #expect(
+                resolution.stages.first { $0.stage == .internet }?.qualificationCode == nil,
+                "fixture \(name) internet qualification"
+            )
+            #expect(
+                resolution.externalSuccess == (fields[15] == "1"),
+                "fixture \(name) external success"
+            )
+            #expect(
+                resolution.neutralDirectProxy == (fields[16] == "1"),
+                "fixture \(name) neutral direct proxy"
+            )
+            #expect(
+                resolution.neutralGateway == (fields[17] == "1"),
+                "fixture \(name) neutral gateway"
+            )
             caseCount += 1
         }
 
-        #expect(caseCount == 25)
+        #expect(caseCount == 30)
     }
 
     @Test("Rust stage aggregation preserves qualifications and absent contributor state")

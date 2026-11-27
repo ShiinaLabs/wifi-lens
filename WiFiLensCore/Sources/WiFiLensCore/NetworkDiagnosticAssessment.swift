@@ -51,6 +51,13 @@ struct NetworkDiagnosticAssessment: Equatable, Sendable {
     let primaryIssue: NetworkDiagnosticResult?
 }
 
+struct NetworkDiagnosticStageResolution: Equatable, Sendable {
+    let stages: [DiagnosticStageAssessment]
+    let externalSuccess: Bool
+    let neutralDirectProxy: Bool
+    let neutralGateway: Bool
+}
+
 struct NetworkDiagnosticAssessmentResolver: Sendable {
     func resolve(
         results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
@@ -113,11 +120,9 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         )
     }
 
-    private func resolveStages(
+    func resolveStages(
         results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult]
-    ) -> (
-        stages: [DiagnosticStageAssessment], externalSuccess: Bool, neutralDirectProxy: Bool, neutralGateway: Bool
-    ) {
+    ) -> NetworkDiagnosticStageResolution {
         func statusCode(_ status: NetworkDiagnosticStatus?) -> Int32 {
             switch status {
             case nil: WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_MISSING
@@ -183,11 +188,13 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         }
         guard status == WIFI_LENS_STATUS_OK else {
             assertionFailure("Rust diagnostic stage assessment returned status \(status)")
-            return (
-                NetworkDiagnosticStage.allCases.map { .init(stage: $0, status: nil, qualificationCode: nil) },
-                false,
-                false,
-                false
+            return NetworkDiagnosticStageResolution(
+                stages: NetworkDiagnosticStage.allCases.map {
+                    .init(stage: $0, status: nil, qualificationCode: nil)
+                },
+                externalSuccess: false,
+                neutralDirectProxy: false,
+                neutralGateway: false
             )
         }
 
@@ -216,8 +223,8 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
             }
         }
 
-        return (
-            [
+        return NetworkDiagnosticStageResolution(
+            stages: [
                 .init(
                     stage: .thisMac,
                     status: mappedStatus(output.this_mac_status),
@@ -234,9 +241,9 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                     qualificationCode: qualificationCode(output.internet_qualification)
                 ),
             ],
-            output.external_success != 0,
-            output.neutral_direct_proxy != 0,
-            output.neutral_gateway != 0
+            externalSuccess: output.external_success != 0,
+            neutralDirectProxy: output.neutral_direct_proxy != 0,
+            neutralGateway: output.neutral_gateway != 0
         )
     }
 

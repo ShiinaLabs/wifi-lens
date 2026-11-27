@@ -184,6 +184,11 @@ fn fixtures_match_typed_and_c_abis() {
         let resolution = assess_network_diagnostic_stages(parse_input(&fields));
         assert_eq!(resolution.stages, expected, "fixture {}", fields[0]);
         assert_eq!(
+            resolution.stages[2].qualification, expected[2].qualification,
+            "typed internet qualification fixture {}",
+            fields[0]
+        );
+        assert_eq!(
             resolution.external_success, expected_external,
             "external success fixture {}",
             fields[0]
@@ -239,6 +244,12 @@ fn fixtures_match_typed_and_c_abis() {
             fields[0]
         );
         assert_eq!(
+            output.internet_qualification,
+            qualification_code(expected[2].qualification),
+            "C ABI internet qualification fixture {}",
+            fields[0]
+        );
+        assert_eq!(
             output.external_success,
             i32::from(expected_external),
             "C ABI external fixture {}",
@@ -258,7 +269,7 @@ fn fixtures_match_typed_and_c_abis() {
         );
         case_count += 1;
     }
-    assert_eq!(case_count, 25);
+    assert_eq!(case_count, 30);
 }
 
 #[test]
