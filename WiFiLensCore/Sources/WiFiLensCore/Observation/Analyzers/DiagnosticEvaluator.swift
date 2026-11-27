@@ -1,34 +1,35 @@
-import SwiftUI
+import Foundation
+import WiFiLensCoreRust
 
 enum DiagnosticEvaluator {
     static func evaluate(
         currentStatus: WiFiCurrentStatus,
-        quality: WiFiQualityResult? = nil,
         channelAnalysis: [ChannelQuality]? = nil,
         channelRecommendations: [ChannelRecommendation]? = nil
     ) -> DiagnosticResult {
         let associated = WiFiLinkEvidenceValidator.assessment(for: currentStatus)?.state == .associated
-        guard associated else {
+        guard associated else { return .unknown }
+
+        let metricsVerified = currentStatus.metricsAttribution == .verified
+        let currentChannel = channelAnalysis?.first(where: { $0.isCurrentChannel })
+        let channelScore = metricsVerified ? currentChannel?.qualityScore : nil
+        let accessPointCount = metricsVerified ? currentChannel?.apCount ?? 0 : 0
+        let security = metricsVerified ? currentStatus.security ?? "" : ""
+        guard
+            let assessment = ObservationAnalysisRustBridge.diagnosis(
+                associated: associated,
+                metricsVerified: metricsVerified,
+                rssi: currentStatus.rssi,
+                channelQualityScore: channelScore,
+                security: security,
+                phyMode: currentStatus.phyMode
+            )
+        else {
             return .unknown
         }
-        let metricsVerified = currentStatus.metricsAttribution == .verified
-        let rssi = metricsVerified ? currentStatus.rssi : nil
-        let chScore =
-            metricsVerified
-            ? channelAnalysis?
-                .first(where: { $0.isCurrentChannel })?
-                .qualityScore : nil
-        let apCount =
-            metricsVerified
-            ? channelAnalysis?
-                .first(where: { $0.isCurrentChannel })?
-                .apCount ?? 0 : 0
-        let sec = metricsVerified ? currentStatus.security ?? "" : ""
-        let phy = metricsVerified ? currentStatus.phyMode ?? "" : ""
 
-        guard rssi != nil || chScore != nil else { return .unknown }
-
-        if let rssi, let chScore, rssi >= -55 && chScore >= 70 && sec.contains("WPA3") {
+        switch assessment.kind {
+        case WIFI_LENS_DIAGNOSTIC_EXCELLENT:
             return DiagnosticResult(
                 icon: "star.fill",
                 title: String(localized: "observation.diagnosis.excellent.title", comment: "Excellent connection"),
@@ -36,32 +37,32 @@ enum DiagnosticEvaluator {
                     localized: "observation.diagnosis.excellent.message", comment: "Excellent connection message"),
                 severity: .excellent
             )
-        }
-
-        if let rssi, rssi < -75 {
+        case WIFI_LENS_DIAGNOSTIC_WEAK_SIGNAL:
             return DiagnosticResult(
                 icon: "wifi.slash",
                 title: String(localized: "observation.diagnosis.weak_signal.title", comment: "Weak signal"),
                 message: String(localized: "observation.diagnosis.weak_signal.message", comment: "Weak signal advice"),
                 severity: .critical
             )
-        }
-
-        if let chScore, chScore < 50 {
-            let channelNum = metricsVerified ? currentStatus.channel ?? 0 : 0
-            let recList = channelRecommendations?.prefix(2).map { "\($0.channel)" }.joined(separator: " / ") ?? ""
+        case WIFI_LENS_DIAGNOSTIC_CONGESTED:
+            let channelNumber = currentStatus.channel ?? 0
+            let recommendationList =
+                channelRecommendations?.prefix(2).map { "\($0.channel)" }
+                .joined(separator: " / ") ?? ""
             return DiagnosticResult(
                 icon: "antenna.radiowaves.left.and.right",
                 title: String(localized: "observation.diagnosis.congested.title", comment: "Congested channel"),
                 message: String(
                     format: String(
                         localized: "observation.diagnosis.congested.message_fmt",
-                        comment: "Congested channel with details"), channelNum, apCount, recList),
+                        comment: "Congested channel with details"),
+                    channelNumber,
+                    accessPointCount,
+                    recommendationList
+                ),
                 severity: .warning
             )
-        }
-
-        if let chScore, chScore < 70 {
+        case WIFI_LENS_DIAGNOSTIC_MEDIOCRE:
             return DiagnosticResult(
                 icon: "antenna.radiowaves.left.and.right",
                 title: String(localized: "observation.diagnosis.mediocre.title", comment: "Mediocre channel"),
@@ -69,37 +70,42 @@ enum DiagnosticEvaluator {
                     localized: "observation.diagnosis.mediocre.message", comment: "Mediocre channel advice"),
                 severity: .warning
             )
-        }
-
-        if !sec.contains("WPA3") && sec != "—" && !sec.isEmpty {
+        case WIFI_LENS_DIAGNOSTIC_WEAK_SECURITY:
             return DiagnosticResult(
                 icon: "lock.open.fill",
                 title: String(localized: "observation.diagnosis.security.title", comment: "Weak security"),
                 message: String(
                     format: String(
-                        localized: "observation.diagnosis.security.message_fmt", comment: "Security advice with type"),
-                    sec),
+                        localized: "observation.diagnosis.security.message_fmt",
+                        comment: "Security advice with type"),
+                    security
+                ),
                 severity: .warning
             )
-        }
-
-        if phy == "802.11n" || phy == "802.11ac" {
-            let version = phy == "802.11n" ? "4" : "5"
+        case WIFI_LENS_DIAGNOSTIC_OLD_PHY_11N, WIFI_LENS_DIAGNOSTIC_OLD_PHY_11AC:
+            let version = assessment.kind == WIFI_LENS_DIAGNOSTIC_OLD_PHY_11N ? "4" : "5"
             return DiagnosticResult(
                 icon: "speedometer",
                 title: String(localized: "observation.diagnosis.old_phy.title", comment: "Older Wi-Fi generation"),
                 message: String(
                     format: String(
-                        localized: "observation.diagnosis.old_phy.message_fmt", comment: "PHY upgrade advice"), version),
+                        localized: "observation.diagnosis.old_phy.message_fmt", comment: "PHY upgrade advice"),
+                    version
+                ),
                 severity: .warning
             )
+        case WIFI_LENS_DIAGNOSTIC_OK:
+            return DiagnosticResult(
+                icon: "checkmark.circle.fill",
+                title: String(localized: "observation.diagnosis.ok.title", comment: "Acceptable connection"),
+                message: String(localized: "observation.diagnosis.ok.message", comment: "General advice"),
+                severity: .ok
+            )
+        case WIFI_LENS_DIAGNOSTIC_UNKNOWN:
+            return .unknown
+        default:
+            assertionFailure("Rust diagnosis evaluator returned kind code \(assessment.kind)")
+            return .unknown
         }
-
-        return DiagnosticResult(
-            icon: "checkmark.circle.fill",
-            title: String(localized: "observation.diagnosis.ok.title", comment: "Acceptable connection"),
-            message: String(localized: "observation.diagnosis.ok.message", comment: "General advice"),
-            severity: .ok
-        )
     }
 }

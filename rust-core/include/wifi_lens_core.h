@@ -17,6 +17,7 @@
 #define WIFI_LENS_STATUS_INVALID_LINK_EVIDENCE 10
 #define WIFI_LENS_STATUS_INVALID_REGULATORY_INPUT 11
 #define WIFI_LENS_STATUS_INVALID_NETWORK_DIAGNOSTIC_INPUT 12
+#define WIFI_LENS_STATUS_INVALID_OBSERVATION_INPUT 13
 
 typedef struct {
     int32_t status;
@@ -582,6 +583,88 @@ int32_t wifi_lens_recommendation_reasons(
 int32_t wifi_lens_diagnostic_stage_assess(
     const WiFiLensDiagnosticStageInput *input,
     WiFiLensDiagnosticStageResult *output
+);
+
+#define WIFI_LENS_QUALITY_ELIGIBLE (1u << 0)
+#define WIFI_LENS_QUALITY_HAS_RSSI (1u << 1)
+#define WIFI_LENS_QUALITY_HAS_LATENCY (1u << 2)
+
+#define WIFI_LENS_QUALITY_LEVEL_UNKNOWN 0
+#define WIFI_LENS_QUALITY_LEVEL_GOOD 1
+#define WIFI_LENS_QUALITY_LEVEL_FAIR 2
+#define WIFI_LENS_QUALITY_LEVEL_POOR 3
+
+#define WIFI_LENS_SIGNAL_BAND_UNKNOWN 0
+#define WIFI_LENS_SIGNAL_BAND_STRONG 1
+#define WIFI_LENS_SIGNAL_BAND_GOOD 2
+#define WIFI_LENS_SIGNAL_BAND_MODERATE 3
+#define WIFI_LENS_SIGNAL_BAND_WEAK 4
+
+#define WIFI_LENS_LATENCY_BAND_UNAVAILABLE 0
+#define WIFI_LENS_LATENCY_BAND_NORMAL 1
+#define WIFI_LENS_LATENCY_BAND_ELEVATED 2
+#define WIFI_LENS_LATENCY_BAND_HIGH 3
+
+#define WIFI_LENS_DIAGNOSTIC_ASSOCIATED (1u << 0)
+#define WIFI_LENS_DIAGNOSTIC_METRICS_VERIFIED (1u << 1)
+#define WIFI_LENS_DIAGNOSTIC_HAS_RSSI (1u << 2)
+#define WIFI_LENS_DIAGNOSTIC_HAS_CHANNEL_SCORE (1u << 3)
+#define WIFI_LENS_DIAGNOSTIC_SECURITY_HAS_WPA3 (1u << 4)
+#define WIFI_LENS_DIAGNOSTIC_SECURITY_KNOWN (1u << 5)
+
+#define WIFI_LENS_PHY_OTHER 0
+#define WIFI_LENS_PHY_11N 1
+#define WIFI_LENS_PHY_11AC 2
+
+#define WIFI_LENS_DIAGNOSTIC_UNKNOWN 0
+#define WIFI_LENS_DIAGNOSTIC_EXCELLENT 1
+#define WIFI_LENS_DIAGNOSTIC_WEAK_SIGNAL 2
+#define WIFI_LENS_DIAGNOSTIC_CONGESTED 3
+#define WIFI_LENS_DIAGNOSTIC_MEDIOCRE 4
+#define WIFI_LENS_DIAGNOSTIC_WEAK_SECURITY 5
+#define WIFI_LENS_DIAGNOSTIC_OLD_PHY_11N 6
+#define WIFI_LENS_DIAGNOSTIC_OLD_PHY_11AC 7
+#define WIFI_LENS_DIAGNOSTIC_OK 8
+
+typedef struct {
+    uint32_t flags;
+    int64_t rssi;
+    double latency_ms;
+} WiFiLensQualityInput;
+
+typedef struct {
+    int32_t level;
+    int32_t signal_band;
+    int32_t latency_band;
+} WiFiLensQualityResult;
+
+typedef struct {
+    uint32_t flags;
+    int64_t rssi;
+    int32_t channel_quality_score;
+    int32_t phy_generation;
+} WiFiLensDiagnosticInput;
+
+typedef struct {
+    int32_t kind;
+} WiFiLensDiagnosticResult;
+
+/*
+ * Quality input flags encode eligibility, RSSI presence, and latency presence.
+ * A present latency must be finite and nonnegative. Diagnostic metric and
+ * security facts require METRICS_VERIFIED; WPA3 requires SECURITY_KNOWN, and
+ * a present channel score must be in 0...100. Unknown flags/codes or these
+ * contradictory encodings return status 13 without writing partial output.
+ * Unflagged scalar fields are absent facts and their stored values are ignored.
+ */
+int32_t wifi_lens_evaluate_quality(
+    const WiFiLensQualityInput *input,
+    WiFiLensQualityResult *output
+);
+
+int32_t wifi_lens_evaluate_diagnosis(
+    const WiFiLensDiagnosticInput *input,
+    WiFiLensDiagnosticResult *output
 );
 
 #endif

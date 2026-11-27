@@ -89,7 +89,16 @@ struct WiFiLinkEvidenceInterpreterTests {
                 Issue.record("Invalid link state in fixture on line \(lineIndex + 1)")
                 continue
             }
-            let coreWLANModeRawValue = fields[6] == "1" ? try #require(Int(fields[7])) : nil
+            let coreWLANModeRawValue: Int?
+            if fields[6] == "1" {
+                guard let rawValue = Int(fields[7]) else {
+                    Issue.record("Invalid raw CoreWLAN mode in link evidence fixture on line \(lineIndex + 1)")
+                    continue
+                }
+                coreWLANModeRawValue = rawValue
+            } else {
+                coreWLANModeRawValue = nil
+            }
             let radioPowerOnRaw = fields[10] == "1" ? fields[11] == "1" : nil
             let evidence: WiFiLinkRawEvidence?
             if fields[1] == "1" {

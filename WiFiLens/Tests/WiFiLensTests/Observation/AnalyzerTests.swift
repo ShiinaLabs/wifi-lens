@@ -9,7 +9,9 @@ private func verifiedAssociatedStatus(
     bssid: String? = "AA:BB",
     channel: Int? = 36,
     rssi: Int? = -45,
-    security: String? = nil
+    security: String? = nil,
+    routerIP: String? = nil,
+    phyMode: String? = nil
 ) -> WiFiCurrentStatus {
     let cycleID = UUID()
     let evidence = WiFiLinkRawEvidence(
@@ -36,7 +38,9 @@ private func verifiedAssociatedStatus(
         channel: channel,
         band: channel.map { $0 <= 14 ? .band24GHz : .band5GHz },
         rssi: rssi,
+        phyMode: phyMode,
         security: security,
+        routerIP: routerIP,
         isConnected: true,
         isWiFiPowerOn: true,
         linkEvidence: evidence,
@@ -49,10 +53,20 @@ private func verifiedAssociatedStatus(
 struct AnalyzerTests {
     @Test("WiFiQualityEvaluator: strong signal + low latency = good")
     func strongGood() {
-        let status = verifiedAssociatedStatus()
-        let latency = GatewayLatencyResult(timestamp: Date(), latencyMs: 20)
+        let status = verifiedAssociatedStatus(routerIP: "192.0.2.1")
+        let latency = GatewayLatencyResult(
+            timestamp: status.timestamp,
+            routerIP: status.routerIP,
+            latencyMs: 20,
+            probeOutcome: .replied(milliseconds: 20),
+            attemptID: UUID(),
+            cycleID: status.interfaceSnapshotCycleID,
+            interfaceName: status.interfaceName,
+            interfaceBound: true
+        )
         let result = WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: latency)
         #expect(result.level == .good)
+        #expect(result.latencyLabel == String(localized: "observation.latency.normal"))
     }
 
     @Test("WiFiQualityEvaluator: weak signal = poor")
@@ -60,6 +74,51 @@ struct AnalyzerTests {
         let status = verifiedAssociatedStatus(channel: 6, rssi: -80)
         let result = WiFiQualityEvaluator.evaluate(currentStatus: status)
         #expect(result.level == .poor)
+    }
+
+    @Test("WiFiQualityEvaluator: gateway latency thresholds are applied only to attributed probes")
+    func latencyThresholdsRequireAttribution() {
+        func attributedLatency(_ milliseconds: Double, for status: WiFiCurrentStatus) -> GatewayLatencyResult {
+            GatewayLatencyResult(
+                timestamp: status.timestamp,
+                routerIP: status.routerIP,
+                latencyMs: milliseconds,
+                probeOutcome: .replied(milliseconds: milliseconds),
+                attemptID: UUID(),
+                cycleID: status.interfaceSnapshotCycleID,
+                interfaceName: status.interfaceName,
+                interfaceBound: true
+            )
+        }
+
+        let status = verifiedAssociatedStatus(rssi: -56, routerIP: "192.0.2.1")
+        let belowFifty = WiFiQualityEvaluator.evaluate(
+            currentStatus: status,
+            gatewayLatency: attributedLatency(49.999, for: status)
+        )
+        #expect(belowFifty.level == .fair)
+        #expect(belowFifty.latencyLabel == String(localized: "observation.latency.normal"))
+
+        let atOneHundred = WiFiQualityEvaluator.evaluate(
+            currentStatus: status,
+            gatewayLatency: attributedLatency(100, for: status)
+        )
+        #expect(atOneHundred.level == .poor)
+        #expect(atOneHundred.latencyLabel == String(localized: "observation.latency.high"))
+
+        let mismatchedCycle = GatewayLatencyResult(
+            timestamp: status.timestamp,
+            routerIP: status.routerIP,
+            latencyMs: 1,
+            probeOutcome: .replied(milliseconds: 1),
+            attemptID: UUID(),
+            cycleID: UUID(),
+            interfaceName: status.interfaceName,
+            interfaceBound: true
+        )
+        let unattributed = WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: mismatchedCycle)
+        #expect(unattributed.level == .poor)
+        #expect(unattributed.latencyLabel == String(localized: "observation.latency.unavailable"))
     }
 
     @Test("DiagnosticEvaluator: excellent when strong + WPA3 + good channel")
@@ -76,6 +135,75 @@ struct AnalyzerTests {
             currentStatus: status, channelAnalysis: [ch]
         )
         #expect(result.severity == .excellent)
+        #expect(result.title == String(localized: "observation.diagnosis.excellent.title"))
+    }
+
+    @Test("DiagnosticEvaluator maps Rust diagnostic categories to existing presentation")
+    func diagnosticCategoryMapping() {
+        func currentChannel(score: Int, apCount: Int = 3) -> ChannelQuality {
+            ChannelQuality(
+                channel: 36,
+                band: "5",
+                bandDisplay: "5 GHz",
+                qualityScore: score,
+                qualityLevel: .good,
+                apCount: apCount,
+                coChannelCount: 1,
+                adjacentCount: 1,
+                interferenceScore: 20,
+                overlapLevel: .moderate,
+                strongestNeighborRSSI: -65,
+                isCurrentChannel: true
+            )
+        }
+
+        let cases: [(WiFiCurrentStatus, Int, DiagnosticSeverity, String)] = [
+            (
+                verifiedAssociatedStatus(rssi: -76, security: "WPA3", phyMode: "802.11ax"),
+                49,
+                .critical,
+                "observation.diagnosis.weak_signal.title"
+            ),
+            (
+                verifiedAssociatedStatus(rssi: -60, security: "WPA3", phyMode: "802.11ax"),
+                50,
+                .warning,
+                "observation.diagnosis.mediocre.title"
+            ),
+            (
+                verifiedAssociatedStatus(rssi: -60, security: "WPA2", phyMode: "802.11n"),
+                70,
+                .warning,
+                "observation.diagnosis.security.title"
+            ),
+            (
+                verifiedAssociatedStatus(rssi: -60, security: "—", phyMode: "802.11n"),
+                70,
+                .warning,
+                "observation.diagnosis.old_phy.title"
+            ),
+            (
+                verifiedAssociatedStatus(rssi: -60, security: "WPA3", phyMode: "802.11ac"),
+                70,
+                .warning,
+                "observation.diagnosis.old_phy.title"
+            ),
+            (
+                verifiedAssociatedStatus(rssi: -60, security: "WPA3", phyMode: "802.11ax"),
+                70,
+                .ok,
+                "observation.diagnosis.ok.title"
+            ),
+        ]
+
+        for (status, score, severity, titleKey) in cases {
+            let result = DiagnosticEvaluator.evaluate(
+                currentStatus: status,
+                channelAnalysis: [currentChannel(score: score)]
+            )
+            #expect(result.severity == severity, "score \(score), RSSI \(String(describing: status.rssi))")
+            #expect(result.title == String(localized: String.LocalizationValue(titleKey)))
+        }
     }
 
     @Test("DiagnosticEvaluator: congested message formats integer inputs")

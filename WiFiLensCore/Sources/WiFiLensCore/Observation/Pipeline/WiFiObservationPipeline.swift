@@ -134,10 +134,9 @@ struct WiFiObservationPipeline: WiFiObservationPipelining {
             ? WiFiQualityEvaluator.evaluate(currentStatus: status, gatewayLatency: latency)
             : nil
         let diagnosis: DiagnosticResult? =
-            if let quality {
+            if quality != nil {
                 DiagnosticEvaluator.evaluate(
                     currentStatus: status,
-                    quality: quality,
                     channelAnalysis: channelAnalysis,
                     channelRecommendations: channelRecommendation
                 )
