@@ -763,6 +763,8 @@ typedef struct {
     size_t organization_length;
 } WiFiLensMacVendorLookupEntry;
 
+typedef struct WiFiLensMacVendorIndex WiFiLensMacVendorIndex;
+
 typedef int32_t (*WiFiLensMacVendorCancellationCallback)(
     int32_t point,
     size_t count,
@@ -812,5 +814,25 @@ int32_t wifi_lens_mac_vendor_lookup(
     size_t *organization_length,
     int32_t *result_code
 );
+
+int32_t wifi_lens_mac_vendor_index_build(
+    const WiFiLensMacVendorLookupEntry *entries,
+    size_t entry_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    WiFiLensMacVendorIndex **out_index
+);
+
+int32_t wifi_lens_mac_vendor_index_lookup(
+    const WiFiLensMacVendorIndex *index,
+    const uint8_t *mac_address,
+    size_t mac_address_length,
+    uint8_t *organization,
+    size_t organization_capacity,
+    size_t *organization_length,
+    int32_t *result_code
+);
+
+void wifi_lens_mac_vendor_index_free(WiFiLensMacVendorIndex *index);
 
 #endif

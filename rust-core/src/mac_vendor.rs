@@ -744,12 +744,10 @@ pub fn lookup_mac_vendor(mac_address: &str, entries: &[MacVendorEntry]) -> MacVe
     if first_octet & 0x02 != 0 {
         return MacVendorLookup::LocallyAdministered;
     }
+    let indexes = prefix_value_indexes(entries);
     for prefix_length_bits in [36u32, 28, 24] {
         let prefix_value = numeric_address >> (48 - prefix_length_bits);
-        if entries.iter().any(|entry| {
-            entry.prefix_length_bits == prefix_length_bits
-                && u64::from_str_radix(&entry.prefix, 16) == Ok(prefix_value)
-        }) {
+        if indexes.contains_key(&(prefix_length_bits, prefix_value)) {
             return MacVendorLookup::Registered;
         }
     }
@@ -766,16 +764,29 @@ pub fn lookup_mac_vendor_organization(
     if numeric_address == 0 || first_octet & 0x01 != 0 || first_octet & 0x02 != 0 {
         return None;
     }
+    let indexes = prefix_value_indexes(entries);
     for prefix_length_bits in [36u32, 28, 24] {
         let prefix_value = numeric_address >> (48 - prefix_length_bits);
-        if let Some(entry) = entries.iter().find(|entry| {
-            entry.prefix_length_bits == prefix_length_bits
-                && u64::from_str_radix(&entry.prefix, 16) == Ok(prefix_value)
-        }) {
+        if let Some(entry) = indexes
+            .get(&(prefix_length_bits, prefix_value))
+            .and_then(|index| entries.get(*index))
+        {
             return Some(entry.organization.clone());
         }
     }
     None
+}
+
+fn prefix_value_indexes(entries: &[MacVendorEntry]) -> HashMap<(u32, u64), usize> {
+    let mut indexes = HashMap::with_capacity(entries.len());
+    for (index, entry) in entries.iter().enumerate() {
+        if let Ok(prefix_value) = u64::from_str_radix(&entry.prefix, 16) {
+            indexes
+                .entry((entry.prefix_length_bits, prefix_value))
+                .or_insert(index);
+        }
+    }
+    indexes
 }
 
 #[repr(C)]
@@ -1261,6 +1272,329 @@ pub unsafe extern "C" fn wifi_lens_mac_vendor_lookup(
         Ok(Ok(status)) => status,
         Ok(Err(status)) => status,
         Err(_) => crate::WIFI_LENS_STATUS_PANIC,
+    }
+}
+
+/// An owned, reusable index. Input buffers passed to the builder may be released
+/// as soon as it returns.
+pub struct WiFiLensMacVendorIndex {
+    organizations: HashMap<(u32, u64), String>,
+    #[cfg(test)]
+    index_builds: usize,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wifi_lens_mac_vendor_index_build(
+    entries: *const WiFiLensMacVendorLookupEntry,
+    entry_count: usize,
+    strings: *const u8,
+    strings_length: usize,
+    out_index: *mut *mut WiFiLensMacVendorIndex,
+) -> i32 {
+    if out_index.is_null()
+        || (entry_count > 0 && entries.is_null())
+        || (strings_length > 0 && strings.is_null())
+    {
+        return crate::WIFI_LENS_STATUS_INVALID_POINTER;
+    }
+    unsafe {
+        *out_index = std::ptr::null_mut();
+    }
+    match catch_unwind(AssertUnwindSafe(|| -> Result<_, i32> {
+        let bytes = if strings_length == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(strings, strings_length) }
+        };
+        let raw = if entry_count == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(entries, entry_count) }
+        };
+        let mut organizations = HashMap::with_capacity(raw.len());
+        for entry in raw {
+            let prefix = str_from_buffer(bytes, entry.prefix_offset, entry.prefix_length)?;
+            let organization =
+                str_from_buffer(bytes, entry.organization_offset, entry.organization_length)?;
+            let prefix_value = u64::from_str_radix(prefix, 16)
+                .map_err(|_| crate::WIFI_LENS_STATUS_INVALID_MAC_VENDOR_INPUT)?;
+            if ![24, 28, 36].contains(&entry.prefix_length_bits) {
+                return Err(crate::WIFI_LENS_STATUS_INVALID_MAC_VENDOR_INPUT);
+            }
+            organizations
+                .entry((entry.prefix_length_bits, prefix_value))
+                .or_insert_with(|| organization.to_owned());
+        }
+        Ok(Box::into_raw(Box::new(WiFiLensMacVendorIndex {
+            organizations,
+            #[cfg(test)]
+            index_builds: 1,
+        })))
+    })) {
+        Ok(Ok(index)) => {
+            unsafe {
+                *out_index = index;
+            }
+            crate::WIFI_LENS_STATUS_OK
+        }
+        Ok(Err(status)) => status,
+        Err(_) => crate::WIFI_LENS_STATUS_PANIC,
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wifi_lens_mac_vendor_index_lookup(
+    index: *const WiFiLensMacVendorIndex,
+    mac: *const u8,
+    mac_length: usize,
+    organization: *mut u8,
+    organization_capacity: usize,
+    organization_length: *mut usize,
+    result_code: *mut i32,
+) -> i32 {
+    if index.is_null()
+        || organization_length.is_null()
+        || result_code.is_null()
+        || (mac_length > 0 && mac.is_null())
+        || (organization_capacity > 0 && organization.is_null())
+    {
+        return crate::WIFI_LENS_STATUS_INVALID_POINTER;
+    }
+    unsafe {
+        *organization_length = 0;
+        *result_code = LOOKUP_INVALID;
+    }
+    match catch_unwind(AssertUnwindSafe(|| -> Result<(), i32> {
+        let text = if mac_length == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(mac, mac_length) }
+        };
+        let address = str_from_buffer(text, 0, mac_length)?;
+        let normalized = normalize_mac_address(address);
+        let mut result = LOOKUP_INVALID;
+        let mut found = None;
+        if let Some(normalized) = normalized {
+            let numeric = u64::from_str_radix(&normalized, 16)
+                .map_err(|_| crate::WIFI_LENS_STATUS_INVALID_MAC_VENDOR_INPUT)?;
+            let first = (numeric >> 40) as u8;
+            if numeric != 0 && first & 1 == 0 {
+                if first & 2 != 0 {
+                    result = LOOKUP_LOCALLY_ADMINISTERED;
+                } else {
+                    result = LOOKUP_UNKNOWN;
+                    let index = unsafe { &*index };
+                    for bits in [36, 28, 24] {
+                        if let Some(value) =
+                            index.organizations.get(&(bits, numeric >> (48 - bits)))
+                        {
+                            result = LOOKUP_REGISTERED;
+                            found = Some(value);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        unsafe {
+            *result_code = result;
+        }
+        if let Some(value) = found {
+            unsafe {
+                *organization_length = value.len();
+            }
+            if value.len() > organization_capacity {
+                return Err(crate::WIFI_LENS_STATUS_OUTPUT_TOO_SMALL);
+            }
+            if !value.is_empty() {
+                unsafe {
+                    std::ptr::copy_nonoverlapping(value.as_ptr(), organization, value.len());
+                }
+            }
+        }
+        Ok(())
+    })) {
+        Ok(Ok(())) => crate::WIFI_LENS_STATUS_OK,
+        Ok(Err(e)) => e,
+        Err(_) => crate::WIFI_LENS_STATUS_PANIC,
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wifi_lens_mac_vendor_index_free(index: *mut WiFiLensMacVendorIndex) {
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        if !index.is_null() {
+            unsafe {
+                drop(Box::from_raw(index));
+            }
+        }
+    }));
+}
+
+#[cfg(test)]
+mod opaque_index_ffi_tests {
+    use super::*;
+
+    #[test]
+    fn owned_index_reuses_prefix_map_and_handles_capacity_and_null_free() {
+        let strings = b"001122334Small0011224Medium001133Large".to_vec();
+        let entries = vec![
+            WiFiLensMacVendorLookupEntry {
+                prefix_offset: 0,
+                prefix_length: 9,
+                prefix_length_bits: 36,
+                organization_offset: 9,
+                organization_length: 5,
+            },
+            WiFiLensMacVendorLookupEntry {
+                prefix_offset: 14,
+                prefix_length: 7,
+                prefix_length_bits: 28,
+                organization_offset: 21,
+                organization_length: 6,
+            },
+            WiFiLensMacVendorLookupEntry {
+                prefix_offset: 27,
+                prefix_length: 6,
+                prefix_length_bits: 24,
+                organization_offset: 33,
+                organization_length: 5,
+            },
+        ];
+        let mut handle = std::ptr::null_mut();
+        assert_eq!(
+            unsafe {
+                wifi_lens_mac_vendor_index_build(
+                    entries.as_ptr(),
+                    entries.len(),
+                    strings.as_ptr(),
+                    strings.len(),
+                    &mut handle,
+                )
+            },
+            crate::WIFI_LENS_STATUS_OK
+        );
+        assert!(!handle.is_null());
+        assert_eq!(unsafe { (*handle).index_builds }, 1);
+        drop(strings);
+        drop(entries);
+        for (mac, code, expected) in [
+            (b"00:11:22:33:44:55".as_slice(), 3, "Small"),
+            (b"00:11:22:44:55:66", 3, "Medium"),
+            (b"00:11:33:44:55:66", 3, "Large"),
+            (b"10:20:30:40:50:60", 1, ""),
+            (b"02:11:22:33:44:55", 2, ""),
+            (b"01:11:22:33:44:55", 0, ""),
+            (b"00:00:00:00:00:00", 0, ""),
+        ] {
+            let mut output = [0u8; 16];
+            let mut length = 99;
+            let mut result = -1;
+            let status = unsafe {
+                wifi_lens_mac_vendor_index_lookup(
+                    handle,
+                    mac.as_ptr(),
+                    mac.len(),
+                    output.as_mut_ptr(),
+                    output.len(),
+                    &mut length,
+                    &mut result,
+                )
+            };
+            assert_eq!(status, crate::WIFI_LENS_STATUS_OK);
+            assert_eq!(result, code);
+            assert_eq!(&output[..length], expected.as_bytes());
+        }
+        assert_eq!(unsafe { (*handle).index_builds }, 1);
+        let mut length = 0;
+        let mut result = 0;
+        assert_eq!(
+            unsafe {
+                wifi_lens_mac_vendor_index_lookup(
+                    handle,
+                    b"00:11:22:33:44:55".as_ptr(),
+                    17,
+                    std::ptr::null_mut(),
+                    0,
+                    &mut length,
+                    &mut result,
+                )
+            },
+            crate::WIFI_LENS_STATUS_OUTPUT_TOO_SMALL
+        );
+        assert_eq!(length, 5);
+        unsafe {
+            wifi_lens_mac_vendor_index_free(handle);
+            wifi_lens_mac_vendor_index_free(std::ptr::null_mut());
+        }
+    }
+
+    #[test]
+    fn build_failure_nulls_handle_and_validates_utf8_and_ranges() {
+        let mut output = 1usize as *mut WiFiLensMacVendorIndex;
+        let bad = [0xff];
+        let entry = WiFiLensMacVendorLookupEntry {
+            prefix_offset: 0,
+            prefix_length: 1,
+            prefix_length_bits: 24,
+            organization_offset: 0,
+            organization_length: 1,
+        };
+        assert_ne!(
+            unsafe {
+                wifi_lens_mac_vendor_index_build(&entry, 1, bad.as_ptr(), bad.len(), &mut output)
+            },
+            crate::WIFI_LENS_STATUS_OK
+        );
+        assert!(output.is_null());
+        let invalid_range = WiFiLensMacVendorLookupEntry {
+            prefix_offset: 1,
+            prefix_length: 1,
+            prefix_length_bits: 24,
+            organization_offset: 0,
+            organization_length: 1,
+        };
+        assert_eq!(
+            unsafe {
+                wifi_lens_mac_vendor_index_build(&invalid_range, 1, b"A".as_ptr(), 1, &mut output)
+            },
+            crate::WIFI_LENS_STATUS_INVALID_INPUT_SLICE
+        );
+        assert!(output.is_null());
+        let invalid_utf8 = WiFiLensMacVendorLookupEntry {
+            prefix_offset: 0,
+            prefix_length: 2,
+            prefix_length_bits: 24,
+            organization_offset: 0,
+            organization_length: 1,
+        };
+        let mixed = [b'0', 0xff];
+        assert_eq!(
+            unsafe {
+                wifi_lens_mac_vendor_index_build(
+                    &invalid_utf8,
+                    1,
+                    mixed.as_ptr(),
+                    mixed.len(),
+                    &mut output,
+                )
+            },
+            crate::WIFI_LENS_STATUS_INVALID_UTF8
+        );
+        assert!(output.is_null());
+        assert!(output.is_null());
+        assert_eq!(
+            unsafe {
+                wifi_lens_mac_vendor_index_build(
+                    std::ptr::null(),
+                    1,
+                    std::ptr::null(),
+                    0,
+                    &mut output,
+                )
+            },
+            crate::WIFI_LENS_STATUS_INVALID_POINTER
+        );
     }
 }
 

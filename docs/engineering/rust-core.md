@@ -233,25 +233,26 @@ cargo test --locked --target aarch64-apple-darwin
 cargo test --locked --target x86_64-apple-darwin
 ```
 
-The `WiFiLensCoreTests` target consumes the shared channel-span and
-link-evidence TSV fixtures. Its regulatory inference, database, compatibility,
-and filter suites exercise the existing Swift APIs through the Rust C ABI. The
-link-evidence cases exercise the existing Swift `WiFiLinkInterpreter` API.
+The `WiFiLensCoreTests` target exercises the shared Swift framework through the
+Rust C ABI. The MAC vendor cases in
+`rust-core/tests/fixtures/mac-vendor-cases.tsv` are read by both Rust and Swift
+parity tests. The link-evidence cases exercise the existing Swift
+`WiFiLinkInterpreter` API using equivalent check-ins.
 `rust-core/tests/fixtures/network-diagnostic-stage-cases.tsv` is shared by the
 Rust typed/C ABI tests and the Swift diagnostic adapter test, covering every
 stage status and qualification boundary. `observation_analysis.rs` Rust tests
 exercise quality/diagnosis thresholds, missing facts, category precedence,
 invalid flag/code encodings, non-finite/negative latency, score range, pointer
-errors, and no-partial-output behavior. `AnalyzerTests` exercises the real
-Swift-to-Rust production bridge, localized result mapping, and provenance gates.
-Swift adapter tests require macOS; Linux and Windows CI validate Rust and the C
-ABI on their native hosts. Run the suite through the native Xcode project:
+errors, and no-partial-output behavior. `AnalyzerTests` is app-hosted in
+`WiFiLensTests`; it exercises the real Swift-to-Rust production bridge,
+localized result mapping, and provenance gates. Swift adapter tests require
+macOS; Linux and Windows CI validate Rust and the C ABI on their native hosts.
+Run both Swift test targets on the Rust runner architecture through the native
+Xcode project:
 
 ```sh
-xcodebuild -project WiFiLens.xcodeproj -scheme WiFiLensCore \
-  -configuration Debug -destination 'platform=macOS,arch=arm64' \
-  -skipPackageUpdates test
-xcodebuild -project WiFiLens.xcodeproj -scheme WiFiLensCore \
-  -configuration Debug -destination 'platform=macOS,arch=x86_64' \
-  -skipPackageUpdates test
+xcodebuild -project WiFiLens.xcodeproj -scheme "WiFi Lens" \
+  -configuration Debug -destination 'platform=macOS' \
+  -skipPackageUpdates -only-testing:WiFiLensTests \
+  -only-testing:WiFiLensCoreTests test
 ```

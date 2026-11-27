@@ -116,5 +116,5 @@ fn shared_lookup_fixtures_match_typed_api() {
         );
         case_count += 1;
     }
-    assert_eq!(case_count, 10);
+    assert_eq!(case_count, 12);
 }

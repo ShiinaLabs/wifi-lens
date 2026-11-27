@@ -16,10 +16,62 @@ struct MACVendorResolverTests {
 
     @Test func usesLongestMatchingPrefix() {
         let resolver = makeResolver()
+        #expect(resolver.indexBuildCount == 1)
 
         #expect(resolver.resolve("00:11:22:33:44:55") == .registered("Small Networks"))
         #expect(resolver.resolve("00:11:22:3f:44:55") == .registered("Medium Networks"))
         #expect(resolver.resolve("00:11:22:ff:44:55") == .registered("Large Networks"))
+        #expect(resolver.indexBuildCount == 1)
+    }
+
+    @Test func resolvesMultibyteOrganizationWithinRustScalarLimit() {
+        let organization = String(repeating: "🛜", count: 256)
+        let resolver = MACVendorResolver(entries: [
+            MACVendorEntry(prefix: "001122", prefixLength: 24, organization: organization)
+        ])
+
+        #expect(resolver.resolve("00:11:22:33:44:55") == .registered(organization))
+        #expect(resolver.indexBuildCount == 1)
+    }
+
+    @Test func sharedLookupFixturesMatchSwiftResolver() throws {
+        let fixtureURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appending(path: "rust-core/tests/fixtures/mac-vendor-cases.tsv")
+        let fixture = try String(contentsOf: fixtureURL, encoding: .utf8)
+        var caseCount = 0
+        for line in fixture.split(whereSeparator: \.isNewline) where !line.isEmpty && !line.hasPrefix("#") {
+            let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
+            guard fields.count == 8, fields[0] == "lookup" else { continue }
+            let entries =
+                [
+                    MACVendorEntry(
+                        prefix: String(fields[3]),
+                        prefixLength: try #require(Int(fields[4])),
+                        organization: String(fields[5])
+                    )
+                ]
+                + (fields[1] == "longest-prefix-36"
+                    ? [MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "Large Networks")]
+                    : [])
+            let resolver = MACVendorResolver(entries: entries)
+            let expected: MACVendorLookupResult
+            switch try #require(Int(fields[6])) {
+            case 0: expected = .invalid
+            case 1: expected = .unknown
+            case 2: expected = .locallyAdministered
+            case 3: expected = .registered(String(fields[7]))
+            default:
+                Issue.record("Unsupported expected state in fixture: \(line)")
+                continue
+            }
+            #expect(resolver.resolve(String(fields[2])) == expected, "fixture \(fields[1])")
+            caseCount += 1
+        }
+        #expect(caseCount == 12)
     }
 
     @Test func acceptsCommonMACAddressFormats() {
@@ -75,7 +127,9 @@ struct MACVendorResolverTests {
             MACVendorEntry(prefix: "001122", prefixLength: 24, organization: "New Name")
         ])
 
+        #expect(resolver.indexBuildCount == 2)
         #expect(resolver.resolve("00:11:22:33:44:55") == .registered("New Name"))
+        #expect(resolver.indexBuildCount == 2)
     }
 
     @Test func locallyAdministeredAddressesDoNotUseRegistryMappings() {
