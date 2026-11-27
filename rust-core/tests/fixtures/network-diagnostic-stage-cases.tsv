@@ -33,3 +33,4 @@ internet-indeterminate normal normal normal normal indeterminate normal missing 
 direct-proxy-http-available normal normal normal normal normal indeterminate available unverified 4 indeterminate normal normal none none 0 0 0
 gateway-indeterminate-without-no-response normal indeterminate indeterminate normal normal normal missing missing 1 normal indeterminate normal none none 1 0 0
 proxy-authentication-not-unverified normal normal normal normal normal indeterminate auth unverified 4 indeterminate normal normal none none 0 0 0
+direct-proxy-with-skipped-path skipped normal normal normal normal indeterminate unverified unverified 4 indeterminate normal normal none none 0 1 0

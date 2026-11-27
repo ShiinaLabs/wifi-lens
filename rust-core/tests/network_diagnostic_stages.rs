@@ -269,7 +269,7 @@ fn fixtures_match_typed_and_c_abis() {
         );
         case_count += 1;
     }
-    assert_eq!(case_count, 30);
+    assert_eq!(case_count, 31);
 }
 
 #[test]

@@ -348,6 +348,10 @@ pub unsafe extern "C" fn wifi_lens_interpret_link_evidence(
     }
     let raw_input = unsafe { *input };
     match guarded(|| {
+        #[cfg(test)]
+        if raw_input.flags == u32::MAX {
+            panic!("test-only panic path");
+        }
         decode_input(raw_input)
             .map(interpret_link_evidence)
             .map(Into::into)
@@ -365,9 +369,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn panic_is_converted_to_a_status_before_crossing_the_abi() {
-        let result =
-            guarded(|| -> Result<WiFiLensLinkEvidenceResult, i32> { panic!("test panic") });
-        assert_eq!(result, Err(WIFI_LENS_STATUS_PANIC));
+    fn panic_at_the_public_ffi_entry_is_converted_to_a_status() {
+        let input = WiFiLensLinkEvidenceInput {
+            flags: u32::MAX,
+            ..WiFiLensLinkEvidenceInput::default()
+        };
+        let sentinel = WiFiLensLinkEvidenceResult {
+            state: -1,
+            reason: -2,
+            candidate_state: -3,
+        };
+        let mut output = sentinel;
+        assert_eq!(
+            unsafe { wifi_lens_interpret_link_evidence(&input, &mut output) },
+            WIFI_LENS_STATUS_PANIC
+        );
+        assert_eq!(output, sentinel);
     }
 }

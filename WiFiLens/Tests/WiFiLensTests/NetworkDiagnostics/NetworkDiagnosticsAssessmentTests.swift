@@ -157,7 +157,7 @@ extension NetworkDiagnosticsTests {
             caseCount += 1
         }
 
-        #expect(caseCount == 30)
+        #expect(caseCount == 31)
     }
 
     @Test("Rust stage aggregation preserves qualifications and absent contributor state")
