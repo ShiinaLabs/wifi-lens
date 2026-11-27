@@ -3,6 +3,7 @@
 mod channel_quality;
 mod information_elements;
 pub mod link_evidence;
+pub mod regulatory;
 
 pub use channel_quality::{
     analyze as analyze_channel_quality, AccessPoint, AnalysisConfiguration, ChannelQuality,
@@ -256,6 +257,7 @@ pub const WIFI_LENS_STATUS_OUTPUT_TOO_SMALL: i32 = 7;
 pub const WIFI_LENS_STATUS_INVALID_UTF8: i32 = 8;
 pub const WIFI_LENS_STATUS_INVALID_WIDTH: i32 = 9;
 pub const WIFI_LENS_STATUS_INVALID_LINK_EVIDENCE: i32 = 10;
+pub const WIFI_LENS_STATUS_INVALID_REGULATORY_INPUT: i32 = 11;
 pub const WIFI_LENS_MAX_CHANNEL_QUALITIES: usize = 105;
 pub const WIFI_LENS_IE_MAX_TEXT_BYTES: usize = 32 * (256 * 2 + 1);
 
