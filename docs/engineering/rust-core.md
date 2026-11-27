@@ -4,9 +4,9 @@
 
 The public `rust-core/` crate is the portable analysis layer used by
 `WiFiLensCore`. Its internal modules own channel block geometry, 802.11
-information-element parsing, and observed/counterfactual channel-quality
-analysis. The crate remains one Apache-2.0 Rust library with no third-party Rust
-dependencies.
+information-element parsing, observed/counterfactual channel-quality analysis,
+and interpretation of collected Wi-Fi link evidence. The crate remains one
+Apache-2.0 Rust library with no third-party Rust dependencies.
 
 Swift-facing adapters preserve existing product APIs:
 
@@ -17,14 +17,36 @@ Swift-facing adapters preserve existing product APIs:
 - `ChannelQualityCalculator` delegates overlap, observed RF scoring, target AP
   exclusion, recommendation thresholds, and result ordering to Rust. Swift
   maps those results into `ChannelQuality` and supplies localized band labels.
+- `WiFiLinkInterpreter` maps collected link facts to the existing
+  `WiFiLinkAssessment` contract through Rust. `WiFiLinkEvidenceValidator`
+  remains a Swift provenance adapter that verifies the status and raw evidence
+  refer to the same snapshot and source identity.
 
-The migration boundary follows the input and output dependencies. CoreWLAN
-acquisition and `WiFiChannel` remain native. Regulatory inference, device
-compatibility, user overrides, and recommendation filtering remain native
-because they consume system and product inputs beyond the portable score.
-`ChannelSeriesDataBuilder`, chart series, heatmap layout, Gaussian sampling,
-and chart rendering remain native because they produce ChartLens/SwiftUI
-presentation data. No second Rust crate or public repository is required.
+The Rust link interpreter receives normalized mode, radio, link-active, and
+capture-consistency facts. It does not call CoreWLAN or SystemConfiguration,
+read identifiers, or own event and polling lifecycle. Acquisition, UUID/time
+comparisons, raw evidence retention, and source-identity validation remain in
+Swift.
+
+## Remaining Public Core Inventory
+
+This inventory separates platform responsibilities from portable decisions;
+portable Swift entries remain candidates for later dependency-aware R2 batches.
+
+| Capability | Current responsibility and destination |
+|---|---|
+| Regulatory inference and channel recommendations | `RegionInferenceEngine`, `RegulatoryFilter`, `DeviceCompatibilityFilter`, and `RegulatoryDatabase` currently remain in Swift. Locale and country codes, RF scores, and hardware capabilities are collected as facts; the inference, rules, compatibility, override, and ordering logic are portable and should move together in a later batch. Keeping the rules and data together avoids a split source of truth. |
+| Observation analysis | `ChannelOccupancyAnalyzer`, `DiagnosticEvaluator`, `RegulatoryDomainResolver`, and `WiFiQualityEvaluator` remain Swift. Their normalized inputs and decisions are portable; channel occupancy should follow the regulatory/channel batch, while link-dependent interpretation should build on the Rust link contract. |
+| Network diagnostic assessment | `NetworkDiagnosticAssessmentResolver`, `NetworkDiagnosticStageResolver`, and portable `NetworkFingerprint` comparison remain Swift. Check/route-state acquisition stays in native adapters; result interpretation, change classification, stage aggregation, conclusion, and primary-issue selection are candidates for a separate batch with a stable evidence-code contract. |
+| Shared portable utilities | AP filter-query parsing and MAC vendor parsing/resolution remain Swift. Their text/data interpretation is portable, while query-grammar compatibility and database download/storage are owned by the current app-facing layer; consider them in a later shared-utilities batch. |
+| Stateful link and device tracking | `WiFiLinkStateCenter`, roaming transition state, and `BLEDeviceTracker` remain Swift. OS notification/acquisition, timers, task cancellation, and UI-facing history are native; pure transition and advertisement decisions can be separated into later batches without moving lifecycle ownership. |
+| Signal and presentation processing | Signal smoothing, AP Radar presentation processing, chart/table projections, heatmap layout/rasterization, localization, and SwiftUI/AppKit rendering remain Swift because they prepare visual state or use native presentation frameworks. They are not part of the current shared Wi-Fi evidence decision. |
+| Platform acquisition | CoreWLAN, SystemConfiguration, `NWPathMonitor`, CoreBluetooth, and interface-bound probes remain native. They gather facts; the portable core receives normalized values. |
+
+`ChannelSeriesDataBuilder`, chart series, heatmap layout, Gaussian sampling, and
+chart rendering continue to produce ChartLens/SwiftUI presentation data. The
+crate remains one Apache-2.0 library; no second Rust crate or public repository
+is required.
 
 The Rust library exposes both native Rust functions and a small C ABI. The ABI
 uses fixed-width integers and `repr(C)` records declared in
@@ -41,10 +63,15 @@ All variable-sized input and output data stays caller-owned:
 - Channel-quality input records refer to UTF-8 identity values by offset and
   length in one caller-owned byte buffer. Output records are written into a
   caller-provided array.
+- Link-evidence interpretation takes one fixed-size input record and writes one
+  fixed-size result record. Optional facts use presence flags; state enums use
+  documented integer codes, and invalid codes return status `10` without a
+  partial result.
 - No Rust-owned pointer escapes the call. Counts report required capacity; an
   undersized output buffer returns status `7` and receives no partial result.
 - Statuses distinguish invalid band/direction/width, invalid pointers or input
-  slices, invalid UTF-8, insufficient output capacity, and a caught Rust panic.
+  slices, invalid UTF-8, invalid link-evidence codes, insufficient output
+  capacity, and a caught Rust panic.
   Panic handling prevents unwinding across C; callers still must provide valid
   memory for every non-null pointer.
 
@@ -67,7 +94,7 @@ The Xcode target adds `rust-core/include` to Swift's header search path. A
 normal Xcode build therefore builds and links the Rust library as part of the
 existing app workflow; no separate generated library or manual copy step is
 needed. The `Build Rust Core` phase lists each Rust module as an input so edits
-to parser or scoring code retrigger the static-library build.
+to parser, scoring, or link-evidence code retrigger the static-library build.
 
 ## CI toolchain setup
 
@@ -100,8 +127,10 @@ cargo test --locked --target aarch64-apple-darwin
 cargo test --locked --target x86_64-apple-darwin
 ```
 
-The shared `WiFiLensCoreTests` target consumes the same TSV behavioral
-fixtures. Run it through the native Xcode project:
+The `WiFiLensCoreTests` target consumes the shared channel-span and
+link-evidence TSV fixtures. The link-evidence cases exercise the existing Swift
+`WiFiLinkInterpreter` API through the C ABI. Run the suite through the native
+Xcode project:
 
 ```sh
 xcodebuild -project WiFiLens.xcodeproj -scheme WiFiLensCore \

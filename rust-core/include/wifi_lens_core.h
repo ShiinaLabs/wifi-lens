@@ -14,12 +14,75 @@
 #define WIFI_LENS_STATUS_OUTPUT_TOO_SMALL 7
 #define WIFI_LENS_STATUS_INVALID_UTF8 8
 #define WIFI_LENS_STATUS_INVALID_WIDTH 9
+#define WIFI_LENS_STATUS_INVALID_LINK_EVIDENCE 10
 
 typedef struct {
     int32_t status;
     int64_t left;
     int64_t right;
 } WiFiLensChannelBlockResult;
+
+#define WIFI_LENS_LINK_HAS_EVIDENCE (1u << 0)
+#define WIFI_LENS_LINK_CYCLE_MATCHES (1u << 1)
+#define WIFI_LENS_LINK_EXPECTED_TIMESTAMP_MATCHES (1u << 2)
+#define WIFI_LENS_LINK_CAPTURE_WINDOW_VALID (1u << 3)
+#define WIFI_LENS_LINK_HAS_CORE_WLAN_MODE (1u << 4)
+#define WIFI_LENS_LINK_HAS_RADIO_POWER_ON_RAW (1u << 5)
+#define WIFI_LENS_LINK_RADIO_POWER_ON_RAW (1u << 6)
+#define WIFI_LENS_LINK_INTERFACE_NAME_NONEMPTY (1u << 7)
+
+#define WIFI_LENS_LINK_MODE_UNAVAILABLE 0
+#define WIFI_LENS_LINK_MODE_STATION 1
+#define WIFI_LENS_LINK_MODE_NONE 2
+#define WIFI_LENS_LINK_MODE_NONE_OR_READ_FAILURE 3
+#define WIFI_LENS_LINK_MODE_OTHER 4
+
+#define WIFI_LENS_LINK_RADIO_UNAVAILABLE 0
+#define WIFI_LENS_LINK_RADIO_REPORTED_ON 1
+#define WIFI_LENS_LINK_RADIO_REPORTED_OFF 2
+#define WIFI_LENS_LINK_RADIO_REPORTED_OFF_OR_READ_FAILURE 3
+
+#define WIFI_LENS_LINK_ACTIVE_UNAVAILABLE 0
+#define WIFI_LENS_LINK_ACTIVE 1
+#define WIFI_LENS_LINK_INACTIVE 2
+
+#define WIFI_LENS_LINK_STATE_UNKNOWN 0
+#define WIFI_LENS_LINK_STATE_ASSOCIATED 1
+#define WIFI_LENS_LINK_STATE_DISCONNECTED 2
+
+#define WIFI_LENS_LINK_REASON_STATION_MODE 1
+#define WIFI_LENS_LINK_REASON_CYCLE_MISMATCH 2
+#define WIFI_LENS_LINK_REASON_RADIO_UNAVAILABLE 3
+#define WIFI_LENS_LINK_REASON_MODE_UNAVAILABLE 4
+#define WIFI_LENS_LINK_REASON_UNSUPPORTED_MODE 5
+#define WIFI_LENS_LINK_REASON_CAPTURE_TIMESTAMP_MISMATCH 6
+#define WIFI_LENS_LINK_REASON_LINK_STATE_UNAVAILABLE 7
+#define WIFI_LENS_LINK_REASON_CONFLICTING_LINK_EVIDENCE 8
+#define WIFI_LENS_LINK_REASON_DISCONNECT_CANDIDATE 9
+
+#define WIFI_LENS_LINK_CANDIDATE_NONE 0
+#define WIFI_LENS_LINK_CANDIDATE_DISCONNECTED WIFI_LENS_LINK_STATE_DISCONNECTED
+
+/*
+ * Link facts use fixed integer codes above. Flags encode optional presence and
+ * native-snapshot consistency facts. RADIO_POWER_ON_RAW means true when
+ * HAS_RADIO_POWER_ON_RAW is also set; link_active uses its tri-state code.
+ * Status 10 rejects unknown flags or enum codes.
+ */
+typedef struct {
+    uint32_t flags;
+    int32_t mode;
+    int64_t core_wlan_mode_raw_value;
+    int64_t other_mode_raw_value;
+    int32_t radio;
+    int32_t link_active;
+} WiFiLensLinkEvidenceInput;
+
+typedef struct {
+    int32_t state;
+    int32_t reason;
+    int32_t candidate_state;
+} WiFiLensLinkEvidenceResult;
 
 typedef struct {
     uint32_t flags;
@@ -140,6 +203,17 @@ WiFiLensChannelBlockResult wifi_lens_channel_block(
     int64_t width_mhz,
     int32_t band,
     int32_t direction
+);
+
+/*
+ * Interpret one collected Wi-Fi link sample. Input and output records remain
+ * caller-owned and must be non-null, correctly aligned, valid, and non-overlapping.
+ * Statuses: 0 success, 4 Rust panic caught at the ABI, 5 invalid pointer,
+ * 10 invalid flags or enum codes.
+ */
+int32_t wifi_lens_interpret_link_evidence(
+    const WiFiLensLinkEvidenceInput *input,
+    WiFiLensLinkEvidenceResult *output
 );
 
 /*
