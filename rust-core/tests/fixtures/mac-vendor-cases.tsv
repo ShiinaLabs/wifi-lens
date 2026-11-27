@@ -1,0 +1,11 @@
+# kind	name	mac	prefix	prefix_bits	organization	expected_state	expected_organization
+lookup	longest-prefix-36	00:11:22:33:44:55	001122334	36	Small Networks	3	Small Networks
+lookup	longest-prefix-28	00:11:22:33:44:55	0011223	28	Medium Networks	3	Medium Networks
+lookup	longest-prefix-24	00-11-22-33-44-55	001122	24	Large Networks	3	Large Networks
+lookup	plain-form	001122334455	001122	24	Large Networks	3	Large Networks
+lookup	locally-administered	02:11:22:33:44:55	021122	24	Should Not Match	2	-
+lookup	null-address	00:00:00:00:00:00	000000	24	Xerox	0	-
+lookup	group-address	01:11:22:33:44:55	011122	24	Group	0	-
+lookup	unknown	10:20:30:40:50:60	001122	24	Large Networks	1	-
+lookup	invalid-shape	not-a-mac	001122	24	Large Networks	0	-
+lookup	mixed-separators	00:11-22:33:44:55	001122	24	Large Networks	0	-

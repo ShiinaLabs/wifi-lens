@@ -18,6 +18,7 @@
 #define WIFI_LENS_STATUS_INVALID_REGULATORY_INPUT 11
 #define WIFI_LENS_STATUS_INVALID_NETWORK_DIAGNOSTIC_INPUT 12
 #define WIFI_LENS_STATUS_INVALID_OBSERVATION_INPUT 13
+#define WIFI_LENS_STATUS_INVALID_MAC_VENDOR_INPUT 14
 
 typedef struct {
     int32_t status;
@@ -702,6 +703,114 @@ int32_t wifi_lens_evaluate_quality(
 int32_t wifi_lens_evaluate_diagnosis(
     const WiFiLensDiagnosticInput *input,
     WiFiLensDiagnosticResult *output
+);
+
+
+/*
+ * MAC vendor registry import contract. Registry codes: 1 = MA-L, 2 = MA-M,
+ * 3 = MA-S, 4 = IAB. Source codes: 1 = IEEE download, 2 = manual import.
+ * Cancellation points: 0 = routine, 1 = records(count), 2 = before final sort,
+ * 3 = after final sort; the callback returns nonzero when cancelled.
+ * Every string and byte slice refers to caller-owned buffers. All result
+ * buffers are caller-owned; counts report required capacity and undersized
+ * outputs receive no partial records. Status 14 reports invalid MAC vendor
+ * input; the failure record carries a typed error code and optional text
+ * slices into the caller-owned failure text buffer.
+ */
+typedef struct {
+    size_t display_name_offset;
+    size_t display_name_length;
+    size_t data_offset;
+    size_t data_length;
+} WiFiLensMacVendorRegistryInput;
+
+typedef struct {
+    int32_t registry;
+    size_t minimum_records;
+} WiFiLensMacVendorMinimum;
+
+typedef struct {
+    int32_t registry;
+    size_t valid_record_count;
+    size_t sha256_offset;
+    size_t sha256_length;
+} WiFiLensMacVendorRegistryMetadata;
+
+typedef struct {
+    size_t prefix_offset;
+    size_t prefix_length;
+    uint32_t prefix_length_bits;
+    size_t organization_offset;
+    size_t organization_length;
+} WiFiLensMacVendorEntry;
+
+typedef struct {
+    int32_t code;
+    int32_t registry;
+    int64_t number1;
+    int64_t number2;
+    size_t file_offset;
+    size_t file_length;
+    size_t detail_offset;
+    size_t detail_length;
+} WiFiLensMacVendorFailure;
+
+typedef struct {
+    size_t prefix_offset;
+    size_t prefix_length;
+    uint32_t prefix_length_bits;
+    size_t organization_offset;
+    size_t organization_length;
+} WiFiLensMacVendorLookupEntry;
+
+typedef int32_t (*WiFiLensMacVendorCancellationCallback)(
+    int32_t point,
+    size_t count,
+    void *context
+);
+
+
+/* MAC vendor parsing and lookup. Statuses: 0 success, 4 panic, 5 invalid
+ * pointer, 6 invalid slice, 7 insufficient capacity, 8 invalid UTF-8,
+ * 14 invalid MAC vendor input. */
+int32_t wifi_lens_mac_vendor_parse_database(
+    const WiFiLensMacVendorRegistryInput *inputs,
+    size_t input_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    int32_t source,
+    const WiFiLensMacVendorMinimum *minimums,
+    size_t minimum_count,
+    size_t maximum_file_bytes,
+    size_t maximum_total_bytes,
+    WiFiLensMacVendorCancellationCallback cancellation,
+    void *cancellation_context,
+    WiFiLensMacVendorFailure *failure,
+    uint8_t *failure_text,
+    size_t failure_text_capacity,
+    size_t *failure_text_length,
+    WiFiLensMacVendorRegistryMetadata *registries,
+    size_t registries_capacity,
+    WiFiLensMacVendorEntry *entries,
+    size_t entries_capacity,
+    uint8_t *text,
+    size_t text_capacity,
+    size_t *registries_count,
+    size_t *entries_count,
+    size_t *text_length
+);
+
+int32_t wifi_lens_mac_vendor_lookup(
+    const uint8_t *mac_address,
+    size_t mac_address_length,
+    const WiFiLensMacVendorLookupEntry *entries,
+    size_t entry_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    uint8_t *organization,
+    size_t organization_capacity,
+    size_t *organization_length,
+    int32_t *result_code
 );
 
 #endif
