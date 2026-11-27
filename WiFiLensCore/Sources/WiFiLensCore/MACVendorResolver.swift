@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import WiFiLensCoreRust
 
 public enum MACVendorLookupResult: Equatable, Sendable {
     case registered(String)
@@ -17,9 +18,8 @@ public protocol MACVendorResolving: AnyObject {
 public final class MACVendorResolver: MACVendorResolving {
     private static let logger = Logger(label: "scanner")
     private static let supportedSchemaVersion = 1
-    private static let supportedPrefixLengths = [36, 28, 24]
 
-    private var organizationsByPrefixLength: [Int: [UInt64: String]] = [:]
+    private var entries: [MACVendorEntry] = []
     private var cache: [String: MACVendorLookupResult] = [:]
 
     public convenience init() {
@@ -39,9 +39,7 @@ public final class MACVendorResolver: MACVendorResolving {
         do {
             let database = try JSONDecoder().decode(MACVendorDatabase.self, from: databaseData)
             guard database.schemaVersion == Self.supportedSchemaVersion else {
-                Self.logger.warning(
-                    "Unsupported MAC vendor database schema: \(database.schemaVersion)"
-                )
+                Self.logger.warning("Unsupported MAC vendor database schema: \(database.schemaVersion)")
                 return
             }
             install(database.entries)
@@ -60,76 +58,82 @@ public final class MACVendorResolver: MACVendorResolving {
     }
 
     public func resolve(_ macAddress: String) -> MACVendorLookupResult {
-        guard let normalized = Self.normalize(macAddress),
-            let numericAddress = UInt64(normalized, radix: 16)
-        else {
-            return .invalid
-        }
-
-        let firstOctet = UInt8(normalized.prefix(2), radix: 16) ?? 0
-        if numericAddress == 0 || firstOctet & 0x01 != 0 {
-            return .invalid
-        }
-
-        if let cached = cache[normalized] {
+        if let cached = cache[macAddress] {
             return cached
+        }
+        let bytes = Array(macAddress.utf8)
+        var resultCode: Int32 = 0
+        var organization = [UInt8](repeating: 0, count: 512)
+        var organizationLength = 0
+        var strings: [UInt8] = []
+        var lookupEntries: [WiFiLensMacVendorLookupEntry] = []
+        for entry in entries {
+            let prefixBytes = Array(entry.prefix.utf8)
+            let prefixOffset = strings.count
+            strings.append(contentsOf: prefixBytes)
+            let organizationBytes = Array(entry.organization.utf8)
+            let organizationOffset = strings.count
+            strings.append(contentsOf: organizationBytes)
+            lookupEntries.append(
+                WiFiLensMacVendorLookupEntry(
+                    prefix_offset: prefixOffset,
+                    prefix_length: prefixBytes.count,
+                    prefix_length_bits: UInt32(entry.prefixLength),
+                    organization_offset: organizationOffset,
+                    organization_length: organizationBytes.count
+                )
+            )
+        }
+
+        let status = bytes.withUnsafeBufferPointer { macBuffer in
+            lookupEntries.withUnsafeBufferPointer { entryBuffer in
+                strings.withUnsafeBufferPointer { stringBuffer in
+                    organization.withUnsafeMutableBufferPointer { organizationBuffer in
+                        withUnsafeMutablePointer(to: &organizationLength) { lengthPointer in
+                            withUnsafeMutablePointer(to: &resultCode) { codePointer in
+                                wifi_lens_mac_vendor_lookup(
+                                    macBuffer.baseAddress,
+                                    macBuffer.count,
+                                    entryBuffer.baseAddress,
+                                    entryBuffer.count,
+                                    stringBuffer.baseAddress,
+                                    stringBuffer.count,
+                                    organizationBuffer.baseAddress,
+                                    organizationBuffer.count,
+                                    lengthPointer,
+                                    codePointer
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        guard status == WIFI_LENS_STATUS_OK else {
+            let result = MACVendorLookupResult.invalid
+            cache[macAddress] = result
+            return result
         }
 
         let result: MACVendorLookupResult
-        if firstOctet & 0x02 != 0 {
-            result = .locallyAdministered
-        } else if let organization = longestPrefixMatch(for: numericAddress) {
-            result = .registered(organization)
-        } else {
+        switch resultCode {
+        case 0:
+            result = .invalid
+        case 1:
             result = .unknown
+        case 2:
+            result = .locallyAdministered
+        case 3:
+            let name = String(bytes: Array(organization.prefix(organizationLength)), encoding: .utf8) ?? ""
+            result = .registered(name)
+        default:
+            result = .invalid
         }
-
-        cache[normalized] = result
+        cache[macAddress] = result
         return result
     }
 
     private func install(_ entries: [MACVendorEntry]) {
-        var mappings: [Int: [UInt64: String]] = [:]
-        for entry in entries where Self.supportedPrefixLengths.contains(entry.prefixLength) {
-            guard entry.prefix.count == entry.prefixLength / 4,
-                let numericPrefix = UInt64(entry.prefix, radix: 16),
-                !entry.organization.isEmpty
-            else {
-                continue
-            }
-            mappings[entry.prefixLength, default: [:]][numericPrefix] = entry.organization
-        }
-        organizationsByPrefixLength = mappings
-    }
-
-    private func longestPrefixMatch(for numericAddress: UInt64) -> String? {
-        for prefixLength in Self.supportedPrefixLengths {
-            let prefix = numericAddress >> UInt64(48 - prefixLength)
-            if let organization = organizationsByPrefixLength[prefixLength]?[prefix] {
-                return organization
-            }
-        }
-        return nil
-    }
-
-    private static func normalize(_ macAddress: String) -> String? {
-        if macAddress.count == 12, macAddress.allSatisfy(\.isHexDigit) {
-            return macAddress.uppercased()
-        }
-
-        for separator: Character in [":", "-"] {
-            let octets = macAddress.split(
-                separator: separator,
-                omittingEmptySubsequences: false
-            )
-            guard octets.count == 6,
-                octets.allSatisfy({ $0.count == 2 && $0.allSatisfy(\.isHexDigit) })
-            else {
-                continue
-            }
-            return octets.joined().uppercased()
-        }
-
-        return nil
+        self.entries = entries
     }
 }

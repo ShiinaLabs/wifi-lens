@@ -1786,6 +1786,7 @@
 				"$(SRCROOT)/rust-core/src/channel_occupancy.rs",
 				"$(SRCROOT)/rust-core/src/information_elements.rs",
 				"$(SRCROOT)/rust-core/src/link_evidence.rs",
+				"$(SRCROOT)/rust-core/src/mac_vendor.rs",
 				"$(SRCROOT)/rust-core/src/network_diagnostic_stages.rs",
 				"$(SRCROOT)/rust-core/src/observation_analysis.rs",
 				"$(SRCROOT)/rust-core/src/regulatory.rs",
