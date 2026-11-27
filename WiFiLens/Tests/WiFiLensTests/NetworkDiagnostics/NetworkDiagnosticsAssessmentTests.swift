@@ -7,6 +7,216 @@ import Testing
 @testable import WiFi_Lens
 
 extension NetworkDiagnosticsTests {
+    @Test("Swift adapter matches shared Rust stage-aggregation fixtures")
+    func sharedRustStageFixtures() throws {
+        let fixtureURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("rust-core", isDirectory: true)
+            .appendingPathComponent("tests", isDirectory: true)
+            .appendingPathComponent("fixtures", isDirectory: true)
+            .appendingPathComponent("network-diagnostic-stage-cases.tsv")
+        let fixtures = try String(contentsOf: fixtureURL, encoding: .utf8)
+        let resolver = NetworkDiagnosticAssessmentResolver()
+        var caseCount = 0
+
+        func status(_ token: Substring) -> NetworkDiagnosticStatus? {
+            switch token {
+            case "missing": return nil
+            case "normal": return .normal
+            case "abnormal": return .abnormal
+            case "indeterminate": return .indeterminate
+            case "blocked": return .blocked
+            case "skipped": return .skipped
+            default:
+                Issue.record("Invalid status fixture token \(token)")
+                return nil
+            }
+        }
+
+        func proxyAvailability(_ token: Substring) -> DiagnosticRouteAvailability? {
+            switch token {
+            case "missing": return nil
+            case "available": return .available
+            case "unavailable": return .unavailable
+            case "auth": return .authenticationRequired
+            case "unverified": return .unverified
+            default:
+                Issue.record("Invalid proxy fixture token \(token)")
+                return nil
+            }
+        }
+
+        func qualification(_ token: Substring) -> String? {
+            switch token {
+            case "none": return nil
+            case "proxy-direct-unverified": return "proxy.direct-unverified"
+            case "gateway-unverified": return "gateway.unverified"
+            default:
+                Issue.record("Invalid qualification fixture token \(token)")
+                return nil
+            }
+        }
+
+        for (lineIndex, line) in fixtures.split(whereSeparator: \.isNewline).enumerated() {
+            if line.isEmpty || line.first == "#" { continue }
+            let fields = line.split(whereSeparator: \.isWhitespace)
+            guard fields.count == 18 else {
+                Issue.record("Invalid stage fixture on line \(lineIndex + 1)")
+                continue
+            }
+
+            let name = String(fields[0])
+            let flags = try #require(Int(fields[9]))
+            let checkIDs: [(NetworkDiagnosticCheckID, Substring)] = [
+                (.path, fields[1]),
+                (.gatewayReachability, fields[2]),
+                (.gatewayTCPReachability, fields[3]),
+                (.dns, fields[4]),
+                (.internet, fields[5]),
+                (.proxy, fields[6]),
+            ]
+            var results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [:]
+            for (id, token) in checkIDs {
+                guard let mapped = status(token) else { continue }
+                var evidence: [NetworkDiagnosticEvidence] = []
+                if id == .internet, flags & 1 != 0 {
+                    evidence.append(.init(code: "https.available"))
+                }
+                if id == .gatewayReachability, flags & 2 != 0 {
+                    evidence.append(.init(code: "gateway.no-response"))
+                }
+                if id == .proxy {
+                    if flags & 4 != 0 {
+                        evidence.append(.init(code: "proxy.https.egress-status", value: "base-check"))
+                    }
+                    if flags & 8 != 0 {
+                        evidence.append(.init(code: "proxy.http.resolution", value: "pac-timeout"))
+                    }
+                }
+                let proxyHTTP = proxyAvailability(fields[7])
+                let proxyHTTPS = proxyAvailability(fields[8])
+                let proxyFacts: DiagnosticProxyFacts?
+                if id == .proxy, let proxyHTTP, let proxyHTTPS {
+                    proxyFacts = DiagnosticProxyFacts(http: proxyHTTP, https: proxyHTTPS)
+                } else {
+                    proxyFacts = nil
+                }
+                results[id] = NetworkDiagnosticResult(
+                    id: id,
+                    status: mapped,
+                    summary: name,
+                    evidence: evidence,
+                    proxyFacts: proxyFacts
+                )
+            }
+
+            let assessment = resolver.resolve(results: results, complete: false)
+            let expectedStatuses = [
+                (NetworkDiagnosticStage.thisMac, fields[10]),
+                (.lan, fields[11]),
+                (.internet, fields[12]),
+            ]
+            for (stage, token) in expectedStatuses {
+                let actual = assessment.stages.first { $0.stage == stage }
+                #expect(
+                    actual?.status == status(token),
+                    "fixture \(name) stage \(stage)"
+                )
+            }
+            let expectedQualifications: [(NetworkDiagnosticStage, Substring)] = [
+                (.thisMac, fields[13]),
+                (.lan, fields[14]),
+            ]
+            for (stage, token) in expectedQualifications {
+                let actual = assessment.stages.first { $0.stage == stage }
+                #expect(
+                    actual?.qualificationCode == qualification(token),
+                    "fixture \(name) qualification \(stage)"
+                )
+            }
+            caseCount += 1
+        }
+
+        #expect(caseCount == 25)
+    }
+
+    @Test("Rust stage aggregation preserves qualifications and absent contributor state")
+    func rustStageAggregation() {
+        let resolver = NetworkDiagnosticAssessmentResolver()
+        let directProxy = NetworkDiagnosticResult(
+            id: .proxy,
+            status: .indeterminate,
+            summary: "direct routing selected",
+            evidence: [.init(code: "proxy.https.egress-status", value: "base-check")],
+            proxyFacts: .init(http: .unverified, https: .unverified)
+        )
+        let thisMac: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [
+            .path: .init(id: .path, status: .normal, summary: "path"),
+            .dns: .init(id: .dns, status: .normal, summary: "dns"),
+            .internet: .init(id: .internet, status: .normal, summary: "internet"),
+            .proxy: directProxy,
+        ]
+        let thisMacAssessment = resolver.resolve(results: thisMac, complete: false)
+        let thisMacStage = thisMacAssessment.stages.first { $0.stage == .thisMac }
+        #expect(thisMacStage?.status == .normal)
+        #expect(thisMacStage?.qualificationCode == "proxy.direct-unverified")
+
+        let missingDNS: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [
+            .path: .init(id: .path, status: .normal, summary: "path"),
+            .proxy: directProxy,
+        ]
+        #expect(
+            resolver.resolve(results: missingDNS, complete: false)
+                .stages.first { $0.stage == .thisMac }?.status == nil
+        )
+
+        var gateway: [NetworkDiagnosticCheckID: NetworkDiagnosticResult] = [
+            .path: .init(id: .path, status: .normal, summary: "path"),
+            .dns: .init(id: .dns, status: .normal, summary: "dns"),
+            .proxy: .init(id: .proxy, status: .normal, summary: "proxy"),
+            .internet: .init(
+                id: .internet,
+                status: .normal,
+                summary: "internet",
+                evidence: [.init(code: "https.available")]
+            ),
+            .gatewayReachability: .init(
+                id: .gatewayReachability,
+                status: .indeterminate,
+                summary: "gateway",
+                evidence: [.init(code: "gateway.no-response")]
+            ),
+            .gatewayTCPReachability: .init(
+                id: .gatewayTCPReachability,
+                status: .indeterminate,
+                summary: "gateway TCP"
+            ),
+        ]
+        let gatewayAssessment = resolver.resolve(
+            results: gateway,
+            complete: true,
+            requiredIDs: Set(gateway.keys)
+        )
+        let lanStage = gatewayAssessment.stages.first { $0.stage == .lan }
+        #expect(lanStage?.status == .indeterminate)
+        #expect(lanStage?.qualificationCode == "gateway.unverified")
+        #expect(gatewayAssessment.conclusion == .networkNormal)
+
+        gateway[.gatewayTCPReachability] = .init(
+            id: .gatewayTCPReachability,
+            status: .normal,
+            summary: "gateway TCP"
+        )
+        #expect(
+            resolver.resolve(results: gateway, complete: false)
+                .stages.first { $0.stage == .lan }?.status == .normal
+        )
+    }
+
     @Test("conclusion and assessment rules cover the decision table")
     func conclusionDecisionTable() {
         func assessment(for results: [NetworkDiagnosticResult]) -> NetworkDiagnosticAssessment {
@@ -304,7 +514,9 @@ extension NetworkDiagnosticsTests {
         var cache = IPv4BoundaryCache()
         #expect(cache.assess(observation([gateway, nil]), internetAvailable: false) == nil)
         let now = ContinuousClock.now
-        #expect(cache.assess(observation([gateway, upstream, carrier, "8.8.8.8"]), internetAvailable: true, now: now) == nil)
+        #expect(
+            cache.assess(observation([gateway, upstream, carrier, "8.8.8.8"]), internetAvailable: true, now: now) == nil
+        )
         let localFailure = observation([gateway, nil])
         let upstreamMiss = IPv4GatewayProbe(level: 2, address: upstream, outcome: .noReply)
         let carrierReply = IPv4GatewayProbe(level: 3, address: carrier, outcome: .replied(milliseconds: 3))
@@ -319,7 +531,9 @@ extension NetworkDiagnosticsTests {
         #expect(cache.assess(observation([gateway, upstream, carrier, nil]), internetAvailable: false) == .carrier)
         #expect(cache.assess(observation([gateway, nil, carrier]), internetAvailable: false) == nil)
         #expect(cache.assess(observation([nil, nil]), internetAvailable: false) == nil)
-        #expect(cache.assess(observation([gateway, upstream, nil]), internetAvailable: false, now: now + .seconds(3600)) == nil)
+        #expect(
+            cache.assess(observation([gateway, upstream, nil]), internetAvailable: false, now: now + .seconds(3600))
+                == nil)
         _ = cache.assess(observation([gateway, upstream, carrier]), internetAvailable: true)
         #expect(cache.assess(observation([gateway, nil], bssid: "second"), internetAvailable: false) == nil)
         let unidentified = observation([gateway, upstream, carrier], bssid: nil)
@@ -342,7 +556,8 @@ extension NetworkDiagnosticsTests {
             #expect(issue?.evidence.contains(.init(code: failure.rawValue)) == true)
         }
         #expect(resolver.resolve(results: byID, complete: false, boundaryFailure: .outlet).conclusion == nil)
-        byID[.internet] = .init(id: .internet, status: .normal, summary: "internet", evidence: [.init(code: "https.available")])
+        byID[.internet] = .init(
+            id: .internet, status: .normal, summary: "internet", evidence: [.init(code: "https.available")])
         #expect(resolver.resolve(results: byID, complete: true, boundaryFailure: .outlet).conclusion == .networkNormal)
     }
 }

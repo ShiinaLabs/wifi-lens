@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCoreRust
 
 enum DiagnosticRouteAvailability: Equatable, Sendable {
     case available
@@ -58,21 +59,29 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         boundaryFailure: IPv4BoundaryFailure? = nil,
         unresponsiveGateway: IPv4GatewayProbe? = nil
     ) -> NetworkDiagnosticAssessment {
-        let stages = NetworkDiagnosticStage.allCases.map { stage in
-            stageAssessment(stage, results: results)
-        }
+        let stageResolution = resolveStages(results: results)
         guard complete,
             Set(results.keys) == requiredIDs
         else {
             return NetworkDiagnosticAssessment(
                 conclusion: nil,
-                stages: stages,
-                primaryIssue: primaryIssue(in: results)
+                stages: stageResolution.stages,
+                primaryIssue: primaryIssue(
+                    in: results,
+                    neutralGateway: stageResolution.neutralGateway
+                )
             )
         }
 
-        let conclusion = conclusion(results: results)
-        var issue = primaryIssue(in: results)
+        let conclusion = conclusion(
+            results: results,
+            externalSuccess: stageResolution.externalSuccess,
+            neutralDirectProxy: stageResolution.neutralDirectProxy
+        )
+        var issue = primaryIssue(
+            in: results,
+            neutralGateway: stageResolution.neutralGateway
+        )
         if let boundaryFailure,
             issue?.id == .internet
                 || (issue?.id == .dns && boundaryFailure != .carrier),
@@ -80,7 +89,7 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
             results[.gatewayReachability]?.status == .normal
                 || results[.gatewayTCPReachability]?.status == .normal,
             let internet = results[.internet], internet.status == .abnormal,
-            !hasExternalSuccess(internet: internet, proxy: results[.proxy]),
+            !stageResolution.externalSuccess,
             !internet.evidence.contains(where: { $0.code == "captive-portal.clear" }),
             internet.evidence.contains(where: {
                 $0.code == "https.connectivity-error"
@@ -92,78 +101,158 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 status: internet.status,
                 summary: internet.summary,
                 detail: internet.detail,
-                evidence: internet.evidence + [.init(code: boundaryFailure.rawValue, value: unresponsiveGateway?.address)]
+                evidence: internet.evidence + [
+                    .init(code: boundaryFailure.rawValue, value: unresponsiveGateway?.address)
+                ]
             )
         }
         return NetworkDiagnosticAssessment(
             conclusion: conclusion,
-            stages: stages,
+            stages: stageResolution.stages,
             primaryIssue: issue
         )
     }
 
-    private func stageAssessment(
-        _ stage: NetworkDiagnosticStage,
+    private func resolveStages(
         results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult]
-    ) -> DiagnosticStageAssessment {
-        let contributors = stage.contributingCheckIDs.compactMap { results[$0] }
-        guard contributors.count == stage.contributingCheckIDs.count else {
-            return .init(stage: stage, status: nil, qualificationCode: nil)
-        }
-        if contributors.allSatisfy({ $0.status == .skipped }) {
-            return .init(stage: stage, status: .skipped, qualificationCode: nil)
-        }
-        if contributors.contains(where: { $0.status == .abnormal }) {
-            return .init(stage: stage, status: .abnormal, qualificationCode: nil)
-        }
-        if contributors.contains(where: { $0.status == .blocked }) {
-            return .init(stage: stage, status: .blocked, qualificationCode: nil)
-        }
-        if stage == .lan, contributors.contains(where: { $0.status == .normal }) {
-            return .init(stage: stage, status: .normal, qualificationCode: nil)
-        }
-        if contributors.contains(where: { $0.status == .indeterminate }) {
-            let nonProxyContributors = contributors.filter { $0.id != .proxy }
-            if stage == .thisMac,
-                let proxy = results[.proxy],
-                isUnverifiedDirectRoute(proxy: proxy, internet: results[.internet]),
-                nonProxyContributors.allSatisfy({ $0.status == .normal })
-            {
-                return .init(
-                    stage: stage,
-                    status: .normal,
-                    qualificationCode: "proxy.direct-unverified"
-                )
+    ) -> (
+        stages: [DiagnosticStageAssessment], externalSuccess: Bool, neutralDirectProxy: Bool, neutralGateway: Bool
+    ) {
+        func statusCode(_ status: NetworkDiagnosticStatus?) -> Int32 {
+            switch status {
+            case nil: WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_MISSING
+            case .normal: WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_NORMAL
+            case .abnormal: WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_ABNORMAL
+            case .indeterminate: WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_INDETERMINATE
+            case .blocked: WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_BLOCKED
+            case .skipped: WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_SKIPPED
             }
-            if stage == .lan,
-                let gateway = results[.gatewayReachability],
-                gateway.status == .indeterminate,
-                gateway.evidence.contains(where: { $0.code == "gateway.no-response" }),
-                hasExternalSuccess(
-                    internet: results[.internet],
-                    proxy: results[.proxy]
-                )
-            {
-                return .init(
-                    stage: stage,
-                    status: .indeterminate,
-                    qualificationCode: "gateway.unverified"
-                )
-            }
-            return .init(stage: stage, status: .indeterminate, qualificationCode: nil)
         }
-        return .init(stage: stage, status: .normal, qualificationCode: nil)
+
+        func proxyAvailabilityCode(_ availability: DiagnosticRouteAvailability?) -> Int32 {
+            switch availability {
+            case .none: WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_FACTS_MISSING
+            case .some(.available): WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_AVAILABLE
+            case .some(.unavailable): WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_UNAVAILABLE
+            case .some(.authenticationRequired): WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_AUTHENTICATION_REQUIRED
+            case .some(.unverified): WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_UNVERIFIED
+            }
+        }
+
+        let proxyEvidence = results[.proxy]?.evidence ?? []
+        var flags: UInt32 = 0
+        if results[.internet]?.evidence.contains(where: { $0.code == "https.available" }) == true {
+            flags |= WIFI_LENS_DIAGNOSTIC_STAGE_INTERNET_HTTPS_AVAILABLE
+        }
+        if results[.gatewayReachability]?.evidence.contains(where: { $0.code == "gateway.no-response" }) == true {
+            flags |= WIFI_LENS_DIAGNOSTIC_STAGE_GATEWAY_NO_RESPONSE
+        }
+        if proxyEvidence.contains(where: { evidence in
+            if evidence.code == "proxy.http.route-type" || evidence.code == "proxy.https.route-type" {
+                return evidence.value == "direct" || evidence.value == "tunnel"
+            }
+            if evidence.code == "proxy.http.egress-status" || evidence.code == "proxy.https.egress-status" {
+                return evidence.value == "base-check"
+            }
+            return false
+        }) {
+            flags |= WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_EXPLICIT_DIRECT_ROUTE
+        }
+        if proxyEvidence.contains(where: {
+            $0.code == "proxy.http.resolution" || $0.code == "proxy.https.resolution"
+        }) {
+            flags |= WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_RESOLUTION_EVIDENCE
+        }
+
+        let input = WiFiLensDiagnosticStageInput(
+            path_status: statusCode(results[.path]?.status),
+            gateway_reachability_status: statusCode(results[.gatewayReachability]?.status),
+            gateway_tcp_reachability_status: statusCode(results[.gatewayTCPReachability]?.status),
+            dns_status: statusCode(results[.dns]?.status),
+            internet_status: statusCode(results[.internet]?.status),
+            proxy_status: statusCode(results[.proxy]?.status),
+            proxy_http_availability: proxyAvailabilityCode(results[.proxy]?.proxyFacts?.http),
+            proxy_https_availability: proxyAvailabilityCode(results[.proxy]?.proxyFacts?.https),
+            flags: flags
+        )
+        var output = WiFiLensDiagnosticStageResult()
+        let status = withUnsafePointer(to: input) { inputPointer in
+            withUnsafeMutablePointer(to: &output) { outputPointer in
+                wifi_lens_diagnostic_stage_assess(inputPointer, outputPointer)
+            }
+        }
+        guard status == WIFI_LENS_STATUS_OK else {
+            assertionFailure("Rust diagnostic stage assessment returned status \(status)")
+            return (
+                NetworkDiagnosticStage.allCases.map { .init(stage: $0, status: nil, qualificationCode: nil) },
+                false,
+                false,
+                false
+            )
+        }
+
+        func mappedStatus(_ code: Int32) -> NetworkDiagnosticStatus? {
+            switch code {
+            case WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_MISSING: return nil
+            case WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_NORMAL: return .normal
+            case WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_ABNORMAL: return .abnormal
+            case WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_INDETERMINATE: return .indeterminate
+            case WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_BLOCKED: return .blocked
+            case WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_SKIPPED: return .skipped
+            default:
+                assertionFailure("Rust diagnostic stage assessment returned status code \(code)")
+                return nil
+            }
+        }
+
+        func qualificationCode(_ code: Int32) -> String? {
+            switch code {
+            case WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_NONE: return nil
+            case WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_PROXY_DIRECT_UNVERIFIED: return "proxy.direct-unverified"
+            case WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_GATEWAY_UNVERIFIED: return "gateway.unverified"
+            default:
+                assertionFailure("Rust diagnostic stage assessment returned qualification code \(code)")
+                return nil
+            }
+        }
+
+        return (
+            [
+                .init(
+                    stage: .thisMac,
+                    status: mappedStatus(output.this_mac_status),
+                    qualificationCode: qualificationCode(output.this_mac_qualification)
+                ),
+                .init(
+                    stage: .lan,
+                    status: mappedStatus(output.lan_status),
+                    qualificationCode: qualificationCode(output.lan_qualification)
+                ),
+                .init(
+                    stage: .internet,
+                    status: mappedStatus(output.internet_status),
+                    qualificationCode: qualificationCode(output.internet_qualification)
+                ),
+            ],
+            output.external_success != 0,
+            output.neutral_direct_proxy != 0,
+            output.neutral_gateway != 0
+        )
     }
 
     private func conclusion(
-        results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult]
+        results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
+        externalSuccess: Bool,
+        neutralDirectProxy: Bool
     ) -> NetworkDiagnosticConclusion {
         let path = results[.path]
         let internet = results[.internet]
         let gateway = results[.gatewayReachability]
         let dns = results[.dns]
         let proxy = results[.proxy]
-        let externalSuccess = hasExternalSuccess(internet: internet, proxy: proxy)
+        let gatewayIsNeutral =
+            externalSuccess && gateway?.status == .indeterminate
+            && gateway?.evidence.contains { $0.code == "gateway.no-response" } == true
         if internet?.evidence.contains(where: {
             $0.code == "captive-portal.redirect" || $0.code == "captive-portal.suspected"
         }) == true {
@@ -189,7 +278,7 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                     result.status != .normal
                 case .gatewayReachability:
                     results[.gatewayTCPReachability]?.status != .normal
-                        && !isNeutralGateway(result, externalSuccess: externalSuccess)
+                        && !gatewayIsNeutral
                         && result.status != .normal
                         && result.status != .skipped
                 case .gatewayTCPReachability:
@@ -197,7 +286,7 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 case .dns, .internet:
                     result.status != .normal
                 case .proxy:
-                    !isNeutralDirectProxy(result, internet: internet)
+                    !neutralDirectProxy
                         && result.status != .normal
                 case .ipv6:
                     false
@@ -207,12 +296,9 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
     }
 
     private func primaryIssue(
-        in results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult]
+        in results: [NetworkDiagnosticCheckID: NetworkDiagnosticResult],
+        neutralGateway: Bool
     ) -> NetworkDiagnosticResult? {
-        let externalSuccess = hasExternalSuccess(
-            internet: results[.internet],
-            proxy: results[.proxy]
-        )
         let candidates = results.values.filter { result in
             switch result.id {
             case .path:
@@ -220,7 +306,7 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
             case .gatewayReachability:
                 (result.status == .abnormal || result.status == .indeterminate)
                     && results[.gatewayTCPReachability]?.status != .normal
-                    && !isNeutralGateway(result, externalSuccess: externalSuccess)
+                    && !neutralGateway
             case .gatewayTCPReachability:
                 false
             case .dns:
@@ -268,15 +354,12 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
         return .indeterminate
     }
 
-    private func hasExternalSuccess(
-        internet: NetworkDiagnosticResult?,
-        proxy: NetworkDiagnosticResult?
-    ) -> Bool {
-        hasDirectHTTPS(internet) || hasAvailableHTTPSProxy(proxy)
-    }
-
     private func hasDirectHTTPS(_ result: NetworkDiagnosticResult?) -> Bool {
         result?.evidence.contains { $0.code == "https.available" } == true
+    }
+
+    private func hasAvailableHTTPSProxy(_ result: NetworkDiagnosticResult?) -> Bool {
+        result?.proxyFacts?.https == .available
     }
 
     private func hasCorroboratedDNSFailure(
@@ -290,50 +373,5 @@ struct NetworkDiagnosticAssessmentResolver: Sendable {
                 $0.code == "https.connectivity-error"
                     && $0.value == String(URLError.dnsLookupFailed.rawValue)
             } == true
-    }
-
-    private func hasAvailableHTTPSProxy(_ result: NetworkDiagnosticResult?) -> Bool {
-        result?.proxyFacts?.https == .available
-    }
-
-    private func isNeutralGateway(
-        _ result: NetworkDiagnosticResult,
-        externalSuccess: Bool
-    ) -> Bool {
-        guard externalSuccess, result.status == .indeterminate else { return false }
-        return result.evidence.contains { $0.code == "gateway.no-response" }
-    }
-
-    private func isNeutralDirectProxy(
-        _ result: NetworkDiagnosticResult,
-        internet: NetworkDiagnosticResult?
-    ) -> Bool {
-        result.status == .indeterminate
-            && internet?.status == .normal
-            && result.proxyFacts?.http == .unverified
-            && result.proxyFacts?.https == .unverified
-            && hasExplicitDirectRouteEvidence(result)
-            && !result.evidence.contains {
-                $0.code == "proxy.http.resolution" || $0.code == "proxy.https.resolution"
-            }
-    }
-
-    private func hasExplicitDirectRouteEvidence(_ result: NetworkDiagnosticResult) -> Bool {
-        result.evidence.contains { evidence in
-            if evidence.code == "proxy.http.route-type" || evidence.code == "proxy.https.route-type" {
-                return evidence.value == "direct" || evidence.value == "tunnel"
-            }
-            if evidence.code == "proxy.http.egress-status" || evidence.code == "proxy.https.egress-status" {
-                return evidence.value == "base-check"
-            }
-            return false
-        }
-    }
-
-    private func isUnverifiedDirectRoute(
-        proxy: NetworkDiagnosticResult,
-        internet: NetworkDiagnosticResult?
-    ) -> Bool {
-        isNeutralDirectProxy(proxy, internet: internet)
     }
 }

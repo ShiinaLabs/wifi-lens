@@ -323,6 +323,15 @@ fn decode_input(input: WiFiLensLinkEvidenceInput) -> Result<LinkEvidenceInput, i
     })
 }
 
+fn guarded(
+    operation: impl FnOnce() -> Result<WiFiLensLinkEvidenceResult, i32> + std::panic::UnwindSafe,
+) -> Result<WiFiLensLinkEvidenceResult, i32> {
+    match catch_unwind(operation) {
+        Ok(result) => result,
+        Err(_) => Err(WIFI_LENS_STATUS_PANIC),
+    }
+}
+
 /// Interpret a collected link sample through the stable C ABI.
 ///
 /// # Safety
@@ -338,12 +347,27 @@ pub unsafe extern "C" fn wifi_lens_interpret_link_evidence(
         return WIFI_LENS_STATUS_INVALID_POINTER;
     }
     let raw_input = unsafe { *input };
-    match catch_unwind(|| decode_input(raw_input).map(interpret_link_evidence)) {
-        Ok(Ok(assessment)) => {
-            unsafe { *output = assessment.into() };
+    match guarded(|| {
+        decode_input(raw_input)
+            .map(interpret_link_evidence)
+            .map(Into::into)
+    }) {
+        Ok(result) => {
+            unsafe { *output = result };
             WIFI_LENS_STATUS_OK
         }
-        Ok(Err(status)) => status,
-        Err(_) => WIFI_LENS_STATUS_PANIC,
+        Err(status) => status,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn panic_is_converted_to_a_status_before_crossing_the_abi() {
+        let result =
+            guarded(|| -> Result<WiFiLensLinkEvidenceResult, i32> { panic!("test panic") });
+        assert_eq!(result, Err(WIFI_LENS_STATUS_PANIC));
     }
 }

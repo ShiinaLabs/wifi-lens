@@ -16,6 +16,7 @@
 #define WIFI_LENS_STATUS_INVALID_WIDTH 9
 #define WIFI_LENS_STATUS_INVALID_LINK_EVIDENCE 10
 #define WIFI_LENS_STATUS_INVALID_REGULATORY_INPUT 11
+#define WIFI_LENS_STATUS_INVALID_NETWORK_DIAGNOSTIC_INPUT 12
 
 typedef struct {
     int32_t status;
@@ -84,6 +85,58 @@ typedef struct {
     int32_t reason;
     int32_t candidate_state;
 } WiFiLensLinkEvidenceResult;
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_MISSING 0
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_NORMAL 1
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_ABNORMAL 2
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_INDETERMINATE 3
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_BLOCKED 4
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_SKIPPED 5
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_FACTS_MISSING 0
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_AVAILABLE 1
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_UNAVAILABLE 2
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_AUTHENTICATION_REQUIRED 3
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_UNVERIFIED 4
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_NONE 0
+#define WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_PROXY_DIRECT_UNVERIFIED 1
+#define WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_GATEWAY_UNVERIFIED 2
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_INTERNET_HTTPS_AVAILABLE (1u << 0)
+#define WIFI_LENS_DIAGNOSTIC_STAGE_GATEWAY_NO_RESPONSE (1u << 1)
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_EXPLICIT_DIRECT_ROUTE (1u << 2)
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_RESOLUTION_EVIDENCE (1u << 3)
+
+/*
+ * Diagnostic status codes: 0 missing, 1 normal, 2 abnormal, 3 indeterminate,
+ * 4 blocked, and 5 skipped. Proxy availability codes distinguish missing facts
+ * (0) from available, unavailable, authentication-required, and unverified.
+ * Flags describe normalized evidence; unknown codes or flags return status 12.
+ */
+typedef struct {
+    int32_t path_status;
+    int32_t gateway_reachability_status;
+    int32_t gateway_tcp_reachability_status;
+    int32_t dns_status;
+    int32_t internet_status;
+    int32_t proxy_status;
+    int32_t proxy_http_availability;
+    int32_t proxy_https_availability;
+    uint32_t flags;
+} WiFiLensDiagnosticStageInput;
+
+typedef struct {
+    int32_t this_mac_status;
+    int32_t this_mac_qualification;
+    int32_t lan_status;
+    int32_t lan_qualification;
+    int32_t internet_status;
+    int32_t internet_qualification;
+    int32_t external_success;
+    int32_t neutral_direct_proxy;
+    int32_t neutral_gateway;
+} WiFiLensDiagnosticStageResult;
 
 typedef struct {
     uint32_t flags;
@@ -517,6 +570,18 @@ int32_t wifi_lens_recommendation_reasons(
     WiFiLensRecommendationReasonResult *outputs,
     size_t output_capacity,
     size_t *output_count
+);
+
+/*
+ * Aggregate normalized network-diagnostic facts into the three stage statuses
+ * and shared neutral-success decisions. The fixed records are caller-owned and
+ * must be valid, aligned, and non-overlapping. Status 5 indicates a null pointer,
+ * status 12 rejects an unknown input code or flag, and status 4 catches panic.
+ * Output is written only on success.
+ */
+int32_t wifi_lens_diagnostic_stage_assess(
+    const WiFiLensDiagnosticStageInput *input,
+    WiFiLensDiagnosticStageResult *output
 );
 
 #endif

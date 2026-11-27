@@ -2059,6 +2059,27 @@ mod tests {
     }
 
     #[test]
+    fn c_abi_reports_required_capacity_without_partial_output() {
+        let mut records = [WiFiLensRegulatoryChannelRule {
+            channel: 999,
+            ..WiFiLensRegulatoryChannelRule::default()
+        }];
+        let mut count = 0;
+        let status = unsafe {
+            wifi_lens_regulatory_channel_rules(
+                REGULATORY_DOMAIN_JP,
+                REGULATORY_BAND_24_GHZ,
+                records.as_mut_ptr(),
+                records.len(),
+                &mut count,
+            )
+        };
+        assert_eq!(status, WIFI_LENS_STATUS_OUTPUT_TOO_SMALL);
+        assert_eq!(count, 14);
+        assert_eq!(records[0].channel, 999);
+    }
+
+    #[test]
     fn c_abi_outputs_typed_region_and_filter_results() {
         let strings = b"USJP";
         let country_ranges = [WiFiLensRegulatoryStringRange {

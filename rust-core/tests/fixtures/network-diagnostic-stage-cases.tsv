@@ -1,0 +1,30 @@
+# name path gateway gateway_tcp dns internet proxy proxy_http proxy_https flags this_mac lan internet_stage this_mac_qual lan_qual external neutral_direct neutral_gateway
+# statuses: missing normal abnormal indeterminate blocked skipped
+# proxy availability: missing available unavailable auth unverified
+# qualifications: none proxy-direct-unverified gateway-unverified
+# flags: bit 0 internet https available, bit 1 gateway no response, bit 2 proxy explicit direct route, bit 3 proxy resolution evidence
+all-normal-no-external normal normal normal normal normal normal missing missing 0 normal normal normal none none 0 0 0
+all-normal-https normal normal normal normal normal normal missing missing 1 normal normal normal none none 1 0 0
+abnormal-precedes-blocked-and-indeterminate abnormal normal normal blocked normal indeterminate missing missing 0 abnormal normal normal none none 0 0 0
+blocked-precedes-indeterminate indeterminate normal normal blocked normal normal missing missing 0 blocked normal normal none none 0 0 0
+all-skipped-this-mac skipped normal normal skipped normal skipped missing missing 0 skipped normal normal none none 0 0 0
+missing-dns-makes-this-mac-missing normal normal normal missing normal normal missing missing 0 missing normal normal none none 0 0 0
+missing-gateway-makes-lan-missing normal missing missing normal normal normal missing missing 0 normal missing normal none none 0 0 0
+mixed-skipped-and-normal-this-mac skipped normal normal normal normal skipped missing missing 0 normal normal normal none none 0 0 0
+lan-success-precedes-indeterminate normal indeterminate normal normal normal normal missing missing 0 normal normal normal none none 0 0 0
+lan-both-indeterminate normal indeterminate indeterminate normal normal normal missing missing 0 normal indeterminate normal none none 0 0 0
+lan-both-blocked normal blocked blocked normal normal normal missing missing 0 normal blocked normal none none 0 0 0
+this-mac-indeterminate-without-proxy-evidence normal normal normal indeterminate normal normal missing missing 0 indeterminate normal normal none none 0 0 0
+direct-proxy-qualified normal normal normal normal normal indeterminate unverified unverified 4 normal normal normal proxy-direct-unverified none 0 1 0
+direct-proxy-with-resolution-evidence normal normal normal normal normal indeterminate unverified unverified 12 indeterminate normal normal none none 0 0 0
+direct-proxy-without-explicit-route normal normal normal normal normal indeterminate unverified unverified 0 indeterminate normal normal none none 0 0 0
+direct-proxy-with-internet-abnormal normal normal normal normal abnormal indeterminate unverified unverified 4 indeterminate normal abnormal none none 0 0 0
+direct-proxy-with-available-https-proxy normal normal normal normal normal indeterminate unverified available 4 indeterminate normal normal none none 1 0 0
+direct-proxy-with-skipped-dns normal normal normal skipped normal indeterminate unverified unverified 4 indeterminate normal normal none none 0 1 0
+gateway-unverified-via-direct-https normal indeterminate indeterminate normal normal normal missing missing 3 normal indeterminate normal none gateway-unverified 1 0 1
+gateway-unverified-via-proxy-https normal indeterminate indeterminate normal normal normal unavailable available 2 normal indeterminate normal none gateway-unverified 1 0 1
+gateway-no-response-without-external-success normal indeterminate indeterminate normal normal normal missing missing 2 normal indeterminate normal none none 0 0 0
+gateway-normal-with-no-response-evidence normal normal normal normal normal normal missing missing 3 normal normal normal none none 1 0 0
+external-success-via-proxy-with-abnormal-internet normal normal normal normal abnormal normal unavailable available 0 normal normal abnormal none none 1 0 0
+internet-skipped-with-normal-lan normal normal normal normal skipped normal missing missing 0 normal normal skipped none none 0 0 0
+internet-indeterminate normal normal normal normal indeterminate normal missing missing 0 normal normal indeterminate none none 0 0 0

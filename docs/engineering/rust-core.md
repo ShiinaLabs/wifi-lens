@@ -5,9 +5,10 @@
 The public `rust-core/` crate is the portable analysis layer used by
 `WiFiLensCore`. Its internal modules own channel block geometry, 802.11
 information-element parsing, observed/counterfactual channel-quality analysis,
-interpretation of collected Wi-Fi link evidence, and regulatory region inference
-and channel recommendation rules. The crate remains one Apache-2.0 Rust library
-with no third-party Rust dependencies.
+interpretation of collected Wi-Fi link evidence, regulatory region inference
+and channel recommendation rules, and network-diagnostic stage aggregation.
+The crate remains one Apache-2.0 Rust library with no third-party Rust
+dependencies.
 
 Swift-facing adapters preserve existing product APIs:
 
@@ -28,6 +29,12 @@ Swift-facing adapters preserve existing product APIs:
   channel rules, inference confidence, compatibility, overrides, classification,
   ordering, and stable reason identifiers. Swift retains locale and hardware
   fact collection, the observable pipeline, model construction, and reason text.
+- `NetworkDiagnosticAssessmentResolver` maps completed check results to
+  normalized status, proxy-availability, and evidence facts in Rust, then maps
+  the returned stage statuses, qualification codes, and shared success/neutrality
+  facts back to the existing Swift models. The overall conclusion, primary-issue
+  ordering, boundary-failure enrichment, probe execution, and presentation stay
+  in Swift.
 
 The Rust link interpreter receives normalized mode, radio, link-active, and
 capture-consistency facts. It does not call CoreWLAN or SystemConfiguration,
@@ -46,7 +53,7 @@ boundary.
 |---|---|
 | Regulatory inference and channel recommendations | **Moved in this R2 batch.** The production observation pipeline supplies locale/country codes, hardware channels, RF results, and PHY facts; Rust owns the country mapping, static rule table, inference, compatibility, overrides, classification, ordering, and reason identifiers. Swift's `RegulatoryDomainResolver` and `RegulatoryPipeline` remain fact/state adapters, while Swift owns model mapping and localized/display text. The rule query adapter also serves the spectrum heatmap. Existing region, database, compatibility, filter, and recommendation-reason tests exercise the Rust-backed Swift API. |
 | Observation analysis | `ChannelOccupancyAnalyzer`, `WiFiQualityEvaluator`, and `DiagnosticEvaluator` consume normalized observation facts and are portable candidates used by the production observation pipeline. Their Swift boundary also applies link/gateway provenance validation and maps results to localized copy. A later batch can move the numeric/decision result while leaving provenance validation and localized presentation in Swift; channel deduplication should be evaluated alongside channel-quality input normalization. |
-| Network diagnostic assessment | `NetworkDiagnosticAssessmentResolver` and `NetworkDiagnosticStageResolver` are pure over completed typed check results and evidence codes, with existing deterministic assessment tests. They are candidates for a separate core API after the evidence-code vocabulary is made an explicit boundary; current evidence includes a Foundation `URLError` code. `NetworkFingerprint.restartReason` is pure over normalized fingerprint values, but the file also owns `Network`, CFNetwork, and SystemConfiguration collectors. The collector stays native; value comparison can be split. Tunnel-name classification uses macOS interface prefixes (`utun`, `ipsec`, `ppp`), so its meaning remains in the platform adapter until other platforms supply normalized tunnel facts. Remediation key selection and status presentation stay in the Swift UI layer. |
+| Network diagnostic stage aggregation | **Moved in this R2 batch.** `NetworkDiagnosticAssessmentResolver` now sends normalized check statuses, proxy availability, and evidence flags to Rust, which owns stage status precedence, missing/skipped distinctions, direct-proxy and gateway qualifications, and the shared external-success/neutrality facts. Swift keeps the overall conclusion, primary-issue ordering, `URLError` corroboration, boundary discovery and enrichment, probes, remediation keys, and presentation. `NetworkFingerprint.restartReason` remains pure over normalized fingerprint values, but its file also owns `Network`, CFNetwork, and SystemConfiguration collectors; the collector stays native and value comparison remains a candidate. Tunnel-name classification uses macOS interface prefixes (`utun`, `ipsec`, `ppp`), so its meaning remains in the platform adapter until other platforms supply normalized tunnel facts. |
 | AP filtering | `APFilterQueryParser` produces a portable AST and has grammar tests. `APFilterService` also uses Foundation `localizedCaseInsensitiveContains` for SSID matching, so moving evaluation needs a deliberate case-folding contract to preserve current query behavior. The parser/filter are UI-facing query behavior and remain Swift pending that contract. |
 | MAC vendor lookup | CSV/JSON parsing and longest-prefix matching operate on byte/string and entry values, so they are portable candidates. Download, bundled-resource loading, storage, observable refresh, and the current main-actor cache remain Swift. The available tests cover parser, resolver, store, downloader, and manager boundaries. |
 | Link, roaming, and device tracking | `WiFiLinkStateCenter` combines AppKit/CoreWLAN/SystemConfiguration events, sampling clocks, and lifecycle; those adapters remain native, while a normalized transition core remains a candidate on top of the Rust link-evidence contract. Roaming probes perform CoreWLAN and interface-bound network acquisition; only classification over normalized samples is a candidate. `BLEDeviceTracker` consumes normalized advertisements without a system API, but its state uses implicit `Date()` and bounded history/eviction; an explicit time/state contract and direct behavior tests are prerequisites to a stable portable API. |
@@ -88,11 +95,16 @@ All variable-sized input and output data stays caller-owned:
 - Regulatory-rule lookup and recommendation filtering write records into
   caller-owned output arrays. Filter reason identifiers use a bit mask; the
   recommendation-reason call returns one reason mask per input recommendation.
+- Diagnostic stage aggregation takes one fixed-size normalized record with
+  explicit missing/code values and flag bits, then writes one fixed-size stage
+  and context result. Unknown codes or flags return status `12` without a
+  partial result.
 - No Rust-owned pointer escapes the call. Counts report required capacity; an
   undersized output buffer returns status `7` and receives no partial records.
 - Statuses distinguish invalid band/direction/width, invalid pointers or input
   slices, invalid UTF-8, invalid link-evidence codes, invalid regulatory codes
-  and flags (`11`), insufficient output capacity, and a caught Rust panic.
+  and flags (`11`), invalid network-diagnostic codes and flags (`12`),
+  insufficient output capacity, and a caught Rust panic.
   Panic handling prevents unwinding across C; callers still must provide valid
   memory for every non-null pointer.
 
@@ -155,9 +167,12 @@ cargo test --locked --target x86_64-apple-darwin
 The `WiFiLensCoreTests` target consumes the shared channel-span and
 link-evidence TSV fixtures. Its regulatory inference, database, compatibility,
 and filter suites exercise the existing Swift APIs through the Rust C ABI. The
-link-evidence cases exercise the existing Swift `WiFiLinkInterpreter` API. Swift
-adapter tests require macOS; Linux and Windows CI validate the Rust API and C ABI
-on their native hosts. Run the suite through the native Xcode project:
+link-evidence cases exercise the existing Swift `WiFiLinkInterpreter` API.
+`rust-core/tests/fixtures/network-diagnostic-stage-cases.tsv` is shared by the
+Rust typed/C ABI tests and the Swift diagnostic adapter test, covering every
+stage status and qualification boundary. Swift adapter tests require macOS;
+Linux and Windows CI validate the Rust API and C ABI on their native hosts. Run
+the suite through the native Xcode project:
 
 ```sh
 xcodebuild -project WiFiLens.xcodeproj -scheme WiFiLensCore \
