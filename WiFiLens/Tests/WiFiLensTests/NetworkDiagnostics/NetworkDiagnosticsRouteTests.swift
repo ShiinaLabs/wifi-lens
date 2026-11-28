@@ -185,7 +185,7 @@ extension NetworkDiagnosticsTests {
             executablePath: "/bin/sh",
             arguments: [
                 "-c",
-                "printf '%s\\n' $$ > \"$1\"; /usr/bin/nohup /bin/sleep 45 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
+                "printf '%s\\n' $$ > \"$1\"; /usr/bin/perl -MPOSIX -e 'POSIX::setsid() or die; open my $file, \">>\", $ARGV[0] or die; print {$file} \"$$\\n\"; close $file; sleep 45' \"$1\" & wait \"$!\"",
                 "route-timeout",
                 pidFile.path,
             ],
