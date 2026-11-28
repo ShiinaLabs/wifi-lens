@@ -826,11 +826,19 @@ extension NetworkDiagnosticsTests {
             ],
             delays: [.zero, .zero, .zero]
         )
+        let clock = SequencedProxyCheckClock(offsets: [
+            .zero,
+            .zero,
+            .milliseconds(250),
+            .milliseconds(1_200),
+            .milliseconds(1_300),
+        ])
         let check = SystemProxyCheck(
             resolver: StubProxyResolver(.direct),
             connector: connector,
             egressLoader: egress,
             tunnelReader: StubProxyTunnelStateReader(interface: nil),
+            clock: clock
         )
 
         let route = await check.evaluate(
