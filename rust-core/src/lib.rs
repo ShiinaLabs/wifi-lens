@@ -1,4 +1,16 @@
-//! Portable Wi-Fi channel span calculations.
+//! Portable Wi-Fi analysis primitives shared by the macOS applications.
+
+mod channel_quality;
+mod information_elements;
+
+pub use channel_quality::{
+    analyze as analyze_channel_quality, AccessPoint, AnalysisConfiguration, ChannelQuality,
+    ChannelWidth, TargetAccessPoint, WiFiLensAccessPointInput, WiFiLensChannelQualityConfig,
+    WiFiLensChannelQualityResult,
+};
+pub use information_elements::{
+    parse as parse_information_elements, IEData, WiFiLensIEParseResult, WiFiLensIEStringRange,
+};
 
 /// The Wi-Fi band used to select a channel block.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -237,6 +249,13 @@ pub const WIFI_LENS_STATUS_INVALID_BAND: i32 = 1;
 pub const WIFI_LENS_STATUS_INVALID_DIRECTION: i32 = 2;
 pub const WIFI_LENS_STATUS_WIDTH_BELOW_20_MHZ: i32 = 3;
 pub const WIFI_LENS_STATUS_PANIC: i32 = 4;
+pub const WIFI_LENS_STATUS_INVALID_POINTER: i32 = 5;
+pub const WIFI_LENS_STATUS_INVALID_INPUT_SLICE: i32 = 6;
+pub const WIFI_LENS_STATUS_OUTPUT_TOO_SMALL: i32 = 7;
+pub const WIFI_LENS_STATUS_INVALID_UTF8: i32 = 8;
+pub const WIFI_LENS_STATUS_INVALID_WIDTH: i32 = 9;
+pub const WIFI_LENS_MAX_CHANNEL_QUALITIES: usize = 105;
+pub const WIFI_LENS_IE_MAX_TEXT_BYTES: usize = 32 * (256 * 2 + 1);
 
 fn ffi_result(
     operation: impl FnOnce() -> Result<ChannelBlock, i32> + std::panic::UnwindSafe,

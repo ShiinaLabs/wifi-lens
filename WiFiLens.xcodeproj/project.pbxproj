@@ -1608,7 +1608,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 48CC669075019465A0637978 /* Build configuration list for PBXNativeTarget "WiFiLensCore" */;
 			buildPhases = (
-				FBC5878B30B867B800C39161 /* Build Rust Core */,
+				FBA0CFB230B88A7B0010BDA7 /* Build Rust Core */,
 				8786E929C6451F1171707511 /* Sources */,
 				6C250FB977475676B858D369 /* Frameworks */,
 				14530F3B1BEE4157098475BA /* Resources */,
@@ -1767,7 +1767,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		FBC5878B30B867B800C39161 /* Build Rust Core */ = {
+		FBA0CFB230B88A7B0010BDA7 /* Build Rust Core */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1779,6 +1779,8 @@
 				"$(SRCROOT)/rust-core/Cargo.lock",
 				"$(SRCROOT)/rust-core/rust-toolchain.toml",
 				"$(SRCROOT)/rust-core/src/lib.rs",
+				"$(SRCROOT)/rust-core/src/channel_quality.rs",
+				"$(SRCROOT)/rust-core/src/information_elements.rs",
 				"$(SRCROOT)/rust-core/include/wifi_lens_core.h",
 				"$(SRCROOT)/rust-core/include/module.modulemap",
 				"$(SRCROOT)/rust-core/build-rust-core.sh",

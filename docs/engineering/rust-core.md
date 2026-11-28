@@ -2,15 +2,56 @@
 
 ## Ownership and interface
 
-The public `rust-core/` crate implements the channel span calculations used by
-`WiFiLensCore`. `ChannelSpanCalculator.swift` preserves the Swift-facing API and
-calls the Rust implementation through the `WiFiLensCoreRust` Clang module.
+The public `rust-core/` crate is the portable analysis layer used by
+`WiFiLensCore`. Its internal modules own channel block geometry, 802.11
+information-element parsing, and observed/counterfactual channel-quality
+analysis. The crate remains one Apache-2.0 Rust library with no third-party Rust
+dependencies.
+
+Swift-facing adapters preserve existing product APIs:
+
+- `ChannelSpanCalculator` delegates channel block calculations to Rust.
+- `IEParser` delegates byte parsing and protocol interpretation to Rust, then
+  maps bounded suite codes and scalar fields into the existing `IEData` model.
+  Swift keeps the existing security summary and display labels.
+- `ChannelQualityCalculator` delegates overlap, observed RF scoring, target AP
+  exclusion, recommendation thresholds, and result ordering to Rust. Swift
+  maps those results into `ChannelQuality` and supplies localized band labels.
+
+The migration boundary follows the input and output dependencies. CoreWLAN
+acquisition and `WiFiChannel` remain native. Regulatory inference, device
+compatibility, user overrides, and recommendation filtering remain native
+because they consume system and product inputs beyond the portable score.
+`ChannelSeriesDataBuilder`, chart series, heatmap layout, Gaussian sampling,
+and chart rendering remain native because they produce ChartLens/SwiftUI
+presentation data. No second Rust crate or public repository is required.
 
 The Rust library exposes both native Rust functions and a small C ABI. The ABI
-uses fixed-width integers and a `repr(C)` result structure declared in
+uses fixed-width integers and `repr(C)` records declared in
 `rust-core/include/wifi_lens_core.h`; `module.modulemap` exposes that header to
-Swift. The crate builds as both an `rlib` and a static library. Its Cargo lock
-file contains no third-party Rust packages, and the crate declares Apache-2.0.
+Swift.
+
+### C ABI ownership and errors
+
+All variable-sized input and output data stays caller-owned:
+
+- The IE parser borrows input bytes for one call. It writes scalar results to a
+  caller-owned record, canonical suite labels to a caller-owned UTF-8 buffer,
+  and byte ranges for each label to caller-owned arrays.
+- Channel-quality input records refer to UTF-8 identity values by offset and
+  length in one caller-owned byte buffer. Output records are written into a
+  caller-provided array.
+- No Rust-owned pointer escapes the call. Counts report required capacity; an
+  undersized output buffer returns status `7` and receives no partial result.
+- Statuses distinguish invalid band/direction/width, invalid pointers or input
+  slices, invalid UTF-8, insufficient output capacity, and a caught Rust panic.
+  Panic handling prevents unwinding across C; callers still must provide valid
+  memory for every non-null pointer.
+
+Band and width values use the integer codes documented in the public header.
+Optional values use explicit presence bits instead of magic input sentinels.
+The result records use documented enum codes for HT/VHT operation and
+counterfactual recommendation state.
 
 ## Xcode integration
 
@@ -25,7 +66,8 @@ Xcode's `DERIVED_FILE_DIR` and is linked into `WiFiLensCore.framework`.
 The Xcode target adds `rust-core/include` to Swift's header search path. A
 normal Xcode build therefore builds and links the Rust library as part of the
 existing app workflow; no separate generated library or manual copy step is
-needed.
+needed. The `Build Rust Core` phase lists each Rust module as an input so edits
+to parser or scoring code retrigger the static-library build.
 
 ## CI toolchain setup
 
