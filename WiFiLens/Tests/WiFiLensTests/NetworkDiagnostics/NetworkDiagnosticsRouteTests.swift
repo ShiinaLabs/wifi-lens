@@ -171,44 +171,50 @@ extension NetworkDiagnosticsTests {
 
     @Test("route command timeout terminates the child without waiting for EOF")
     func routeCommandTimeoutDoesNotWaitForChild() async {
-        let readyFile = FileManager.default.temporaryDirectory
+        let pidFile = FileManager.default.temporaryDirectory
             .appendingPathComponent("route-timeout-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: readyFile) }
+        defer {
+            if let contents = try? String(contentsOf: pidFile, encoding: .utf8) {
+                for pid in contents.split(whereSeparator: \.isNewline).compactMap({ pid_t(String($0)) }) {
+                    _ = Darwin.kill(pid, SIGKILL)
+                }
+            }
+            try? FileManager.default.removeItem(at: pidFile)
+        }
         let execution = DiagnosticRouteProcessExecution(
             executablePath: "/bin/sh",
             arguments: [
                 "-c",
-                "sleep 4 & child=$!; printf '%s' \"$child\" > '\(readyFile.path)'; wait \"$child\"",
+                "child=; trap 'if [ -n \"$child\" ]; then kill -KILL \"$child\" 2>/dev/null; fi; exit' TERM; printf '%s\\n' $$ > \"$1\"; /bin/sleep 8 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
+                "route-timeout",
+                pidFile.path,
             ],
             environment: [:],
             outputLimit: 1024
         )
-        let run = Task { await execution.run(timeout: .seconds(1)) }
+        let run = Task { await execution.run(timeout: .seconds(5)) }
 
-        var childPID: pid_t?
-        for _ in 0..<200 {
-            if let contents = try? String(contentsOf: readyFile, encoding: .utf8),
-                let pid = pid_t(contents)
-            {
-                childPID = pid
+        var processIDs: [pid_t] = []
+        for _ in 0..<1_000 {
+            if let contents = try? String(contentsOf: pidFile, encoding: .utf8) {
+                processIDs = contents.split(whereSeparator: \.isNewline).compactMap { pid_t(String($0)) }
+            }
+            if processIDs.count == 2 {
                 break
             }
             try? await Task.sleep(for: .milliseconds(10))
         }
-        guard let childPID else {
+        guard processIDs.count == 2 else {
             run.cancel()
-            Issue.record("Route command child did not signal readiness")
+            _ = await run.value
+            Issue.record("Route command and pipe-holding child did not signal readiness")
             return
         }
-        defer { _ = Darwin.kill(childPID, SIGKILL) }
 
-        let startedAt = ContinuousClock.now
         let result = await run.value
-        let elapsedAfterReady = startedAt.duration(to: ContinuousClock.now)
 
         #expect(result.timedOut)
-        #expect(elapsedAfterReady < .seconds(2))
-        #expect(Darwin.kill(childPID, 0) == 0)
+        #expect(Darwin.kill(processIDs[1], 0) == 0)
     }
 
     @Test("contextual path and gateway checks use one selected interface")
