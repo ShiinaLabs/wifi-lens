@@ -1,4 +1,5 @@
 import CFNetwork
+import Darwin
 import Foundation
 import Network
 import Testing
@@ -170,18 +171,44 @@ extension NetworkDiagnosticsTests {
 
     @Test("route command timeout terminates the child without waiting for EOF")
     func routeCommandTimeoutDoesNotWaitForChild() async {
+        let readyFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("route-timeout-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: readyFile) }
         let execution = DiagnosticRouteProcessExecution(
-            executablePath: "/bin/sleep",
-            arguments: ["5"],
+            executablePath: "/bin/sh",
+            arguments: [
+                "-c",
+                "sleep 4 & child=$!; printf '%s' \"$child\" > '\(readyFile.path)'; wait \"$child\"",
+            ],
             environment: [:],
             outputLimit: 1024
         )
+        let run = Task { await execution.run(timeout: .seconds(1)) }
+
+        var childPID: pid_t?
+        for _ in 0..<200 {
+            if let contents = try? String(contentsOf: readyFile, encoding: .utf8),
+                let pid = pid_t(contents)
+            {
+                childPID = pid
+                break
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        guard let childPID else {
+            run.cancel()
+            Issue.record("Route command child did not signal readiness")
+            return
+        }
+        defer { _ = Darwin.kill(childPID, SIGKILL) }
+
         let startedAt = ContinuousClock.now
-        let result = await execution.run(timeout: .milliseconds(50))
-        let elapsed = startedAt.duration(to: ContinuousClock.now)
+        let result = await run.value
+        let elapsedAfterReady = startedAt.duration(to: ContinuousClock.now)
 
         #expect(result.timedOut)
-        #expect(elapsed < .seconds(2))
+        #expect(elapsedAfterReady < .seconds(2))
+        #expect(Darwin.kill(childPID, 0) == 0)
     }
 
     @Test("contextual path and gateway checks use one selected interface")
