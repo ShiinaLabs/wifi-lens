@@ -185,7 +185,7 @@ extension NetworkDiagnosticsTests {
             executablePath: "/bin/sh",
             arguments: [
                 "-c",
-                "printf '%s\\n' $$ > \"$1\"; /bin/sleep 45 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
+                "printf '%s\\n' $$ > \"$1\"; /usr/bin/nohup /bin/sleep 45 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
                 "route-timeout",
                 pidFile.path,
             ],
