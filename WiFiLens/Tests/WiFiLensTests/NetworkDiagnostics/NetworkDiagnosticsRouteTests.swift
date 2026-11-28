@@ -185,7 +185,7 @@ extension NetworkDiagnosticsTests {
             executablePath: "/bin/sh",
             arguments: [
                 "-c",
-                "child=; trap 'if [ -n \"$child\" ]; then kill -KILL \"$child\" 2>/dev/null; fi; exit' TERM; printf '%s\\n' $$ > \"$1\"; /bin/sleep 8 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
+                "printf '%s\\n' $$ > \"$1\"; /bin/sleep 14 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
                 "route-timeout",
                 pidFile.path,
             ],
@@ -205,16 +205,24 @@ extension NetworkDiagnosticsTests {
             try? await Task.sleep(for: .milliseconds(10))
         }
         guard processIDs.count == 2 else {
-            run.cancel()
             _ = await run.value
             Issue.record("Route command and pipe-holding child did not signal readiness")
             return
         }
+        let childPID = processIDs[1]
+        #expect(Darwin.kill(childPID, SIGSTOP) == 0)
+        let releaseChildIfTestStalls = Task {
+            try? await Task.sleep(for: .seconds(10))
+            guard !Task.isCancelled else { return }
+            _ = Darwin.kill(childPID, SIGCONT)
+            _ = Darwin.kill(childPID, SIGTERM)
+        }
+        defer { releaseChildIfTestStalls.cancel() }
 
         let result = await run.value
 
         #expect(result.timedOut)
-        #expect(Darwin.kill(processIDs[1], 0) == 0)
+        #expect(Darwin.kill(childPID, 0) == 0)
     }
 
     @Test("contextual path and gateway checks use one selected interface")
