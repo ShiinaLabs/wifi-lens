@@ -1,7 +1,111 @@
 use wifi_lens_core::mac_vendor::{
-    lookup_mac_vendor, lookup_mac_vendor_organization, parse_mac_vendor_database, MacVendorEntry,
-    MacVendorError, MacVendorLookup, MacVendorRegistry, MacVendorRegistryInput,
+    lookup_mac_vendor, lookup_mac_vendor_organization, parse_mac_vendor_database,
+    wifi_lens_mac_vendor_parse_database, MacVendorEntry, MacVendorError, MacVendorLookup,
+    MacVendorRegistry, MacVendorRegistryInput, WiFiLensMacVendorEntry, WiFiLensMacVendorFailure,
+    WiFiLensMacVendorMinimum, WiFiLensMacVendorRegistryInput, WiFiLensMacVendorRegistryMetadata,
 };
+
+#[test]
+fn parse_ffi_preserves_error_code_and_reports_required_detail_capacity() {
+    let name = "x".repeat(600);
+    let csvs = [
+        b"Registry,Assignment,Organization Name\nMA-L,invalid,Example\n".as_slice(),
+        b"Registry,Assignment,Organization Name\nMA-M,0011223,Example\n",
+        b"Registry,Assignment,Organization Name\nMA-S,001122334,Example\n",
+        b"Registry,Assignment,Organization Name\nIAB,001122335,Example\n",
+    ];
+    let mut strings = Vec::new();
+    let mut inputs = Vec::new();
+    for csv in csvs {
+        let display_name_offset = strings.len();
+        strings.extend_from_slice(name.as_bytes());
+        let data_offset = strings.len();
+        strings.extend_from_slice(csv);
+        inputs.push(WiFiLensMacVendorRegistryInput {
+            display_name_offset,
+            display_name_length: name.len(),
+            data_offset,
+            data_length: csv.len(),
+        });
+    }
+    let minimums = [1, 2, 3, 4].map(|registry| WiFiLensMacVendorMinimum {
+        registry,
+        minimum_records: 1,
+    });
+    let mut failure = WiFiLensMacVendorFailure::default();
+    let mut failure_text = vec![0u8; 1];
+    let mut failure_text_length = 0;
+    let mut registries = [WiFiLensMacVendorRegistryMetadata::default(); 4];
+    let mut entries = [WiFiLensMacVendorEntry::default(); 1];
+    let mut text = [0u8; 0];
+    let (mut registries_count, mut entries_count, mut text_length) = (0, 0, 0);
+
+    let status = unsafe {
+        wifi_lens_mac_vendor_parse_database(
+            inputs.as_ptr(),
+            inputs.len(),
+            strings.as_ptr(),
+            strings.len(),
+            2,
+            minimums.as_ptr(),
+            minimums.len(),
+            4096,
+            4096,
+            None,
+            std::ptr::null_mut(),
+            &mut failure,
+            failure_text.as_mut_ptr(),
+            failure_text.len(),
+            &mut failure_text_length,
+            registries.as_mut_ptr(),
+            registries.len(),
+            entries.as_mut_ptr(),
+            entries.len(),
+            text.as_mut_ptr(),
+            0,
+            &mut registries_count,
+            &mut entries_count,
+            &mut text_length,
+        )
+    };
+    assert_eq!(status, 14);
+    assert_eq!(failure.code, 10);
+    assert_eq!(failure_text_length, name.len() + b"invalid".len());
+
+    failure_text.resize(failure_text_length, 0);
+    let retry_status = unsafe {
+        wifi_lens_mac_vendor_parse_database(
+            inputs.as_ptr(),
+            inputs.len(),
+            strings.as_ptr(),
+            strings.len(),
+            2,
+            minimums.as_ptr(),
+            minimums.len(),
+            4096,
+            4096,
+            None,
+            std::ptr::null_mut(),
+            &mut failure,
+            failure_text.as_mut_ptr(),
+            failure_text.len(),
+            &mut failure_text_length,
+            registries.as_mut_ptr(),
+            registries.len(),
+            entries.as_mut_ptr(),
+            entries.len(),
+            text.as_mut_ptr(),
+            0,
+            &mut registries_count,
+            &mut entries_count,
+            &mut text_length,
+        )
+    };
+    assert_eq!(retry_status, 14);
+    assert_eq!(failure.code, 10);
+    assert_eq!(failure_text_length, name.len() + b"invalid".len());
+    assert_eq!(&failure_text[name.len()..], b"invalid");
+}
 
 #[test]
 fn parser_preserves_format_stripping_assignment_normalization_sha256_and_order() {

@@ -97,45 +97,47 @@ struct MACVendorCSVParser: Sendable {
         let cancellationError = MACVendorCancellationError()
         var context = MACVendorCancellationContext(parser: self, error: cancellationError)
 
-        let status = withUnsafeMutablePointer(to: &failure) { failurePointer in
-            strings.withUnsafeBufferPointer { stringBuffer in
-                rawInputs.withUnsafeBufferPointer { inputBuffer in
-                    minimums.withUnsafeBufferPointer { minimumBuffer in
-                        failureText.withUnsafeMutableBufferPointer { failureTextBuffer in
-                            registryResults.withUnsafeMutableBufferPointer { registryBuffer in
-                                entryResults.withUnsafeMutableBufferPointer { entryBuffer in
-                                    resultText.withUnsafeMutableBufferPointer { textBuffer in
-                                        withUnsafeMutablePointer(to: &failureTextLength) { failureLengthPointer in
-                                            withUnsafeMutablePointer(to: &registryCount) { registryCountPointer in
-                                                withUnsafeMutablePointer(to: &entryCount) { entryCountPointer in
-                                                    withUnsafeMutablePointer(to: &resultTextLength) { textLengthPointer in
-                                                        withUnsafeMutablePointer(to: &context) { contextPointer in
-                                                            wifi_lens_mac_vendor_parse_database(
-                                                                inputBuffer.baseAddress,
-                                                                inputBuffer.count,
-                                                                stringBuffer.baseAddress,
-                                                                stringBuffer.count,
-                                                                source.rustCode,
-                                                                minimumBuffer.baseAddress,
-                                                                minimumBuffer.count,
-                                                                maximumFileBytes,
-                                                                maximumTotalBytes,
-                                                                macVendorCancellationCallback,
-                                                                contextPointer,
-                                                                failurePointer,
-                                                                failureTextBuffer.baseAddress,
-                                                                failureTextBuffer.count,
-                                                                failureLengthPointer,
-                                                                registryBuffer.baseAddress,
-                                                                registryBuffer.count,
-                                                                entryBuffer.baseAddress,
-                                                                entryBuffer.count,
-                                                                textBuffer.baseAddress,
-                                                                textBuffer.count,
-                                                                registryCountPointer,
-                                                                entryCountPointer,
-                                                                textLengthPointer
-                                                            )
+        let callParser = {
+            withUnsafeMutablePointer(to: &failure) { failurePointer in
+                strings.withUnsafeBufferPointer { stringBuffer in
+                    rawInputs.withUnsafeBufferPointer { inputBuffer in
+                        minimums.withUnsafeBufferPointer { minimumBuffer in
+                            failureText.withUnsafeMutableBufferPointer { failureTextBuffer in
+                                registryResults.withUnsafeMutableBufferPointer { registryBuffer in
+                                    entryResults.withUnsafeMutableBufferPointer { entryBuffer in
+                                        resultText.withUnsafeMutableBufferPointer { textBuffer in
+                                            withUnsafeMutablePointer(to: &failureTextLength) { failureLengthPointer in
+                                                withUnsafeMutablePointer(to: &registryCount) { registryCountPointer in
+                                                    withUnsafeMutablePointer(to: &entryCount) { entryCountPointer in
+                                                        withUnsafeMutablePointer(to: &resultTextLength) { textLengthPointer in
+                                                            withUnsafeMutablePointer(to: &context) { contextPointer in
+                                                                wifi_lens_mac_vendor_parse_database(
+                                                                    inputBuffer.baseAddress,
+                                                                    inputBuffer.count,
+                                                                    stringBuffer.baseAddress,
+                                                                    stringBuffer.count,
+                                                                    source.rustCode,
+                                                                    minimumBuffer.baseAddress,
+                                                                    minimumBuffer.count,
+                                                                    maximumFileBytes,
+                                                                    maximumTotalBytes,
+                                                                    macVendorCancellationCallback,
+                                                                    contextPointer,
+                                                                    failurePointer,
+                                                                    failureTextBuffer.baseAddress,
+                                                                    failureTextBuffer.count,
+                                                                    failureLengthPointer,
+                                                                    registryBuffer.baseAddress,
+                                                                    registryBuffer.count,
+                                                                    entryBuffer.baseAddress,
+                                                                    entryBuffer.count,
+                                                                    textBuffer.baseAddress,
+                                                                    textBuffer.count,
+                                                                    registryCountPointer,
+                                                                    entryCountPointer,
+                                                                    textLengthPointer
+                                                                )
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -148,6 +150,11 @@ struct MACVendorCSVParser: Sendable {
                     }
                 }
             }
+        }
+        var status = callParser()
+        if status != WIFI_LENS_STATUS_OK, failureTextLength > failureText.count {
+            failureText = [UInt8](repeating: 0, count: failureTextLength)
+            status = callParser()
         }
 
         guard status == WIFI_LENS_STATUS_OK else {
@@ -227,7 +234,7 @@ struct MACVendorCSVParser: Sendable {
         case 8: return .duplicateRegistry(registry ?? .maL)
         case 9: return .missingRegistry(registry ?? .maL)
         case 10:
-            let assignment = String(detail.suffix(Int(max(0, number2))))
+            let assignment = String(decoding: detail.utf8.suffix(Int(max(0, number2))), as: UTF8.self)
             return .invalidAssignment(file: file, registry: registry ?? .maL, assignment: assignment)
         case 11: return .invalidOrganization(file: file)
         case 12: return .tooFewRecords(registry: registry ?? .maL, minimum: Int(number1), actual: Int(number2))

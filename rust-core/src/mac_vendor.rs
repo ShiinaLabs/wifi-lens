@@ -1097,9 +1097,7 @@ pub unsafe extern "C" fn wifi_lens_mac_vendor_parse_database(
             unsafe {
                 *failure_text_length = detail.len();
             }
-            if detail.len() > failure_text_capacity {
-                failure_value.code = -1;
-            } else if !detail.is_empty() {
+            if detail.len() <= failure_text_capacity && !detail.is_empty() {
                 unsafe {
                     std::ptr::copy_nonoverlapping(detail.as_ptr(), failure_text, detail.len());
                 }

@@ -774,7 +774,10 @@ typedef int32_t (*WiFiLensMacVendorCancellationCallback)(
 
 /* MAC vendor parsing and lookup. Statuses: 0 success, 4 panic, 5 invalid
  * pointer, 6 invalid slice, 7 insufficient capacity, 8 invalid UTF-8,
- * 14 invalid MAC vendor input. */
+ * 14 invalid MAC vendor input. On invalid MAC vendor input, failure.code
+ * remains the typed error code. failure_text_length reports the required
+ * UTF-8 byte count even when the provided buffer is too small; callers may
+ * retry with that capacity. */
 int32_t wifi_lens_mac_vendor_parse_database(
     const WiFiLensMacVendorRegistryInput *inputs,
     size_t input_count,
@@ -801,7 +804,6 @@ int32_t wifi_lens_mac_vendor_parse_database(
     size_t *entries_count,
     size_t *text_length
 );
-
 int32_t wifi_lens_mac_vendor_lookup(
     const uint8_t *mac_address,
     size_t mac_address_length,
