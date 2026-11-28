@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCoreRust
 
 public enum WiFiModeEvidence: Equatable, Sendable {
     case station
@@ -172,65 +173,109 @@ public enum WiFiLinkInterpreter {
         expectedCycleID: UUID,
         expectedCapturedAt: Date? = nil
     ) -> WiFiLinkAssessment {
-        guard let evidence else {
-            return WiFiLinkAssessment(state: .unknown, reason: .modeUnavailable)
-        }
-        guard evidence.snapshotCycleID == expectedCycleID else {
-            return WiFiLinkAssessment(state: .unknown, reason: .cycleMismatch)
-        }
-        if let expectedCapturedAt, evidence.capturedAt != expectedCapturedAt {
-            return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
-        }
-        guard evidence.captureStartedAt <= evidence.capturedAt,
-            evidence.capturedAt <= evidence.captureEndedAt
-        else {
-            return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
-        }
-        if let rawMode = evidence.coreWLANModeRawValue {
-            switch evidence.mode {
-            case .station where rawMode != 1,
-                .none where rawMode != 0,
-                .noneOrReadFailure where rawMode != 0:
-                return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
-            case .other(let interpretedRawValue) where interpretedRawValue != rawMode:
-                return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
-            default:
-                break
+        var flags: UInt32 = 0
+        var mode = WIFI_LENS_LINK_MODE_UNAVAILABLE
+        var coreWLANModeRawValue: Int64 = 0
+        var otherModeRawValue: Int64 = 0
+        var radio = WIFI_LENS_LINK_RADIO_UNAVAILABLE
+        var linkActive = WIFI_LENS_LINK_ACTIVE_UNAVAILABLE
+
+        if let evidence {
+            flags |= WIFI_LENS_LINK_HAS_EVIDENCE
+            if evidence.snapshotCycleID == expectedCycleID {
+                flags |= WIFI_LENS_LINK_CYCLE_MATCHES
             }
-        }
-        if evidence.radio == .reportedOn, evidence.radioPowerOnRaw == false {
-            return WiFiLinkAssessment(state: .unknown, reason: .radioUnavailable)
-        }
-        guard evidence.mode == .station else {
-            if case .other = evidence.mode {
-                return WiFiLinkAssessment(state: .unknown, reason: .unsupportedMode)
+            if expectedCapturedAt.map({ evidence.capturedAt == $0 }) ?? true {
+                flags |= WIFI_LENS_LINK_EXPECTED_TIMESTAMP_MATCHES
             }
-            if evidence.mode == .none || evidence.mode == .noneOrReadFailure,
-                evidence.radio == .reportedOn,
-                evidence.linkActive == false
+            if evidence.captureStartedAt <= evidence.capturedAt,
+                evidence.capturedAt <= evidence.captureEndedAt
             {
-                return WiFiLinkAssessment(
-                    state: .unknown,
-                    reason: .disconnectCandidate,
-                    candidateState: .disconnected
-                )
+                flags |= WIFI_LENS_LINK_CAPTURE_WINDOW_VALID
             }
-            return WiFiLinkAssessment(state: .unknown, reason: .modeUnavailable)
-        }
-        guard evidence.radio == .reportedOn else {
-            return WiFiLinkAssessment(state: .unknown, reason: .radioUnavailable)
-        }
-        switch evidence.linkActive {
-        case true:
-            guard !evidence.interfaceName.isEmpty else {
-                return WiFiLinkAssessment(state: .unknown, reason: .captureTimestampMismatch)
+            if let rawValue = evidence.coreWLANModeRawValue {
+                flags |= WIFI_LENS_LINK_HAS_CORE_WLAN_MODE
+                coreWLANModeRawValue = Int64(rawValue)
             }
-            return WiFiLinkAssessment(state: .associated, reason: .stationMode)
-        case false:
+            if let rawValue = evidence.radioPowerOnRaw {
+                flags |= WIFI_LENS_LINK_HAS_RADIO_POWER_ON_RAW
+                if rawValue {
+                    flags |= WIFI_LENS_LINK_RADIO_POWER_ON_RAW
+                }
+            }
+            if !evidence.interfaceName.isEmpty {
+                flags |= WIFI_LENS_LINK_INTERFACE_NAME_NONEMPTY
+            }
+            if case .other(let rawValue) = evidence.mode {
+                otherModeRawValue = Int64(rawValue)
+            }
+            mode =
+                switch evidence.mode {
+                case .station: WIFI_LENS_LINK_MODE_STATION
+                case .none: WIFI_LENS_LINK_MODE_NONE
+                case .noneOrReadFailure: WIFI_LENS_LINK_MODE_NONE_OR_READ_FAILURE
+                case .other: WIFI_LENS_LINK_MODE_OTHER
+                case .unavailable: WIFI_LENS_LINK_MODE_UNAVAILABLE
+                }
+            radio =
+                switch evidence.radio {
+                case .reportedOn: WIFI_LENS_LINK_RADIO_REPORTED_ON
+                case .reportedOff: WIFI_LENS_LINK_RADIO_REPORTED_OFF
+                case .reportedOffOrReadFailure: WIFI_LENS_LINK_RADIO_REPORTED_OFF_OR_READ_FAILURE
+                case .unavailable: WIFI_LENS_LINK_RADIO_UNAVAILABLE
+                }
+            linkActive =
+                switch evidence.linkActive {
+                case true: WIFI_LENS_LINK_ACTIVE
+                case false: WIFI_LENS_LINK_INACTIVE
+                case nil: WIFI_LENS_LINK_ACTIVE_UNAVAILABLE
+                }
+        }
+
+        let input = WiFiLensLinkEvidenceInput(
+            flags: flags,
+            mode: mode,
+            core_wlan_mode_raw_value: coreWLANModeRawValue,
+            other_mode_raw_value: otherModeRawValue,
+            radio: radio,
+            link_active: linkActive
+        )
+        var output = WiFiLensLinkEvidenceResult()
+        let status = withUnsafePointer(to: input) { inputPointer in
+            withUnsafeMutablePointer(to: &output) { outputPointer in
+                wifi_lens_interpret_link_evidence(inputPointer, outputPointer)
+            }
+        }
+        guard status == WIFI_LENS_STATUS_OK else {
+            assertionFailure("Rust link evidence interpreter returned status \(status)")
             return WiFiLinkAssessment(state: .unknown, reason: .conflictingLinkEvidence)
-        case nil:
-            return WiFiLinkAssessment(state: .unknown, reason: .linkStateUnavailable)
         }
+
+        let state: VerifiedWiFiLinkState =
+            switch output.state {
+            case WIFI_LENS_LINK_STATE_ASSOCIATED: .associated
+            case WIFI_LENS_LINK_STATE_DISCONNECTED: .disconnected
+            default: .unknown
+            }
+        let reason: WiFiLinkEvidenceReason =
+            switch output.reason {
+            case WIFI_LENS_LINK_REASON_STATION_MODE: .stationMode
+            case WIFI_LENS_LINK_REASON_CYCLE_MISMATCH: .cycleMismatch
+            case WIFI_LENS_LINK_REASON_RADIO_UNAVAILABLE: .radioUnavailable
+            case WIFI_LENS_LINK_REASON_MODE_UNAVAILABLE: .modeUnavailable
+            case WIFI_LENS_LINK_REASON_UNSUPPORTED_MODE: .unsupportedMode
+            case WIFI_LENS_LINK_REASON_CAPTURE_TIMESTAMP_MISMATCH: .captureTimestampMismatch
+            case WIFI_LENS_LINK_REASON_LINK_STATE_UNAVAILABLE: .linkStateUnavailable
+            case WIFI_LENS_LINK_REASON_CONFLICTING_LINK_EVIDENCE: .conflictingLinkEvidence
+            case WIFI_LENS_LINK_REASON_DISCONNECT_CANDIDATE: .disconnectCandidate
+            default: .conflictingLinkEvidence
+            }
+        let candidateState: VerifiedWiFiLinkState? =
+            switch output.candidate_state {
+            case WIFI_LENS_LINK_CANDIDATE_DISCONNECTED: .disconnected
+            default: nil
+            }
+        return WiFiLinkAssessment(state: state, reason: reason, candidateState: candidateState)
     }
 }
 

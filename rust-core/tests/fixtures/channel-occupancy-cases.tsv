@@ -1,0 +1,8 @@
+# name bssid_1 band_1 rssi_1 width_1 bssid_2 band_2 rssi_2 width_2 selected_index selected_width group_count
+# bssid values are raw UTF-8 tokens; composed and precomposed forms are distinct.
+stronger-second-same-group aa:bb 2 -70 80 aa:bb 2 -45 40 1 40 1
+weaker-second-same-group aa:bb 2 -50 160 aa:bb 2 -80 40 0 160 1
+equal-rssi-keeps-first aa:bb 2 -50 40 aa:bb 2 -50 160 0 40 1
+different-band-is-distinct aa:bb 2 -60 40 aa:bb 1 -50 80 0 40 2
+raw-utf8-identity-is-byte-exact Å 2 -70 80 Å 2 -50 40 0 80 2
+unsupported-width-falls-back-to-20 aa:bb 2 -40 320 aa:bb 2 -50 12 0 20 1

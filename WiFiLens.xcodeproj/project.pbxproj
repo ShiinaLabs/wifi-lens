@@ -288,6 +288,7 @@
 		FB23154C304D9B6400619D14 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */; };
 		FB2E3B2E2FC5ACDA00D2610E /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB2E3B2D2FC5ACDA00D2610E /* CoreBluetooth.framework */; };
 		FB31C21830B85DCE003ABDB7 /* SwiftFTR in Frameworks */ = {isa = PBXBuildFile; productRef = F9A00000000000000000000E /* SwiftFTR */; };
+		FB47A0EC30B9A78300ABEA62 /* AnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB469E9C30B9A78300DBA0D3 /* AnalyzerTests.swift */; };
 		FB7F34783071E43900FC37BC /* zh-Hant.md in Resources */ = {isa = PBXBuildFile; fileRef = FB7F34773071E42D00FC37BC /* zh-Hant.md */; };
 		FB85B8A92FE6526D00D2D391 /* ChartLens in Frameworks */ = {isa = PBXBuildFile; productRef = FB85B8A82FE6526D00D2D391 /* ChartLens */; };
 		FB8FCB212FF6C5DF00BB2929 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FB8FCB202FF6C5DF00BB2929 /* Sparkle */; };
@@ -659,6 +660,7 @@
 		FB23154A304D9B6300619D14 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		FB2E3B2D2FC5ACDA00D2610E /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		FB39A1A1306E22BB0084F54C /* WiFiLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WiFiLens.entitlements; sourceTree = "<group>"; };
+		FB469E9C30B9A78300DBA0D3 /* AnalyzerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzerTests.swift; sourceTree = "<group>"; };
 		FB5A212C2FC31C6100828D9F /* WiFiLens-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "WiFiLens-Info.plist"; sourceTree = "<group>"; };
 		FB7F34773071E42D00FC37BC /* zh-Hant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "zh-Hant.md"; sourceTree = "<group>"; };
 		FB80FA2C2FC0AC1900547708 /* OSS.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = OSS.xcconfig; sourceTree = "<group>"; };
@@ -1552,6 +1554,7 @@
 				OB00000000000000000000B2 /* RoamingMigrationTests.swift */,
 				OB00000000000000000000B4 /* DiagnosticMigrationTests.swift */,
 				OB00000000000000000000D1 /* RuntimeTests.swift */,
+				FB469E9C30B9A78300DBA0D3 /* AnalyzerTests.swift */,
 			);
 			path = Observation;
 			sourceTree = "<group>";
@@ -1608,7 +1611,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 48CC669075019465A0637978 /* Build configuration list for PBXNativeTarget "WiFiLensCore" */;
 			buildPhases = (
-				FBA0CFB230B88A7B0010BDA7 /* Build Rust Core */,
+				FB6A917C30B9A4DF00DB2841 /* Build Rust Core */,
 				8786E929C6451F1171707511 /* Sources */,
 				6C250FB977475676B858D369 /* Frameworks */,
 				14530F3B1BEE4157098475BA /* Resources */,
@@ -1767,7 +1770,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		FBA0CFB230B88A7B0010BDA7 /* Build Rust Core */ = {
+		FB6A917C30B9A4DF00DB2841 /* Build Rust Core */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1780,7 +1783,13 @@
 				"$(SRCROOT)/rust-core/rust-toolchain.toml",
 				"$(SRCROOT)/rust-core/src/lib.rs",
 				"$(SRCROOT)/rust-core/src/channel_quality.rs",
+				"$(SRCROOT)/rust-core/src/channel_occupancy.rs",
 				"$(SRCROOT)/rust-core/src/information_elements.rs",
+				"$(SRCROOT)/rust-core/src/link_evidence.rs",
+				"$(SRCROOT)/rust-core/src/mac_vendor.rs",
+				"$(SRCROOT)/rust-core/src/network_diagnostic_stages.rs",
+				"$(SRCROOT)/rust-core/src/observation_analysis.rs",
+				"$(SRCROOT)/rust-core/src/regulatory.rs",
 				"$(SRCROOT)/rust-core/include/wifi_lens_core.h",
 				"$(SRCROOT)/rust-core/include/module.modulemap",
 				"$(SRCROOT)/rust-core/build-rust-core.sh",
@@ -2065,6 +2074,7 @@
 				MV0000000000000000000009 /* MACVendorCSVParserTests.swift in Sources */,
 				G900000000000000000000BC /* GuidanceStateStoreTests.swift in Sources */,
 				G900000000000000000000BF /* GuidancePolicyTests.swift in Sources */,
+				FB47A0EC30B9A78300ABEA62 /* AnalyzerTests.swift in Sources */,
 				G900000000000000000000D5 /* GuidanceCoordinatorTests.swift in Sources */,
 				G900000000000000000000D7 /* GuidanceEditionTests.swift in Sources */,
 				G900000000000000000000EB /* GuidanceDebugTests.swift in Sources */,

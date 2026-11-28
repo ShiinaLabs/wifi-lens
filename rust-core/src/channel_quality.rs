@@ -150,7 +150,7 @@ impl TargetMatcher<'_> {
 }
 
 impl ChannelBand {
-    fn code(self) -> i32 {
+    pub(crate) fn code(self) -> i32 {
         match self {
             Self::Band2_4Ghz => BAND_24,
             Self::Band5Ghz => BAND_5,
@@ -158,7 +158,7 @@ impl ChannelBand {
         }
     }
 
-    fn from_code(code: i32) -> Result<Self, i32> {
+    pub(crate) fn from_code(code: i32) -> Result<Self, i32> {
         match code {
             BAND_24 => Ok(Self::Band2_4Ghz),
             BAND_5 => Ok(Self::Band5Ghz),

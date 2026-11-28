@@ -1,0 +1,26 @@
+# name evidence cycle timestamp window mode raw-present raw-value other-mode radio power-present power-value interface link state reason candidate
+# timestamp: 0 expected-value mismatch, 1 expected-value match, 2 expected timestamp omitted
+# state, reason, and candidate columns use the WIFI_LENS_LINK_* codes in wifi_lens_core.h
+station-associated 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 0
+missing-evidence 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0
+cycle-mismatch 1 0 1 1 1 1 1 0 1 1 1 1 1 0 2 0
+expected-timestamp-mismatch 1 1 0 1 1 1 1 0 1 1 1 1 1 0 6 0
+expected-timestamp-unchecked 1 1 2 1 1 1 1 0 1 1 1 1 1 1 1 0
+invalid-capture-window 1 1 1 0 1 1 1 0 1 1 1 1 1 0 6 0
+station-raw-mode-conflict 1 1 1 1 1 1 0 0 1 1 1 1 1 0 8 0
+none-raw-mode-conflict 1 1 1 1 2 1 1 0 1 1 1 1 2 0 8 0
+ambiguous-mode-raw-conflict 1 1 1 1 3 1 1 0 1 1 1 1 2 0 8 0
+other-mode-raw-conflict 1 1 1 1 4 1 8 7 1 1 1 1 1 0 8 0
+other-mode-unsupported 1 1 1 1 4 0 0 7 1 1 1 1 1 0 5 0
+radio-power-contradiction 1 1 1 1 1 1 1 0 1 1 0 1 1 0 3 0
+reported-radio-off 1 1 1 1 1 0 0 0 2 0 0 1 1 0 3 0
+radio-off-read-ambiguous 1 1 1 1 1 0 0 0 3 1 0 1 1 0 3 0
+none-confirmed-disconnected-candidate 1 1 1 1 2 1 0 0 1 1 1 1 2 0 9 2
+ambiguous-none-disconnect-candidate 1 1 1 1 3 1 0 0 1 1 1 1 2 0 9 2
+none-without-radio-proof 1 1 1 1 2 1 0 0 0 0 0 1 2 0 4 0
+station-link-inactive-conflict 1 1 1 1 1 1 1 0 1 1 1 1 2 0 8 0
+station-link-unavailable 1 1 1 1 1 1 1 0 1 1 1 1 0 0 7 0
+station-interface-name-missing 1 1 1 1 1 1 1 0 1 1 1 0 1 0 6 0
+unavailable-mode 1 1 1 1 0 0 0 0 1 1 1 1 1 0 4 0
+radio-unavailable-station 1 1 1 1 1 1 1 0 0 0 0 1 1 0 3 0
+invalid-capture-end 1 1 1 0 1 1 1 0 1 1 1 1 1 0 6 0

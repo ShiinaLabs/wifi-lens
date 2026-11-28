@@ -287,6 +287,23 @@ struct MACVendorCSVParserTests {
         }
     }
 
+    @Test func preservesInvalidAssignmentAndLongUTF8FilenameAcrossFailureBufferRetry() {
+        var inputs = completeInputs()
+        let filename = String(repeating: "é", count: 300)
+        inputs[0] = MACVendorRegistryInput(
+            displayName: filename,
+            data: Data("Registry,Assignment,Organization Name\nMA-L,invalid,Example\n".utf8)
+        )
+
+        #expect(throws: MACVendorDatabaseError.invalidAssignment(
+            file: filename,
+            registry: .maL,
+            assignment: "invalid"
+        )) {
+            try parser.parse(inputs: inputs, source: .manualImport, createdAt: .distantPast)
+        }
+    }
+
     @Test func rejectsMoreThan250000RowsIncludingEmptyRows() {
         var inputs = completeInputs()
         let csv = "Registry,Assignment,Organization Name\n" + String(repeating: "\n", count: 250_000)

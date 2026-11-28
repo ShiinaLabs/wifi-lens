@@ -16,6 +16,9 @@ on:
       - ".agents/**"
       - "docs/architecture/**"
       - "scripts/check-public-project-boundary.py"
+      - ".swift-format"
+      - "scripts/format_xcstrings.py"
+      - "scripts/xcstrings_key_order.swift"
       - "scripts/install-rust-toolchain.sh"
       - "scripts/tests/**"
       - "scripts/create-dmg.sh"
@@ -33,11 +36,18 @@ on:
       - ".agents/**"
       - "docs/architecture/**"
       - "scripts/check-public-project-boundary.py"
+      - ".swift-format"
+      - "scripts/format_xcstrings.py"
+      - "scripts/xcstrings_key_order.swift"
       - "scripts/install-rust-toolchain.sh"
       - "scripts/tests/**"
       - "scripts/create-dmg.sh"
       - "assets/**"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -46,6 +56,25 @@ env:
   DEBUG_CONFIG: Debug
 
 jobs:
+  rust-portable:
+    name: Rust core (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pinned Rust toolchain
+        shell: bash
+        run: scripts/install-rust-toolchain.sh rust-core
+
+      - name: Test portable Rust core
+        working-directory: rust-core
+        run: cargo test --locked
+
   build-and-test:
     runs-on: macos-26
     timeout-minutes: 20

@@ -2,6 +2,8 @@
 
 Multi-stage pipeline that infers the user's regulatory domain from multiple signals, then filters and classifies channel recommendations based on region rules and device hardware capabilities.
 
+Portable country mapping, static regulatory rules, region inference, device compatibility, classification, sorting, and recommendation reason identifiers run in `rust-core/src/regulatory.rs`. Swift adapters preserve the current model APIs and provide normalized locale, AP, hardware, and RF facts. Locale and hardware acquisition, observable pipeline state, localized explanations, and view availability remain in Swift.
+
 ## Architecture
 
 ```
@@ -32,20 +34,23 @@ Hardware Supported Channels (CoreWLAN)  ─┐
 
 ## Data Flow
 
-`ScannerViewModel` gathers visible APs plus the current connection identity (BSSID/SSID/channel), then passes them to `ChannelQualityCalculator`. The calculator produces both observed RF quality and counterfactual recommendation state by excluding the current target AP from recommendation scoring. These qualities are then passed along with network IEs, device capabilities, and user preferences to `RegulatoryPipeline.computeRecommendations()`. The pipeline returns classified `[ChannelRecommendation]` for display in the channel quality views.
+The production `WiFiObservationRuntime` sends the admitted scan and same-cycle context to `WiFiObservationPipeline`. `ChannelOccupancyAnalyzer` adapts and deduplicates AP facts before `ChannelQualityCalculator` produces observed RF quality and counterfactual recommendation state by excluding the current target AP from recommendation scoring. The pipeline then sends the locale region, supported channels, AP country IEs, device capabilities, RF results, and user override to the Rust-backed Swift adapters. Rust returns inference and filter decisions; Swift maps them to `[ChannelRecommendation]` and localized display models. `RegulatoryPipeline` remains a Swift state adapter for scan-facing configuration and inferred-region projection.
 
 ## Key Types
 
 | File | Type | Purpose |
 |------|------|---------|
+| `rust-core/src/regulatory.rs` | Rust module | Owns country mapping, inference, static per-region rules, compatibility, classification, ordering, and stable reason codes over normalized facts |
 | `ChannelQualityCalculator.swift` | `enum` | Swift-facing adapter for Rust observed RF and counterfactual recommendation scoring |
-| `RegulatoryPipeline.swift` | `final class` | `@Observable` orchestrator — collects inputs, calls inference + filter, exposes `inferredRegion` |
-| `RegionInferenceEngine.swift` | `enum` | Multi-source region inference with confidence scoring |
-| `RegulatoryFilter.swift` | `enum` | 5-stage classification pipeline |
-| `RegulatoryDatabase.swift` | `enum` | Static per-region channel rules (US/JP/CN/EU, 2.4/5/6 GHz) |
-| `RegulatoryDomain.swift` | `enum` | `US`/`JP`/`CN`/`EU`/`unknown` with locale-based mapping |
-| `DeviceCompatibilityFilter.swift` | `enum` | Checks PHY/band/DFS/6 GHz support per device |
-| `ChannelRecommendation.swift` | `struct` | Output model: observed RF data + counterfactual score + regulatory classification + restriction reasons |
+| `RegulatoryPipeline.swift` | `final class` | `@Observable` scan-facing state adapter for overrides, hardware facts, and inferred-region projection |
+| `RegulatoryDomainResolver.swift` | `enum` | Normalizes locale and override inputs for region inference |
+| `RegionInferenceEngine.swift` | `enum` | Swift bridge mapping Rust inference and source contributions into `RegionInferenceResult` |
+| `RegulatoryFilter.swift` | `enum` | Swift bridge mapping Rust filter results into `ChannelRecommendation` and restriction text |
+| `RegulatoryDatabase.swift` | `enum` | Swift lookup facade over Rust channel rules; supplies the heatmap's legal channel sets |
+| `RegulatoryDomain.swift` | `enum` | `US`/`JP`/`CN`/`EU`/`unknown`, Rust country mapping, and Swift-localized display |
+| `DeviceCompatibilityFilter.swift` | `enum` | Swift bridge for Rust device compatibility and display reason text |
+| `RecommendationReasonCalculator.swift` | `enum` | Maps Rust reason flags to stable Swift reason identifiers and localization keys |
+| `ChannelRecommendation.swift` | `struct` / `enum` | Output model for observed RF, counterfactual score, regulatory classification, and restrictions; `ChannelRecommendationAvailability` remains a Swift UI status projection |
 
 ## Region Inference
 
@@ -63,7 +68,7 @@ Hardware Supported Channels (CoreWLAN)  ─┐
 1. **User override** — always wins, recorded with `.high` confidence.
 2. **Channel fingerprint + AP consensus agree** — `.high` confidence.
 3. **Channel fingerprint alone** — `.medium` (hardware/driver is authoritative). If AP disagrees, a conflict is recorded but the hardware wins.
-4. **AP consensus alone** — `.medium` (with consensus) / `.low` (without). AP country codes can be wrong (flashed routers, etc.).
+4. **AP consensus alone** — `.medium` (with consensus) / `.low` (without). AP country codes can be wrong (flashed routers, etc.). When valid AP-domain votes tie, the first recognized country code wins and confidence stays low.
 5. **Locale alone** — `.low`.
 6. **Nothing** — `.unknown` with `.low` confidence.
 

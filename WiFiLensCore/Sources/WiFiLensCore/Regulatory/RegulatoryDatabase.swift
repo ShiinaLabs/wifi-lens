@@ -1,8 +1,7 @@
 import Foundation
+import WiFiLensCoreRust
 
-/// Per-channel regulatory metadata. Only populated for channels with caveats;
-/// channels not in this dictionary are unrestricted (aside from being
-/// region-allowed).
+/// Per-channel metadata exposed to the Swift recommendation and display models.
 struct RegulatoryChannelMeta: Hashable, Sendable {
     let isDFS: Bool
     let isRadarSensitive: Bool
@@ -29,174 +28,81 @@ struct RegulatoryChannelMeta: Hashable, Sendable {
     )
 }
 
-// MARK: - Regulatory Database
-
-/// Static, data-driven regulatory rules. No business logic lives here — this is
-/// pure channel data sourced from public allocation tables.
+/// Swift lookup adapter over the portable Rust regulatory rule table.
 enum RegulatoryDatabase {
-    static func allowedChannels(for domain: RegulatoryDomain, band: String) -> Set<Int>? {
-        rules[domain]?[band]?.allowedChannels
-    }
-
     struct BandRules: Sendable {
         let allowedChannels: Set<Int>
         let channelMeta: [Int: RegulatoryChannelMeta]
     }
 
-    /// Primary lookup: `RegulatoryDatabase.rules[.US]?["5"]`
+    /// Compatibility view used by existing Swift consumers and tests.
     static let rules: [RegulatoryDomain: [String: BandRules]] = [
-        .US: usRules,
-        .JP: jpRules,
-        .CN: cnRules,
-        .EU: euRules,
+        .US: rules(for: .US),
+        .JP: rules(for: .JP),
+        .CN: rules(for: .CN),
+        .EU: rules(for: .EU),
     ]
 
-    // MARK: - US (FCC)
+    static func allowedChannels(for domain: RegulatoryDomain, band: String) -> Set<Int>? {
+        rules[domain]?[band]?.allowedChannels
+    }
 
-    /// US 5 GHz: U-NII-1 (36-48), U-NII-2A (52-64, DFS), U-NII-2C (100-144, DFS), U-NII-3 (149-165).
-    /// The channel numbering changes offset at U-NII-3: 36-144 are ≡0 mod 4, 149-165 are ≡1 mod 4.
-    private static let us5GHzChannels: Set<Int> = {
-        var ch = Set(stride(from: 36, through: 144, by: 4))  // U-NII-1, 2A, 2C
-        ch.formUnion(stride(from: 149, through: 165, by: 4))  // U-NII-3
-        return ch
-    }()
-
-    private static let usRules: [String: BandRules] = {
-        let dfsChannels: Set<Int> = [
-            52, 56, 60, 64,
-            100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144,
+    private static func rules(for domain: RegulatoryDomain) -> [String: BandRules] {
+        [
+            "24": bandRules(domain: domain, bandCode: WIFI_LENS_REGULATORY_BAND_24_GHZ),
+            "5": bandRules(domain: domain, bandCode: WIFI_LENS_REGULATORY_BAND_5_GHZ),
+            "6": bandRules(domain: domain, bandCode: WIFI_LENS_REGULATORY_BAND_6_GHZ),
         ]
-        let radarSensitive: Set<Int> = [52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128]
-        let indoorOnly5GHz: Set<Int> = []  // US has no indoor-only 5 GHz restriction after R&O
+    }
 
-        var fiveMeta = [Int: RegulatoryChannelMeta]()
-        for ch in dfsChannels {
-            fiveMeta[ch] = RegulatoryChannelMeta(
-                isDFS: true,
-                isRadarSensitive: radarSensitive.contains(ch),
-                requiresCAC: true,
-                forcedSwitchRisk: true,
-                isIndoorOnly: indoorOnly5GHz.contains(ch),
-                maxEIRPDbm: nil,
-                requiresAFC: false,
-                wiFi6EAvailable: true,
-                wiFi7Available: true,
-                notes: ch <= 64 ? "UNII-2A DFS" : "UNII-2C DFS"
+    private static func bandRules(domain: RegulatoryDomain, bandCode: Int32) -> BandRules {
+        var records = [WiFiLensRegulatoryChannelRule](repeating: .init(), count: 256)
+        var recordCount = 0
+        let status = records.withUnsafeMutableBufferPointer { buffer in
+            wifi_lens_regulatory_channel_rules(
+                domain.rustCode,
+                bandCode,
+                buffer.baseAddress,
+                buffer.count,
+                &recordCount
             )
         }
-
-        // US 6 GHz: LPI (indoor) operation spans the full 5.925-7.125 GHz band
-        // (U-NII-5 through U-NII-8, channels 1-233). Per 47 CFR 15.407(a)(5), LPI has
-        // no sub-band exclusion; standard power is limited to U-NII-5/7 and requires
-        // AFC, which is not modeled here. Channel 2 is the preferred PSC for 6 GHz.
-        let sixChannels = Set(stride(from: 1, through: 233, by: 4))
-        let sixMeta = [Int: RegulatoryChannelMeta]()
-
-        return [
-            "24": BandRules(allowedChannels: Set(1...11), channelMeta: [:]),
-            "5": BandRules(allowedChannels: us5GHzChannels, channelMeta: fiveMeta),
-            "6": BandRules(allowedChannels: sixChannels, channelMeta: sixMeta),
-        ]
-    }()
-
-    // MARK: - JP (MIC)
-
-    private static let jpRules: [String: BandRules] = {
-        let dfsChannels: Set<Int> = [
-            52, 56, 60, 64,
-            100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140,
-        ]
-        let radarSensitive: Set<Int> = [52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128]
-
-        var fiveMeta = [Int: RegulatoryChannelMeta]()
-        for ch in dfsChannels {
-            fiveMeta[ch] = RegulatoryChannelMeta(
-                isDFS: true,
-                isRadarSensitive: radarSensitive.contains(ch),
-                requiresCAC: true,
-                forcedSwitchRisk: true,
-                isIndoorOnly: false,
-                maxEIRPDbm: nil,
-                requiresAFC: false,
-                wiFi6EAvailable: true,
-                wiFi7Available: true,
-                notes: ch <= 64 ? "W53 DFS" : "W56 DFS"
-            )
+        guard status == WIFI_LENS_STATUS_OK else {
+            assertionFailure("Rust regulatory rule lookup returned status \(status)")
+            return BandRules(allowedChannels: [], channelMeta: [:])
         }
 
-        // JP 6 GHz: LPI channels 1-93 only
-        let sixChannels = Set(stride(from: 1, through: 93, by: 4))
-
-        return [
-            "24": BandRules(
-                allowedChannels: Set(1...14),
-                channelMeta: [
-                    14: RegulatoryChannelMeta(
-                        isDFS: false, isRadarSensitive: false, requiresCAC: false,
-                        forcedSwitchRisk: false, isIndoorOnly: false, maxEIRPDbm: nil,
-                        requiresAFC: false, wiFi6EAvailable: false, wiFi7Available: false,
-                        notes: "802.11b only in Japan"
-                    )
-                ]),
-            "5": BandRules(
-                allowedChannels: Set(stride(from: 36, through: 144, by: 4)),
-                channelMeta: fiveMeta
-            ),
-            "6": BandRules(allowedChannels: sixChannels, channelMeta: [:]),
-        ]
-    }()
-
-    // MARK: - CN (SRRC)
-
-    private static let cnRules: [String: BandRules] = {
-        return [
-            "24": BandRules(allowedChannels: Set(1...13), channelMeta: [:]),
-            "5": BandRules(
-                allowedChannels: Set(
-                    Array(stride(from: 36, through: 48, by: 4)) + Array(stride(from: 149, through: 165, by: 4))
-                ),
-                channelMeta: [:]
-            ),
-            // No 6 GHz allocation yet in China
-            "6": BandRules(allowedChannels: [], channelMeta: [:]),
-        ]
-    }()
-
-    // MARK: - EU (ETSI)
-
-    private static let euRules: [String: BandRules] = {
-        let dfsChannels: Set<Int> = [
-            52, 56, 60, 64,
-            100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140,
-        ]
-        let radarSensitive: Set<Int> = [52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128]
-
-        var fiveMeta = [Int: RegulatoryChannelMeta]()
-        for ch in dfsChannels {
-            fiveMeta[ch] = RegulatoryChannelMeta(
-                isDFS: true,
-                isRadarSensitive: radarSensitive.contains(ch),
-                requiresCAC: true,
-                forcedSwitchRisk: true,
-                isIndoorOnly: false,
-                maxEIRPDbm: nil,
-                requiresAFC: false,
-                wiFi6EAvailable: true,
-                wiFi7Available: true,
-                notes: ch <= 64 ? "UNII-2A DFS" : "UNII-2C DFS"
+        let populated = records.prefix(recordCount)
+        var channelMeta: [Int: RegulatoryChannelMeta] = [:]
+        for record in populated where record.has_metadata != 0 {
+            let flags = record.metadata_flags
+            channelMeta[Int(record.channel)] = RegulatoryChannelMeta(
+                isDFS: flags & WIFI_LENS_REGULATORY_META_IS_DFS != 0,
+                isRadarSensitive: flags & WIFI_LENS_REGULATORY_META_IS_RADAR_SENSITIVE != 0,
+                requiresCAC: flags & WIFI_LENS_REGULATORY_META_REQUIRES_CAC != 0,
+                forcedSwitchRisk: flags & WIFI_LENS_REGULATORY_META_FORCED_SWITCH_RISK != 0,
+                isIndoorOnly: flags & WIFI_LENS_REGULATORY_META_IS_INDOOR_ONLY != 0,
+                maxEIRPDbm: record.has_max_eirp == 0 ? nil : Int(record.max_eirp_dbm),
+                requiresAFC: flags & WIFI_LENS_REGULATORY_META_REQUIRES_AFC != 0,
+                wiFi6EAvailable: flags & WIFI_LENS_REGULATORY_META_WIFI_6E_AVAILABLE != 0,
+                wiFi7Available: flags & WIFI_LENS_REGULATORY_META_WIFI_7_AVAILABLE != 0,
+                notes: note(for: record.note_code)
             )
         }
+        return BandRules(
+            allowedChannels: Set(populated.map { Int($0.channel) }),
+            channelMeta: channelMeta
+        )
+    }
 
-        // EU 6 GHz: LPI channels 1-93 only
-        let sixChannels = Set(stride(from: 1, through: 93, by: 4))
-
-        return [
-            "24": BandRules(allowedChannels: Set(1...13), channelMeta: [:]),
-            "5": BandRules(
-                allowedChannels: Set(stride(from: 36, through: 144, by: 4)),
-                channelMeta: fiveMeta
-            ),
-            "6": BandRules(allowedChannels: sixChannels, channelMeta: [:]),
-        ]
-    }()
+    private static func note(for code: Int32) -> String? {
+        switch code {
+        case 1: "UNII-2A DFS"
+        case 2: "UNII-2C DFS"
+        case 3: "W53 DFS"
+        case 4: "W56 DFS"
+        case 5: "802.11b only in Japan"
+        default: nil
+        }
+    }
 }

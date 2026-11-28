@@ -1,4 +1,5 @@
 import CFNetwork
+import Darwin
 import Foundation
 import Network
 import Testing
@@ -170,18 +171,58 @@ extension NetworkDiagnosticsTests {
 
     @Test("route command timeout terminates the child without waiting for EOF")
     func routeCommandTimeoutDoesNotWaitForChild() async {
+        let pidFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("route-timeout-\(UUID().uuidString)")
+        defer {
+            if let contents = try? String(contentsOf: pidFile, encoding: .utf8) {
+                for pid in contents.split(whereSeparator: \.isNewline).compactMap({ pid_t(String($0)) }) {
+                    _ = Darwin.kill(pid, SIGKILL)
+                }
+            }
+            try? FileManager.default.removeItem(at: pidFile)
+        }
         let execution = DiagnosticRouteProcessExecution(
-            executablePath: "/bin/sleep",
-            arguments: ["5"],
+            executablePath: "/bin/sh",
+            arguments: [
+                "-c",
+                "printf '%s\\n' $$ > \"$1\"; /usr/bin/perl -MPOSIX -e 'POSIX::setsid() or die; open my $file, \">>\", $ARGV[0] or die; print {$file} \"$$\\n\"; close $file; sleep 45' \"$1\" & wait \"$!\"",
+                "route-timeout",
+                pidFile.path,
+            ],
             environment: [:],
             outputLimit: 1024
         )
-        let startedAt = ContinuousClock.now
-        let result = await execution.run(timeout: .milliseconds(50))
-        let elapsed = startedAt.duration(to: ContinuousClock.now)
+        let run = Task { await execution.run(timeout: .seconds(20)) }
+
+        var processIDs: [pid_t] = []
+        for _ in 0..<2_500 {
+            if let contents = try? String(contentsOf: pidFile, encoding: .utf8) {
+                processIDs = contents.split(whereSeparator: \.isNewline).compactMap { pid_t(String($0)) }
+            }
+            if processIDs.count == 2 {
+                break
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        guard processIDs.count == 2 else {
+            _ = await run.value
+            Issue.record("Route command and pipe-holding child did not signal readiness")
+            return
+        }
+        let childPID = processIDs[1]
+        #expect(Darwin.kill(childPID, SIGSTOP) == 0)
+        let releaseChildIfTestStalls = Task {
+            try? await Task.sleep(for: .seconds(30))
+            guard !Task.isCancelled else { return }
+            _ = Darwin.kill(childPID, SIGCONT)
+            _ = Darwin.kill(childPID, SIGTERM)
+        }
+        defer { releaseChildIfTestStalls.cancel() }
+
+        let result = await run.value
 
         #expect(result.timedOut)
-        #expect(elapsed < .seconds(2))
+        #expect(Darwin.kill(childPID, 0) == 0)
     }
 
     @Test("contextual path and gateway checks use one selected interface")

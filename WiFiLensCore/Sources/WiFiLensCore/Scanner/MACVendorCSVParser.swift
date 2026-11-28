@@ -1,11 +1,21 @@
-import CryptoKit
 import Foundation
+import WiFiLensCoreRust
 
 enum MACVendorCSVParserCancellationPoint: Equatable, Sendable {
     case routine
     case records(Int)
     case beforeFinalSort
     case afterFinalSort
+
+    init?(cancellationCode: Int32, count: Int) {
+        switch cancellationCode {
+        case 0: self = .routine
+        case 1: self = .records(count)
+        case 2: self = .beforeFinalSort
+        case 3: self = .afterFinalSort
+        default: return nil
+        }
+    }
 }
 
 struct MACVendorCSVParser: Sendable {
@@ -45,439 +55,244 @@ struct MACVendorCSVParser: Sendable {
         source: MACVendorDatabaseSource,
         createdAt: Date
     ) throws -> MACVendorDatabase {
-        try cancellationCheck(.routine)
-        guard inputs.count == MACVendorRegistry.allCases.count else {
-            throw MACVendorDatabaseError.wrongFileCount(
-                expected: MACVendorRegistry.allCases.count,
-                actual: inputs.count
+        var strings: [UInt8] = []
+        var rawInputs: [WiFiLensMacVendorRegistryInput] = []
+        for input in inputs {
+            let nameBytes = Array(input.displayName.utf8)
+            let nameOffset = strings.count
+            strings.append(contentsOf: nameBytes)
+            let dataOffset = strings.count
+            strings.append(contentsOf: input.data)
+            rawInputs.append(
+                WiFiLensMacVendorRegistryInput(
+                    display_name_offset: nameOffset,
+                    display_name_length: nameBytes.count,
+                    data_offset: dataOffset,
+                    data_length: input.data.count
+                )
             )
         }
 
-        var totalBytes = 0
-        for input in inputs {
-            try cancellationCheck(.routine)
-            guard input.data.count <= maximumFileBytes else {
-                throw MACVendorDatabaseError.fileTooLarge(
-                    file: input.displayName,
-                    maximumBytes: maximumFileBytes
-                )
-            }
-            totalBytes += input.data.count
-            guard totalBytes <= maximumTotalBytes else {
-                throw MACVendorDatabaseError.totalSizeExceeded(maximumBytes: maximumTotalBytes)
-            }
+        let minimums = MACVendorRegistry.allCases.map { registry in
+            WiFiLensMacVendorMinimum(
+                registry: registry.rustCode,
+                minimum_records: minimumRecordCounts[registry] ?? 0
+            )
         }
+        var failure = WiFiLensMacVendorFailure()
+        var failureText = [UInt8](repeating: 0, count: 512)
+        var failureTextLength = 0
+        var registryResults = [WiFiLensMacVendorRegistryMetadata](
+            repeating: WiFiLensMacVendorRegistryMetadata(),
+            count: MACVendorRegistry.allCases.count
+        )
+        var entryResults = [WiFiLensMacVendorEntry](
+            repeating: WiFiLensMacVendorEntry(),
+            count: 1_000_000
+        )
+        var resultText = [UInt8](repeating: 0, count: 96_000_000)
+        var registryCount = 0
+        var entryCount = 0
+        var resultTextLength = 0
+        let cancellationError = MACVendorCancellationError()
+        var context = MACVendorCancellationContext(parser: self, error: cancellationError)
 
-        var parsedByRegistry: [MACVendorRegistry: ParsedRegistry] = [:]
-        for input in inputs {
-            try cancellationCheck(.routine)
-            let parsed = try parse(input)
-            guard parsedByRegistry[parsed.registry] == nil else {
-                throw MACVendorDatabaseError.duplicateRegistry(parsed.registry)
-            }
-            parsedByRegistry[parsed.registry] = parsed
-        }
-
-        for registry in MACVendorRegistry.allCases where parsedByRegistry[registry] == nil {
-            throw MACVendorDatabaseError.missingRegistry(registry)
-        }
-
-        var entriesByAssignment: [AssignmentKey: MACVendorEntry] = [:]
-        var ambiguousAssignments: Set<AssignmentKey> = []
-        for registry in MACVendorRegistry.allCases {
-            guard let parsed = parsedByRegistry[registry] else {
-                continue
-            }
-            for (index, entry) in parsed.entries.enumerated() {
-                if index > 0, index.isMultiple(of: 1_000) {
-                    try cancellationCheck(.records(index))
-                }
-                let key = AssignmentKey(prefix: entry.prefix, prefixLength: entry.prefixLength)
-                guard !ambiguousAssignments.contains(key) else {
-                    continue
-                }
-                if let existing = entriesByAssignment[key] {
-                    if existing.organization != entry.organization {
-                        entriesByAssignment.removeValue(forKey: key)
-                        ambiguousAssignments.insert(key)
+        let callParser = {
+            withUnsafeMutablePointer(to: &failure) { failurePointer in
+                strings.withUnsafeBufferPointer { stringBuffer in
+                    rawInputs.withUnsafeBufferPointer { inputBuffer in
+                        minimums.withUnsafeBufferPointer { minimumBuffer in
+                            failureText.withUnsafeMutableBufferPointer { failureTextBuffer in
+                                registryResults.withUnsafeMutableBufferPointer { registryBuffer in
+                                    entryResults.withUnsafeMutableBufferPointer { entryBuffer in
+                                        resultText.withUnsafeMutableBufferPointer { textBuffer in
+                                            withUnsafeMutablePointer(to: &failureTextLength) { failureLengthPointer in
+                                                withUnsafeMutablePointer(to: &registryCount) { registryCountPointer in
+                                                    withUnsafeMutablePointer(to: &entryCount) { entryCountPointer in
+                                                        withUnsafeMutablePointer(to: &resultTextLength) { textLengthPointer in
+                                                            withUnsafeMutablePointer(to: &context) { contextPointer in
+                                                                wifi_lens_mac_vendor_parse_database(
+                                                                    inputBuffer.baseAddress,
+                                                                    inputBuffer.count,
+                                                                    stringBuffer.baseAddress,
+                                                                    stringBuffer.count,
+                                                                    source.rustCode,
+                                                                    minimumBuffer.baseAddress,
+                                                                    minimumBuffer.count,
+                                                                    maximumFileBytes,
+                                                                    maximumTotalBytes,
+                                                                    macVendorCancellationCallback,
+                                                                    contextPointer,
+                                                                    failurePointer,
+                                                                    failureTextBuffer.baseAddress,
+                                                                    failureTextBuffer.count,
+                                                                    failureLengthPointer,
+                                                                    registryBuffer.baseAddress,
+                                                                    registryBuffer.count,
+                                                                    entryBuffer.baseAddress,
+                                                                    entryBuffer.count,
+                                                                    textBuffer.baseAddress,
+                                                                    textBuffer.count,
+                                                                    registryCountPointer,
+                                                                    entryCountPointer,
+                                                                    textLengthPointer
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                } else {
-                    entriesByAssignment[key] = entry
                 }
             }
         }
+        var status = callParser()
+        if status != WIFI_LENS_STATUS_OK, failureTextLength > failureText.count {
+            failureText = [UInt8](repeating: 0, count: failureTextLength)
+            status = callParser()
+        }
 
-        let metadata = MACVendorRegistry.allCases.compactMap { registry -> MACVendorRegistryMetadata? in
-            guard let parsed = parsedByRegistry[registry] else {
-                return nil
+        guard status == WIFI_LENS_STATUS_OK else {
+            if let error = cancellationError.value {
+                throw error
             }
+            let file = decodeSwiftUTF8(failureText, failure.detail_offset, failure.detail_length) ?? ""
+            let detail = String(decoding: failureText.prefix(failureTextLength), as: UTF8.self)
+            throw mapMacVendorError(
+                code: failure.code,
+                registry: MACVendorRegistry(rustCode: failure.registry),
+                number1: failure.number1,
+                number2: failure.number2,
+                file: file,
+                detail: detail
+            )
+        }
+
+        let registries = registryResults.prefix(registryCount).compactMap { metadata -> MACVendorRegistryMetadata? in
+            guard let registry = MACVendorRegistry(rustCode: metadata.registry),
+                let sha256 = decodeSwiftUTF8(resultText, metadata.sha256_offset, metadata.sha256_length)
+            else { return nil }
             return MACVendorRegistryMetadata(
                 registry: registry,
-                validRecordCount: parsed.entries.count,
-                sha256: parsed.sha256,
+                validRecordCount: metadata.valid_record_count,
+                sha256: sha256,
                 sourceURL: source == .ieeeDownload ? registry.downloadURL : nil
             )
         }
-
-        try cancellationCheck(.beforeFinalSort)
-        let entries = entriesByAssignment.values.sorted {
-            if $0.prefixLength != $1.prefixLength {
-                return $0.prefixLength > $1.prefixLength
-            }
-            return $0.prefix < $1.prefix
+        let entries = entryResults.prefix(entryCount).compactMap { entry -> MACVendorEntry? in
+            guard let prefix = decodeSwiftUTF8(resultText, entry.prefix_offset, entry.prefix_length),
+                let organization = decodeSwiftUTF8(resultText, entry.organization_offset, entry.organization_length)
+            else { return nil }
+            return MACVendorEntry(
+                prefix: prefix,
+                prefixLength: Int(entry.prefix_length_bits),
+                organization: organization
+            )
         }
-        try cancellationCheck(.afterFinalSort)
-
+        guard registries.count == registryCount, entries.count == entryCount else {
+            throw MACVendorDatabaseError.malformedCSV(file: inputs.first?.displayName ?? "")
+        }
         return MACVendorDatabase(
             schemaVersion: MACVendorDatabase.schemaVersion,
             createdAt: createdAt,
             source: source,
-            registries: metadata,
+            registries: registries,
             entries: entries
         )
     }
 
-    private func parse(_ input: MACVendorRegistryInput) throws -> ParsedRegistry {
-        try cancellationCheck(.routine)
-        guard var csv = String(data: input.data, encoding: .utf8) else {
-            throw MACVendorDatabaseError.invalidEncoding(file: input.displayName)
-        }
-        if csv.first == "\u{FEFF}" {
-            csv.removeFirst()
-        }
-        csv = String(
-            csv.unicodeScalars.filter {
-                $0.properties.generalCategory != .format
-            })
-
-        let rows = try CSVReader.parse(
-            csv,
-            file: input.displayName,
-            cancellationCheck: cancellationCheck
-        )
-        guard let header = rows.first else {
-            throw MACVendorDatabaseError.malformedCSV(file: input.displayName)
-        }
-
-        let requiredColumns = ["Registry", "Assignment", "Organization Name"]
-        let missingColumns = requiredColumns.filter { !header.contains($0) }
-        guard missingColumns.isEmpty else {
-            throw MACVendorDatabaseError.missingColumns(
-                file: input.displayName,
-                columns: missingColumns
-            )
-        }
-        guard let registryIndex = header.firstIndex(of: "Registry"),
-            let assignmentIndex = header.firstIndex(of: "Assignment"),
-            let organizationIndex = header.firstIndex(of: "Organization Name")
-        else {
-            throw MACVendorDatabaseError.malformedCSV(file: input.displayName)
-        }
-
-        let greatestIndex = max(registryIndex, assignmentIndex, organizationIndex)
-        var fileRegistry: MACVendorRegistry?
-        var entriesByAssignment: [AssignmentKey: MACVendorEntry] = [:]
-        var ambiguousAssignments: Set<AssignmentKey> = []
-
-        for (index, row) in rows.dropFirst().enumerated() {
-            if index > 0, index.isMultiple(of: 1_000) {
-                try cancellationCheck(.records(index))
-            }
-            if row.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-                continue
-            }
-            guard row.indices.contains(greatestIndex),
-                let registry = MACVendorRegistry(rawValue: row[registryIndex])
-            else {
-                throw MACVendorDatabaseError.mixedRegistries(file: input.displayName)
-            }
-            if let fileRegistry, fileRegistry != registry {
-                throw MACVendorDatabaseError.mixedRegistries(file: input.displayName)
-            }
-            fileRegistry = registry
-
-            let assignment = row[assignmentIndex]
-            let normalizedAssignment =
-                assignment
-                .replacingOccurrences(of: ":", with: "")
-                .replacingOccurrences(of: "-", with: "")
-                .uppercased()
-            guard normalizedAssignment.count == registry.prefixLength / 4,
-                normalizedAssignment.allSatisfy({
-                    ("0"..."9").contains($0) || ("A"..."F").contains($0)
-                })
-            else {
-                throw MACVendorDatabaseError.invalidAssignment(
-                    file: input.displayName,
-                    registry: registry,
-                    assignment: assignment
-                )
-            }
-
-            guard
-                let organization = try normalizeOrganization(
-                    row[organizationIndex],
-                    file: input.displayName
-                )
-            else {
-                continue
-            }
-
-            let key = AssignmentKey(prefix: normalizedAssignment, prefixLength: registry.prefixLength)
-            guard !ambiguousAssignments.contains(key) else {
-                continue
-            }
-            if let existing = entriesByAssignment[key] {
-                if existing.organization != organization {
-                    entriesByAssignment.removeValue(forKey: key)
-                    ambiguousAssignments.insert(key)
-                }
-            } else {
-                entriesByAssignment[key] = MACVendorEntry(
-                    prefix: normalizedAssignment,
-                    prefixLength: registry.prefixLength,
-                    organization: organization
-                )
-            }
-        }
-
-        guard let registry = fileRegistry else {
-            throw MACVendorDatabaseError.mixedRegistries(file: input.displayName)
-        }
-        let minimum = minimumRecordCounts[registry] ?? 0
-        guard entriesByAssignment.count >= minimum else {
-            throw MACVendorDatabaseError.tooFewRecords(
-                registry: registry,
-                minimum: minimum,
-                actual: entriesByAssignment.count
-            )
-        }
-
-        return ParsedRegistry(
-            registry: registry,
-            entries: Array(entriesByAssignment.values),
-            sha256: SHA256.hash(data: input.data).map { String(format: "%02x", $0) }.joined()
-        )
+    private func decodeSwiftUTF8(_ bytes: [UInt8], _ offset: Int, _ length: Int) -> String? {
+        guard offset >= 0, length >= 0, offset <= bytes.count, length <= bytes.count - offset else { return nil }
+        return String(bytes: Array(bytes[offset..<(offset + length)]), encoding: .utf8)
     }
 
-    private func normalizeOrganization(_ value: String, file: String) throws -> String? {
-        let decoded = decodeEntities(in: value)
-        var normalized = ""
-        var hasPendingSpace = false
-
-        for scalar in decoded.unicodeScalars {
-            if scalar.properties.isWhitespace {
-                hasPendingSpace = !normalized.isEmpty
-                continue
-            }
-            guard !CharacterSet.controlCharacters.contains(scalar) else {
-                throw MACVendorDatabaseError.invalidOrganization(file: file)
-            }
-            if hasPendingSpace {
-                normalized.append(" ")
-                hasPendingSpace = false
-            }
-            normalized.unicodeScalars.append(scalar)
-        }
-
-        guard normalized.unicodeScalars.count <= 256 else {
-            throw MACVendorDatabaseError.invalidOrganization(file: file)
-        }
-        guard !normalized.isEmpty, normalized.caseInsensitiveCompare("private") != .orderedSame else {
-            return nil
-        }
-        return normalized
-    }
-
-    private func decodeEntities(in value: String) -> String {
-        var result = ""
-        var cursor = value.startIndex
-
-        while cursor < value.endIndex {
-            guard value[cursor] == "&" else {
-                result.append(value[cursor])
-                cursor = value.index(after: cursor)
-                continue
-            }
-
-            let entityStart = value.index(after: cursor)
-            if let (decoded, nextIndex) = decodeEntityCandidate(in: value, startingAt: entityStart) {
-                result.unicodeScalars.append(decoded)
-                cursor = nextIndex
-            } else {
-                result.append("&")
-                cursor = entityStart
-            }
-        }
-        return result
-    }
-
-    private func decodeEntityCandidate(
-        in value: String,
-        startingAt startIndex: String.Index
-    ) -> (scalar: Unicode.Scalar, nextIndex: String.Index)? {
-        let maximumCandidateLength = 8
-        var candidate = ""
-        var cursor = startIndex
-
-        while cursor < value.endIndex {
-            let character = value[cursor]
-            if character == "&" {
-                return nil
-            }
-            if character == ";" {
-                guard let scalar = decodeEntity(candidate) else {
-                    return nil
-                }
-                return (scalar, value.index(after: cursor))
-            }
-            guard candidate.count < maximumCandidateLength else {
-                return nil
-            }
-            candidate.append(character)
-            cursor = value.index(after: cursor)
-        }
-        return nil
-    }
-
-    private func decodeEntity(_ entity: String) -> Unicode.Scalar? {
-        switch entity {
-        case "amp": return "&"
-        case "lt": return "<"
-        case "gt": return ">"
-        case "quot": return "\""
-        case "#39": return "'"
-        default:
-            if entity.hasPrefix("#x") || entity.hasPrefix("#X") {
-                return UInt32(entity.dropFirst(2), radix: 16).flatMap(Unicode.Scalar.init)
-            }
-            if entity.hasPrefix("#") {
-                return UInt32(entity.dropFirst(), radix: 10).flatMap(Unicode.Scalar.init)
-            }
-            return nil
+    private func mapMacVendorError(
+        code: Int32,
+        registry: MACVendorRegistry?,
+        number1: Int64,
+        number2: Int64,
+        file: String,
+        detail: String
+    ) -> MACVendorDatabaseError {
+        switch code {
+        case 1: return .wrongFileCount(expected: Int(number1), actual: Int(number2))
+        case 2: return .fileTooLarge(file: file, maximumBytes: Int(number1))
+        case 3: return .totalSizeExceeded(maximumBytes: Int(number1))
+        case 4: return .invalidEncoding(file: file)
+        case 5: return .malformedCSV(file: file)
+        case 6:
+            let columns = ["Registry", "Assignment", "Organization Name"]
+                .enumerated()
+                .compactMap { index, column in number1 & (1 << index) == 0 ? nil : column }
+            return .missingColumns(file: file, columns: columns)
+        case 7: return .mixedRegistries(file: file)
+        case 8: return .duplicateRegistry(registry ?? .maL)
+        case 9: return .missingRegistry(registry ?? .maL)
+        case 10:
+            let assignment = String(decoding: detail.utf8.suffix(Int(max(0, number2))), as: UTF8.self)
+            return .invalidAssignment(file: file, registry: registry ?? .maL, assignment: assignment)
+        case 11: return .invalidOrganization(file: file)
+        case 12: return .tooFewRecords(registry: registry ?? .maL, minimum: Int(number1), actual: Int(number2))
+        case 13: return .persistenceFailure
+        default: return .malformedCSV(file: file)
         }
     }
 }
 
-extension MACVendorCSVParser {
-    fileprivate struct AssignmentKey: Hashable {
-        let prefix: String
-        let prefixLength: Int
+private final class MACVendorCancellationError {
+    var value: Error?
+}
+
+private struct MACVendorCancellationContext {
+    let parser: MACVendorCSVParser
+    let error: MACVendorCancellationError
+}
+
+private let macVendorCancellationCallback: WiFiLensMacVendorCancellationCallback = { point, count, contextPointer in
+    guard let contextPointer,
+        let point = MACVendorCSVParserCancellationPoint(cancellationCode: point, count: count)
+    else { return 0 }
+    let context = contextPointer.assumingMemoryBound(to: MACVendorCancellationContext.self).pointee
+    do {
+        try context.parser.cancellationCheck(point)
+        return 0
+    } catch {
+        context.error.value = error
+        return 1
+    }
+}
+
+private extension MACVendorRegistry {
+    var rustCode: Int32 {
+        switch self {
+        case .maL: 1
+        case .maM: 2
+        case .maS: 3
+        case .iab: 4
+        }
     }
 
-    fileprivate struct ParsedRegistry {
-        let registry: MACVendorRegistry
-        let entries: [MACVendorEntry]
-        let sha256: String
+    init?(rustCode: Int32) {
+        switch rustCode {
+        case 1: self = .maL
+        case 2: self = .maM
+        case 3: self = .maS
+        case 4: self = .iab
+        default: return nil
+        }
     }
+}
 
-    fileprivate enum CSVReader {
-        private static let maximumRows = 250_000
-        private static let maximumFieldsPerRow = 16
-        private static let maximumTotalFields = 1_000_000
-
-        static func parse(
-            _ csv: String,
-            file: String,
-            cancellationCheck: MACVendorCSVParser.CancellationCheck
-        ) throws -> [[String]] {
-            var rows: [[String]] = []
-            var row: [String] = []
-            var field = ""
-            var totalFields = 0
-            var insideQuotes = false
-            var afterClosingQuote = false
-            var endedWithRowTerminator = false
-            var index = csv.startIndex
-
-            func appendField() throws {
-                guard row.count < maximumFieldsPerRow,
-                    totalFields < maximumTotalFields
-                else {
-                    throw MACVendorDatabaseError.malformedCSV(file: file)
-                }
-                row.append(field)
-                totalFields += 1
-                field = ""
-            }
-
-            func appendRow() throws {
-                guard rows.count < maximumRows else {
-                    throw MACVendorDatabaseError.malformedCSV(file: file)
-                }
-                rows.append(row)
-                row = []
-            }
-
-            while index < csv.endIndex {
-                let character = csv[index]
-                let nextIndex = csv.index(after: index)
-
-                if insideQuotes {
-                    if character == "\"" {
-                        if nextIndex < csv.endIndex, csv[nextIndex] == "\"" {
-                            field.append("\"")
-                            endedWithRowTerminator = false
-                            index = csv.index(after: nextIndex)
-                            continue
-                        }
-                        insideQuotes = false
-                        afterClosingQuote = true
-                    } else {
-                        field.append(character)
-                    }
-                    endedWithRowTerminator = false
-                    index = nextIndex
-                    continue
-                }
-
-                if afterClosingQuote,
-                    character != ",",
-                    character != "\r",
-                    character != "\n",
-                    character != "\r\n"
-                {
-                    throw MACVendorDatabaseError.malformedCSV(file: file)
-                }
-
-                switch character {
-                case "\"":
-                    guard field.isEmpty else {
-                        throw MACVendorDatabaseError.malformedCSV(file: file)
-                    }
-                    insideQuotes = true
-                    endedWithRowTerminator = false
-                case ",":
-                    try appendField()
-                    afterClosingQuote = false
-                    endedWithRowTerminator = false
-                case "\r", "\n", "\r\n":
-                    try appendField()
-                    try appendRow()
-                    if rows.count.isMultiple(of: 1_000) {
-                        try cancellationCheck(.records(rows.count))
-                    }
-                    afterClosingQuote = false
-                    endedWithRowTerminator = true
-                    if character == "\r", nextIndex < csv.endIndex, csv[nextIndex] == "\n" {
-                        index = csv.index(after: nextIndex)
-                        continue
-                    }
-                default:
-                    field.append(character)
-                    endedWithRowTerminator = false
-                }
-                index = nextIndex
-            }
-
-            guard !insideQuotes else {
-                throw MACVendorDatabaseError.malformedCSV(file: file)
-            }
-            if !endedWithRowTerminator {
-                try appendField()
-                try appendRow()
-            }
-            return rows
+private extension MACVendorDatabaseSource {
+    var rustCode: Int32 {
+        switch self {
+        case .ieeeDownload: 1
+        case .manualImport: 2
         }
     }
 }

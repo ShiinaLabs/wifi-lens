@@ -14,6 +14,159 @@ struct WiFiLinkEvidenceInterpreterTests {
         #expect(result.reason == .stationMode)
     }
 
+    @Test("Rust link evidence bridge matches shared Swift fixtures")
+    func sharedRustBridgeFixtures() throws {
+        let fixtureURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("rust-core", isDirectory: true)
+            .appendingPathComponent("tests", isDirectory: true)
+            .appendingPathComponent("fixtures", isDirectory: true)
+            .appendingPathComponent("link-evidence-cases.tsv")
+        let fixtures = try String(contentsOf: fixtureURL, encoding: .utf8)
+        let timestamp = Date(timeIntervalSince1970: 100)
+        var caseCount = 0
+
+        for (lineIndex, line) in fixtures.split(whereSeparator: \.isNewline).enumerated() {
+            if line.isEmpty || line.first == "#" {
+                continue
+            }
+            let fields = line.split(whereSeparator: \.isWhitespace)
+            guard fields.count == 17 else {
+                Issue.record("Invalid link evidence fixture on line \(lineIndex + 1)")
+                continue
+            }
+
+            let name = String(fields[0])
+            let expectedTimestampMode = try #require(Int(fields[3]))
+            let capturedAt = expectedTimestampMode == 1 ? timestamp : timestamp.addingTimeInterval(1)
+            let captureStartedAt: Date
+            let captureEndedAt: Date
+            if fields[4] == "1" {
+                captureStartedAt = capturedAt
+                captureEndedAt = capturedAt
+            } else if name == "invalid-capture-end" {
+                captureStartedAt = capturedAt
+                captureEndedAt = capturedAt.addingTimeInterval(-1)
+            } else {
+                captureStartedAt = capturedAt.addingTimeInterval(1)
+                captureEndedAt = capturedAt
+            }
+            let cycleID = UUID()
+            let modeCode = try #require(Int(fields[5]))
+            let otherModeRawValue = try #require(Int(fields[8]))
+            let mode: WiFiModeEvidence
+            switch modeCode {
+            case 0: mode = .unavailable
+            case 1: mode = .station
+            case 2: mode = .none
+            case 3: mode = .noneOrReadFailure
+            case 4: mode = .other(rawValue: otherModeRawValue)
+            default:
+                Issue.record("Invalid mode in link evidence fixture on line \(lineIndex + 1)")
+                continue
+            }
+            let radioCode = try #require(Int(fields[9]))
+            let radio: WiFiRadioEvidence
+            switch radioCode {
+            case 0: radio = .unavailable
+            case 1: radio = .reportedOn
+            case 2: radio = .reportedOff
+            case 3: radio = .reportedOffOrReadFailure
+            default:
+                Issue.record("Invalid radio in link evidence fixture on line \(lineIndex + 1)")
+                continue
+            }
+            let linkActive: Bool?
+            switch try #require(Int(fields[13])) {
+            case 0: linkActive = nil
+            case 1: linkActive = true
+            case 2: linkActive = false
+            default:
+                Issue.record("Invalid link state in fixture on line \(lineIndex + 1)")
+                continue
+            }
+            let coreWLANModeRawValue: Int?
+            if fields[6] == "1" {
+                guard let rawValue = Int(fields[7]) else {
+                    Issue.record("Invalid raw CoreWLAN mode in link evidence fixture on line \(lineIndex + 1)")
+                    continue
+                }
+                coreWLANModeRawValue = rawValue
+            } else {
+                coreWLANModeRawValue = nil
+            }
+            let radioPowerOnRaw = fields[10] == "1" ? fields[11] == "1" : nil
+            let evidence: WiFiLinkRawEvidence?
+            if fields[1] == "1" {
+                evidence = WiFiLinkRawEvidence(
+                    snapshotCycleID: fields[2] == "1" ? cycleID : UUID(),
+                    capturedAt: capturedAt,
+                    interfaceName: fields[12] == "1" ? "en0" : "",
+                    mode: mode,
+                    coreWLANModeRawValue: coreWLANModeRawValue,
+                    radio: radio,
+                    linkActive: linkActive,
+                    radioPowerOnRaw: radioPowerOnRaw,
+                    captureStartedAt: captureStartedAt,
+                    captureEndedAt: captureEndedAt
+                )
+            } else {
+                evidence = nil
+            }
+            let expectedState: VerifiedWiFiLinkState
+            switch try #require(Int(fields[14])) {
+            case 0: expectedState = .unknown
+            case 1: expectedState = .associated
+            case 2: expectedState = .disconnected
+            default:
+                Issue.record("Invalid expected state in fixture on line \(lineIndex + 1)")
+                continue
+            }
+            let expectedReason: WiFiLinkEvidenceReason
+            switch try #require(Int(fields[15])) {
+            case 1: expectedReason = .stationMode
+            case 2: expectedReason = .cycleMismatch
+            case 3: expectedReason = .radioUnavailable
+            case 4: expectedReason = .modeUnavailable
+            case 5: expectedReason = .unsupportedMode
+            case 6: expectedReason = .captureTimestampMismatch
+            case 7: expectedReason = .linkStateUnavailable
+            case 8: expectedReason = .conflictingLinkEvidence
+            case 9: expectedReason = .disconnectCandidate
+            default:
+                Issue.record("Invalid expected reason in fixture on line \(lineIndex + 1)")
+                continue
+            }
+            let expectedCandidate: VerifiedWiFiLinkState?
+            switch try #require(Int(fields[16])) {
+            case 0: expectedCandidate = nil
+            case 2: expectedCandidate = .disconnected
+            default:
+                Issue.record("Invalid expected candidate in fixture on line \(lineIndex + 1)")
+                continue
+            }
+            let expected = WiFiLinkAssessment(
+                state: expectedState,
+                reason: expectedReason,
+                candidateState: expectedCandidate
+            )
+            let result = WiFiLinkInterpreter.evaluate(
+                evidence,
+                expectedCycleID: fields[2] == "1" ? cycleID : UUID(),
+                expectedCapturedAt: expectedTimestampMode == 2 ? nil : timestamp
+            )
+
+            #expect(result == expected, "fixture \(name)")
+            caseCount += 1
+        }
+
+        #expect(caseCount == 23)
+    }
+
     @Test("A single explicit negative sample is only a candidate")
     func disconnectCandidateRemainsUnknown() {
         let sample = evidence(

@@ -1,8 +1,18 @@
 //! Portable Wi-Fi analysis primitives shared by the macOS applications.
 
+pub mod channel_occupancy;
 mod channel_quality;
 mod information_elements;
+pub mod link_evidence;
+pub mod mac_vendor;
+pub mod network_diagnostic_stages;
+pub mod observation_analysis;
+pub mod regulatory;
 
+pub use channel_occupancy::{
+    normalize as normalize_channel_occupancy, ChannelOccupancyAccessPoint,
+    NormalizedChannelOccupancy, WiFiLensChannelOccupancyInput, WiFiLensChannelOccupancyResult,
+};
 pub use channel_quality::{
     analyze as analyze_channel_quality, AccessPoint, AnalysisConfiguration, ChannelQuality,
     ChannelWidth, TargetAccessPoint, WiFiLensAccessPointInput, WiFiLensChannelQualityConfig,
@@ -10,6 +20,14 @@ pub use channel_quality::{
 };
 pub use information_elements::{
     parse as parse_information_elements, IEData, WiFiLensIEParseResult, WiFiLensIEStringRange,
+};
+pub use mac_vendor::{
+    lookup_mac_vendor, lookup_mac_vendor_organization, normalize_mac_address,
+    parse_mac_vendor_database, MacVendorCancellationPoint, MacVendorDatabase,
+    MacVendorDatabaseSource, MacVendorEntry, MacVendorError, MacVendorLookup, MacVendorRegistry,
+    MacVendorRegistryInput, WiFiLensMacVendorEntry, WiFiLensMacVendorFailure,
+    WiFiLensMacVendorLookupEntry, WiFiLensMacVendorMinimum, WiFiLensMacVendorRegistryInput,
+    WiFiLensMacVendorRegistryMetadata,
 };
 
 /// The Wi-Fi band used to select a channel block.
@@ -254,6 +272,11 @@ pub const WIFI_LENS_STATUS_INVALID_INPUT_SLICE: i32 = 6;
 pub const WIFI_LENS_STATUS_OUTPUT_TOO_SMALL: i32 = 7;
 pub const WIFI_LENS_STATUS_INVALID_UTF8: i32 = 8;
 pub const WIFI_LENS_STATUS_INVALID_WIDTH: i32 = 9;
+pub const WIFI_LENS_STATUS_INVALID_LINK_EVIDENCE: i32 = 10;
+pub const WIFI_LENS_STATUS_INVALID_REGULATORY_INPUT: i32 = 11;
+pub const WIFI_LENS_STATUS_INVALID_NETWORK_DIAGNOSTIC_INPUT: i32 = 12;
+pub const WIFI_LENS_STATUS_INVALID_OBSERVATION_INPUT: i32 = 13;
+pub const WIFI_LENS_STATUS_INVALID_MAC_VENDOR_INPUT: i32 = 14;
 pub const WIFI_LENS_MAX_CHANNEL_QUALITIES: usize = 105;
 pub const WIFI_LENS_IE_MAX_TEXT_BYTES: usize = 32 * (256 * 2 + 1);
 

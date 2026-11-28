@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCoreRust
 
 // MARK: - Regulatory Domain
 
@@ -21,18 +22,32 @@ public enum RegulatoryDomain: String, CaseIterable, Codable, Sendable {
 
     /// Map a locale region identifier (ISO 3166-1 alpha-2) onto a regulatory domain.
     public static func from(localeRegionCode: String?) -> Self {
-        guard let code = localeRegionCode?.uppercased() else { return .unknown }
-        switch code {
-        case "US", "CA", "MX": return .US
-        case "JP": return .JP
-        case "CN": return .CN
-        case "GB", "DE", "FR", "IT", "ES", "NL", "BE", "SE", "DK", "FI",
-            "PT", "IE", "AT", "PL", "CZ", "SK", "HU", "RO", "BG", "HR",
-            "SI", "LT", "LV", "EE", "LU", "MT", "CY", "GR", "NO", "CH",
-            "IS", "LI":
-            return .EU
-        default: return .unknown
+        let bytes = Array((localeRegionCode ?? "").utf8)
+        let code = bytes.withUnsafeBufferPointer {
+            wifi_lens_regulatory_domain_from_country_code($0.baseAddress, $0.count)
         }
+        return Self(rustCode: code)
+    }
+
+    var rustCode: Int32 {
+        switch self {
+        case .unknown: WIFI_LENS_REGULATORY_DOMAIN_UNKNOWN
+        case .US: WIFI_LENS_REGULATORY_DOMAIN_US
+        case .JP: WIFI_LENS_REGULATORY_DOMAIN_JP
+        case .CN: WIFI_LENS_REGULATORY_DOMAIN_CN
+        case .EU: WIFI_LENS_REGULATORY_DOMAIN_EU
+        }
+    }
+
+    init(rustCode: Int32) {
+        self =
+            switch rustCode {
+            case WIFI_LENS_REGULATORY_DOMAIN_US: .US
+            case WIFI_LENS_REGULATORY_DOMAIN_JP: .JP
+            case WIFI_LENS_REGULATORY_DOMAIN_CN: .CN
+            case WIFI_LENS_REGULATORY_DOMAIN_EU: .EU
+            default: .unknown
+            }
     }
 }
 
@@ -42,6 +57,23 @@ enum InferenceConfidence: Comparable, Sendable {
     case high
     case medium
     case low
+
+    var rustCode: Int32 {
+        switch self {
+        case .low: WIFI_LENS_REGULATORY_CONFIDENCE_LOW
+        case .medium: WIFI_LENS_REGULATORY_CONFIDENCE_MEDIUM
+        case .high: WIFI_LENS_REGULATORY_CONFIDENCE_HIGH
+        }
+    }
+
+    init(rustCode: Int32) {
+        self =
+            switch rustCode {
+            case WIFI_LENS_REGULATORY_CONFIDENCE_MEDIUM: .medium
+            case WIFI_LENS_REGULATORY_CONFIDENCE_HIGH: .high
+            default: .low
+            }
+    }
 
     public var label: String {
         switch self {

@@ -14,12 +14,131 @@
 #define WIFI_LENS_STATUS_OUTPUT_TOO_SMALL 7
 #define WIFI_LENS_STATUS_INVALID_UTF8 8
 #define WIFI_LENS_STATUS_INVALID_WIDTH 9
+#define WIFI_LENS_STATUS_INVALID_LINK_EVIDENCE 10
+#define WIFI_LENS_STATUS_INVALID_REGULATORY_INPUT 11
+#define WIFI_LENS_STATUS_INVALID_NETWORK_DIAGNOSTIC_INPUT 12
+#define WIFI_LENS_STATUS_INVALID_OBSERVATION_INPUT 13
+#define WIFI_LENS_STATUS_INVALID_MAC_VENDOR_INPUT 14
 
 typedef struct {
     int32_t status;
     int64_t left;
     int64_t right;
 } WiFiLensChannelBlockResult;
+
+#define WIFI_LENS_LINK_HAS_EVIDENCE (1u << 0)
+#define WIFI_LENS_LINK_CYCLE_MATCHES (1u << 1)
+#define WIFI_LENS_LINK_EXPECTED_TIMESTAMP_MATCHES (1u << 2)
+#define WIFI_LENS_LINK_CAPTURE_WINDOW_VALID (1u << 3)
+#define WIFI_LENS_LINK_HAS_CORE_WLAN_MODE (1u << 4)
+#define WIFI_LENS_LINK_HAS_RADIO_POWER_ON_RAW (1u << 5)
+#define WIFI_LENS_LINK_RADIO_POWER_ON_RAW (1u << 6)
+#define WIFI_LENS_LINK_INTERFACE_NAME_NONEMPTY (1u << 7)
+
+#define WIFI_LENS_LINK_MODE_UNAVAILABLE 0
+#define WIFI_LENS_LINK_MODE_STATION 1
+#define WIFI_LENS_LINK_MODE_NONE 2
+#define WIFI_LENS_LINK_MODE_NONE_OR_READ_FAILURE 3
+#define WIFI_LENS_LINK_MODE_OTHER 4
+
+#define WIFI_LENS_LINK_RADIO_UNAVAILABLE 0
+#define WIFI_LENS_LINK_RADIO_REPORTED_ON 1
+#define WIFI_LENS_LINK_RADIO_REPORTED_OFF 2
+#define WIFI_LENS_LINK_RADIO_REPORTED_OFF_OR_READ_FAILURE 3
+
+#define WIFI_LENS_LINK_ACTIVE_UNAVAILABLE 0
+#define WIFI_LENS_LINK_ACTIVE 1
+#define WIFI_LENS_LINK_INACTIVE 2
+
+#define WIFI_LENS_LINK_STATE_UNKNOWN 0
+#define WIFI_LENS_LINK_STATE_ASSOCIATED 1
+#define WIFI_LENS_LINK_STATE_DISCONNECTED 2
+
+#define WIFI_LENS_LINK_REASON_STATION_MODE 1
+#define WIFI_LENS_LINK_REASON_CYCLE_MISMATCH 2
+#define WIFI_LENS_LINK_REASON_RADIO_UNAVAILABLE 3
+#define WIFI_LENS_LINK_REASON_MODE_UNAVAILABLE 4
+#define WIFI_LENS_LINK_REASON_UNSUPPORTED_MODE 5
+#define WIFI_LENS_LINK_REASON_CAPTURE_TIMESTAMP_MISMATCH 6
+#define WIFI_LENS_LINK_REASON_LINK_STATE_UNAVAILABLE 7
+#define WIFI_LENS_LINK_REASON_CONFLICTING_LINK_EVIDENCE 8
+#define WIFI_LENS_LINK_REASON_DISCONNECT_CANDIDATE 9
+
+#define WIFI_LENS_LINK_CANDIDATE_NONE 0
+#define WIFI_LENS_LINK_CANDIDATE_DISCONNECTED WIFI_LENS_LINK_STATE_DISCONNECTED
+
+/*
+ * Link facts use fixed integer codes above. Flags encode optional presence and
+ * native-snapshot consistency facts. RADIO_POWER_ON_RAW means true when
+ * HAS_RADIO_POWER_ON_RAW is also set; link_active uses its tri-state code.
+ * Status 10 rejects unknown flags or enum codes.
+ */
+typedef struct {
+    uint32_t flags;
+    int32_t mode;
+    int64_t core_wlan_mode_raw_value;
+    int64_t other_mode_raw_value;
+    int32_t radio;
+    int32_t link_active;
+} WiFiLensLinkEvidenceInput;
+
+typedef struct {
+    int32_t state;
+    int32_t reason;
+    int32_t candidate_state;
+} WiFiLensLinkEvidenceResult;
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_MISSING 0
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_NORMAL 1
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_ABNORMAL 2
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_INDETERMINATE 3
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_BLOCKED 4
+#define WIFI_LENS_DIAGNOSTIC_STAGE_STATUS_SKIPPED 5
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_FACTS_MISSING 0
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_AVAILABLE 1
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_UNAVAILABLE 2
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_AUTHENTICATION_REQUIRED 3
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_UNVERIFIED 4
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_NONE 0
+#define WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_PROXY_DIRECT_UNVERIFIED 1
+#define WIFI_LENS_DIAGNOSTIC_STAGE_QUALIFICATION_GATEWAY_UNVERIFIED 2
+
+#define WIFI_LENS_DIAGNOSTIC_STAGE_INTERNET_HTTPS_AVAILABLE (1u << 0)
+#define WIFI_LENS_DIAGNOSTIC_STAGE_GATEWAY_NO_RESPONSE (1u << 1)
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_EXPLICIT_DIRECT_ROUTE (1u << 2)
+#define WIFI_LENS_DIAGNOSTIC_STAGE_PROXY_RESOLUTION_EVIDENCE (1u << 3)
+
+/*
+ * Diagnostic status codes: 0 missing, 1 normal, 2 abnormal, 3 indeterminate,
+ * 4 blocked, and 5 skipped. Proxy availability codes distinguish missing facts
+ * (0) from available, unavailable, authentication-required, and unverified.
+ * Flags describe normalized evidence; unknown codes or flags return status 12.
+ */
+typedef struct {
+    int32_t path_status;
+    int32_t gateway_reachability_status;
+    int32_t gateway_tcp_reachability_status;
+    int32_t dns_status;
+    int32_t internet_status;
+    int32_t proxy_status;
+    int32_t proxy_http_availability;
+    int32_t proxy_https_availability;
+    uint32_t flags;
+} WiFiLensDiagnosticStageInput;
+
+typedef struct {
+    int32_t this_mac_status;
+    int32_t this_mac_qualification;
+    int32_t lan_status;
+    int32_t lan_qualification;
+    int32_t internet_status;
+    int32_t internet_qualification;
+    int32_t external_success;
+    int32_t neutral_direct_proxy;
+    int32_t neutral_gateway;
+} WiFiLensDiagnosticStageResult;
 
 typedef struct {
     uint32_t flags;
@@ -98,10 +217,215 @@ typedef struct {
     uint8_t show_in_simple_view;
 } WiFiLensChannelQualityResult;
 
+/*
+ * Normalize scan rows before channel scoring. Band codes are 1 = 2.4 GHz,
+ * 2 = 5 GHz, 3 = 6 GHz. BSSID slices are raw UTF-8 in the caller-owned string
+ * buffer and are matched byte-exactly with band. Operating widths 40, 80,
+ * and 160 are retained; every other value maps to 20 MHz, matching the Swift
+ * adapter's existing fallback. Results retain first-group order and source
+ * indices; a strictly stronger RSSI replaces the selected row, while ties
+ * keep the first row. All buffers are caller-owned; no pointer escapes. The
+ * count pointer is required; null pointers are valid only for zero-length
+ * inputs or zero output capacity. Buffers must not overlap. The count reports
+ * required capacity and undersized outputs receive no writes.
+ */
+typedef struct {
+    int32_t band;
+    int64_t rssi;
+    int32_t operating_width_mhz;
+    size_t bssid_offset;
+    size_t bssid_length;
+} WiFiLensChannelOccupancyInput;
+
+typedef struct {
+    size_t source_index;
+    int32_t channel_width_mhz;
+} WiFiLensChannelOccupancyResult;
+
 #define WIFI_LENS_IE_MAX_SUITES 256
 #define WIFI_LENS_IE_MAX_SUITE_LABEL_BYTES 32
 #define WIFI_LENS_IE_MAX_TEXT_BYTES 16416
 #define WIFI_LENS_MAX_CHANNEL_QUALITIES 105
+
+#define WIFI_LENS_REGULATORY_DOMAIN_UNKNOWN 0
+#define WIFI_LENS_REGULATORY_DOMAIN_US 1
+#define WIFI_LENS_REGULATORY_DOMAIN_JP 2
+#define WIFI_LENS_REGULATORY_DOMAIN_CN 3
+#define WIFI_LENS_REGULATORY_DOMAIN_EU 4
+
+#define WIFI_LENS_REGULATORY_BAND_24_GHZ 1
+#define WIFI_LENS_REGULATORY_BAND_5_GHZ 2
+#define WIFI_LENS_REGULATORY_BAND_6_GHZ 3
+
+#define WIFI_LENS_REGULATORY_CONFIDENCE_LOW 0
+#define WIFI_LENS_REGULATORY_CONFIDENCE_MEDIUM 1
+#define WIFI_LENS_REGULATORY_CONFIDENCE_HIGH 2
+
+#define WIFI_LENS_REGULATORY_CONFLICT_CHANNELS_DISAGREE_WITH_AP 1
+
+#define WIFI_LENS_REGULATORY_CLASSIFICATION_RECOMMENDED 1
+#define WIFI_LENS_REGULATORY_CLASSIFICATION_ADVANCED 2
+#define WIFI_LENS_REGULATORY_CLASSIFICATION_RESTRICTED 3
+
+#define WIFI_LENS_REGULATORY_FILTER_HAS_SUPPORTED_CHANNELS (1u << 0)
+#define WIFI_LENS_DEVICE_SUPPORTS_N (1u << 0)
+#define WIFI_LENS_DEVICE_SUPPORTS_AC (1u << 1)
+#define WIFI_LENS_DEVICE_SUPPORTS_AX (1u << 2)
+#define WIFI_LENS_DEVICE_SUPPORTS_BE (1u << 3)
+#define WIFI_LENS_DEVICE_SUPPORTS_6_GHZ (1u << 4)
+#define WIFI_LENS_DEVICE_SUPPORTS_DFS (1u << 5)
+#define WIFI_LENS_DEVICE_SUPPORTS_160_MHZ (1u << 6)
+
+#define WIFI_LENS_REGULATORY_META_IS_DFS (1u << 0)
+#define WIFI_LENS_REGULATORY_META_IS_RADAR_SENSITIVE (1u << 1)
+#define WIFI_LENS_REGULATORY_META_REQUIRES_CAC (1u << 2)
+#define WIFI_LENS_REGULATORY_META_FORCED_SWITCH_RISK (1u << 3)
+#define WIFI_LENS_REGULATORY_META_IS_INDOOR_ONLY (1u << 4)
+#define WIFI_LENS_REGULATORY_META_REQUIRES_AFC (1u << 5)
+#define WIFI_LENS_REGULATORY_META_WIFI_6E_AVAILABLE (1u << 6)
+#define WIFI_LENS_REGULATORY_META_WIFI_7_AVAILABLE (1u << 7)
+
+#define WIFI_LENS_REGULATORY_REASON_REGION_UNKNOWN 1
+#define WIFI_LENS_REGULATORY_REASON_REGION_BLOCKED 2
+#define WIFI_LENS_REGULATORY_REASON_DFS 3
+#define WIFI_LENS_REGULATORY_REASON_RADAR_SENSITIVE 4
+#define WIFI_LENS_REGULATORY_REASON_CAC_REQUIRED 5
+#define WIFI_LENS_REGULATORY_REASON_INDOOR_ONLY 6
+#define WIFI_LENS_REGULATORY_REASON_AFC_REQUIRED 7
+#define WIFI_LENS_REGULATORY_REASON_REGION_LOW_CONFIDENCE 8
+#define WIFI_LENS_REGULATORY_REASON_DEVICE_INCOMPATIBLE 9
+#define WIFI_LENS_REGULATORY_REASON_USER_OVERRIDE 10
+#define WIFI_LENS_REGULATORY_MAX_FILTER_REASONS 10
+
+#define WIFI_LENS_DEVICE_REASON_NONE 0
+#define WIFI_LENS_DEVICE_REASON_CHANNEL_UNSUPPORTED 1
+#define WIFI_LENS_DEVICE_REASON_6_GHZ_UNSUPPORTED 2
+#define WIFI_LENS_DEVICE_REASON_AFC_UNSUPPORTED 3
+#define WIFI_LENS_DEVICE_REASON_DFS_UNSUPPORTED 4
+
+#define WIFI_LENS_RECOMMENDATION_REASON_CURRENT_CHANNEL 1
+#define WIFI_LENS_RECOMMENDATION_REASON_CURRENTLY_OPTIMAL 2
+#define WIFI_LENS_RECOMMENDATION_REASON_CLEAR_SPECTRUM 3
+#define WIFI_LENS_RECOMMENDATION_REASON_LOW_CONGESTION 4
+#define WIFI_LENS_RECOMMENDATION_REASON_CONGESTED 5
+#define WIFI_LENS_RECOMMENDATION_REASON_LOW_OVERLAP 6
+#define WIFI_LENS_RECOMMENDATION_REASON_HIGH_OVERLAP 7
+#define WIFI_LENS_RECOMMENDATION_REASON_LOW_INTERFERENCE 8
+#define WIFI_LENS_RECOMMENDATION_REASON_HIGH_INTERFERENCE 9
+#define WIFI_LENS_RECOMMENDATION_REASON_LESS_CROWDED_BAND 10
+#define WIFI_LENS_RECOMMENDATION_REASON_DFS_REQUIRED 11
+#define WIFI_LENS_RECOMMENDATION_REASON_INDOOR_ONLY 12
+#define WIFI_LENS_RECOMMENDATION_REASON_CAC_REQUIRED 13
+#define WIFI_LENS_RECOMMENDATION_REASON_RADAR_SENSITIVE 14
+#define WIFI_LENS_RECOMMENDATION_REASON_MAX 14
+
+#define WIFI_LENS_RESTRICTION_HAS_DFS (1u << 0)
+#define WIFI_LENS_RESTRICTION_HAS_INDOOR_ONLY (1u << 1)
+#define WIFI_LENS_RESTRICTION_HAS_CAC_REQUIRED (1u << 2)
+#define WIFI_LENS_RESTRICTION_HAS_RADAR_SENSITIVE (1u << 3)
+
+typedef struct {
+    size_t offset;
+    size_t length;
+} WiFiLensRegulatoryStringRange;
+
+typedef struct {
+    int32_t band;
+    int32_t channel;
+} WiFiLensRegulatorySupportedChannel;
+
+typedef struct {
+    size_t locale_region_offset;
+    size_t locale_region_length;
+    int32_t user_override_domain;
+    size_t ap_country_code_count;
+    const WiFiLensRegulatoryStringRange *ap_country_codes;
+    size_t supported_channel_count;
+    const WiFiLensRegulatorySupportedChannel *supported_channels;
+    size_t strings_length;
+    const uint8_t *strings;
+} WiFiLensRegulatoryInferenceInput;
+
+typedef struct {
+    int32_t domain;
+    int32_t confidence;
+    int32_t locale_domain;
+    int32_t ap_domain;
+    int32_t supported_channels_domain;
+    int32_t conflict_resolution;
+} WiFiLensRegulatoryInferenceResult;
+
+typedef struct {
+    int32_t channel;
+    uint8_t has_metadata;
+    uint32_t metadata_flags;
+    int32_t max_eirp_dbm;
+    uint8_t has_max_eirp;
+    int32_t note_code;
+} WiFiLensRegulatoryChannelRule;
+
+typedef struct {
+    size_t band_offset;
+    size_t band_length;
+    int32_t channel;
+    int32_t rf_score;
+    uint8_t score_selected;
+    int32_t recommendation_score;
+    uint8_t is_current_channel;
+    uint8_t show_in_simple_view;
+    int32_t user_classification_override;
+} WiFiLensRegulatoryFilterCandidate;
+
+typedef struct {
+    int32_t domain;
+    int32_t confidence;
+    uint32_t flags;
+    uint32_t capability_flags;
+} WiFiLensRegulatoryFilterConfig;
+
+typedef struct {
+    size_t original_index;
+    int32_t classification;
+    uint32_t restriction_reason_flags;
+    uint8_t device_compatible;
+    int32_t device_reason;
+    uint8_t show_in_simple_view;
+} WiFiLensRegulatoryFilterResult;
+
+typedef struct {
+    int32_t band_code;
+    int32_t channel;
+    uint8_t has_supported_channels;
+    uint32_t capability_flags;
+    uint8_t has_metadata;
+    uint32_t metadata_flags;
+    int32_t max_eirp_dbm;
+    uint8_t has_max_eirp;
+    int32_t note_code;
+} WiFiLensDeviceCompatibilityInput;
+
+typedef struct {
+    uint8_t is_compatible;
+    int32_t reason;
+} WiFiLensDeviceCompatibilityResult;
+
+typedef struct {
+    size_t band_offset;
+    size_t band_length;
+    int32_t channel;
+    int32_t rf_score;
+    int32_t ap_count;
+    uint8_t is_current_channel;
+    uint8_t is_recommended;
+    int32_t adjacent_count;
+    int32_t interference_score;
+    int32_t overlap_level;
+    uint32_t restriction_flags;
+} WiFiLensRecommendationReasonInput;
+
+typedef struct {
+    uint32_t reason_flags;
+} WiFiLensRecommendationReasonResult;
 
 #define WIFI_LENS_IE_SUPPORTS_80211K (1u << 0)
 #define WIFI_LENS_IE_SUPPORTS_80211R (1u << 1)
@@ -140,6 +464,17 @@ WiFiLensChannelBlockResult wifi_lens_channel_block(
     int64_t width_mhz,
     int32_t band,
     int32_t direction
+);
+
+/*
+ * Interpret one collected Wi-Fi link sample. Input and output records remain
+ * caller-owned and must be non-null, correctly aligned, valid, and non-overlapping.
+ * Statuses: 0 success, 4 Rust panic caught at the ABI, 5 invalid pointer,
+ * 10 invalid flags or enum codes.
+ */
+int32_t wifi_lens_interpret_link_evidence(
+    const WiFiLensLinkEvidenceInput *input,
+    WiFiLensLinkEvidenceResult *output
 );
 
 /*
@@ -192,5 +527,314 @@ int32_t wifi_lens_channel_quality_analyze(
     size_t result_capacity,
     size_t *result_count
 );
+
+/* Statuses: 0 success, 1 invalid band, 4 caught Rust panic, 5 invalid pointer,
+ * 6 invalid input slice, 7 output capacity too small, 8 invalid UTF-8. */
+int32_t wifi_lens_channel_occupancy_normalize(
+    const WiFiLensChannelOccupancyInput *access_points,
+    size_t access_point_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    WiFiLensChannelOccupancyResult *results,
+    size_t result_capacity,
+    size_t *result_count
+);
+
+/*
+ * Map an ISO 3166-1 alpha-2 country code to a regulatory domain. Unknown or
+ * invalid UTF-8 codes return WIFI_LENS_REGULATORY_DOMAIN_UNKNOWN; status 5
+ * reports a null pointer paired with a nonzero length.
+ */
+int32_t wifi_lens_regulatory_domain_from_country_code(
+    const uint8_t *country_code,
+    size_t country_code_length
+);
+
+/*
+ * Infer a regulatory domain from locale, AP country codes, supported channels,
+ * and an optional user override. All strings are UTF-8 slices in one caller-owned
+ * byte buffer. Output is caller-owned; no Rust pointer escapes. The input,
+ * output, and every non-empty array must be valid, aligned, and non-overlapping.
+ */
+int32_t wifi_lens_regulatory_infer(
+    const WiFiLensRegulatoryInferenceInput *input,
+    WiFiLensRegulatoryInferenceResult *output
+);
+
+/*
+ * Return every allowed channel and its metadata for one known domain and band.
+ * output_count reports the required capacity; status 7 writes no partial output.
+ */
+int32_t wifi_lens_regulatory_channel_rules(
+    int32_t domain_code,
+    int32_t band_code,
+    WiFiLensRegulatoryChannelRule *output,
+    size_t output_capacity,
+    size_t *output_count
+);
+
+/* Check normalized hardware facts against device PHY and channel metadata. */
+int32_t wifi_lens_regulatory_device_compatibility(
+    const WiFiLensDeviceCompatibilityInput *input,
+    const WiFiLensRegulatorySupportedChannel *supported_channels,
+    size_t supported_channel_count,
+    WiFiLensDeviceCompatibilityResult *output
+);
+
+/*
+ * Apply regulatory rules, device compatibility, user classifications, and the
+ * established channel sort. Band strings use UTF-8 ranges in strings. Output
+ * records are sorted and retain original_index for Swift model mapping. Status 7
+ * reports required result capacity and writes no partial output.
+ */
+int32_t wifi_lens_regulatory_filter(
+    const WiFiLensRegulatoryFilterCandidate *candidates,
+    size_t candidate_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    const WiFiLensRegulatorySupportedChannel *supported_channels,
+    size_t supported_channel_count,
+    const WiFiLensRegulatoryFilterConfig *config,
+    WiFiLensRegulatoryFilterResult *output,
+    size_t output_capacity,
+    size_t *output_count
+);
+
+/* Compute stable reason identifiers for a sorted recommendation list. */
+int32_t wifi_lens_recommendation_reasons(
+    const WiFiLensRecommendationReasonInput *inputs,
+    size_t input_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    WiFiLensRecommendationReasonResult *outputs,
+    size_t output_capacity,
+    size_t *output_count
+);
+
+/*
+ * Aggregate normalized network-diagnostic facts into the three stage statuses
+ * and shared neutral-success decisions. The fixed records are caller-owned and
+ * must be valid, aligned, and non-overlapping. Status 5 indicates a null pointer,
+ * status 12 rejects an unknown input code or flag, and status 4 catches panic.
+ * Output is written only on success.
+ */
+int32_t wifi_lens_diagnostic_stage_assess(
+    const WiFiLensDiagnosticStageInput *input,
+    WiFiLensDiagnosticStageResult *output
+);
+
+#define WIFI_LENS_QUALITY_ELIGIBLE (1u << 0)
+#define WIFI_LENS_QUALITY_HAS_RSSI (1u << 1)
+#define WIFI_LENS_QUALITY_HAS_LATENCY (1u << 2)
+
+#define WIFI_LENS_QUALITY_LEVEL_UNKNOWN 0
+#define WIFI_LENS_QUALITY_LEVEL_GOOD 1
+#define WIFI_LENS_QUALITY_LEVEL_FAIR 2
+#define WIFI_LENS_QUALITY_LEVEL_POOR 3
+
+#define WIFI_LENS_SIGNAL_BAND_UNKNOWN 0
+#define WIFI_LENS_SIGNAL_BAND_STRONG 1
+#define WIFI_LENS_SIGNAL_BAND_GOOD 2
+#define WIFI_LENS_SIGNAL_BAND_MODERATE 3
+#define WIFI_LENS_SIGNAL_BAND_WEAK 4
+
+#define WIFI_LENS_LATENCY_BAND_UNAVAILABLE 0
+#define WIFI_LENS_LATENCY_BAND_NORMAL 1
+#define WIFI_LENS_LATENCY_BAND_ELEVATED 2
+#define WIFI_LENS_LATENCY_BAND_HIGH 3
+
+#define WIFI_LENS_DIAGNOSTIC_ASSOCIATED (1u << 0)
+#define WIFI_LENS_DIAGNOSTIC_METRICS_VERIFIED (1u << 1)
+#define WIFI_LENS_DIAGNOSTIC_HAS_RSSI (1u << 2)
+#define WIFI_LENS_DIAGNOSTIC_HAS_CHANNEL_SCORE (1u << 3)
+#define WIFI_LENS_DIAGNOSTIC_SECURITY_HAS_WPA3 (1u << 4)
+#define WIFI_LENS_DIAGNOSTIC_SECURITY_KNOWN (1u << 5)
+
+#define WIFI_LENS_PHY_OTHER 0
+#define WIFI_LENS_PHY_11N 1
+#define WIFI_LENS_PHY_11AC 2
+
+#define WIFI_LENS_DIAGNOSTIC_UNKNOWN 0
+#define WIFI_LENS_DIAGNOSTIC_EXCELLENT 1
+#define WIFI_LENS_DIAGNOSTIC_WEAK_SIGNAL 2
+#define WIFI_LENS_DIAGNOSTIC_CONGESTED 3
+#define WIFI_LENS_DIAGNOSTIC_MEDIOCRE 4
+#define WIFI_LENS_DIAGNOSTIC_WEAK_SECURITY 5
+#define WIFI_LENS_DIAGNOSTIC_OLD_PHY_11N 6
+#define WIFI_LENS_DIAGNOSTIC_OLD_PHY_11AC 7
+#define WIFI_LENS_DIAGNOSTIC_OK 8
+
+typedef struct {
+    uint32_t flags;
+    int64_t rssi;
+    double latency_ms;
+} WiFiLensQualityInput;
+
+typedef struct {
+    int32_t level;
+    int32_t signal_band;
+    int32_t latency_band;
+} WiFiLensQualityResult;
+
+typedef struct {
+    uint32_t flags;
+    int64_t rssi;
+    int32_t channel_quality_score;
+    int32_t phy_generation;
+} WiFiLensDiagnosticInput;
+
+typedef struct {
+    int32_t kind;
+} WiFiLensDiagnosticResult;
+
+/*
+ * Quality input flags encode eligibility, RSSI presence, and latency presence.
+ * A present latency must be finite and nonnegative. Diagnostic metric and
+ * security facts require METRICS_VERIFIED; WPA3 requires SECURITY_KNOWN, and
+ * a present channel score must be in 0...100. Unknown flags/codes or these
+ * contradictory encodings return status 13 without writing partial output.
+ * Unflagged scalar fields are absent facts and their stored values are ignored.
+ */
+int32_t wifi_lens_evaluate_quality(
+    const WiFiLensQualityInput *input,
+    WiFiLensQualityResult *output
+);
+
+int32_t wifi_lens_evaluate_diagnosis(
+    const WiFiLensDiagnosticInput *input,
+    WiFiLensDiagnosticResult *output
+);
+
+
+/*
+ * MAC vendor registry import contract. Registry codes: 1 = MA-L, 2 = MA-M,
+ * 3 = MA-S, 4 = IAB. Source codes: 1 = IEEE download, 2 = manual import.
+ * Cancellation points: 0 = routine, 1 = records(count), 2 = before final sort,
+ * 3 = after final sort; the callback returns nonzero when cancelled.
+ * Every string and byte slice refers to caller-owned buffers. All result
+ * buffers are caller-owned; counts report required capacity and undersized
+ * outputs receive no partial records. Status 14 reports invalid MAC vendor
+ * input; the failure record carries a typed error code and optional text
+ * slices into the caller-owned failure text buffer.
+ */
+typedef struct {
+    size_t display_name_offset;
+    size_t display_name_length;
+    size_t data_offset;
+    size_t data_length;
+} WiFiLensMacVendorRegistryInput;
+
+typedef struct {
+    int32_t registry;
+    size_t minimum_records;
+} WiFiLensMacVendorMinimum;
+
+typedef struct {
+    int32_t registry;
+    size_t valid_record_count;
+    size_t sha256_offset;
+    size_t sha256_length;
+} WiFiLensMacVendorRegistryMetadata;
+
+typedef struct {
+    size_t prefix_offset;
+    size_t prefix_length;
+    uint32_t prefix_length_bits;
+    size_t organization_offset;
+    size_t organization_length;
+} WiFiLensMacVendorEntry;
+
+typedef struct {
+    int32_t code;
+    int32_t registry;
+    int64_t number1;
+    int64_t number2;
+    size_t file_offset;
+    size_t file_length;
+    size_t detail_offset;
+    size_t detail_length;
+} WiFiLensMacVendorFailure;
+
+typedef struct {
+    size_t prefix_offset;
+    size_t prefix_length;
+    uint32_t prefix_length_bits;
+    size_t organization_offset;
+    size_t organization_length;
+} WiFiLensMacVendorLookupEntry;
+
+typedef struct WiFiLensMacVendorIndex WiFiLensMacVendorIndex;
+
+typedef int32_t (*WiFiLensMacVendorCancellationCallback)(
+    int32_t point,
+    size_t count,
+    void *context
+);
+
+
+/* MAC vendor parsing and lookup. Statuses: 0 success, 4 panic, 5 invalid
+ * pointer, 6 invalid slice, 7 insufficient capacity, 8 invalid UTF-8,
+ * 14 invalid MAC vendor input. On invalid MAC vendor input, failure.code
+ * remains the typed error code. failure_text_length reports the required
+ * UTF-8 byte count even when the provided buffer is too small; callers may
+ * retry with that capacity. */
+int32_t wifi_lens_mac_vendor_parse_database(
+    const WiFiLensMacVendorRegistryInput *inputs,
+    size_t input_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    int32_t source,
+    const WiFiLensMacVendorMinimum *minimums,
+    size_t minimum_count,
+    size_t maximum_file_bytes,
+    size_t maximum_total_bytes,
+    WiFiLensMacVendorCancellationCallback cancellation,
+    void *cancellation_context,
+    WiFiLensMacVendorFailure *failure,
+    uint8_t *failure_text,
+    size_t failure_text_capacity,
+    size_t *failure_text_length,
+    WiFiLensMacVendorRegistryMetadata *registries,
+    size_t registries_capacity,
+    WiFiLensMacVendorEntry *entries,
+    size_t entries_capacity,
+    uint8_t *text,
+    size_t text_capacity,
+    size_t *registries_count,
+    size_t *entries_count,
+    size_t *text_length
+);
+int32_t wifi_lens_mac_vendor_lookup(
+    const uint8_t *mac_address,
+    size_t mac_address_length,
+    const WiFiLensMacVendorLookupEntry *entries,
+    size_t entry_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    uint8_t *organization,
+    size_t organization_capacity,
+    size_t *organization_length,
+    int32_t *result_code
+);
+
+int32_t wifi_lens_mac_vendor_index_build(
+    const WiFiLensMacVendorLookupEntry *entries,
+    size_t entry_count,
+    const uint8_t *strings,
+    size_t strings_length,
+    WiFiLensMacVendorIndex **out_index
+);
+
+int32_t wifi_lens_mac_vendor_index_lookup(
+    const WiFiLensMacVendorIndex *index,
+    const uint8_t *mac_address,
+    size_t mac_address_length,
+    uint8_t *organization,
+    size_t organization_capacity,
+    size_t *organization_length,
+    int32_t *result_code
+);
+
+void wifi_lens_mac_vendor_index_free(WiFiLensMacVendorIndex *index);
 
 #endif

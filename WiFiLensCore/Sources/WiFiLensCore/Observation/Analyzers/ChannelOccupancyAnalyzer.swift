@@ -1,4 +1,5 @@
 import Foundation
+import WiFiLensCoreRust
 
 enum ChannelOccupancyAnalyzer {
     static func analyze(
@@ -8,29 +9,75 @@ enum ChannelOccupancyAnalyzer {
         supportedBands: Set<String>,
         targetAP: ChannelQualityCalculator.TargetAP?
     ) -> [ChannelQuality] {
-        var seen = [String: ChannelQualityCalculator.APInfo]()
+        var strings: [UInt8] = []
+        var accessPoints: [WiFiLensChannelOccupancyInput] = []
         for obs in snapshot.networks {
-            let key = "\(obs.bssid)-\(obs.channel.band.rawValue)"
-            // Use the operating width reported by CWChannel for occupancy
-            // geometry. IE-derived width labels are exposed separately on the
-            // observation capabilities and do not replace this channel model.
-            let widthLabel = channelWidthLabel(obs.channel.channelWidthMHz)
-            let info = ChannelQualityCalculator.APInfo(
-                channel: obs.channel.channelNumber,
-                rssi: obs.rssi,
-                channelWidth: widthLabel,
-                band: obs.channel.band.id,
-                bssid: obs.bssid,
-                ssid: obs.ssid
+            let bssidBytes = Array(obs.bssid.utf8)
+            let bssidOffset = strings.count
+            strings.append(contentsOf: bssidBytes)
+            accessPoints.append(
+                WiFiLensChannelOccupancyInput(
+                    band: Int32(obs.channel.band.rawValue),
+                    rssi: Int64(obs.rssi),
+                    operating_width_mhz: Int32(clamping: obs.channel.channelWidthMHz),
+                    bssid_offset: bssidOffset,
+                    bssid_length: bssidBytes.count
+                )
             )
-            if let existing = seen[key] {
-                if info.rssi > existing.rssi { seen[key] = info }
-            } else {
-                seen[key] = info
+        }
+
+        var normalized = [WiFiLensChannelOccupancyResult](
+            repeating: WiFiLensChannelOccupancyResult(),
+            count: accessPoints.count
+        )
+        var normalizedCount = 0
+        let status = accessPoints.withUnsafeBufferPointer { accessPointBuffer in
+            strings.withUnsafeBufferPointer { stringBuffer in
+                normalized.withUnsafeMutableBufferPointer { outputBuffer in
+                    wifi_lens_channel_occupancy_normalize(
+                        accessPointBuffer.baseAddress,
+                        accessPointBuffer.count,
+                        stringBuffer.baseAddress,
+                        stringBuffer.count,
+                        outputBuffer.baseAddress,
+                        outputBuffer.count,
+                        &normalizedCount
+                    )
+                }
             }
         }
+        guard status == WIFI_LENS_STATUS_OK, normalizedCount <= normalized.count else {
+            assertionFailure("Rust channel normalization failed: \(status), \(normalizedCount)")
+            return []
+        }
+
+        var scoringInputs: [ChannelQualityCalculator.APInfo] = []
+        scoringInputs.reserveCapacity(normalizedCount)
+        for selection in normalized.prefix(normalizedCount) {
+            let sourceIndex = Int(selection.source_index)
+            guard snapshot.networks.indices.contains(sourceIndex) else {
+                assertionFailure("Rust channel occupancy selected out-of-range source index \(sourceIndex)")
+                return []
+            }
+            guard [20, 40, 80, 160].contains(Int(selection.channel_width_mhz)) else {
+                assertionFailure("Rust channel occupancy returned unsupported width \(selection.channel_width_mhz)")
+                return []
+            }
+            let observation = snapshot.networks[sourceIndex]
+            scoringInputs.append(
+                ChannelQualityCalculator.APInfo(
+                    channel: observation.channel.channelNumber,
+                    rssi: observation.rssi,
+                    channelWidth: String(selection.channel_width_mhz),
+                    band: observation.channel.band.id,
+                    bssid: observation.bssid,
+                    ssid: observation.ssid
+                )
+            )
+        }
+
         return ChannelQualityCalculator.compute(
-            aps: Array(seen.values),
+            aps: scoringInputs,
             currentChannel: currentChannel,
             currentBand: currentBand?.id,
             supportedBands: supportedBands,
@@ -38,12 +85,4 @@ enum ChannelOccupancyAnalyzer {
         )
     }
 
-    private static func channelWidthLabel(_ width: Int) -> String {
-        switch width {
-        case 160: return "160"
-        case 80: return "80"
-        case 40: return "40"
-        default: return "20"
-        }
-    }
 }

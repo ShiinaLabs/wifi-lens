@@ -129,6 +129,18 @@ import Testing
         #expect(result.confidence == .low)
     }
 
+    @Test("AP country code ties keep the first recognized domain with low confidence")
+    func apTieKeepsFirstRecognizedDomain() {
+        let result = RegionInferenceEngine.infer(
+            systemLocale: Locale(identifier: "en_ZZ"),
+            supportedChannels: [],
+            apCountryCodes: ["US", "DE"],
+            userOverride: nil
+        )
+        #expect(result.domain == .US)
+        #expect(result.confidence == .low)
+    }
+
     @Test("Empty AP country codes are handled gracefully")
     func emptyAPCodes() {
         let locale = Locale(identifier: "ja_JP")
