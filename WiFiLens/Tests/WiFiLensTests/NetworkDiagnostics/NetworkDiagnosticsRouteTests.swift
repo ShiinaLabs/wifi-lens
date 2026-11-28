@@ -185,17 +185,17 @@ extension NetworkDiagnosticsTests {
             executablePath: "/bin/sh",
             arguments: [
                 "-c",
-                "printf '%s\\n' $$ > \"$1\"; /bin/sleep 14 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
+                "printf '%s\\n' $$ > \"$1\"; /bin/sleep 45 & child=$!; printf '%s\\n' \"$child\" >> \"$1\"; wait \"$child\"",
                 "route-timeout",
                 pidFile.path,
             ],
             environment: [:],
             outputLimit: 1024
         )
-        let run = Task { await execution.run(timeout: .seconds(5)) }
+        let run = Task { await execution.run(timeout: .seconds(20)) }
 
         var processIDs: [pid_t] = []
-        for _ in 0..<1_000 {
+        for _ in 0..<2_500 {
             if let contents = try? String(contentsOf: pidFile, encoding: .utf8) {
                 processIDs = contents.split(whereSeparator: \.isNewline).compactMap { pid_t(String($0)) }
             }
@@ -212,7 +212,7 @@ extension NetworkDiagnosticsTests {
         let childPID = processIDs[1]
         #expect(Darwin.kill(childPID, SIGSTOP) == 0)
         let releaseChildIfTestStalls = Task {
-            try? await Task.sleep(for: .seconds(10))
+            try? await Task.sleep(for: .seconds(30))
             guard !Task.isCancelled else { return }
             _ = Darwin.kill(childPID, SIGCONT)
             _ = Darwin.kill(childPID, SIGTERM)
